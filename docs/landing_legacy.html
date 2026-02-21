@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Football | Future of Soccer Analytics</title>
+    <link rel="stylesheet" href="css/style.css?v=12">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .hero {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.4), var(--bg-dark)),
+                url('assets/hero_bg.png') center/cover no-repeat;
+        }
+
+        .hero-content {
+            max-width: 900px;
+            z-index: 10;
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            margin-bottom: 24px;
+            line-height: 1;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            text-decoration: none;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 64px;
+        }
+
+        .stat-card {
+            padding: 24px;
+            text-align: left;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .stat-card:nth-child(2) {
+            animation-delay: 1s;
+        }
+
+        .stat-card:nth-child(3) {
+            animation-delay: 2s;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav glass">
+        <a href="#" class="logo">AMATUKS<span class="gradient-text">HUB</span></a>
+        <div class="nav-links">
+            <a href="analytics.html" class="btn btn-primary">Open Analytics</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero">
+            <div class="hero-bg"></div>
+            <div class="hero-content">
+                <h1 class="gradient-text">Redefining Game Intelligence</h1>
+                <p>Harness the power of AI to analyze every movement, pass, and play. Precision analytics for the modern
+                    beautiful game.</p>
+
+                <div class="cta-group">
+                    <a href="analytics.html" class="btn btn-primary">Start Analyzing</a>
+                    <a href="#features" class="btn btn-outline" style="margin-left: 16px;">How it works</a>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card glass">
+                        <h3 class="gradient-text">99.8%</h3>
+                        <p>Object Detection Accuracy</p>
+                    </div>
+                    <div class="stat-card glass">
+                        <h3 class="gradient-text">
+                            < 50ms</h3>
+                                <p>Processing Latency</p>
+                    </div>
+                    <div class="stat-card glass">
+                        <h3 class="gradient-text">10k+</h3>
+                        <p>Data Points Per Match</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>

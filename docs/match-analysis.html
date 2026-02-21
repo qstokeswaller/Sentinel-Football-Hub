@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Analysis | UP Performance Analysis Hub</title>
+    <link rel="stylesheet" href="css/style.css?v=1771598058752">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
+                <div class="brand-text">
+                    <h3>Football</h3>
+                    <p>Performance Hub</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard_v2.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
+                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a></li>
+                    <li><a href="library.html"><i class="fas fa-book"></i><span>Library</span></a></li>
+                    <li><a href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
+                    <li><a href="squad.html"><i class="fas fa-user-friends"></i><span>Squad Management</span></a></li>
+                    <li><a href="players.html"><i class="fas fa-user"></i><span>Player Management</span></a></li>
+                    <li class="active"><a href="matches.html"><i class="fas fa-futbol"></i><span>Matches</span></a></li>
+                    <li><a href="analytics.html"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-toggle-sidebar" id="toggleSidebar" title="Toggle Sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 24px;">
+                <a href="matches.html" style="text-decoration: none; color: var(--text-secondary); font-weight: 600;">
+                    <i class="fas fa-arrow-left"></i> Back to Matches
+                </a>
+            </div>
+
+            <header class="page-header"
+                style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+                <div class="header-info">
+                    <h1>Match Analysis</h1>
+                    <!-- Match Title (Bubble) will be injected here via JS -->
+                </div>
+
+                <!-- Center Container for Score Bubble -->
+                <div id="scoreline-container"
+                    style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
+                    <!-- Content injected by JS -->
+                </div>
+
+                <div class="header-actions">
+                    <div class="badge badge-warning"
+                        style="background: #e0f2fe; color: #0284c7; padding: 8px 16px; border-radius: 8px;">
+                        <i class="fas fa-video"></i> Analysis Hub
+                    </div>
+                </div>
+            </header>
+
+            <!-- Key Moments & Clips Section -->
+            <div class="section-card" style="margin-bottom: 30px;">
+                <div class="section-header">
+                    <h3>Key Moments & Clips</h3>
+                    <button class="dash-btn primary" onclick="openClipModal()" style="font-size: 0.85rem;"><i
+                            class="fas fa-plus"></i> Add Clip</button>
+                </div>
+                <div class="analysis-grid" id="clipsGrid">
+                    <!-- Clips will be injected here -->
+                </div>
+                <div id="emptyClipsState" class="upload-drop-zone" onclick="openClipModal()"
+                    style="display: none; padding: 30px; cursor: pointer; margin-top: 24px;">
+                    <i class="fas fa-plus-circle" style="font-size: 2rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+                    <p>No key clips added yet.</p>
+                    <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 4px;">Click to Add Clip</p>
+                </div>
+                <div class="section-card" style="margin-bottom: 30px;">
+                    <div class="section-header">
+                        <h3>Highlights Video</h3>
+                        <button class="dash-btn primary"
+                            onclick="document.getElementById('highlightsUploadInput').click()"
+                            style="font-size: 0.85rem;">
+                            <i class="fas fa-upload"></i> Upload Highlights
+                        </button>
+                        <input type="file" id="highlightsUploadInput" accept="video/*" hidden>
+                    </div>
+                    <div id="highlightsContainer" style="margin-top: 20px;">
+                        <!-- Highlights content will be injected here -->
+                        <div id="emptyHighlightsState" class="upload-drop-zone"
+                            onclick="document.getElementById('highlightsUploadInput').click()">
+                            <i class="fas fa-film" style="font-size: 2rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+                            <p>No highlights video uploaded yet.</p>
+                            <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 4px;">Click or Drag &
+                                Drop Video</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Match Video Section -->
+                <div class="section-card" style="margin-bottom: 30px;">
+                    <div class="section-header">
+                        <h3>Full Match Video</h3>
+                        <button class="dash-btn primary" onclick="document.getElementById('videoUploadInput').click()"
+                            style="font-size: 0.85rem;">
+                            <i class="fas fa-upload"></i> Upload Video
+                        </button>
+                        <input type="file" id="videoUploadInput" accept="video/*" hidden>
+                    </div>
+                    <div id="fullMatchContainer" style="margin-top: 20px;">
+                        <!-- Match Video Content -->
+                        <div id="emptyMatchVideoState" class="upload-drop-zone"
+                            onclick="document.getElementById('videoUploadInput').click()">
+                            <i class="fas fa-video" style="font-size: 2rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+                            <p>No full match video uploaded yet.</p>
+                            <p style="font-size: 0.8rem; color: var(--text-light); margin-top: 4px;">Click or Drag &
+                                Drop Video</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- External Analysis Links Section -->
+                <div class="section-card" style="margin-bottom: 60px;">
+                    <div class="section-header">
+                        <h3>External Analysis Links</h3>
+                        <button class="dash-btn primary" onclick="openLinkModal()" style="font-size: 0.85rem;">
+                            <i class="fas fa-link"></i> Add External Link
+                        </button>
+                    </div>
+                    <div id="externalLinksContainer" style="margin-top: 20px; display: grid; gap: 16px;">
+                        <!-- Link Content -->
+                        <div id="emptyLinksState" class="upload-drop-zone" onclick="openLinkModal()">
+                            <i class="fas fa-external-link-alt"
+                                style="font-size: 2rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+                            <p>No external analysis links added.</p>
+                        </div>
+                    </div>
+                </div>
+        </main>
+    </div>
+
+    <!-- Clip Modal -->
+    <div id="clipModal" class="modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-card"
+            style="background: #ffffff; padding: 32px; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative;">
+            <button onclick="closeClipModal()"
+                style="position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 1.2rem;">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 style="margin-bottom: 24px; font-size: 1.25rem;">Add Key Clip</h3>
+
+            <div style="margin-bottom: 20px;">
+                <label
+                    style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Minute
+                    / Time</label>
+                <input type="text" id="clipTime" placeholder="e.g. 45' + 2"
+                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; margin-bottom: 16px;">
+
+                <label
+                    style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Description</label>
+                <input type="text" id="clipDesc" placeholder="e.g. Goal - Counter Attack"
+                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; margin-bottom: 16px;">
+
+                <label
+                    style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Tag
+                    (Optional)</label>
+                <select id="clipTag"
+                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; background: white;">
+                    <option value="Goal">Goal</option>
+                    <option value="Chance">Chance</option>
+                    <option value="Defensive">Defensive</option>
+                    <option value="Transition">Transition</option>
+                    <option value="Build Up">Build Up</option>
+                    <option value="Set Piece">Set Piece</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="dash-btn ghost" onclick="closeClipModal()">Cancel</button>
+                <button class="dash-btn primary" onclick="saveClip()">Add Clip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link Modal -->
+    <div id="linkModal" class="modal-overlay"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-card"
+            style="background: #ffffff; padding: 32px; border-radius: 20px; width: 100%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); position: relative;">
+            <button onclick="closeLinkModal()"
+                style="position: absolute; top: 20px; right: 20px; background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 1.2rem;">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 style="margin-bottom: 24px; font-size: 1.25rem;">Add External Analysis</h3>
+
+            <div style="margin-bottom: 20px;">
+                <label
+                    style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Platform</label>
+                <select class="dropdown-filter" style="width: 100%;" id="linkPlatform">
+                    <option value="Generic">Other / Generic</option>
+                    <option value="Metrica Sports">Metrica Sports</option>
+                    <option value="Longomatch">Longomatch</option>
+                    <option value="Hudl">Hudl</option>
+                    <option value="Veo">Veo</option>
+                    <option value="Youtube">Youtube / Drive</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 24px;">
+                <label
+                    style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Resource
+                    Title (Optional)</label>
+                <input type="text" id="linkTitle" placeholder="e.g. First Half Tactical Cam"
+                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; margin-bottom: 16px;">
+
+                <label
+                    style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">URL</label>
+                <input type="url" id="linkUrl" placeholder="https://..."
+                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; margin-bottom: 16px;">
+
+                <label
+                    style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary);">Description
+                    (Optional)</label>
+                <textarea id="linkDescription" placeholder="Notes about this clip..."
+                    style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; outline: none; resize: vertical; min-height: 80px;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="dash-btn ghost" onclick="closeLinkModal()">Cancel</button>
+                <button class="dash-btn primary" onclick="saveLink()">Add Link</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/squad-manager.js?v=11"></script>
+    <script src="js/match-manager.js?v=11"></script>
+    <script src="js/match-analysis.js?v=11"></script>
+    <script src="js/sidebar-toggle.js"></script>
+</body>
+
+</html>

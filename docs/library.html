@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library | UP Performance Analysis Hub</title>
+  <link rel="stylesheet" href="css/style.css?v=1771598058747">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/api-config.js?v=2"></script>
+  <style>
+    /* ── DASHBOARD LIBRARY STYLES ── */
+
+    /* Stats row */
+    .lib-stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .lib-stat {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .lib-stat .left .num {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+      color: #1a202c;
+    }
+
+    .lib-stat .left .num.blue {
+      color: #4a90d9;
+    }
+
+    .lib-stat .left .num.green {
+      color: #38a169;
+    }
+
+    .lib-stat .left .num.orange {
+      color: #e07a2f;
+    }
+
+    .lib-stat .left .lbl {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #a0aec0;
+      margin-top: 4px;
+    }
+
+    .lib-stat .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .lib-stat .icon.blue {
+      background: #ebf4ff;
+      color: #4a90d9;
+    }
+
+    .lib-stat .icon.green {
+      background: #f0fff4;
+      color: #38a169;
+    }
+
+    .lib-stat .icon.orange {
+      background: #fff5ee;
+      color: #e07a2f;
+    }
+
+    .lib-stat .icon.grey {
+      background: #f7fafc;
+      color: #a0aec0;
+    }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .filter-search {
+      flex: 1;
+      min-width: 220px;
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: #2d3748;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+
+    .filter-search:focus {
+      border-color: #4a90d9;
+      box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
+    }
+
+    .filter-search::placeholder {
+      color: #cbd5e0;
+    }
+
+    .filter-btn {
+      padding: 10px 20px;
+      border-radius: 9999px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #718096;
+      cursor: pointer;
+      transition: all 0.14s;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+    }
+
+    .filter-btn.danger {
+      color: #e53e3e;
+      border-color: #fed7d7;
+      background: #fff5f5;
+      margin-left: auto;
+      border-radius: 9999px;
+    }
+
+    .filter-btn.danger:hover {
+      background: #fed7d7;
+    }
+
+    /* Section heading */
+    .lib-section {
+      margin-bottom: 34px;
+    }
+
+    .lib-section-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f4f8;
+    }
+
+    .lib-section-hd h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #4a5568;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lib-section-hd h2 i {
+      color: #4a90d9;
+    }
+
+    .lib-section-hd .count-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: #718096;
+      background: #edf2f7;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 2px 10px;
+    }
+
+    /* Grid */
+    .lib-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    /* Card */
+    .lib-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.15s, transform 0.12s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .lib-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .card-thumb {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-thumb-placeholder {
+      width: 100%;
+      height: 150px;
+      background: #f7fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      color: #e2e8f0;
+    }
+
+    .card-body {
+      padding: 13px 15px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .card-pill {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 7px;
+    }
+
+    .card-pill.session {
+      background: #ebf4ff;
+      color: #2b6cb0;
+      border: 1px solid #bee3f8;
+      color: #3182ce;
+    }
+
+    .card-pill.drill {
+      background: #f0fff4;
+      color: #2f855a;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 6px;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-top-section {
+      height: 88px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 0 !important;
+      /* Override card-body padding-bottom if needed */
+    }
+
+    .card-author {
+      font-size: 11px;
+      color: #a0aec0;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: auto;
+    }
+
+    .card-author i {
+      font-size: 10px;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .card-chip {
+      font-size: 11px;
+      font-weight: 500;
+      color: #718096;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 2px 7px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .card-desc {
+      font-size: 11px;
+      color: #a0aec0;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 5px;
+      padding-top: 10px;
+      border-top: 1px solid #f0f4f8;
+      margin-top: auto;
+    }
+
+    .card-btn {
+      flex: 1;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border-light);
+      background: #f7fafc;
+      color: var(--text-medium);
+      cursor: pointer;
+      transition: all 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .card-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: var(--primary-light);
+    }
+
+    .card-btn.pdf:hover {
+      border-color: #9ae6b4;
+      color: #276749;
+      background: #f0fff4;
+    }
+
+    .card-btn.danger:hover {
+      border-color: #fed7d7;
+      color: #e53e3e;
+      background: #fff5f5;
+    }
+
+    /* Empty state */
+    .lib-empty {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 50px 20px;
+      color: #a0aec0;
+    }
+
+    .lib-empty .empty-icon {
+      font-size: 44px;
+      margin-bottom: 12px;
+    }
+
+    .lib-empty h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #718096;
+      margin-bottom: 6px;
+    }
+
+    .lib-empty p {
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .lib-empty a {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 20px;
+      border-radius: 8px;
+      background: #4a90d9;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .lib-empty a:hover {
+      background: #3a7bc8;
+    }
+
+    /* ── MODAL ── */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 32, 44, 0.7);
+      backdrop-filter: blur(3px);
+      z-index: 500;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    #modal-overlay.open {
+      display: flex;
+    }
+
+    #modal-box {
+      background: #fff;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 820px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      animation: mIn 0.2s ease;
+    }
+
+    @keyframes mIn {
+      from {
+        opacity: 0;
+        transform: scale(0.97)
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    #modal-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #f0f4f8;
+      background: #f8fafc;
+    }
+
+    #modal-head-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a202c;
+      flex: 1;
+    }
+
+    #modal-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      color: #a0aec0;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s;
+    }
+
+    #modal-close:hover {
+      color: #e53e3e;
+      border-color: #fed7d7;
+    }
+
+    #modal-body {
+      padding: 20px;
+      max-height: 65vh;
+      overflow-y: auto;
+    }
+
+    #modal-foot {
+      display: flex;
+      gap: 8px;
+      padding: 14px 20px;
+      border-top: 1px solid #f0f4f8;
+      flex-wrap: wrap;
+      background: #f8fafc;
+    }
+
+    .modal-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 7px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .modal-btn.pdf {
+      background: #ebf4ff;
+      color: #2b6cb0;
+      border-color: #bee3f8;
+      border-radius: 9999px;
+    }
+
+    .modal-btn.pdf:hover {
+      background: #bee3f8;
+    }
+
+    .modal-btn.pill {
+      border-radius: 9999px;
+      padding: 10px 24px;
+      font-weight: 700;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+    }
+
+    .modal-btn.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .modal-btn.primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .modal-btn.del {
+      background: #fff5f5;
+      color: #e53e3e;
+      border-color: #fed7d7;
+      margin-left: auto;
+      border-radius: 9999px;
+    }
+
+    .modal-btn.del:hover {
+      background: #fed7d7;
+    }
+
+    /* session modal meta */
+    .modal-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .modal-meta-cell {
+      padding: 10px 14px;
+      border-right: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .modal-meta-cell:last-child {
+      border-right: none;
+    }
+
+    .modal-meta-cell label {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a0aec0;
+      margin-bottom: 3px;
+    }
+
+    .modal-meta-cell span {
+      font-size: 13px;
+      color: #2d3748;
+      font-weight: 500;
+    }
+
+    /* drill blocks in session modal */
+    .modal-drill-block {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .modal-drill-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      background: #f8fafc;
+      border-bottom: 1px solid #f0f4f8;
+    }
+
+    .modal-drill-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .modal-drill-body {
+      padding: 12px 13px;
+    }
+
+    .modal-drill-img {
+      width: 100%;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .modal-drill-desc {
+      font-size: 12px;
+      color: #718096;
+      line-height: 1.6;
+    }
+
+    /* toast */
+    #dash-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #2d3748;
+      color: #fff;
+      border-radius: 8px;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(6px);
+      transition: all 0.22s;
+      z-index: 999;
+    }
+
+    #dash-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
+        <div class="brand-text">
+          <h3>Football</h3>
+          <p>Performance Hub</p>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard_v2.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
+          <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a></li>
+          <li class="active"><a href="library.html"><i class="fas fa-book"></i><span>Library</span></a></li>
+          <li><a href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
+          <li><a href="squad.html"><i class="fas fa-user-friends"></i><span>Squad Management</span></a></li>
+          <li><a href="players.html"><i class="fas fa-user"></i><span>Player Management</span></a></li>
+          <li><a href="matches.html"><i class="fas fa-futbol"></i><span>Matches</span></a></li>
+          <li><a href="analytics.html"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-toggle-sidebar" id="toggleSidebar" title="Toggle Sidebar">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <header class="page-header">
+        <div class="header-info">
+          <h1>Sessions &amp; Drills Library</h1>
+          <p>Browse and manage your collection of session plans and drills</p>
+        </div>
+        <div class="header-actions">
+          <a href="planner.html" class="dash-btn"
+            style="display:flex;align-items:center;gap:8px;padding:12px 24px;border-radius:9999px;background:var(--primary);color:#fff;font-size:14px;font-weight:700;text-decoration:none;border:none;box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); transition: all 0.2s;">
+            <i class="fas fa-plus-circle"></i> New Session
+          </a>
+        </div>
+      </header>
+
+      <!-- STATS -->
+      <div class="lib-stats-row">
+        <div class="lib-stat">
+          <div class="left">
+            <div class="num blue" id="stat-sessions">0</div>
+            <div class="lbl">Sessions Saved</div>
+          </div>
+          <div class="icon blue"><i class="fas fa-clipboard-list"></i></div>
+        </div>
+        <div class="lib-stat">
+          <div class="left">
+            <div class="num green" id="stat-drills">0</div>
+            <div class="lbl">Drills in Library</div>
+          </div>
+          <div class="icon green"><i class="fas fa-futbol"></i></div>
+        </div>
+        <div class="lib-stat">
+          <div class="left">
+            <div class="num orange" id="stat-authors">0</div>
+            <div class="lbl">Authors / Coaches</div>
+          </div>
+          <div class="icon orange"><i class="fas fa-user-tie"></i></div>
+        </div>
+        <div class="lib-stat">
+          <div class="left">
+            <div class="num" id="stat-recent" style="font-size:18px;padding-top:4px;">—</div>
+            <div class="lbl">Last Updated</div>
+          </div>
+          <div class="icon grey"><i class="fas fa-clock"></i></div>
+        </div>
+      </div>
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <input type="text" id="search-input" class="filter-search" placeholder="Search by title, author, team...">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('session',this)">Sessions</button>
+        <button class="filter-btn" onclick="setFilter('drill',this)">Drills</button>
+        <button class="filter-btn danger" onclick="clearAll()"><i class="fas fa-trash"></i> Clear All</button>
+      </div>
+
+      <!-- SESSIONS -->
+      <div class="lib-section" id="sessions-section">
+        <div class="lib-section-hd">
+          <h2><i class="fas fa-clipboard-list"></i> Sessions</h2>
+          <span class="count-badge" id="sessions-count">0</span>
+        </div>
+        <div class="lib-grid" id="sessions-grid"></div>
+      </div>
+
+      <!-- DRILLS LIBRARY -->
+      <div class="lib-section" id="drills-section">
+        <div class="lib-section-hd">
+          <h2><i class="fas fa-futbol"></i> Drill Library</h2>
+          <span class="count-badge" id="drills-count">0</span>
+        </div>
+        <div class="lib-grid" id="drills-grid"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" onclick="closeIfBg(event)">
+    <div id="modal-box">
+      <div id="modal-head">
+        <span id="modal-head-pill" class="card-pill"></span>
+        <span id="modal-head-title">—</span>
+        <button id="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modal-body"></div>
+      <div id="modal-foot"></div>
+    </div>
+  </div>
+
+  <div id="dash-toast"></div>
+
+  <script>
+    // ═══════════════════════════════════════════════════════════
+    //  STATE
+    // ═══════════════════════════════════════════════════════════
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let sessions = [];
+    let drills = [];
+
+    // ═══════════════════════════════════════════════════════════
+    //  INIT
+    // ═══════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAll();
+      document.getElementById('search-input').addEventListener('input', function () {
+        currentSearch = this.value.toLowerCase().trim();
+        renderAll();
+      });
+    });
+
+    async function loadAll() {
+      try {
+        const [sessionsRes, drillsRes] = await Promise.all([
+          fetch(`${window.API_BASE_URL}/sessions?_t=${Date.now()}`).then(r => r.json()).catch(e => { console.warn("Sessions failed:", e); return []; }),
+          fetch(`${window.API_BASE_URL}/drills?_t=${Date.now()}`).then(r => r.json()).catch(e => { console.warn("Drills failed:", e); return []; })
+        ]);
+
+        // Map database fields to UI format
+        sessions = (sessionsRes || []).map(s => ({
+          ...s,
+          type: 'session',
+          players: s.playersCount,
+          level: s.abilityLevel,
+          savedAt: s.createdAt,
+          author: s.author || 'UP Coach',
+          team: s.team || 'UP First XI'
+        }));
+
+        drills = (drillsRes || []).map(d => ({
+          ...d,
+          type: 'drill',
+          savedAt: Date.now() // Drills don't have separate createdAt in DB yet
+        }));
+
+        renderAll();
+      } catch (e) {
+        console.error("Failed to load data:", e);
+        showToast('Error loading data');
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  RENDER
+    // ═══════════════════════════════════════════════════════════
+    function renderAll() {
+      const all = [...sessions, ...drills];
+
+      // Stats
+      document.getElementById('stat-sessions').textContent = sessions.length;
+      document.getElementById('stat-drills').textContent = drills.length;
+
+      const authors = new Set(all.map(i => i.author).filter(Boolean));
+      document.getElementById('stat-authors').textContent = authors.size || 0;
+
+      if (all.length) {
+        const sorted = [...all].sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
+        const latest = sorted[0];
+        const d = new Date(latest.savedAt);
+        document.getElementById('stat-recent').textContent = isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      }
+
+      function matches(item) {
+        if (currentFilter !== 'all' && item.type !== currentFilter) return false;
+        if (currentSearch) {
+          const hay = [item.title, item.author, item.team, item.venue, item.purpose, item.description].filter(Boolean).join(' ').toLowerCase();
+          if (!hay.includes(currentSearch)) return false;
+        }
+        return true;
+      }
+
+      const fSessions = sessions.filter(matches);
+      const fDrills = drills.filter(matches);
+
+      // Section visibility
+      document.getElementById('sessions-section').style.display = currentFilter === 'drill' ? 'none' : '';
+      document.getElementById('drills-section').style.display = currentFilter === 'session' ? 'none' : '';
+
+      document.getElementById('sessions-count').textContent = fSessions.length;
+      document.getElementById('drills-count').textContent = fDrills.length;
+
+      renderGrid('sessions-grid', fSessions, 'session');
+      renderGrid('drills-grid', fDrills, 'drill');
+    }
+
+    function renderGrid(gridId, items, type) {
+      const grid = document.getElementById(gridId);
+      if (!items.length) {
+        const isSearch = !!currentSearch;
+        grid.innerHTML = `
+      <div class="lib-empty">
+        <div class="empty-icon">${type === 'session' ? '📋' : '⚽'}</div>
+        <h3>No ${type === 'session' ? 'sessions' : 'drills'} yet</h3>
+        <p>${isSearch ? 'No results match your search.' : 'Save a ' + type + ' from the Session Planner to see it here.'}</p>
+        ${!isSearch ? `<a href="planner.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:9999px;background:var(--primary);color:#fff;font-size:14px;font-weight:700;text-decoration:none;border:none;box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);"><i class="fas fa-plus-circle"></i> Go to Planner</a>` : ''}
+      </div>`;
+        return;
+      }
+      grid.innerHTML = items.map(buildCard).join('');
+    }
+
+    function buildCard(item) {
+      const isSess = item.type === 'session';
+      const date = item.date ? new Date(item.date).toLocaleDateString('en-GB') : '';
+
+      // Thumbnail
+      const thumbHTML = item.image
+        ? `<img src="${item.image}" class="card-thumb" alt="${esc(item.title)}">`
+        : `<div class="card-thumb-placeholder">${isSess ? '📋' : '⚽'}</div>`;
+
+      const authorLine = (item.author || item.team)
+        ? `<div class="card-author"><i class="fas fa-user-tie"></i>${esc([item.author, item.team].filter(Boolean).join(' · '))}</div>`
+        : '';
+
+      return `
+    <div class="lib-card" onclick="openModal('${item.id}')">
+      <div class="card-body card-top-section">
+        <div class="card-header">
+           <div class="card-title">${esc(item.title || 'Untitled')}</div>
+           <span class="card-pill ${item.type}">${isSess ? 'Session' : 'Drill'}</span>
+        </div>
+        ${authorLine}
+      </div>
+      ${thumbHTML}
+      <div class="card-body">
+        <div class="card-actions">
+          <button class="card-btn" onclick="openModal('${item.id}', event)"><i class="fas fa-eye"></i> View</button>
+          <button class="card-btn" onclick="exportPDF('${item.id}', event)"><i class="fas fa-file-pdf"></i> PDF</button>
+          <button class="card-btn danger" onclick="deleteItem('${item.id}', '${item.type}', event)"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  MODAL
+    // ═══════════════════════════════════════════════════════════
+    async function openModal(id, e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      const item = [...sessions, ...drills].find(i => i.id === id);
+      if (!item) return;
+
+      const isSess = item.type === 'session';
+      const pill = document.getElementById('modal-head-pill');
+      pill.textContent = isSess ? 'Session' : 'Drill';
+      pill.className = 'card-pill ' + (isSess ? 'session' : 'drill');
+      document.getElementById('modal-head-title').textContent = item.title || 'Untitled';
+
+      if (isSess) {
+        // Fetch full session details with drills
+        try {
+          const fullSession = await fetch(`${window.API_BASE_URL}/sessions/${id}`).then(r => r.json());
+          document.getElementById('modal-body').innerHTML = buildSessionModalBody({
+            ...item,
+            blocks: (fullSession.drills || []).map(d => ({ ...d, type: 'drill' }))
+          });
+        } catch (e) {
+          document.getElementById('modal-body').innerHTML = `<p>Error loading session details.</p>`;
+        }
+      } else {
+        document.getElementById('modal-body').innerHTML = buildDrillModalBody(item);
+      }
+
+      document.getElementById('modal-foot').innerHTML = `
+    ${!isSess ? `<button class="modal-btn png" onclick="exportPNG('${item.id}', event)" style="background:var(--success);"><i class="fas fa-file-image"></i> Export PNG</button>` : ''}
+    <button class="modal-btn pdf" onclick="exportPDF('${item.id}')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+    <button class="modal-btn del" onclick="deleteItem('${item.id}', '${item.type}')"><i class="fas fa-trash"></i> Delete</button>
+  `;
+
+      document.getElementById('modal-overlay').classList.add('open');
+    }
+
+    function buildSessionModalBody(item) {
+      const date = item.date ? new Date(item.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+      const time = item.startTime || '';
+      return `
+    <div class="modal-meta-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="modal-meta-cell"><label>Date/Time</label><span>${esc(date)}${time ? ` at ${esc(time)}` : ''}</span></div>
+      <div class="modal-meta-cell"><label>Venue</label><span>${esc(item.venue || '—')}</span></div>
+      <div class="modal-meta-cell"><label>Duration</label><span>${esc(item.duration || '—')}</span></div>
+    </div>
+    <div class="modal-meta-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:18px;">
+      <div class="modal-meta-cell"><label>Players</label><span>${esc(item.players || '—')}</span></div>
+      <div class="modal-meta-cell"><label>Level</label><span>${esc(item.level || '—')}</span></div>
+      <div class="modal-meta-cell"><label>Author</label><span>${esc(item.author || '—')}</span></div>
+      <div class="modal-meta-cell"><label>Team</label><span>${esc(item.team || '—')}</span></div>
+    </div>
+    ${item.equipment || item.purpose ? `
+    <div class="modal-meta-grid" style="grid-template-columns:1fr 1fr;margin-bottom:18px;">
+      <div class="modal-meta-cell"><label>Equipment</label><span>${esc(item.equipment || '—')}</span></div>
+      <div class="modal-meta-cell"><label>Purpose</label><span>${esc(item.purpose || '—')}</span></div>
+    </div>` : ''}
+    ${(item.drills || item.blocks || []).map((b, i) => buildDrillBlockModal(b, i + 1)).join('')}
+  `;
+    }
+
+    function buildDrillBlockModal(b, num) {
+      const isDrill = b.type === 'drill';
+      return `
+    <div class="modal-drill-block">
+      <div class="modal-drill-head">
+        ${isDrill ? `<span style="font-size:11px;font-weight:700;color:#a0aec0;background:#edf2f7;border:1px solid #e2e8f0;border-radius:4px;padding:1px 6px;">#${num}</span>` : ''}
+        <span class="card-pill ${isDrill ? 'drill' : 'section'}" style="margin-bottom:0;">${isDrill ? 'Drill' : 'Section'}</span>
+        <span class="modal-drill-title">${esc(b.title || 'Untitled')}</span>
+      </div>
+      <div class="modal-drill-body">
+        ${b.image ? `<img src="${b.image}" class="modal-drill-img" alt="${esc(b.title)}">` : ''}
+        ${b.description ? `<div class="modal-drill-desc">${b.description}</div>` : ''}
+      </div>
+    </div>`;
+    }
+
+    function buildDrillModalBody(item) {
+      const date = item.savedAt ? new Date(item.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+      return `
+    <div class="modal-meta-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px;">
+      <div class="modal-meta-cell"><label>Saved</label><span>${esc(date)}</span></div>
+      ${item.author ? `<div class="modal-meta-cell"><label>Author</label><span>${esc(item.author)}</span></div>` : ''}
+    </div>
+    <div style="margin-bottom:18px;">
+      ${item.image ? `<img src="${item.image}" class="modal-drill-img" style="max-height:300px;width:auto;border-radius:8px;border:1px solid #e2e8f0;display:block;margin-bottom:15px;">` : ''}
+      ${item.description ? `<div style="font-size:13px;color:#4a5568;line-height:1.7;">${item.description}</div>` : ''}
+    </div>
+  `;
+    }
+
+    function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+    function closeIfBg(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ═══════════════════════════════════════════════════════════
+    //  FILTER
+    // ═══════════════════════════════════════════════════════════
+    function setFilter(f, btn) {
+      currentFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderAll();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  DELETE
+    // ═══════════════════════════════════════════════════════════
+    async function deleteItem(id, type, e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      console.trace(`deleteItem called for ${type} ${id}`);
+
+      if (!window.confirm(`Are you sure you want to delete this ${type}?`)) {
+        console.log('Deletion cancelled by user');
+        return;
+      }
+
+      try {
+        const endpoint = type === 'session' ? 'sessions' : 'drills';
+        console.log(`Sending DELETE request to ${window.API_BASE_URL}/${endpoint}/${id}`);
+        const res = await fetch(`${window.API_BASE_URL}/${endpoint}/${id}`, {
+          method: 'DELETE',
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          console.log('Deletion successful');
+          closeModal();
+          loadAll();
+          showToast('Deleted successfully');
+        } else {
+          const errText = await res.text();
+          console.warn('Deletion failed:', errText);
+          showToast('Failed to delete');
+        }
+      } catch (e) {
+        console.error('Error in deleteItem:', e);
+        showToast('Error deleting');
+      }
+    }
+    window.deleteItem = deleteItem;
+
+    async function clearAll() {
+      if (!confirm('This will delete ALL sessions and drills. Continue?')) return;
+      showToast('Clearing all...');
+      try {
+        await Promise.all([
+          ...sessions.map(s => fetch(`${window.API_BASE_URL}/sessions/${s.id}`, { method: 'DELETE' })),
+          ...drills.map(d => fetch(`${window.API_BASE_URL}/drills/${d.id}`, { method: 'DELETE' }))
+        ]);
+        await loadAll();
+        showToast('All data cleared');
+      } catch (e) {
+        console.error('Clear all error:', e);
+        showToast('Failed to clear all data');
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  PDF EXPORT FROM DASHBOARD
+    // ═══════════════════════════════════════════════════════════
+    async function exportPDF(id, e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      console.trace(`exportPDF called for id ${id}`);
+      if (!window.jspdf) { showToast('PDF library not loaded'); return; }
+      const { jsPDF } = window.jspdf;
+
+      const item = [...sessions, ...drills].find(i => i.id === id);
+      if (!item) { console.error('Item not found for export:', id); return; }
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const PW = doc.internal.pageSize.getWidth();
+      const PH = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentW = PW - (margin * 2);
+
+      if (item.type === 'drill') {
+        doc.setFillColor(74, 144, 217); doc.rect(0, 0, PW, 15, 'F');
+        doc.setTextColor(255); doc.setFontSize(10); doc.text('UP PERFORMANCE HUB · DRILL', margin, 10);
+
+        doc.setTextColor(26, 32, 44); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+        doc.text(item.title || 'Untitled Drill', margin, 30);
+
+        let y = 40;
+        if (item.image) {
+          try {
+            const imgProps = doc.getImageProperties(item.image);
+            const imgH = (imgProps.height * contentW) / imgProps.width;
+            doc.addImage(item.image, 'PNG', margin, y, contentW, imgH);
+            y += imgH + 10;
+          } catch (e) { console.warn('Failed to add image to PDF:', e); }
+        }
+
+        const desc = (item.description || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ');
+        doc.setFontSize(11); doc.setTextColor(45, 55, 72); doc.setFont('helvetica', 'normal');
+        doc.text(doc.splitTextToSize(desc, contentW), margin, y);
+
+        const safeTitle = (item.title || 'drill').replace(/[^a-z0-9]/gi, '_');
+        const filename = `UP_Drill_${safeTitle}.pdf`;
+        try {
+          const blob = doc.output('blob');
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          console.log(`PDF saved: ${filename}`);
+          showToast(`Exported ${filename}`);
+        } catch (err) {
+          console.error('PDF Save failed:', err);
+          showToast('Failed to save PDF');
+        }
+        return;
+      }
+
+      // Session
+      try {
+        const fullSession = await fetch(`${window.API_BASE_URL}/sessions/${id}`).then(r => r.json());
+        const blocks = fullSession.drills || [];
+
+        // Front Page / Header
+        doc.setFillColor(74, 144, 217); doc.rect(0, 0, PW, 25, 'F');
+        doc.setTextColor(255); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text((item.title || 'Session Plan').toUpperCase(), margin, 17);
+
+        let y = 35;
+        doc.setFontSize(9); doc.setTextColor(113, 128, 150);
+        const meta = [item.author, item.team, item.date ? new Date(item.date).toLocaleDateString() : ''].filter(Boolean).join(' · ');
+        doc.text(meta, margin, y);
+        y += 15;
+
+        blocks.forEach((b, idx) => {
+          if (idx > 0) doc.addPage();
+          doc.setFillColor(74, 144, 217); doc.rect(0, 0, PW, 12, 'F');
+          doc.setTextColor(255); doc.setFontSize(8); doc.text(`DRILL ${idx + 1} OF ${blocks.length}`, margin, 8);
+
+          doc.setTextColor(26, 32, 44); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+          doc.text(b.title || 'Untitled Drill', margin, 25);
+
+          let curY = 32;
+          if (b.image) {
+            try {
+              const imgProps = doc.getImageProperties(b.image);
+              const imgH = (imgProps.height * contentW) / imgProps.width;
+              doc.addImage(b.image, 'PNG', margin, curY, contentW, Math.min(imgH, 150)); // Cap height to allow text
+              curY += Math.min(imgH, 150) + 10;
+            } catch (e) { }
+          }
+
+          const bdesc = (b.description || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ');
+          doc.setFontSize(11); doc.setTextColor(45, 55, 72); doc.setFont('helvetica', 'normal');
+          doc.text(doc.splitTextToSize(bdesc, contentW), margin, curY);
+        });
+
+        const safeTitle = (item.title || 'session').replace(/[^a-z0-9]/gi, '_');
+        const filename = `UP_Session_${safeTitle}.pdf`;
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log(`PDF saved: ${filename}`);
+        showToast(`Exported ${filename}`);
+      } catch (e) {
+        console.error("PDF Export failed:", e);
+        showToast('Error generating PDF');
+      }
+    }
+    window.exportPDF = exportPDF;
+
+    async function exportPNG(id, e) {
+      if (e) { e.stopPropagation(); e.preventDefault(); }
+      const item = [...sessions, ...drills].find(i => i.id === id);
+      if (!item || item.type !== 'drill' || !item.image) {
+        showToast('No image data found for this drill');
+        return;
+      }
+      const safeTitle = (item.title || 'drill').replace(/[^a-z0-9]/gi, '_');
+      const filename = `UP_Drill_${safeTitle}.png`;
+      const a = document.createElement('a');
+      a.href = item.image;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`Exported ${filename}`);
+    }
+    window.exportPNG = exportPNG;
+
+    // ═══════════════════════════════════════════════════════════
+    //  TOAST
+    // ═══════════════════════════════════════════════════════════
+    function showToast(msg) {
+      if (window.showGlobalToast) {
+        window.showGlobalToast(msg, 'success');
+        return;
+      }
+      const t = document.getElementById('dash-toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      console.log('Toast:', msg); // Debug log
+      setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    // UTILS
+    function esc(str) { if (!str) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  </script>
+  <script src="js/sidebar-toggle.js"></script>
+</body>
+
+</html>

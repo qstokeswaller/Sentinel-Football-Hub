@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Hub | UP Performance Analysis Hub</title>
+    <link rel="stylesheet" href="css/style.css?v=1771598058769">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/api-config.js"></script>
+    <style>
+        /* Shared Styles for Reports Hub */
+        .history-timeline {
+            margin-top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .history-item {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .history-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
+            background: #fdfdfd;
+        }
+
+        .history-date {
+            min-width: 60px;
+            text-align: center;
+            border-right: 1px solid var(--border-light);
+            padding-right: 16px;
+        }
+
+        .history-date .day {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--navy-dark);
+        }
+
+        .history-date .month {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .history-content {
+            flex: 1;
+        }
+
+        .history-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--navy-dark);
+            margin-bottom: 4px;
+        }
+
+        .history-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .history-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Session Preview Card */
+        .session-preview {
+            background: var(--bg-body);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .session-preview.visible {
+            display: block;
+        }
+
+        .sp-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .sp-meta {
+            font-size: 12px;
+            color: var(--text-medium);
+            margin-bottom: 12px;
+        }
+
+        .sp-drills {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sp-drill-item {
+            font-size: 13px;
+            color: var(--text-dark);
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* File Upload */
+        .file-dropzone {
+            border: 2px dashed var(--border-light);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg-body);
+        }
+
+        .file-dropzone:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* Ratings */
+        .rating-stars {
+            display: flex;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .star {
+            font-size: 24px;
+            color: var(--border-light);
+            transition: color 0.1s;
+        }
+
+        .star.active {
+            color: var(--warning);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
+                <div class="brand-text">
+                    <h3>Football</h3>
+                    <p>Performance Hub</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard_v2.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
+                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a>
+                    </li>
+                    <li><a href="library.html"><i class="fas fa-book"></i><span>Library</span></a></li>
+                    <li class="active"><a href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a>
+                    </li>
+                    <li><a href="squad.html"><i class="fas fa-user-friends"></i><span>Squad Management</span></a></li>
+                    <li><a href="players.html"><i class="fas fa-user"></i><span>Player Management</span></a></li>
+                    <li><a href="matches.html"><i class="fas fa-futbol"></i><span>Matches</span></a></li>
+                    <li><a href="analytics.html"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-toggle-sidebar" id="toggleSidebar" title="Toggle Sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-info">
+                    <h1>Reports Hub</h1>
+                    <p>Centralized repository for feedback, reports, and performance history.</p>
+                </div>
+            </header>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchMainTab('sessions')" id="tab-btn-sessions">
+                    <i class="fas fa-clipboard-list"></i> Session Reports
+                </button>
+                <button class="tab-btn" onclick="switchMainTab('match-repo')" id="tab-btn-match-repo">
+                    <i class="fas fa-archive"></i> Match Reports
+                </button>
+                <button class="tab-btn" onclick="switchMainTab('matches')" id="tab-btn-matches">
+                    <i class="fas fa-futbol"></i> Team Reports
+                </button>
+                <button class="tab-btn" onclick="switchMainTab('players')" id="tab-btn-players">
+                    <i class="fas fa-user-graduate"></i> Player Reports
+                </button>
+            </div>
+
+            <!-- VIEW: SESSIONS (Daily Reports) -->
+            <div id="view-sessions" class="main-view">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                    <h2 style="font-size: 18px; font-weight: 700; color: var(--text-dark); margin:0;">Daily Session
+                        Reports</h2>
+                    <button class="dash-btn primary" onclick="switchSubTab('new')">
+                        <i class="fas fa-plus"></i> New Session Report
+                    </button>
+                </div>
+
+                <div id="session-sub-view-list">
+                    <div class="report-grid" id="report-grid">
+                        <div style="text-align:center;padding:40px;color:var(--text-light);">
+                            <i class="fas fa-circle-notch fa-spin"></i> Loading reports...
+                        </div>
+                    </div>
+                </div>
+
+                <div id="session-sub-view-new" style="display:none;">
+                    <div class="report-form">
+                        <div
+                            style="margin-bottom:24px; border-bottom:1px solid var(--border-light); padding-bottom:16px;">
+                            <h3 style="margin:0; font-size:18px;">Create New Session Report</h3>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Which session did you run?</label>
+                            <select id="session-select" class="form-select" onchange="onSessionSelect()">
+                                <option value="">-- Select a Session --</option>
+                            </select>
+                            <div id="session-preview" class="session-preview">
+                                <div class="sp-title" id="sp-title">Session Title</div>
+                                <div class="sp-meta" id="sp-meta">Date: - • Duration: -</div>
+                                <div class="sp-drills" id="sp-drills"></div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date Conducted</label>
+                                <input type="date" id="report-date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Attendance</label>
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <input type="number" id="att-count" class="form-input" placeholder="Present">
+                                    <span>/</span>
+                                    <input type="number" id="att-total" class="form-input" placeholder="Total"
+                                        value="22">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Success Rating</label>
+                            <div class="rating-stars" id="rating-stars">
+                                <i class="fas fa-star star" data-val="1"></i>
+                                <i class="fas fa-star star" data-val="2"></i>
+                                <i class="fas fa-star star" data-val="3"></i>
+                                <i class="fas fa-star star" data-val="4"></i>
+                                <i class="fas fa-star star" data-val="5"></i>
+                            </div>
+                            <input type="hidden" id="rating-val" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">General Notes</label>
+                            <textarea id="gen-notes" class="form-textarea" rows="3" placeholder="Notes..."></textarea>
+                        </div>
+                        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:32px;">
+                            <button class="dash-btn outline" onclick="switchSubTab('list')">Cancel</button>
+                            <button class="dash-btn outline" onclick="exportSessionReportPDF()">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button class="dash-btn primary" onclick="saveReport()">Save Report</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: MATCH REPOSITORY (The "Separate Match Reports" feature) -->
+            <div id="view-match-repo" class="main-view" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                    <h2 style="font-size: 18px; font-weight: 700; color: var(--text-dark); margin:0;">Match Reports
+                        Repository</h2>
+                    <div style="display:flex; gap: 12px; align-items: center;">
+                        <div style="position: relative; width: 180px;">
+                            <select id="match-repo-team-filter" class="form-control-bubble"
+                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
+                                <option value="all">All Teams</option>
+                            </select>
+                            <i class="fas fa-chevron-down"
+                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                        </div>
+                        <a href="matches.html" class="dash-btn primary"
+                            style="border-radius: 9999px; padding: 8px 20px;">
+                            <i class="fas fa-plus"></i> New Match report
+                        </a>
+                    </div>
+                </div>
+
+                <div class="match-grid" id="match-reports-grid"
+                    style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+                    <!-- Populated by JS -->
+                    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-light);">
+                        <i class="fas fa-circle-notch fa-spin"></i> Loading matches...
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: MATCHES (Team Reports History) -->
+            <div id="view-matches" class="main-view" style="display:none;">
+                <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                    <h2 style="font-size: 18px; font-weight: 700; color: var(--text-dark); margin:0;">Team Performance
+                        Reports</h2>
+                    <div style="display:flex; gap: 12px; align-items: center;">
+                        <div style="position: relative; width: 180px;">
+                            <select id="team-report-league-filter" class="form-control-bubble"
+                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
+                                <option value="all">All Leagues</option>
+                            </select>
+                            <i class="fas fa-chevron-down"
+                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                        </div>
+                        <div style="position: relative; width: 180px;">
+                            <select id="team-report-squad-filter" class="form-control-bubble"
+                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
+                                <option value="all">All Teams</option>
+                            </select>
+                            <i class="fas fa-chevron-down"
+                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                        </div>
+                        <button id="btnAssessTeam" class="dash-btn primary"
+                            style="border-radius: 9999px; padding: 10px 20px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-plus"></i> Assess Team
+                        </button>
+                    </div>
+                </header>
+
+                <div id="team-history-timeline" class="history-timeline">
+                    <div style="text-align:center;padding:40px;color:var(--text-light);">
+                        <i class="fas fa-futbol" style="font-size:32px; margin-bottom: 12px; opacity: 0.3;"></i>
+                        <p>Select a team to view report history.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: PLAYERS (Player Reports History) -->
+            <div id="view-players" class="main-view" style="display:none;">
+                <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        <h2 style="font-size: 18px; font-weight: 700; color: var(--text-dark); margin:0;">Player Reports
+                            & History</h2>
+                    </div>
+                    <div style="display:flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <div style="position: relative; width: 160px;">
+                            <select id="player-report-squad-filter" class="form-control-bubble"
+                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
+                                <option value="">Select Team</option>
+                            </select>
+                            <i class="fas fa-chevron-down"
+                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                        </div>
+                        <div style="position: relative; width: 160px;">
+                            <select id="player-report-position-filter" class="form-control-bubble"
+                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
+                                <option value="all">All Positions</option>
+                            </select>
+                            <i class="fas fa-chevron-down"
+                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                        </div>
+                        <div style="position: relative; width: 220px;">
+                            <i class="fas fa-search"
+                                style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 0.85rem; z-index: 10;"></i>
+                            <input type="text" id="player-report-search-filter" placeholder="Search player..."
+                                style="padding: 10px 16px 10px 42px; background: white; border: 2px solid var(--primary-light); font-size: 0.85rem; border-radius: 9999px; width: 100%; outline: none; font-weight: 500;">
+                        </div>
+                    </div>
+                </header>
+
+                <div id="player-history-timeline" class="history-timeline">
+                    <div
+                        style="text-align:center;padding:80px 40px;color:var(--text-light); border: 2px dashed var(--border-light); border-radius: 16px;">
+                        <i class="fas fa-user-graduate" style="font-size:48px; margin-bottom: 16px; opacity: 0.2;"></i>
+                        <p style="font-weight: 500;">Select a team and player above to load intelligence reports.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Squad Assessment Modal -->
+    <div class="modal-overlay" id="modalSquadAssessment">
+        <div class="modal-container modal-bubble" style="max-width: 800px;">
+            <div class="modal-header-bubble">
+                <h2>Comprehensive Squad Assessment</h2>
+                <button class="btn-close-modal">&times;</button>
+            </div>
+
+            <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+                <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                    <div class="form-group-bubble">
+                        <label>Assessment Date</label>
+                        <input type="date" id="squadAssessDate" class="form-control-bubble">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Context</label>
+                        <select id="squadAssessContext" class="form-control-bubble">
+                            <option value="Match">Match Performance</option>
+                            <option value="Training">Training Block</option>
+                            <option value="General">General Review</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Group Ratings (1-10)</h3>
+                <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                    <div class="form-group-bubble">
+                        <label>Tactical Execution</label>
+                        <input type="number" id="squadAssessTactical" class="form-control-bubble" min="1" max="10"
+                            placeholder="e.g. 7">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Physical Condition</label>
+                        <input type="number" id="squadAssessPhysical" class="form-control-bubble" min="1" max="10"
+                            placeholder="e.g. 8">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Squad Cohesion & Mentality</label>
+                        <input type="number" id="squadAssessMentality" class="form-control-bubble" min="1" max="10"
+                            placeholder="e.g. 9">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Overall Rating</label>
+                        <input type="number" id="squadAssessOverall" class="form-control-bubble" min="1" max="10"
+                            placeholder="e.g. 8">
+                    </div>
+                </div>
+
+                <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Qualitative Feedback</h3>
+                <div class="form-group-bubble">
+                    <label>Key Strengths</label>
+                    <textarea id="squadAssessStrengths" class="form-control-bubble" rows="3"
+                        placeholder="What did the squad do well?"></textarea>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Areas for Improvement</label>
+                    <textarea id="squadAssessImprovements" class="form-control-bubble" rows="3"
+                        placeholder="Where does the squad need work?"></textarea>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Additional Notes</label>
+                    <textarea id="squadAssessNotes" class="form-control-bubble" rows="3"
+                        placeholder="Any other observations..."></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline btn-close-modal">Cancel</button>
+                <button class="dash-btn primary" id="btnSaveSquadAssessment">Save Assessment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Squad Assessment Modal (Read Only + Print) -->
+    <div class="modal-overlay" id="modalViewSquadAssessment">
+        <div class="modal-container modal-bubble" style="max-width: 800px;">
+            <div class="modal-header-bubble">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-users-cog" style="color: var(--primary);"></i>
+                    <h2 id="viewSquadAssessTitle">Team Assessment Details</h2>
+                </div>
+                <button class="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body-bubble" id="viewSquadAssessContent" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-footer-bubble"
+                style="padding: 24px; display: flex; justify-content: flex-end; gap: 16px;">
+                <button class="dash-btn outline" onclick="printReport('viewSquadAssessContent')"
+                    style="min-width: 140px;">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <button class="dash-btn primary btn-close-modal" style="min-width: 120px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Player Assessment Modal -->
+    <div class="modal-overlay" id="modalViewAssessment">
+        <div class="modal-container modal-bubble" style="max-width: 850px;">
+            <div class="modal-header-bubble">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-user-chart" style="color: var(--primary);"></i>
+                    <h2 id="viewPlayerAssessTitle">Player Performance Report</h2>
+                </div>
+                <button class="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body-bubble" id="viewPlayerAssessContent" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline" onclick="printReport('viewPlayerAssessContent')">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <button class="dash-btn primary btn-close-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Daily Report Modal -->
+    <div class="modal-overlay" id="modalViewDailyReport">
+        <div class="modal-container modal-bubble" style="max-width: 800px;">
+            <div class="modal-header-bubble">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-clipboard-check" style="color: var(--primary);"></i>
+                    <h2 id="viewDailyReportTitle">Daily Session Report</h2>
+                </div>
+                <button class="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body-bubble" id="viewDailyReportContent" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline" onclick="printReport('viewDailyReportContent')">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+                <button class="dash-btn primary btn-close-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dash-toast"></div>
+
+    <!-- Scripts -->
+    <script src="js/squad-manager.js?v=9"></script>
+    <script src="js/match-manager.js?v=9"></script>
+    <script src="js/reports-ui.js?v=2"></script>
+    <script src="js/sidebar-toggle.js"></script>
+</body>
+
+</html>

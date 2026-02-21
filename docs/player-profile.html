@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Profile | UP Performance Analysis Hub</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="css/style.css?v=1771598058765">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/api-config.js"></script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .profile-header {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .profile-avatar-large {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: var(--light-blue);
+            color: var(--blue-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-primary-info h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.75rem;
+            color: var(--navy-dark);
+        }
+
+        .profile-primary-info .subtitle {
+            margin: 0;
+            font-weight: 600;
+            color: var(--blue-accent);
+            font-size: 0.95rem;
+        }
+
+        .profile-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-box .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .stat-box .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--navy-dark);
+        }
+
+        /* Tabs */
+        .profile-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            padding: 8px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 9999px;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: #f1f5f9;
+            color: var(--navy-dark);
+            border-color: #cbd5e1;
+        }
+
+        .tab-btn.active {
+            background: var(--light-blue);
+            color: var(--blue-accent);
+            border-color: var(--blue-accent);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Matrices and Tables inside overview */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .matrix-table th {
+            background: #f8fafc;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .matrix-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        .matrix-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .matrix-table .structure-name {
+            font-weight: 600;
+            color: var(--blue-accent);
+            width: 25%;
+        }
+
+        .matrix-textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .matrix-textarea:focus {
+            outline: none;
+            border-color: var(--blue-accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Detailed Form Styles */
+        .rating-matrix {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .rating-matrix-header {
+            background: rgba(37, 99, 235, 0.05);
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(37, 99, 235, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rating-matrix-header h3 {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--blue-accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rating-scale-hint {
+            display: flex;
+            gap: 16px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
+        .rating-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rating-row:last-child {
+            border-bottom: none;
+        }
+
+        .rating-row:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .rating-row .attribute {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--navy-dark);
+        }
+
+        .rating-radios {
+            display: flex;
+            gap: 12px;
+        }
+
+        .rating-radios input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--blue-accent);
+            cursor: pointer;
+        }
+
+        .history-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+
+        .history-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
+                <div class="brand-text">
+                    <h3>Football</h3>
+                    <p>Performance Hub</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard_v2.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
+                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a>
+                    </li>
+                    <li><a href="library.html"><i class="fas fa-book"></i><span>Library</span></a></li>
+                    <li><a href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
+                    <li><a href="squad.html"><i class="fas fa-user-friends"></i><span>Squad Management</span></a></li>
+                    <li><a href="players.html"><i class="fas fa-user"></i><span>Player Management</span></a></li>
+                    <li><a href="matches.html"><i class="fas fa-futbol"></i><span>Matches</span></a></li>
+                    <li><a href="analytics.html"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-toggle-sidebar" id="toggleSidebar" title="Toggle Sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="dash-btn outline sm" onclick="window.history.back()"
+                        style="margin-right: 16px; border-radius: 9999px;">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <h1 class="page-title">Player Profile</h1>
+                </div>
+                <div class="header-right">
+                    <!-- Cleaned up headers as requested -->
+                </div>
+            </header>
+
+            <div class="dashboard-content max-w">
+
+                <!-- Profile Header -->
+                <div class="profile-header">
+                    <div class="profile-avatar-large" id="profAvatarInitials">--</div>
+                    <div style="flex: 1;">
+                        <div class="profile-primary-info"
+                            style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div>
+                                <h2 id="profName">Loading Player...</h2>
+                                <p class="subtitle"><span id="profPosition">POS</span> | <span id="profSquad">Squad
+                                        Name</span></p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button id="btnToggleEditProfile" class="dash-btn outline sm"
+                                    style="height: fit-content; align-self: center;">
+                                    <i class="fas fa-edit"></i> Edit Info
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Read-Only View State -->
+                        <div class="profile-stats-grid" id="profStatsViewState">
+                            <div class="stat-box">
+                                <span class="label">Age</span>
+                                <span class="value" id="viewProfAge">--</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="label">Height</span>
+                                <span class="value" id="viewProfHeight">-- cm</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="label">Weight</span>
+                                <span class="value" id="viewProfWeight">-- kg</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="label">Preferred Foot</span>
+                                <span class="value" id="viewProfFoot">--</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="label">Position</span>
+                                <span class="value" id="viewProfPosition">--</span>
+                            </div>
+                            <div class="stat-box" style="grid-column: span 2;">
+                                <span class="label">Previous Clubs</span>
+                                <span class="value" id="viewProfClubs">--</span>
+                            </div>
+                        </div>
+
+                        <!-- Editable Form State (Hidden by Default) -->
+                        <div id="profStatsEditState" style="display: none;">
+                            <div class="profile-stats-grid">
+                                <div class="stat-box">
+                                    <span class="label">Age</span>
+                                    <input type="number" id="editProfAge" class="form-control-bubble"
+                                        style="padding: 4px 8px; font-size: 1rem; height: auto;" />
+                                </div>
+                                <div class="stat-box">
+                                    <span class="label">Height (cm)</span>
+                                    <input type="number" id="editProfHeight" class="form-control-bubble"
+                                        style="padding: 4px 8px; font-size: 1rem; height: auto;" />
+                                </div>
+                                <div class="stat-box">
+                                    <span class="label">Weight (kg)</span>
+                                    <input type="number" id="editProfWeight" class="form-control-bubble"
+                                        style="padding: 4px 8px; font-size: 1rem; height: auto;" />
+                                </div>
+                                <div class="stat-box">
+                                    <span class="label">Preferred Foot</span>
+                                    <select id="editProfFoot" class="form-control-bubble"
+                                        style="padding: 4px 8px; font-size: 1rem; height: auto;">
+                                        <option value="Right">Right</option>
+                                        <option value="Left">Left</option>
+                                        <option value="Both">Both</option>
+                                    </select>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="label">Position</span>
+                                    <select id="editProfPosition" class="form-control-bubble"
+                                        style="padding: 4px 8px; font-size: 1rem; height: auto;">
+                                        <optgroup label="Forward">
+                                            <option value="ST">Striker (ST)</option>
+                                            <option value="LW">Left Winger (LW)</option>
+                                            <option value="RW">Right Winger (RW)</option>
+                                            <option value="CF">Center Forward (CF)</option>
+                                        </optgroup>
+                                        <optgroup label="Midfielder">
+                                            <option value="CAM">Attacking Midfielder (CAM)</option>
+                                            <option value="CM">Central Midfielder (CM)</option>
+                                            <option value="CDM">Defensive Midfielder (CDM)</option>
+                                            <option value="LM">Left Midfielder (LM)</option>
+                                            <option value="RM">Right Midfielder (RM)</option>
+                                        </optgroup>
+                                        <optgroup label="Defender">
+                                            <option value="CB">Center Back (CB)</option>
+                                            <option value="LB">Left Back (LB)</option>
+                                            <option value="RB">Right Back (RB)</option>
+                                            <option value="LWB">Left Wing Back (LWB)</option>
+                                            <option value="RWB">Right Wing Back (RWB)</option>
+                                        </optgroup>
+                                        <optgroup label="Goalkeeper">
+                                            <option value="GK">Goalkeeper (GK)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="stat-box" style="grid-column: span 2;">
+                                    <span class="label">Previous Clubs</span>
+                                    <input type="text" id="editProfClubs" class="form-control-bubble"
+                                        style="padding: 4px 8px; font-size: 1rem; height: auto;" />
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                                <button id="btnCancelProfileEdit" class="dash-btn outline sm"
+                                    style="border-color: transparent;">
+                                    Cancel
+                                </button>
+                                <button id="btnSaveProfileInfo" class="dash-btn primary sm">
+                                    <i class="fas fa-save"></i> Save Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="overview"><i class="fas fa-chart-pie"
+                            style="margin-right: 6px;"></i> Overview</button>
+                    <button class="tab-btn" data-tab="new-assessment"><i class="fas fa-plus-circle"
+                            style="margin-right: 6px;"></i> New Assessment</button>
+                    <button class="tab-btn" data-tab="history"><i class="fas fa-history" style="margin-right: 6px;"></i>
+                        Assessment History</button>
+                </div>
+
+                <!-- Tab 1: Overview (Dev Structures) -->
+                <div class="tab-content active" id="tab-overview">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <h3 style="margin-top: 0; color: var(--navy-dark); font-weight: 800;">
+                                <i class="fas fa-chart-line" style="margin-right: 8px; color: var(--blue-accent);"></i>
+                                Overall Assessment
+                            </h3>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <div class="form-group-bubble" style="margin-bottom: 0;">
+                                <input type="date" id="overviewDate" class="form-control-bubble"
+                                    style="padding: 8px 12px;">
+                            </div>
+                            <button id="btnSaveDevStructures" class="dash-btn primary">
+                                <i class="fas fa-save" style="margin-right: 6px;"></i> Save Record
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Rich Text Toolbar -->
+                    <div class="rich-text-toolbar">
+                        <button type="button" class="tool-btn" data-command="bold" title="Bold"><i
+                                class="fas fa-bold"></i></button>
+                        <button type="button" class="tool-btn" data-command="italic" title="Italic"><i
+                                class="fas fa-italic"></i></button>
+                        <button type="button" class="tool-btn" data-command="underline" title="Underline"><i
+                                class="fas fa-underline"></i></button>
+                        <div class="tool-divider"></div>
+                        <button type="button" class="tool-btn" data-command="insertUnorderedList" title="Bullet List"><i
+                                class="fas fa-list-ul"></i></button>
+                        <button type="button" class="tool-btn" data-command="insertOrderedList" title="Numbered List"><i
+                                class="fas fa-list-ol"></i></button>
+                        <div class="tool-divider"></div>
+                        <button type="button" class="tool-btn" data-command="removeFormat" title="Clear Formatting"><i
+                                class="fas fa-eraser"></i></button>
+                    </div>
+
+                    <div class="bubble-grid-2 mb-24">
+                        <div class="form-group-bubble">
+                            <label>Bioenergetics</label>
+                            <div id="dev-bioenergetics" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Detail aerobic/anaerobic capacity..."></div>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Conditional</label>
+                            <div id="dev-conditional" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Strength, speed, and endurance notes..."></div>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Coordinative</label>
+                            <div id="dev-coordinative" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Technical execution and motor control..."></div>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Cognitive</label>
+                            <div id="dev-cognitive" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Decision making and tactical understanding..."></div>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Socio-affective</label>
+                            <div id="dev-socio" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Team interaction and relationship dynamics..."></div>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Emotional-volitional</label>
+                            <div id="dev-emotional" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Stress management and self-control..."></div>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Creative-expressive</label>
+                            <div id="dev-creative" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Originality and creative solutions..."></div>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Mental</label>
+                            <div id="dev-mental" class="form-control-bubble rich-content" contenteditable="true"
+                                placeholder="Resilience, concentration, and focus..."></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Assessment History -->
+            <div class="tab-content" id="tab-history">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i class="fas fa-folder-open" style="color: var(--blue-accent); font-size: 1.25rem;"></i>
+                        <h3 style="margin: 0; font-size: 1.2rem; color: var(--navy-dark);">Intelligence & Reports
+                            History</h3>
+                    </div>
+                </div>
+
+                <h4
+                    style="margin: 32px 0 16px 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-chart-line" style="color: var(--blue-accent);"></i> Performance Reports
+                </h4>
+                <div id="assessmentHistoryContainer" class="history-list">
+                    <!-- Populated by JS -->
+                </div>
+
+                <h4
+                    style="margin: 40px 0 16px 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-seedling" style="color: var(--green-accent);"></i> Development Structures
+                </h4>
+                <div id="devHistoryContainer" class="history-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Tab 3: New Assessment (Detailed Form) -->
+            <div class="tab-content" id="tab-new-assessment">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <i class="fas fa-clipboard-check" style="color: var(--blue-accent); font-size: 1.25rem;"></i>
+                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--navy-dark);">Official Athletic Performance
+                        Report</h3>
+                </div>
+
+                <div
+                    style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                        <div class="form-group-bubble">
+                            <label>Date of Assessment</label>
+                            <input type="date" id="assessDate" class="form-control-bubble">
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Evaluator</label>
+                            <input type="text" id="assessEvaluator" class="form-control-bubble"
+                                placeholder="Coach Name">
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Team Context</label>
+                            <select id="assessTeam" class="form-control-bubble">
+                                <option value="">Select Team / Squad</option>
+                                <option value="First Team">First Team</option>
+                                <option value="U23">U23</option>
+                                <option value="U19">U19</option>
+                            </select>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Match Details (Optional)</label>
+                            <input type="text" id="assessMatch" class="form-control-bubble"
+                                placeholder="e.g. vs SuperSport Utd (Home)">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <!-- Tactical -->
+                        <div class="rating-matrix">
+                            <div class="rating-matrix-header">
+                                <h3><i class="fas fa-chess-knight"></i> Tactical</h3>
+                                <div class="rating-scale-hint">
+                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Positioning</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tac_pos" value="1"><input type="radio" name="tac_pos"
+                                        value="2"><input type="radio" name="tac_pos" value="3"><input type="radio"
+                                        name="tac_pos" value="4"><input type="radio" name="tac_pos" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Decision Making</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tac_dec" value="1"><input type="radio" name="tac_dec"
+                                        value="2"><input type="radio" name="tac_dec" value="3"><input type="radio"
+                                        name="tac_dec" value="4"><input type="radio" name="tac_dec" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Game Awareness</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tac_awa" value="1"><input type="radio" name="tac_awa"
+                                        value="2"><input type="radio" name="tac_awa" value="3"><input type="radio"
+                                        name="tac_awa" value="4"><input type="radio" name="tac_awa" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Creativity</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tac_cre" value="1"><input type="radio" name="tac_cre"
+                                        value="2"><input type="radio" name="tac_cre" value="3"><input type="radio"
+                                        name="tac_cre" value="4"><input type="radio" name="tac_cre" value="5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical -->
+                        <div class="rating-matrix">
+                            <div class="rating-matrix-header">
+                                <h3><i class="fas fa-bolt"></i> Technical</h3>
+                                <div class="rating-scale-hint">
+                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Passing Accuracy</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tec_pas" value="1"><input type="radio" name="tec_pas"
+                                        value="2"><input type="radio" name="tec_pas" value="3"><input type="radio"
+                                        name="tec_pas" value="4"><input type="radio" name="tec_pas" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">First Touch</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tec_tou" value="1"><input type="radio" name="tec_tou"
+                                        value="2"><input type="radio" name="tec_tou" value="3"><input type="radio"
+                                        name="tec_tou" value="4"><input type="radio" name="tec_tou" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Ball Control</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tec_con" value="1"><input type="radio" name="tec_con"
+                                        value="2"><input type="radio" name="tec_con" value="3"><input type="radio"
+                                        name="tec_con" value="4"><input type="radio" name="tec_con" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Dribbling</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="tec_dri" value="1"><input type="radio" name="tec_dri"
+                                        value="2"><input type="radio" name="tec_dri" value="3"><input type="radio"
+                                        name="tec_dri" value="4"><input type="radio" name="tec_dri" value="5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Physical -->
+                        <div class="rating-matrix">
+                            <div class="rating-matrix-header">
+                                <h3><i class="fas fa-dumbbell"></i> Physical</h3>
+                                <div class="rating-scale-hint">
+                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Speed / Acceleration</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="phy_spe" value="1"><input type="radio" name="phy_spe"
+                                        value="2"><input type="radio" name="phy_spe" value="3"><input type="radio"
+                                        name="phy_spe" value="4"><input type="radio" name="phy_spe" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Agility / Balance</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="phy_agi" value="1"><input type="radio" name="phy_agi"
+                                        value="2"><input type="radio" name="phy_agi" value="3"><input type="radio"
+                                        name="phy_agi" value="4"><input type="radio" name="phy_agi" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Stamina / Endurance</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="phy_sta" value="1"><input type="radio" name="phy_sta"
+                                        value="2"><input type="radio" name="phy_sta" value="3"><input type="radio"
+                                        name="phy_sta" value="4"><input type="radio" name="phy_sta" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Strength / Power</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="phy_str" value="1"><input type="radio" name="phy_str"
+                                        value="2"><input type="radio" name="phy_str" value="3"><input type="radio"
+                                        name="phy_str" value="4"><input type="radio" name="phy_str" value="5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Psychological -->
+                        <div class="rating-matrix">
+                            <div class="rating-matrix-header">
+                                <h3><i class="fas fa-brain"></i> Psychological</h3>
+                                <div class="rating-scale-hint">
+                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Work Ethic</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="psy_wor" value="1"><input type="radio" name="psy_wor"
+                                        value="2"><input type="radio" name="psy_wor" value="3"><input type="radio"
+                                        name="psy_wor" value="4"><input type="radio" name="psy_wor" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Communication</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="psy_com" value="1"><input type="radio" name="psy_com"
+                                        value="2"><input type="radio" name="psy_com" value="3"><input type="radio"
+                                        name="psy_com" value="4"><input type="radio" name="psy_com" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Focus / Concentration</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="psy_foc" value="1"><input type="radio" name="psy_foc"
+                                        value="2"><input type="radio" name="psy_foc" value="3"><input type="radio"
+                                        name="psy_foc" value="4"><input type="radio" name="psy_foc" value="5">
+                                </div>
+                            </div>
+                            <div class="rating-row">
+                                <span class="attribute">Resilience</span>
+                                <div class="rating-radios">
+                                    <input type="radio" name="psy_res" value="1"><input type="radio" name="psy_res"
+                                        value="2"><input type="radio" name="psy_res" value="3"><input type="radio"
+                                        name="psy_res" value="4"><input type="radio" name="psy_res" value="5">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin: 24px 0 16px 0; color: var(--navy-dark); font-size: 1.05rem;">Qualitative
+                        Feedback</h4>
+                    <div class="bubble-grid-2">
+                        <div class="form-group-bubble">
+                            <label>Areas of Strength</label>
+                            <textarea id="assessStrength" class="form-control-bubble" rows="3"
+                                placeholder="Core strengths..."></textarea>
+                        </div>
+                        <div class="form-group-bubble">
+                            <label>Areas to Improve</label>
+                            <textarea id="assessImprove" class="form-control-bubble" rows="3"
+                                placeholder="Focus areas..."></textarea>
+                        </div>
+                        <div class="form-group-bubble" style="grid-column: 1 / -1;">
+                            <label>Suggestions for Growth</label>
+                            <textarea id="assessGrowth" class="form-control-bubble" rows="2"
+                                placeholder="Specific drills or habits..."></textarea>
+                        </div>
+                        <div class="form-group-bubble" style="grid-column: 1 / -1;">
+                            <label>Final Comments</label>
+                            <textarea id="assessComments" class="form-control-bubble" rows="3"
+                                placeholder="Summary and overall impression..."></textarea>
+                        </div>
+                    </div>
+
+                    <div
+                        style="display: flex; justify-content: flex-end; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px;">
+                        <button class="dash-btn primary" id="btnSubmitAssessment"
+                            style="box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); padding: 12px 24px; font-size: 1rem;">
+                            Submit Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+    </div>
+    </main>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalViewAssessment">
+        <div class="modal-content-bubble" style="max-width: 850px;">
+            <div class="modal-header-bubble">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div class="icon-circle" style="background: var(--light-blue); color: var(--blue-accent);">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <div>
+                        <h2 id="viewAssessTitle" style="margin: 0; font-size: 1.35rem; color: var(--navy-dark);">
+                            Performance Report Details</h2>
+                        <p id="viewAssessMeta"
+                            style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);"></p>
+                    </div>
+                </div>
+                <button class="btn-close-modal"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+                <div id="viewAssessRatings" class="bubble-grid-2">
+                    <!-- Dynamic Rating Sections -->
+                </div>
+
+                <div style="margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px;">
+                    <h4 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Qualitative Feedback
+                    </h4>
+                    <div class="bubble-grid-2" id="viewAssessFeedback">
+                        <!-- Dynamic Feedback Sections -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline btn-close-modal">Close Report</button>
+                <button class="dash-btn primary" onclick="window.print()"><i class="fas fa-print"></i> Print
+                    PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/squad-manager.js?v=9"></script>
+    <script src="js/player-profile-ui.js?v=1"></script>
+</body>
+
+</html>

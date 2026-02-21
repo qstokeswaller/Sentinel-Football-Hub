@@ -1,0 +1,787 @@
+/**
+ * Player Profile UI Core Logic
+ */
+
+console.log('Player Profile UI: Script Loaded');
+
+let currentPlayer = null;
+let currentPlayerId = null;
+let editingDevStructureId = null;
+let editingAssessmentId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Player Profile UI: DOM Content Loaded');
+    initProfileUI();
+});
+
+async function initProfileUI() {
+    console.log('Player Profile UI: Initializing...');
+    try {
+        const initialized = await squadManager.init();
+        if (!initialized) {
+            console.error('Player Profile: Manager failed to initialize');
+            return;
+        }
+
+        // Parse ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        currentPlayerId = urlParams.get('id');
+
+        if (!currentPlayerId) {
+            alert("No player ID provided. Returning to roster.");
+            window.location.href = 'players.html';
+            return;
+        }
+
+        const players = squadManager.getPlayers();
+        console.log('Player Profile: Found', players.length, 'players in manager');
+
+        // Use == to handle string/number mismatch from URL vs storage
+        currentPlayer = players.find(p => p.id == currentPlayerId);
+
+        if (!currentPlayer) {
+            console.error('Player Profile: Player NOT found for ID:', currentPlayerId);
+            alert("Player not found.");
+            window.location.href = 'players.html';
+            return;
+        }
+
+        populateProfileHeader();
+        setupTabs();
+        setupAssessmentForm();
+        setupOverviewEditor();
+        renderAssessmentHistory();
+        renderOverviewHistory();
+
+    } catch (err) {
+        console.error('Player Profile UI: Critical Error in init:', err);
+    }
+}
+
+// --- Overview & Dev Structures Logic ---
+function setupOverviewEditor() {
+    console.log('Player Profile: Setting up Overview Editor...');
+
+    // Default date to today
+    const dateInput = document.getElementById('overviewDate');
+    if (dateInput) dateInput.valueAsDate = new Date();
+
+    // Toolbar logic
+    const toolbar = document.querySelector('.rich-text-toolbar');
+    if (toolbar) {
+        toolbar.querySelectorAll('.tool-btn').forEach(btn => {
+            // Using mousedown + preventDefault is better for keeping focus in the editable area
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const command = btn.getAttribute('data-command');
+                document.execCommand(command, false, null);
+                updateToolbarState();
+            });
+        });
+
+        // Update state on selection change, click (inside editor), and input
+        document.addEventListener('selectionchange', updateToolbarState);
+
+        // Listen to all editable divs for focus and input to sync toolbar
+        document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+            el.addEventListener('input', updateToolbarState);
+            el.addEventListener('focus', updateToolbarState);
+            el.addEventListener('keyup', updateToolbarState);
+        });
+    }
+
+    function updateToolbarState() {
+        if (!toolbar) return;
+
+        // Only update if one of our editors is focused
+        const activeEl = document.activeElement;
+        const isEditing = activeEl && activeEl.getAttribute('contenteditable') === 'true';
+
+        toolbar.querySelectorAll('.tool-btn').forEach(btn => {
+            const command = btn.getAttribute('data-command');
+            if (command) {
+                // queryCommandState works for the current insertion point if it's within an editable area
+                if (document.queryCommandState(command)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            }
+        });
+    }
+
+    // Save button
+    const btnSave = document.getElementById('btnSaveDevStructures');
+    if (btnSave) {
+        btnSave.addEventListener('click', saveDevStructures);
+    }
+}
+
+async function saveDevStructures() {
+    if (!currentPlayerId) return;
+
+    const btn = document.getElementById('btnSaveDevStructures');
+    const originalText = btn.innerHTML; // Renamed from originalHTML to originalText for consistency with instruction
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+
+    const s = { // Renamed from 'structures' to 's' as per instruction's usage
+        bioenergetics: document.getElementById('dev-bioenergetics').innerHTML,
+        conditional: document.getElementById('dev-conditional').innerHTML,
+        coordinative: document.getElementById('dev-coordinative').innerHTML,
+        cognitive: document.getElementById('dev-cognitive').innerHTML,
+        socio: document.getElementById('dev-socio').innerHTML,
+        emotional: document.getElementById('dev-emotional').innerHTML,
+        creative: document.getElementById('dev-creative').innerHTML,
+        mental: document.getElementById('dev-mental').innerHTML
+    };
+
+    const date = document.getElementById('overviewDate').value || new Date().toISOString().split('T')[0];
+
+    const success = await squadManager.saveDevStructure({
+        id: editingDevStructureId,
+        playerId: String(currentPlayerId),
+        date: document.getElementById('overviewDate').value, // Changed to use value directly
+        structures: s // Changed to use 's'
+    });
+
+    if (success) {
+        editingDevStructureId = null; // Clear ID after save
+        btn.innerHTML = '<i class="fas fa-check"></i> Saved!'; // Updated message
+        btn.style.background = 'var(--green-accent)';
+        if (window.showGlobalToast) window.showGlobalToast('Overall assessment saved', 'success'); // Added toast
+        renderOverviewHistory(); // Refresh history
+        setTimeout(() => {
+            btn.innerHTML = originalText; // Use originalText
+            btn.style.background = '';
+            btn.disabled = false;
+        }, 1500);
+    } else {
+        alert('Failed to save to database. Please ensure the backend is running and the database is accessible.');
+        btn.innerHTML = originalText; // Use originalText
+        btn.disabled = false;
+    }
+}
+
+async function renderOverviewHistory() {
+    const container = document.getElementById('devHistoryContainer');
+    if (!container || !currentPlayerId) return;
+
+    const records = await squadManager.getDevStructures(currentPlayerId);
+
+    if (records.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-light); font-size: 0.85rem;">No historical records found.</div>';
+        return;
+    }
+
+    container.innerHTML = records.map((rec) => {
+        const d = new Date(rec.date).toLocaleDateString();
+
+        return `
+            <div class="dash-card history-item" style="margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h4 style="margin: 0 0 4px 0; color: var(--navy-dark); font-size: 1.05rem;">Overall Assessment</h4>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i> ${d} &nbsp; | &nbsp; <i class="far fa-clock" style="margin-right: 4px;"></i> Saved on ${new Date(rec.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="dash-btn outline sm" onclick="viewDevStructureDetails('${rec.id}')" title="View Details">
+                            <i class="far fa-eye"></i> View
+                        </button>
+                        <button class="dash-btn outline sm" onclick="loadOverviewFromHistory('${rec.id}')" title="Edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="dash-btn outline sm" onclick="deleteDevStructure('${rec.id}')" style="border-color: #fca5a5; color: #ef4444;" title="Delete">
+                            <i class="fas fa-trash-alt"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.deleteDevStructure = async (id) => {
+    if (!confirm('Are you sure you want to delete this overall assessment record?')) return;
+    const success = await squadManager.deleteDevStructure(id);
+    if (success) {
+        renderOverviewHistory();
+        if (window.showGlobalToast) window.showGlobalToast('Record deleted', 'success');
+    }
+};
+
+window.viewDevStructureDetails = async (id) => {
+    const records = await squadManager.getDevStructures(currentPlayerId);
+    const rec = records.find(r => r.id === id);
+    if (!rec) return;
+
+    const s = rec.structures;
+    const modalHtml = `
+        <div class="modal-overlay active" id="modalDevDetails">
+            <div class="modal-content-bubble" style="max-width: 800px; width: 95%;">
+                <div class="modal-header-bubble">
+                    <h3 class="modal-title-bubble">Overall Assessment Details</h3>
+                    <button class="btn-close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                </div>
+                <div class="modal-body-bubble" id="print-area-dev">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;">
+                        <div>
+                            <h2 style="margin: 0; color: var(--navy-dark);">${currentPlayer?.name || 'Player Name'}</h2>
+                            <p style="margin: 5px 0 0 0; color: var(--text-secondary);">Overall Assessment • ${new Date(rec.date).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        ${['bioenergetics', 'conditional', 'coordinative', 'cognitive', 'socio', 'emotional', 'creative', 'mental'].map(key => `
+                            <div class="dash-card" style="padding: 15px;">
+                                <h4 style="margin: 0 0 10px 0; color: var(--primary); text-transform: capitalize;">${key}</h4>
+                                <div style="font-size: 0.9rem; line-height: 1.5;">${s[key] || 'No notes recorded.'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer-bubble">
+                    <button class="dash-btn outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                    <button class="dash-btn primary" onclick="printDevAssessment()">
+                        <i class="fas fa-print"></i> Print Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+};
+
+window.printDevAssessment = () => {
+    const printContent = document.getElementById('print-area-dev').innerHTML;
+    const originalContent = document.body.innerHTML;
+
+    // Simple print approach
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>Print Assessment</title>');
+    printWindow.document.write('<link rel="stylesheet" href="css/style.css">');
+    printWindow.document.write('<style>body{padding:40px;} .dash-card{border:1px solid #ddd; padding:15px; margin-bottom:15px;}</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(printContent);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+};
+
+// Global export for internal loading
+window.loadOverviewFromHistory = async (id) => {
+    const records = await squadManager.getDevStructures(currentPlayerId);
+    const fullRecord = records.find(r => r.id === id);
+    if (!fullRecord) return;
+
+    const s = fullRecord.structures;
+    document.getElementById('dev-bioenergetics').innerHTML = s.bioenergetics || '';
+    document.getElementById('dev-conditional').innerHTML = s.conditional || '';
+    document.getElementById('dev-coordinative').innerHTML = s.coordinative || '';
+    document.getElementById('dev-cognitive').innerHTML = s.cognitive || '';
+    document.getElementById('dev-socio').innerHTML = s.socio || '';
+    document.getElementById('dev-emotional').innerHTML = s.emotional || '';
+    document.getElementById('dev-creative').innerHTML = s.creative || '';
+    document.getElementById('dev-mental').innerHTML = s.mental || '';
+
+    // Update date to the record date
+    document.getElementById('overviewDate').value = fullRecord.date;
+    editingDevStructureId = fullRecord.id;
+
+    // Switch to Overview tab
+    document.querySelector('[data-tab="overview"]').click();
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (window.showGlobalToast) {
+        window.showGlobalToast('Report loaded from history', 'success');
+    }
+};
+
+function populateProfileHeader() {
+    if (!currentPlayer) return;
+
+    const squad = squadManager.getSquads().find(s => s.id === currentPlayer.squadId);
+
+    document.getElementById('profName').textContent = currentPlayer.name;
+    document.getElementById('profAvatarInitials').textContent = currentPlayer.name.substring(0, 2).toUpperCase();
+    document.getElementById('profPosition').textContent = currentPlayer.position;
+    document.getElementById('profSquad').textContent = squad ? squad.name : 'Unassigned';
+
+    // Populate Read-Only View
+    document.getElementById('viewProfAge').textContent = currentPlayer.age || '--';
+    document.getElementById('viewProfHeight').textContent = currentPlayer.height ? currentPlayer.height + ' cm' : '--';
+    document.getElementById('viewProfWeight').textContent = currentPlayer.weight ? currentPlayer.weight + ' kg' : '--';
+    document.getElementById('viewProfFoot').textContent = currentPlayer.foot || '--';
+    document.getElementById('viewProfPosition').textContent = currentPlayer.position || '--';
+    document.getElementById('viewProfClubs').textContent = currentPlayer.previousClubs || '--';
+
+    // Populate Edit Form
+    document.getElementById('editProfAge').value = currentPlayer.age || '';
+    document.getElementById('editProfHeight').value = currentPlayer.height || '';
+    document.getElementById('editProfWeight').value = currentPlayer.weight || '';
+    document.getElementById('editProfFoot').value = currentPlayer.foot || 'Right';
+    document.getElementById('editProfPosition').value = currentPlayer.position || 'CM';
+    document.getElementById('editProfClubs').value = currentPlayer.previousClubs || '';
+
+    // Action Buttons
+    const btnToggleEdit = document.getElementById('btnToggleEditProfile');
+    const btnCancelEdit = document.getElementById('btnCancelProfileEdit');
+    const btnSave = document.getElementById('btnSaveProfileInfo');
+
+    if (btnToggleEdit) btnToggleEdit.addEventListener('click', () => toggleEditMode(true));
+    if (btnCancelEdit) btnCancelEdit.addEventListener('click', () => toggleEditMode(false));
+    if (btnSave) btnSave.addEventListener('click', saveProfileInfo);
+
+    const allSquads = squadManager.getSquads();
+    const assessTeamSelect = document.getElementById('assessTeam');
+    if (assessTeamSelect) {
+        assessTeamSelect.innerHTML = '<option value="">Select Team / Squad</option>' +
+            allSquads.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+    }
+}
+
+function setupTabs() {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const tabName = tab.getAttribute('data-tab');
+
+            // If manual click, clear editing state for that tab
+            if (e.isTrusted) {
+                if (tabName === 'assess') editingAssessmentId = null;
+                if (tabName === 'overview') editingDevStructureId = null;
+            }
+
+            // Remove active
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            // Add active
+            tab.classList.add('active');
+            const targetId = 'tab-' + tabName;
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.classList.add('active');
+
+            if (tabName === 'history') {
+                renderAssessmentHistory();
+                renderOverviewHistory();
+            }
+        });
+    });
+}
+
+function setupAssessmentForm() {
+    document.getElementById('assessDate').valueAsDate = new Date();
+
+    const btnSubmit = document.getElementById('btnSubmitAssessment');
+    if (btnSubmit) {
+        btnSubmit.addEventListener('click', saveAssessment);
+    }
+
+    // Modal Close Logic
+    const closeBtns = document.querySelectorAll('.btn-close-modal');
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modals = document.querySelectorAll('.modal-overlay');
+            modals.forEach(m => m.classList.remove('active'));
+        });
+    });
+
+    // Close on overlay click
+    const modals = document.querySelectorAll('.modal-overlay');
+    modals.forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+}
+
+async function saveAssessment() {
+    const btnSubmit = document.getElementById('btnSubmitAssessment');
+    if (!btnSubmit) return;
+
+    const originalText = btnSubmit.innerHTML;
+    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    btnSubmit.disabled = true;
+
+    // Gather Ratings
+    const getRadioValue = (name) => {
+        const checked = document.querySelector(`input[name="${name}"]:checked`);
+        return checked ? parseInt(checked.value) : 0;
+    };
+
+    const record = {
+        id: editingAssessmentId,
+        playerId: currentPlayerId,
+        date: document.getElementById('assessDate').value,
+        evaluator: document.getElementById('assessEvaluator').value || 'System',
+        team: document.getElementById('assessTeam').value,
+        matchId: document.getElementById('assessMatch').value,
+        ratings: {
+            tactical: {
+                positioning: getRadioValue('tac_pos'),
+                decision: getRadioValue('tac_dec'),
+                awareness: getRadioValue('tac_awa'),
+                creativity: getRadioValue('tac_cre')
+            },
+            technical: {
+                passing: getRadioValue('tec_pas'),
+                touch: getRadioValue('tec_tou'),
+                control: getRadioValue('tec_con'),
+                dribbling: getRadioValue('tec_dri')
+            },
+            physical: {
+                speed: getRadioValue('phy_spe'),
+                agility: getRadioValue('phy_agi'),
+                stamina: getRadioValue('phy_sta'),
+                strength: getRadioValue('phy_str')
+            },
+            psychological: {
+                workEthic: getRadioValue('psy_wor'),
+                communication: getRadioValue('psy_com'),
+                focus: getRadioValue('psy_foc'),
+                resilience: getRadioValue('psy_res')
+            }
+        },
+        feedback: {
+            strength: document.getElementById('assessStrength').value,
+            improvement: document.getElementById('assessImprove').value,
+            growth: document.getElementById('assessGrowth').value,
+            comments: document.getElementById('assessComments').value
+        }
+    };
+
+    console.log('Final Assessment Record:', record);
+
+    const success = await squadManager.saveAssessment(record);
+
+    if (success) {
+        editingAssessmentId = null;
+        btnSubmit.innerHTML = '<i class="fas fa-check"></i> Report Submitted!';
+        btnSubmit.style.background = 'var(--green-accent)';
+
+        setTimeout(() => {
+            btnSubmit.innerHTML = originalText;
+            btnSubmit.style.background = '';
+            btnSubmit.disabled = false;
+
+            // Clear form
+            document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+            document.getElementById('assessStrength').value = '';
+            document.getElementById('assessImprove').value = '';
+            document.getElementById('assessGrowth').value = '';
+            document.getElementById('assessComments').value = '';
+            document.getElementById('assessEvaluator').value = ''; // Added this back
+            document.getElementById('assessMatch').value = ''; // Added this back
+
+            // Refresh history
+            renderAssessmentHistory();
+        }, 1500);
+    } else {
+        alert('Failed to save assessment to database. Please check connection.');
+        btnSubmit.innerHTML = originalText;
+        btnSubmit.disabled = false;
+    }
+}
+
+async function renderAssessmentHistory() {
+    if (!currentPlayerId) return;
+    const historyData = await squadManager.getAssessments(currentPlayerId);
+    const container = document.getElementById('assessmentHistoryContainer');
+    if (!container) return;
+
+    if (historyData.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-muted); background: #f8fafc; border-radius: 12px; border: 1px dashed var(--border);">
+                <i class="fas fa-file-invoice" style="font-size: 2.5rem; margin-bottom: 16px; opacity: 0.5;"></i>
+                <p>No reports found. Create a new assessment to begin tracking.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = historyData.map(record => {
+        const d = new Date(record.date).toLocaleDateString();
+        const title = record.matchId ? `Match Report: ${record.matchId}` : 'Overall Performance Review';
+
+        return `
+        <div class="dash-card history-item" style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <h4 style="margin: 0 0 4px 0; color: var(--navy-dark); font-size: 1.05rem;">${title}</h4>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i> ${d} &nbsp; | &nbsp; <i class="far fa-user" style="margin-right: 4px;"></i> Evaluator: ${record.evaluator}</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="dash-btn outline sm" onclick="viewAssessmentDetails('${record.id}')">
+                        <i class="far fa-eye"></i> View
+                    </button>
+                    <button class="dash-btn outline sm" onclick="deleteAssessment('${record.id}')" style="border-color: #fca5a5; color: #ef4444;">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+window.deleteAssessment = async (id) => {
+    if (!confirm('Are you sure you want to delete this assessment?')) return;
+    const success = await squadManager.deleteAssessment(id);
+    if (success) {
+        renderAssessmentHistory();
+        if (window.showGlobalToast) window.showGlobalToast('Assessment deleted', 'success');
+    }
+};
+
+window.loadAssessmentForEdit = async (id) => {
+    const historyData = await squadManager.getAssessments(currentPlayerId);
+    const rec = historyData.find(r => r.id === id);
+    if (!rec) return;
+
+    // Populate metadata
+    document.getElementById('assessDate').value = rec.date;
+    document.getElementById('assessEvaluator').value = rec.evaluator || '';
+    document.getElementById('assessTeam').value = rec.team || '';
+    document.getElementById('assessMatch').value = rec.matchId || '';
+    editingAssessmentId = rec.id;
+
+    // Helper to set radio buttons
+    const setRadio = (category, name, value) => {
+        const input = document.querySelector(`input[name="${category}_${name}"][value="${value}"]`);
+        if (input) input.checked = true;
+    };
+
+    // Populate Ratings
+    const r = rec.ratings;
+    if (r) {
+        if (r.tactical) {
+            setRadio('tac', 'pos', r.tactical.positioning);
+            setRadio('tac', 'dec', r.tactical.decision);
+            setRadio('tac', 'awa', r.tactical.awareness);
+            setRadio('tac', 'cre', r.tactical.creativity);
+        }
+        if (r.technical) {
+            setRadio('tec', 'pas', r.technical.passing);
+            setRadio('tec', 'tou', r.technical.touch);
+            setRadio('tec', 'con', r.technical.control);
+            setRadio('tec', 'dri', r.technical.dribbling);
+        }
+        if (r.physical) {
+            setRadio('phy', 'spe', r.physical.speed);
+            setRadio('phy', 'agi', r.physical.agility);
+            setRadio('phy', 'sta', r.physical.stamina);
+            setRadio('phy', 'str', r.physical.strength);
+        }
+        if (r.psychological) {
+            setRadio('psy', 'wor', r.psychological.workEthic);
+            setRadio('psy', 'com', r.psychological.communication);
+            setRadio('psy', 'foc', r.psychological.focus);
+            setRadio('psy', 'res', r.psychological.resilience);
+        }
+    }
+
+    // Populate Feedback
+    const f = rec.feedback;
+    if (f) {
+        document.getElementById('assessStrength').value = f.strength || '';
+        document.getElementById('assessImprove').value = f.improvement || '';
+        document.getElementById('assessGrowth').value = f.growth || '';
+        document.getElementById('assessComments').value = f.comments || '';
+    }
+
+    // Switch to Assess tab
+    document.querySelector('[data-tab="assess"]').click();
+
+    // Scroll to form
+    const formSection = document.getElementById('tab-assess');
+    if (formSection) {
+        formSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    if (window.showGlobalToast) {
+        window.showGlobalToast('Assessment loaded for editing', 'success');
+    }
+};
+
+async function viewAssessmentDetails(assessId) {
+    const historyData = await squadManager.getAssessments(currentPlayerId);
+    const record = historyData.find(r => r.id === assessId);
+    if (!record) return;
+
+    // Set Header
+    document.getElementById('viewAssessMeta').textContent = `Date: ${new Date(record.date).toLocaleDateString()} | Evaluator: ${record.evaluator} | Team: ${record.team || 'N/A'}`;
+    if (record.match) {
+        document.getElementById('viewAssessTitle').textContent = `Match Report: ${record.match}`;
+    } else {
+        document.getElementById('viewAssessTitle').textContent = `Overall Performance Review`;
+    }
+
+    // Populate Ratings
+    const ratingsContainer = document.getElementById('viewAssessRatings');
+    ratingsContainer.innerHTML = '';
+
+    const categories = {
+        tactical: 'Tactical Analysis',
+        technical: 'Technical Skills',
+        physical: 'Physical Performance',
+        psychological: 'Psychological Assessment'
+    };
+
+    if (record.ratings) {
+        Object.keys(categories).forEach(catKey => {
+            const catData = record.ratings[catKey];
+            if (catData) {
+                const section = document.createElement('div');
+                section.className = 'form-group-bubble';
+                section.innerHTML = `
+                    <label style="color: var(--blue-accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">${categories[catKey]}</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${Object.keys(catData).map(attr => {
+                    const val = catData[attr] || 0;
+                    let stars = '';
+                    for (let i = 1; i <= 5; i++) {
+                        stars += `<i class="${i <= val ? 'fas' : 'far'} fa-star" style="color: ${i <= val ? '#f59e0b' : '#cbd5e1'}; font-size: 0.8rem; margin-left: 2px;"></i>`;
+                    }
+                    // Capitalize attribute name
+                    const label = attr.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    return `
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.85rem; color: var(--text-dark);">${label}</span>
+                                    <div>${stars}</div>
+                                </div>
+                            `;
+                }).join('')}
+                    </div>
+                `;
+                ratingsContainer.appendChild(section);
+            }
+        });
+    }
+
+    // Populate Feedback
+    const feedbackContainer = document.getElementById('viewAssessFeedback');
+    feedbackContainer.innerHTML = '';
+    const fields = {
+        strength: 'Key Strengths',
+        improvement: 'Areas to Improve',
+        growth: 'Suggestions for Growth',
+        comments: 'Final Comments'
+    };
+
+    if (record.feedback) {
+        Object.keys(fields).forEach(fKey => {
+            const text = record.feedback[fKey];
+            if (text) {
+                const div = document.createElement('div');
+                div.className = 'form-group-bubble';
+                div.innerHTML = `
+                    <label>${fields[fKey]}</label>
+                    <div style="background: #f8fafc; border-radius: 8px; padding: 12px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.5; border: 1px solid var(--border-light);">
+                        ${text.replace(/\n/g, '<br>')}
+                    </div>
+                `;
+                feedbackContainer.appendChild(div);
+            }
+        });
+    }
+
+    // Show Modal
+    document.getElementById('modalViewAssessment').classList.add('active');
+}
+
+function toggleEditMode(isEditing) {
+    const viewState = document.getElementById('profStatsViewState');
+    const editState = document.getElementById('profStatsEditState');
+    const toggleBtn = document.getElementById('btnToggleEditProfile');
+
+    if (isEditing) {
+        viewState.style.display = 'none';
+        editState.style.display = 'block';
+        toggleBtn.style.display = 'none';
+    } else {
+        viewState.style.display = 'grid'; // it's a grid
+        editState.style.display = 'none';
+        toggleBtn.style.display = 'block';
+
+        // Reset inputs on cancel
+        populateProfileHeader();
+    }
+}
+
+async function saveProfileInfo() {
+    const btn = document.getElementById('btnSaveProfileInfo');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    btn.disabled = true;
+
+    const updatedData = {
+        age: document.getElementById('editProfAge').value,
+        height: document.getElementById('editProfHeight').value,
+        weight: document.getElementById('editProfWeight').value,
+        foot: document.getElementById('editProfFoot').value,
+        position: document.getElementById('editProfPosition').value,
+        previousClubs: document.getElementById('editProfClubs').value
+    };
+
+    const success = await squadManager.updatePlayer(currentPlayerId, updatedData);
+
+    if (success) {
+        // Update local memory
+        currentPlayer = { ...currentPlayer, ...updatedData };
+        btn.innerHTML = '<i class="fas fa-check"></i> Saved';
+        btn.style.background = 'var(--green-accent)';
+        btn.style.color = '#fff';
+        btn.style.borderColor = 'var(--green-accent)';
+
+        // Return to view mode with updated data
+        setTimeout(() => {
+            toggleEditMode(false);
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+            btn.disabled = false;
+        }, 1000);
+
+    } else {
+        btn.innerHTML = '<i class="fas fa-times"></i> Error';
+        btn.style.background = 'red';
+        btn.style.color = '#fff';
+
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+            btn.disabled = false;
+        }, 2000);
+    }
+}
+
+window.loadAssessmentForEdit = async (id) => {
+    const historyData = await squadManager.getAssessments(currentPlayerId);
+    const rec = historyData.find(r => r.id === id);
+    if (!rec) {
+        if (window.showGlobalToast) window.showGlobalToast('Assessment not found.', 'error');
+        return;
+    }
+
+    // Store the ID for upsert on save
+    window._editingAssessmentId = id;
+    window._editingAssessmentCreatedAt = rec.createdAt;
+
+    // Open the assessment details modal instead of trying to navigate to a form tab
+    if (typeof viewAssessmentDetails === 'function') {
+        viewAssessmentDetails(id);
+    }
+
+    if (window.showGlobalToast) window.showGlobalToast('Assessment opened for viewing. Use the full profile Assessment tab to create edits.', 'info');
+};
+

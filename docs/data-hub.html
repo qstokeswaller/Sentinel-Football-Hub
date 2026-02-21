@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Hub | UP Performance Analysis Hub</title>
+    <link rel="stylesheet" href="css/style.css?v=1771598058741">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
+                <div class="brand-text">
+                    <h3>Football</h3>
+                    <p>Performance Hub</p>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="dashboard_v2.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
+                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a>
+                    </li>
+                    <li><a href="library.html"><i class="fas fa-book"></i><span>Library</span></a></li>
+                    <li><a href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
+                    <li><a href="squad.html"><i class="fas fa-user-friends"></i><span>Squad Management</span></a></li>
+                    <li><a href="players.html"><i class="fas fa-user"></i><span>Player Management</span></a></li>
+                    <li><a href="matches.html"><i class="fas fa-futbol"></i><span>Matches</span></a></li>
+                    <li class="active"><a href="analytics.html"><i
+                                class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-toggle-sidebar" id="toggleSidebar" title="Toggle Sidebar">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="page-title">
+                    <h1>Data Hub</h1>
+                    <p class="subtitle">Raw performance data & export</p>
+                </div>
+                <div class="top-nav-actions">
+                    <button class="btn btn-primary"><i class="fas fa-download"></i> Export CSV</button>
+                </div>
+            </header>
+
+            <div class="data-hub-controls glass">
+                <div class="filter-group">
+                    <label>Data Provider</label>
+                    <select class="glass-select">
+                        <option>GPS Tracking</option>
+                        <option>Wellness Surveys</option>
+                        <option>Testing Results</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Date Range</label>
+                    <input type="date" class="glass-input">
+                </div>
+                <div class="filter-group">
+                    <button class="btn btn-secondary">Fetch Data</button>
+                </div>
+            </div>
+
+            <div class="table-card glass">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Athlete</th>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Unit</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data rows will be injected here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+        </main>
+    </div>
+    <script src="js/sidebar-toggle.js"></script>
+</body>
+
+</html>
