@@ -3,34 +3,31 @@
  */
 (function () {
     // --- AWS PRODUCTION CONFIGURATION ---
-    // If you have a live AWS URL, paste it here (e.g., 'http://your-ec2-ip:3001/api')
-    // If left as '/api', it assumes the frontend and backend are on the same domain.
-    const PROD_API_URL = '/api';
+    const AWS_STATIC_IP = '54.170.115.131';
+    const PROD_API_URL = `http://${AWS_STATIC_IP}:3001/api`;
     // -------------------------------------
 
     const currentHost = window.location.hostname;
     const currentPort = window.location.port;
 
-    // Default configuration (Same-origin API)
-    window.API_BASE_URL = PROD_API_URL;
+    // Default configuration: 
+    // If we are running ON the server (IP or Domain), relative /api is safest.
+    window.API_BASE_URL = '/api';
     window.USE_LOCAL_STORAGE = false;
 
-    // Detection for Local Development (Node.js backend)
+    // Detection logic
     const isLocalBackend = currentHost === 'localhost' || currentHost === '127.0.0.1';
-
-    // Detection for Static Hosting (GitHub Pages / port 5500 / file://)
     const isGitHubPages = currentHost.includes('github.io');
     const isStaticMode = currentPort === '5500' || currentPort === '8080' || window.location.protocol === 'file:';
 
     if (isGitHubPages || isStaticMode) {
-        console.log('Environment: Static/Demo Mode detected. FORCING API for live testing.');
-        window.API_BASE_URL = 'http://localhost:3001/api';
-        window.USE_LOCAL_STORAGE = false; // Forced off as per user request
+        console.log('Environment: Local/Static Mode. Connecting to AWS Live Database.');
+        window.API_BASE_URL = PROD_API_URL;
     } else if (isLocalBackend && currentPort !== '3001') {
-        // If frontend is on 5500/8080 but wants to talk to local backend on 3001
-        // We typically handle this by manually setting isStaticMode above,
-        // but for a smooth 'npm start' experience on localhost:3001, we use relative /api.
+        console.log('Environment: Local Dev (Port Mismatch). Connecting to local 3001.');
         window.API_BASE_URL = 'http://localhost:3001/api';
+    } else {
+        console.log('Environment: Live production (Same-origin). Using relative /api.');
     }
 
     console.log('Final API Config:', {
