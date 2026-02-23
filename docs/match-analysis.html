@@ -29,7 +29,8 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="dashboard_v2.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
-                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a></li>
+                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a>
+                    </li>
                     <li><a href="library.html"><i class="fas fa-book"></i><span>Library</span></a></li>
                     <li><a href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
                     <li><a href="squad.html"><i class="fas fa-user-friends"></i><span>Squad Management</span></a></li>
@@ -60,11 +61,6 @@
                     <!-- Match Title (Bubble) will be injected here via JS -->
                 </div>
 
-                <!-- Center Container for Score Bubble -->
-                <div id="scoreline-container"
-                    style="position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center;">
-                    <!-- Content injected by JS -->
-                </div>
 
                 <div class="header-actions">
                     <div class="badge badge-warning"
@@ -249,6 +245,7 @@
         </div>
     </div>
 
+    <script src="js/api-config.js"></script>
     <script src="js/squad-manager.js?v=11"></script>
     <script src="js/match-manager.js?v=11"></script>
     <script src="js/match-analysis.js?v=11"></script>

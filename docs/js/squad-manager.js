@@ -189,8 +189,8 @@ class SquadManager {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: data.id || 'assess_' + Date.now(),
                     ...data,
+                    id: data.id || 'assess_' + Date.now(),
                     createdAt: data.createdAt || new Date().toISOString()
                 })
             });
@@ -220,8 +220,8 @@ class SquadManager {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: data.id || 'ds_' + Date.now(),
                     ...data,
+                    id: data.id || 'ds_' + Date.now(),
                     createdAt: data.createdAt || new Date().toISOString()
                 })
             });
@@ -239,9 +239,9 @@ class SquadManager {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    id: 'sa_' + Date.now(),
                     ...data,
-                    createdAt: new Date().toISOString()
+                    id: data.id || 'sa_' + Date.now(),
+                    createdAt: data.createdAt || new Date().toISOString()
                 })
             });
             if (!response.ok) throw new Error('Failed to save squad assessment');

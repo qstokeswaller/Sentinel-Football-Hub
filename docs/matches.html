@@ -13,6 +13,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="js/api-config.js"></script>
     <style>
         /* Tabs Logic */
@@ -563,79 +564,6 @@
         </div>
     </div>
 
-    <script src="js/squad-manager.js"></script>
-    <script src="js/match-manager.js"></script>
-    <script src="js/match-ui.js"></script>
-
-    <script>
-        // Add this fallback script in case the external JS files have issues
-        function closeAddMatchModal() {
-            const modal = document.getElementById('createMatchModal');
-            if (modal) {
-                modal.style.display = 'none';
-            }
-        }
-
-        // Dropzone Interaction Logic
-        function setupDropzone(id, fileInputId) {
-            const dz = document.getElementById(id);
-            const input = document.getElementById(fileInputId);
-            if (!dz || !input) return;
-
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
-                dz.addEventListener(evt, e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                });
-            });
-
-            dz.addEventListener('dragover', () => {
-                dz.style.borderColor = 'var(--primary)';
-                dz.style.background = '#eff6ff';
-            });
-
-            dz.addEventListener('dragleave', () => {
-                dz.style.borderColor = '#cbd5e1';
-                dz.style.background = '#f8fafc';
-            });
-
-            dz.addEventListener('drop', (e) => {
-                dz.style.borderColor = 'var(--success)';
-                dz.style.background = '#ecfdf5';
-                const files = e.dataTransfer.files;
-                if (files.length) {
-                    input.files = files;
-                    dz.querySelector('p').textContent = files[0].name;
-                }
-            });
-        }
-
-        // Ensure the button opens the modal
-        document.addEventListener('DOMContentLoaded', function () {
-            const btnNewMatch = document.getElementById('btn-new-match');
-            const modal = document.getElementById('createMatchModal');
-
-            if (btnNewMatch && modal) {
-                btnNewMatch.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    modal.style.display = 'flex';
-                });
-            }
-
-            // Close modal when clicking outside
-            if (modal) {
-                modal.addEventListener('click', function (e) {
-                    if (e.target === modal) {
-                        closeAddMatchModal();
-                    }
-                });
-            }
-
-            // Setup Dropzones
-            setupDropzone('matchVideoDropzone', 'matchVideoFile');
-            setupDropzone('matchReportDropzone', 'matchReportFile');
-        });
-    </script>
     <script src="js/squad-manager.js"></script>
     <script src="js/match-manager.js"></script>
     <script src="js/match-ui.js"></script>

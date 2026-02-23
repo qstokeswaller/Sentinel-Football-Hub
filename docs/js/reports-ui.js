@@ -5,6 +5,10 @@
 
 let selectedSession = null;
 
+// In-memory cache of fetched reports and sessions for the modal lookup
+const _reportCache = { reports: [], sessions: [] };
+
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize Managers
     await Promise.all([
@@ -145,6 +149,10 @@ async function loadSessionReports() {
         const sRes = await fetch(`${window.API_BASE_URL}/sessions`, { cache: 'no-store' });
         const sessions = await sRes.json();
 
+        // Store in cache so modal can use it without re-fetching
+        _reportCache.reports = reports;
+        _reportCache.sessions = sessions;
+
         const sel = document.getElementById('session-select');
         if (sel) {
             sel.innerHTML = '<option value="">-- Select a Session --</option>';
@@ -161,7 +169,8 @@ async function loadSessionReports() {
             return;
         }
 
-        grid.innerHTML = reports.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).map(r => {
+        const validReports = reports.filter(r => r.id && r.id !== 'null');
+        grid.innerHTML = validReports.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).map(r => {
             const s = sessions.find(sess => sess.id === r.sessionId);
             const title = s ? s.title : 'General Report';
             const dateShort = new Date(r.date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -193,62 +202,69 @@ async function openDailyReportDetails(id) {
     const content = document.getElementById('viewDailyReportContent');
     if (!modal || !content) return;
 
-    content.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
     modal.classList.add('active');
 
-    try {
-        const res = await fetch(`${window.API_BASE_URL}/reports/${id}`);
-        if (!res.ok) throw new Error('Not found');
-        const r = await res.json();
-
-        const sRes = await fetch(`${window.API_BASE_URL}/sessions/${r.sessionId}`);
-        const s = sRes.ok ? await sRes.json() : null;
-
-        content.innerHTML = `
-            <div style="background: var(--bg-light); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
-                <h3 style="margin-top:0; color:var(--primary);">${s ? s.title : 'Daily Session'}</h3>
-                <div style="display: flex; gap: 15px; font-size: 0.9rem; opacity: 0.8;">
-                    <span><i class="far fa-calendar-alt"></i> ${new Date(r.date).toLocaleDateString()}</span>
-                    <span><i class="fas fa-users"></i> ${r.attendanceCount}/${r.attendanceTotal} Attendance</span>
-                </div>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-                <div class="dash-card" style="padding: 20px; border-left: 4px solid var(--primary);">
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Intensity Focus</div>
-                    <div style="font-weight: 800; color: var(--navy-dark); font-size: 1.1rem;">${r.intensity || 'Normal'}</div>
-                </div>
-                <div class="dash-card" style="padding: 20px; border-left: 4px solid var(--warning);">
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Overall Rating</div>
-                    <div style="font-weight: 700; color: var(--warning); font-size: 1.2rem; letter-spacing: 2px;">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</div>
-                </div>
-            </div>
-
-            <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Session Focus</h4>
-            <div class="dash-card" style="padding: 16px; margin-bottom: 20px; background: white;">
-                ${r.focus || 'No specific focus documented.'}
-            </div>
-
-            <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Coaching Notes & Observations</h4>
-            <div class="dash-card" style="padding: 16px; background: white; white-space: pre-wrap; line-height: 1.6;">
-                ${r.notes || 'No general notes.'}
-            </div>
-
-            ${r.drillNotes ? `
-                <h4 style="margin: 24px 0 12px 0; color: var(--navy-dark);">Drill-Specific Feedback</h4>
-                <div class="dash-card" style="padding: 16px; background: #f8fafc;">
-                    ${Object.entries(JSON.parse(r.drillNotes || '{}')).map(([drillId, note]) => `
-                        <div style="margin-bottom: 12px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
-                            <div style="font-weight: 700; font-size: 0.85rem; color: var(--primary);">Drill Update</div>
-                            <div style="font-size: 0.9rem;">${note}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : ''}
-        `;
-    } catch (e) {
-        content.innerHTML = '<div style="color:red;padding:20px;">Error loading report details.</div>';
+    if (!id || id === 'null' || id === 'undefined') {
+        content.innerHTML = '<div style="color:orange;padding:20px;">This report has no ID — it may have been saved incorrectly. Please delete and re-save it.</div>';
+        return;
     }
+
+    // Use local cache to avoid server round-trip (GET /api/reports/:id route issues)
+    const r = _reportCache.reports.find(rep => rep.id === id);
+    if (!r) {
+        content.innerHTML = '<div style="color:red;padding:20px;">Report not found in cache. Please refresh the page and try again.</div>';
+        return;
+    }
+
+    const s = _reportCache.sessions.find(sess => sess.id === r.sessionId) || null;
+
+    // drillNotes is already an object from GET /api/reports parsing
+    const drillNotes = (typeof r.drillNotes === 'string') ? JSON.parse(r.drillNotes || '{}') : (r.drillNotes || {});
+    const drillNotesEntries = Object.entries(drillNotes);
+    const dateStr = r.date ? new Date(r.date).toLocaleDateString() : 'No date';
+
+    content.innerHTML = `
+        <div style="background: var(--bg-light); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+            <h3 style="margin-top:0; color:var(--primary);">${s ? s.title : 'Daily Session'}</h3>
+            <div style="display: flex; gap: 15px; font-size: 0.9rem; opacity: 0.8;">
+                <span><i class="far fa-calendar-alt"></i> ${dateStr}</span>
+                <span><i class="fas fa-users"></i> ${r.attendanceCount || 0}/${r.attendanceTotal || 0} Attendance</span>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+            <div class="dash-card" style="padding: 20px; border-left: 4px solid var(--primary);">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Intensity Focus</div>
+                <div style="font-weight: 800; color: var(--navy-dark); font-size: 1.1rem;">${r.intensity || 'Normal'}</div>
+            </div>
+            <div class="dash-card" style="padding: 20px; border-left: 4px solid var(--warning);">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Overall Rating</div>
+                <div style="font-weight: 700; color: var(--warning); font-size: 1.2rem; letter-spacing: 2px;">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</div>
+            </div>
+        </div>
+
+        <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Session Focus</h4>
+        <div class="dash-card" style="padding: 16px; margin-bottom: 20px; background: white;">
+            ${r.focus || 'No specific focus documented.'}
+        </div>
+
+        <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Coaching Notes & Observations</h4>
+        <div class="dash-card" style="padding: 16px; background: white; white-space: pre-wrap; line-height: 1.6;">
+            ${r.notes || 'No general notes.'}
+        </div>
+
+        ${drillNotesEntries.length > 0 ? `
+            <h4 style="margin: 24px 0 12px 0; color: var(--navy-dark);">Drill-Specific Feedback</h4>
+            <div class="dash-card" style="padding: 16px; background: #f8fafc;">
+                ${drillNotesEntries.map(([drillId, note]) => `
+                    <div style="margin-bottom: 12px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px;">
+                        <div style="font-weight: 700; font-size: 0.85rem; color: var(--primary);">Drill Update</div>
+                        <div style="font-size: 0.9rem;">${note}</div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : ''}
+    `;
 }
 
 window.openSessionReportDetails = openDailyReportDetails;
@@ -305,11 +321,11 @@ function loadMatchRepository() {
     };
 
     const isReportCompleted = (m) => {
-        if (m.notes && m.notes.trim() !== '') return true;
+        if (m.notes && m.notes.trim() !== '' && m.notes !== 'No notes provided.') return true;
         const s = m.stats || {};
         return !!(s.tactical_lineup_home || s.tactical_lineup_away || s.tactical_timeline ||
             s.tactical_in_possession || s.tactical_out_possession ||
-            s.tactical_transitions || s.tactical_set_pieces);
+            s.tactical_transitions || s.tactical_set_pieces || s.tactical_lineup);
     };
 
     grid.innerHTML = matches.map(m => {
@@ -327,7 +343,7 @@ function loadMatchRepository() {
             : `<span style="background: #fff7ed; color: #9a3412; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.75rem; border: 1px solid #9a341230;">FILL REPORT</span>`;
 
         const printBtn = completed
-            ? `<button onclick="event.stopPropagation(); window.location.href='match-details.html?id=${m.id}&download=true'" class="dash-btn outline sm" style="padding: 4px 8px; font-size: 0.7rem; height: auto;">
+            ? `<button onclick="event.stopPropagation(); exportMatchReportPDF('${m.id}')" class="dash-btn outline sm" style="padding: 4px 8px; font-size: 0.7rem; height: auto;">
                  <i class="fas fa-print"></i> Print
                </button>`
             : '';
@@ -377,67 +393,39 @@ async function loadTeamReports() {
     container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><i class="fas fa-circle-notch fa-spin"></i> Loading team history...</div>';
 
     try {
-        const matches = (matchManager.matches || []).filter(m => m.squadId === squadId && m.isPast).sort((a, b) => new Date(b.date) - new Date(a.date));
         const assessments = await squadManager.getSquadAssessments(squadId);
 
-        if (matches.length === 0 && assessments.length === 0) {
-            container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><p>No reports found for this team.</p></div>';
+        if (assessments.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><p>No team assessments found for this squad.</p></div>';
             return;
         }
 
-        // Combine and sort by date
-        const allItems = [
-            ...matches.map(m => ({ ...m, type: 'match' })),
-            ...assessments.map(a => ({ ...a, type: 'assessment' }))
-        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Sort by date descending
+        const sortedAssessments = assessments.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        container.innerHTML = allItems.map(item => {
+        container.innerHTML = sortedAssessments.map(item => {
             const d = new Date(item.date);
             const day = d.getDate();
             const month = d.toLocaleDateString(undefined, { month: 'short' });
 
-            if (item.type === 'match') {
-                const res = (item.homeScore > item.awayScore) ? 'W' : (item.homeScore < item.awayScore ? 'L' : 'D');
-                const badge = res === 'W' ? 'badge-success' : (res === 'L' ? 'badge-danger' : 'badge-secondary');
-                return `
-                    <div class="history-item" onclick="window.location.href='match-details.html?id=${item.id}'">
-                        <div class="history-date">
-                            <div class="day">${day}</div>
-                            <div class="month">${month}</div>
-                        </div>
-                        <div class="history-content">
-                            <div class="history-title">vs ${item.opponent || (item.ourSide === 'home' ? item.awayTeam : item.homeTeam)}</div>
-                            <div class="history-meta">${item.competition} • ${item.venue}</div>
-                            <div class="history-tags">
-                                <span class="badge ${badge}" style="width: 24px; text-align: center;">${res}</span>
-                                <span style="font-weight: 700; color: var(--navy-dark);">${item.homeScore} - ${item.awayScore}</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; color: var(--text-light);">
-                            <i class="fas fa-chevron-right"></i>
+            return `
+                <div class="history-item" onclick="openSquadAssessmentDetails('${item.id}')" style="border-left: 3px solid var(--primary);">
+                    <div class="history-date">
+                        <div class="day">${day}</div>
+                        <div class="month">${month}</div>
+                    </div>
+                    <div class="history-content">
+                        <div class="history-title">${item.context} Assessment</div>
+                        <div class="history-meta">Overall Rating: <strong>${item.ratings?.overall || 0}/10</strong></div>
+                        <div class="history-tags">
+                            <span class="badge badge-primary">Squad Review</span>
                         </div>
                     </div>
-                `;
-            } else {
-                return `
-                    <div class="history-item" onclick="openSquadAssessmentDetails('${item.id}')" style="border-left: 3px solid var(--primary);">
-                        <div class="history-date">
-                            <div class="day">${day}</div>
-                            <div class="month">${month}</div>
-                        </div>
-                        <div class="history-content">
-                            <div class="history-title">${item.context} Assessment</div>
-                            <div class="history-meta">Overall Rating: <strong>${item.ratings?.overall || 0}/10</strong></div>
-                            <div class="history-tags">
-                                <span class="badge badge-primary">Squad Review</span>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; color: var(--primary);">
-                            <i class="fas fa-eye"></i>
-                        </div>
+                    <div style="display: flex; align-items: center; color: var(--primary);">
+                        <i class="fas fa-eye"></i>
                     </div>
-                `;
-            }
+                </div>
+            `;
         }).join('');
     } catch (e) {
         console.error('Error loading team reports:', e);
@@ -542,10 +530,10 @@ async function loadPlayerReports(playerId) {
             const day = d.getDate();
             const month = d.toLocaleString('default', { month: 'short' });
 
-            // Parse feedback from notes if it's JSON
-            let feedback = { strength: 'None', comments: 'No comments' };
+            // Parse feedback from notes if it's JSON (fallback for legacy or LocalStorage paths)
+            let feedback = r.feedback || { strength: 'None', comments: 'No comments' };
             try {
-                if (r.notes && r.notes.startsWith('{')) {
+                if (r.notes && r.notes.startsWith('{') && !r.feedback) {
                     feedback = JSON.parse(r.notes);
                 }
             } catch (e) { }
@@ -558,8 +546,8 @@ async function loadPlayerReports(playerId) {
                     </div>
                     <div class="history-content">
                         <div style="margin-top: 12px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.5; border-top: 1px dashed var(--border-light); padding-top: 12px;">
-                            <strong>Strengths:</strong> ${r.feedback?.strength || 'None'}<br>
-                            <strong>Comments:</strong> ${r.feedback?.comments || 'No comments'}
+                            <strong>Strengths:</strong> ${feedback.strength || 'None'}<br>
+                            <strong>Comments:</strong> ${feedback.comments || 'No comments'}
                         </div>
                     </div>
                 </div>
@@ -645,8 +633,10 @@ async function viewDevStructureDetails(id) {
         if (!response.ok) throw new Error('Failed to fetch');
         const ds = await response.json();
 
-        const player = squadManager.players.find(p => String(p.id) === String(ds.playerId));
-        document.getElementById('viewPlayerAssessTitle').textContent = `${player ? player.name : 'Player'} - Overall Assessment`;
+        const players = await squadManager.getPlayers();
+        const player = players.find(p => p.id == ds.playerId);
+        const titleEl = document.getElementById('viewPlayerAssessTitle');
+        if (titleEl) titleEl.textContent = `${player ? player.name : 'Player'} - Overall Assessment`;
 
         const structures = ds.structures || {};
         const structureHtml = Object.entries(structures).map(([key, val]) => {
@@ -687,7 +677,7 @@ window.viewDevStructureDetails = viewDevStructureDetails;
 window.viewPlayerTimeline = viewPlayerTimeline;
 window.openAssessmentDetails = openAssessmentDetails;
 window.openSquadAssessmentDetails = openSquadAssessmentDetails;
-window.printReport = printReport;
+// window.printReport is assigned below after its definition
 
 async function openAssessmentDetails(id) {
     const modal = document.getElementById('modalViewAssessment');
@@ -703,8 +693,11 @@ async function openAssessmentDetails(id) {
         const r = await response.json();
 
         // Fetch player name
-        const player = squadManager.players.find(p => String(p.id) === String(r.playerId));
-        document.getElementById('viewPlayerAssessTitle').textContent = `${player ? player.name : 'Player'} - Performance Report`;
+        // Use squadManager.getPlayers() and loose equality
+        const players = await squadManager.getPlayers();
+        const player = players.find(p => p.id == r.playerId);
+        const titleEl = document.getElementById('viewPlayerAssessTitle');
+        if (titleEl) titleEl.textContent = `${player ? player.name : 'Player'} - Performance Report`;
 
         // Build ratings HTML - handle nested objects properly
         let ratingsHtml = '';
@@ -862,43 +855,6 @@ async function openSquadAssessmentDetails(id) {
     }
 }
 
-function printReport(elementId) {
-    const content = document.getElementById(elementId).innerHTML;
-    const title = document.querySelector(`#${elementId}`).parentElement.previousElementSibling.querySelector('h2').textContent;
-
-    const printWindow = window.open('', '_blank', 'height=800,width=1000');
-    printWindow.document.write('<html><head><title>UP Performance Hub - Report Print</title>');
-    printWindow.document.write('<link rel="stylesheet" href="css/style.css">'); // Try to inherit styles
-    printWindow.document.write('<style>');
-    printWindow.document.write(`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Outfit', sans-serif; padding: 40px; color: #1e293b; background: white; }
-        .dash-card { border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-        h2 { color: #0f172a; margin-top: 0; }
-        h3 { color: #334155; margin-top: 30px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
-        @media print { .no-print { display: none; } }
-    `);
-    printWindow.document.write('</style></head><body>');
-    printWindow.document.write('<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:3px solid #0045e6; padding-bottom:20px;">');
-    printWindow.document.write('<h1 style="margin:0; color:#0045e6;">UP PERFORMANCE HUB</h1>');
-    printWindow.document.write('<div style="text-align:right;"><div style="font-weight:800;">INTELLIGENCE & SCOUTING</div><div style="font-size:0.8rem; opacity:0.7;">Confidential Report</div></div>');
-    printWindow.document.write('</div>');
-    printWindow.document.write(`<h2>${title}</h2>`);
-    printWindow.document.write(content);
-    printWindow.document.write('<div style="margin-top:60px; font-size:0.8rem; color:#94a3b8; border-top:1px solid #e2e8f0; padding-top:20px; text-align:center;">');
-    printWindow.document.write('&copy; ' + new Date().getFullYear() + ' UP Performance Hub. All rights reserved. Generated on ' + new Date().toLocaleString());
-    printWindow.document.write('</div>');
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-
-    // Wait for content to load (especially styles) before printing
-    setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-        // Option window.close() after print if desired
-    }, 500);
-}
 
 async function viewPlayerTimeline(playerId) {
     if (!playerId) return;
@@ -928,24 +884,34 @@ async function onSessionSelect() {
 
     try {
         const res = await fetch(`${window.API_BASE_URL}/sessions/${id}`);
+        if (!res.ok) throw new Error('Session not found');
         const s = await res.json();
+
         preview.classList.add('visible');
-        document.getElementById('sp-title').textContent = s.title;
-        document.getElementById('sp-meta').textContent = `Created: ${new Date(s.createdAt).toLocaleDateString()}`;
-        document.getElementById('sp-drills').innerHTML = (s.drills || []).map((d, i) => `<div class="sp-drill-item">${i + 1}. ${d.title}</div>`).join('');
+        const titleEl = document.getElementById('sp-title');
+        const metaEl = document.getElementById('sp-meta');
+        const drillsEl = document.getElementById('sp-drills');
+
+        if (titleEl) titleEl.textContent = s.title || 'Untitled Session';
+        if (metaEl) metaEl.textContent = `Created: ${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'Unknown'}`;
+        if (drillsEl) {
+            drillsEl.innerHTML = (s.drills || []).length > 0
+                ? s.drills.map((d, i) => `<div class="sp-drill-item">${i + 1}. ${d.title}</div>`).join('')
+                : '<div style="font-size: 12px; color: var(--text-light); padding: 8px;">No drills in this session.</div>';
+        }
 
         // Auto-populate Date Conducted if available
         const dateInput = document.getElementById('report-date');
-        if (dateInput && s.date) {
-            dateInput.value = s.date;
-        }
+        if (dateInput && s.date) dateInput.value = s.date;
 
         // Auto-populate Attendance Total from playersCount
         const attTotal = document.getElementById('att-total');
-        if (attTotal && s.playersCount) {
-            attTotal.value = s.playersCount;
-        }
-    } catch (e) { console.error(e); }
+        if (attTotal && s.playersCount) attTotal.value = s.playersCount;
+
+    } catch (e) {
+        console.error('Error fetching session preview:', e);
+        preview.classList.remove('visible');
+    }
 }
 
 function setupRating() {
@@ -1062,6 +1028,7 @@ async function saveReport() {
     }
 
     const reportData = {
+        id: `report_${Date.now()}`,
         sessionId,
         date,
         attendanceCount: parseInt(attendanceCount) || 0,
@@ -1091,6 +1058,441 @@ async function saveReport() {
     }
 }
 window.saveReport = saveReport;
+
+/**
+ * Shared PDF builder — produces a fully-structured match analysis PDF.
+ * Used by both the Match Reports hub (exportMatchReportPDF) and
+ * the Match Details page (downloadReportPDF via match-details-ui.js).
+ */
+function buildMatchPDF(match) {
+    if (!window.jspdf) {
+        if (window.showGlobalToast) window.showGlobalToast('PDF library not loaded', 'error');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+
+    // Resolve team names — use stored homeTeam/awayTeam first, fall back to squad lookup
+    let homeName = match.homeTeam;
+    let awayName = match.awayTeam;
+    if (!homeName || !awayName) {
+        const squadName = (window.squadManager && squadManager.getSquad(match.squadId))
+            ? squadManager.getSquad(match.squadId).name
+            : 'Home';
+        if (match.ourSide === 'away') {
+            homeName = match.opponent || 'Home Team';
+            awayName = squadName;
+        } else {
+            homeName = squadName;
+            awayName = match.opponent || 'Away Team';
+        }
+    }
+
+    const hScore = match.homeScore !== undefined ? match.homeScore : 0;
+    const aScore = match.awayScore !== undefined ? match.awayScore : 0;
+    const matchScore = `${hScore} - ${aScore}`;
+    const matchDate = match.date || 'TBD';
+    const competition = match.competition || 'Friendly';
+    const venue = match.venue || 'Venue TBD';
+
+    let resultColor = [100, 116, 139];
+    if (hScore !== aScore) {
+        const ourSide = match.ourSide || 'home';
+        const weWon = (ourSide === 'home' && hScore > aScore) || (ourSide === 'away' && aScore > hScore);
+        resultColor = weWon ? [16, 185, 129] : [239, 68, 68];
+    }
+
+    const doc = new jsPDF();
+    const margin = 20;
+    const PW = doc.internal.pageSize.getWidth();
+    const PH = doc.internal.pageSize.getHeight();
+    const contentW = PW - (margin * 2);
+    const halfW = contentW / 2;
+
+    // ── HEADER BANNER ─────────────────────────────────────────────────────────
+    doc.setFillColor(30, 58, 138);
+    doc.rect(0, 0, PW, 44, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MATCH ANALYSIS REPORT', margin, 22);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('UP PERFORMANCE HUB  ·  CONFIDENTIAL', margin, 31);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, PW - margin, 31, { align: 'right' });
+
+    let y = 54;
+
+    // ── SCORELINE CARD ────────────────────────────────────────────────────────
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, contentW, 36, 4, 4, 'F');
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text(homeName, margin + 6, y + 13, { maxWidth: halfW - 20 });
+    doc.text(awayName, PW - margin - 6, y + 13, { align: 'right', maxWidth: halfW - 20 });
+
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...resultColor);
+    doc.text(matchScore, PW / 2, y + 15, { align: 'center' });
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text(`${competition}  ·  ${venue}  ·  ${matchDate}`, PW / 2, y + 28, { align: 'center' });
+
+    y += 46;
+
+    // ── KEY STATISTICS ────────────────────────────────────────────────────────
+    const stats = match.stats || {};
+    const homeStats = stats.home || {};
+    const awayStats = stats.away || {};
+
+    const statItems = [
+        { label: 'Goals', key: 'goals' },
+        { label: 'Possession', key: 'possession', suffix: '%' },
+        { label: 'Shots', key: 'shots' },
+        { label: 'Shots on Target', key: 'shotsOnTarget' },
+        { label: 'Corners', key: 'corners' },
+        { label: 'Fouls', key: 'fouls' },
+        { label: 'Yellow Cards', key: 'yellowCards' },
+        { label: 'Red Cards', key: 'redCards' },
+    ];
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text('KEY STATISTICS', margin, y);
+    y += 5;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text(homeName, margin, y + 4);
+    doc.setTextColor(100, 116, 139);
+    doc.text(awayName, PW - margin, y + 4, { align: 'right' });
+    y += 10;
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(margin, y, PW - margin, y);
+    y += 6;
+
+    statItems.forEach(item => {
+        const hVal = parseFloat(homeStats[item.key]) || 0;
+        const aVal = parseFloat(awayStats[item.key]) || 0;
+        const suffix = item.suffix || '';
+        const total = hVal + aVal || 1;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 58, 138);
+        doc.text(`${hVal}${suffix}`, margin, y);
+
+        doc.setTextColor(100);
+        doc.setFont('helvetica', 'normal');
+        doc.text(item.label, PW / 2, y, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text(`${aVal}${suffix}`, PW - margin, y, { align: 'right' });
+
+        const barH = 4;
+        const barY = y + 2;
+
+        doc.setFillColor(226, 232, 240);
+        doc.rect(margin, barY, contentW, barH, 'F');
+
+        const hWidth = (hVal / total) * halfW;
+        doc.setFillColor(30, 58, 138);
+        doc.rect(margin, barY, hWidth, barH, 'F');
+
+        const aWidth = (aVal / total) * halfW;
+        doc.setFillColor(100, 116, 139);
+        doc.rect(PW - margin - aWidth, barY, aWidth, barH, 'F');
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(PW / 2 - 0.5, barY, 1, barH, 'F');
+
+        y += 14;
+        if (y > PH - 40) { doc.addPage(); y = 20; }
+    });
+
+    y += 4;
+
+    // ── TACTICAL PHASES ───────────────────────────────────────────────────────
+    const tacticalPhases = [
+        { title: 'Starting XI — ' + homeName, content: stats.tactical_lineup_home, color: [30, 58, 138] },
+        { title: 'Starting XI — ' + awayName, content: stats.tactical_lineup_away, color: [100, 116, 139] },
+        { title: 'Timeline / Key Events', content: stats.tactical_timeline, color: [30, 58, 138] },
+        { title: 'In Possession (Attacking)', content: stats.tactical_in_possession, color: [16, 185, 129] },
+        { title: 'Out of Possession (Defence)', content: stats.tactical_out_possession, color: [239, 68, 68] },
+        { title: 'Transitions', content: stats.tactical_transitions, color: [245, 158, 11] },
+        { title: 'Set Pieces', content: stats.tactical_set_pieces, color: [99, 102, 241] },
+    ];
+
+    const stripHtml = (html) => (html || '')
+        .replace(/<li>/gi, '\n• ')
+        .replace(/<\/li>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    if (y > PH - 50) { doc.addPage(); y = 20; }
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text('TACTICAL ANALYSIS', margin, y);
+    y += 3;
+    doc.setDrawColor(30, 58, 138);
+    doc.line(margin, y, PW - margin, y);
+    y += 8;
+
+    tacticalPhases.forEach(phase => {
+        const text = stripHtml(phase.content);
+        if (!text) return;
+
+        if (y > PH - 40) { doc.addPage(); y = 20; }
+
+        doc.setFillColor(...phase.color);
+        doc.rect(margin, y - 3, 3, 7, 'F');
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...phase.color);
+        doc.text(phase.title.toUpperCase(), margin + 6, y + 1);
+        y += 8;
+
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+        const lines = doc.splitTextToSize(text, contentW - 6);
+        lines.forEach(line => {
+            if (y > PH - 20) { doc.addPage(); y = 20; }
+            doc.text(line, margin + 6, y);
+            y += 5;
+        });
+        y += 6;
+    });
+
+    // ── FOOTER (all pages) ────────────────────────────────────────────────────
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7.5);
+        doc.setTextColor(148, 163, 184);
+        doc.setFont('helvetica', 'normal');
+        doc.line(margin, PH - 12, PW - margin, PH - 12);
+        doc.text('UP Performance Hub  ·  Confidential', margin, PH - 7);
+        doc.text(`Page ${i} of ${totalPages}`, PW - margin, PH - 7, { align: 'right' });
+    }
+
+    // ── DOWNLOAD ──────────────────────────────────────────────────────────────
+    const filename = `Match_Report_${homeName}_vs_${awayName}_${matchDate}.pdf`
+        .replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (window.showGlobalToast) window.showGlobalToast(`PDF Exported: ${filename}`, 'success');
+}
+
+async function exportMatchReportPDF(matchId) {
+    if (!matchId) return;
+    try {
+        const m = await matchManager.getMatch(matchId);
+        if (!m) return;
+        buildMatchPDF(m);
+    } catch (err) {
+        console.error('Match Print Error:', err);
+        if (window.showGlobalToast) window.showGlobalToast('Failed to export PDF', 'error');
+    }
+}
+window.exportMatchReportPDF = exportMatchReportPDF;
+
+// Keep original printReport for squad/player/session assessment modals.
+// These use the browser print window because they contain rich HTML (star ratings,
+// nested cards etc.) that jsPDF cannot render natively. The styling below
+// ensures the printed output is clean and branded.
+window.printReport = function (elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    let title = 'Report';
+    try {
+        const modalHeader = el.closest('.modal-container')?.querySelector('.modal-header-bubble h2');
+        if (modalHeader) {
+            title = modalHeader.textContent.trim();
+        }
+    } catch (e) { /* fallback to default */ }
+
+    const printWindow = window.open('', '_blank', 'height=900,width=900');
+    if (!printWindow) return;
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>UP Performance Hub — ${title}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 40px 48px;
+            color: #1e293b;
+            background: white;
+            line-height: 1.55;
+            font-size: 14px;
+        }
+
+        /* ── BRANDED HEADER ── */
+        .print-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 20px;
+            margin-bottom: 28px;
+            border-bottom: 3px solid #1e3a8a;
+        }
+        .print-header-left h1 {
+            margin: 0 0 4px;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #1e3a8a;
+            letter-spacing: 0.5px;
+        }
+        .print-header-left p {
+            margin: 0;
+            font-size: 0.78rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .print-header-right {
+            text-align: right;
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+        .print-header-right strong {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+
+        /* ── REPORT TITLE ── */
+        .print-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 24px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* ── CONTENT ELEMENTS ── */
+        .dash-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            background: white;
+        }
+        h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin: 24px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            display: inline-block;
+        }
+        h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #0045e6;
+            margin: 16px 0 6px;
+        }
+        p { margin: 0 0 10px; }
+        strong { font-weight: 700; }
+
+        /* ── RATING STARS ── */
+        .fa-star, .far.fa-star, .fas.fa-star {
+            font-size: 1rem;
+        }
+
+        /* ── GRID LAYOUTS ── */
+        [style*="grid"] {
+            display: flex !important;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        [style*="grid"] > * {
+            flex: 1 1 180px;
+            min-width: 0;
+        }
+
+        /* ── FOOTER ── */
+        .print-footer {
+            margin-top: 48px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* ── HIDE INTERACTIVE ELEMENTS ── */
+        button, .btn-close-modal, .modal-footer-bubble { display: none !important; }
+
+        @media print {
+            body { padding: 20px 28px; }
+            .print-header { margin-bottom: 20px; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="print-header">
+        <div class="print-header-left">
+            <h1>UP PERFORMANCE HUB</h1>
+            <p>Intelligence &amp; Scouting — Confidential Report</p>
+        </div>
+        <div class="print-header-right">
+            <strong>Generated</strong>
+            ${new Date().toLocaleString()}
+        </div>
+    </div>
+    <div class="print-title">${title}</div>
+    ${el.innerHTML}
+    <div class="print-footer">
+        <span>UP Performance Hub &copy; ${new Date().getFullYear()}</span>
+        <span>Confidential — Not for Distribution</span>
+    </div>
+</body>
+</html>`);
+
+    printWindow.document.close();
+    setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+    }, 600);
+};
 
 function exportSessionReportPDF() {
     if (!window.jspdf) {
@@ -1163,8 +1565,22 @@ function exportSessionReportPDF() {
 
     // Save
     const filename = `Session_Report_${reportDate.replace(/-/g, '')}.pdf`;
-    doc.save(filename);
-    if (window.showGlobalToast) window.showGlobalToast(`PDF Exported: ${filename}`, 'success');
+
+    try {
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (window.showGlobalToast) window.showGlobalToast(`PDF Exported: ${filename}`, 'success');
+    } catch (err) {
+        console.error('PDF Save failed:', err);
+        if (window.showGlobalToast) window.showGlobalToast('Failed to save PDF', 'error');
+    }
 }
 
 window.exportSessionReportPDF = exportSessionReportPDF;

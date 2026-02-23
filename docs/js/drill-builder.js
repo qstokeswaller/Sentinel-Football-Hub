@@ -259,6 +259,14 @@ function onDown(id, e, canvases) {
     } else if (['rect', 'rect-fill', 'circle', 'circle-fill', 'tri', 'tri-fill', 'zone', 'line', 'arrow', 'dashed', 'dashed-line'].includes(s.tool)) {
         const type = s.tool.replace('-fill', '');
         s.currentPath = { type, x1: x, y1: y, x2: x, y2: y, filled: s.tool.includes('-fill') || s.tool === 'zone', ...common };
+    } else if (s.tool === 'eraser') {
+        const hitIdx = s.paths.findIndex(p => pathHitTest(p, x, y, 10));
+        if (hitIdx >= 0) s.paths.splice(hitIdx, 1);
+        else {
+            const tok = findTok(s, x, y);
+            if (tok) s.tokens = s.tokens.filter(t => t.id !== tok.id);
+        }
+        s.isDrawing = true;
     }
 }
 
@@ -289,6 +297,10 @@ function onMove(id, e, canvases) {
     else if (s.tool === 'eraser') {
         const hitIdx = s.paths.findIndex(p => pathHitTest(p, x, y, 10));
         if (hitIdx >= 0) s.paths.splice(hitIdx, 1);
+        else {
+            const tok = findTok(s, x, y);
+            if (tok) s.tokens = s.tokens.filter(t => t.id !== tok.id);
+        }
     } else { s.currentPath.x2 = x; s.currentPath.y2 = y; }
     drawAll(id, canvases);
 }

@@ -52,90 +52,40 @@ function calculateResult(home, away) {
 
 // Helper to get squad name safely
 function getSquadName(squadId) {
-    if (!window.squadManager) return 'UP-Tuks';
+    if (!window.squadManager) return 'UP Performance';
     const squad = squadManager.getSquad(squadId);
-    return squad ? squad.name : 'UP-Tuks';
+    return squad ? squad.name : 'UP Performance';
+}
+
+function resolveTeamNames(m) {
+    let home = m.homeTeam;
+    let away = m.awayTeam;
+
+    // Fallback for legacy data or missing explicit sides
+    if (!home || !away) {
+        const squadName = getSquadName(m.squadId);
+        // Default to Squad on LEFT unless explicitly marked as 'away'
+        if (m.ourSide === 'away') {
+            home = m.opponent || 'Home Team';
+            away = squadName;
+        } else {
+            home = squadName;
+            away = m.opponent || 'Away Team';
+        }
+    }
+    return { home, away };
 }
 
 function renderHeader(match) {
-    const squadName = getSquadName(match.squadId);
+    const { home: homeName, away: awayName } = resolveTeamNames(match);
 
-    const opponentName = match.opponent || match.awayTeam || 'Opponent';
-
-    // 1. Set the Title Text
+    // 1. Set the Title Text (Optional - can be hidden if bubble is preferred)
     const titleEl = document.getElementById('matchTitle');
     if (titleEl) {
-        titleEl.innerText = `${squadName} vs ${opponentName}`;
+        titleEl.innerText = `${homeName} vs ${awayName}`;
         titleEl.style.display = 'block';
         titleEl.style.fontSize = '0.9rem';
         titleEl.style.color = 'var(--text-medium)';
-    }
-
-    // 2. Render the Bubble via match-ui.js logic
-    const scoreContainer = document.getElementById('scoreline-container');
-    if (scoreContainer) {
-        // Determine if match is played based on score existence (robust fallback)
-        const isPlayed = (match.homeScore !== undefined && match.homeScore !== null && match.homeScore !== '');
-
-        let centerContent = '';
-
-        if (isPlayed) {
-            const homeScore = parseInt(match.homeScore, 10);
-            const awayScore = parseInt(match.awayScore, 10);
-            const result = calculateResult(homeScore, awayScore);
-            // Colors from match-ui.js
-            const resultColor = result === 'Win' ? '#166534' : (result === 'Loss' ? '#991b1b' : '#475569');
-            const resultBg = result === 'Win' ? '#dcfce7' : (result === 'Loss' ? '#fee2e2' : '#f1f5f9');
-
-            centerContent = `
-                <div style="
-                    background: ${resultBg}; 
-                    color: ${resultColor}; 
-                    padding: 4px 12px; 
-                    border-radius: 6px; 
-                    font-weight: 800; 
-                    font-size: 1.1rem; 
-                    min-width: 60px; 
-                    text-align: center;
-                    letter-spacing: 1px;
-                ">
-                    ${homeScore} - ${awayScore}
-                </div>
-            `;
-        } else {
-            // Future / No Result
-            centerContent = `
-                <div style="
-                    color: var(--text-medium); 
-                    padding: 0px 8px; 
-                    font-size: 0.9rem; 
-                    font-weight: 700;
-                ">
-                    VS
-                </div>
-            `;
-        }
-
-        scoreContainer.innerHTML = `
-            <div class="scoreline-bubble" style="
-                background: white; 
-                padding: 8px 20px; 
-                border-radius: 9999px; 
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
-                display: flex; 
-                align-items: center; 
-                gap: 16px; 
-                border: 1px solid var(--border-light);
-                font-family: 'Inter', sans-serif;
-            ">
-                <span style="font-weight: 700; color: var(--navy-dark); font-size: 1.05rem;">${squadName}</span>
-                ${centerContent}
-                <span style="font-weight: 700; color: var(--text-medium); font-size: 1.05rem;">${opponentName}</span>
-            </div>
-            <div style="font-size: 0.85rem; color: var(--text-medium); font-weight: 600; margin-left: 16px; margin-top: 2px;">
-                ${match.date || ''}
-            </div>
-        `;
     }
 }
 

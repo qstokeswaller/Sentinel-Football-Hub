@@ -7,27 +7,33 @@
     const PROD_API_URL = `http://${AWS_STATIC_IP}:3001/api`;
     // -------------------------------------
 
+    // --- OLD FALLBACK (same-origin relative path) ---
+    // const PROD_API_URL = '/api';
+    // ------------------------------------------------
+
     const currentHost = window.location.hostname;
     const currentPort = window.location.port;
 
-    // Default configuration: 
-    // If we are running ON the server (IP or Domain), relative /api is safest.
-    window.API_BASE_URL = '/api';
+    // Default configuration (Same-origin API)
+    window.API_BASE_URL = PROD_API_URL;
     window.USE_LOCAL_STORAGE = false;
 
-    // Detection logic
+    // Detection for Local Development (Node.js backend)
     const isLocalBackend = currentHost === 'localhost' || currentHost === '127.0.0.1';
+
+    // Detection for Static Hosting (GitHub Pages / port 5500 / file://)
     const isGitHubPages = currentHost.includes('github.io');
     const isStaticMode = currentPort === '5500' || currentPort === '8080' || window.location.protocol === 'file:';
 
     if (isGitHubPages || isStaticMode) {
-        console.log('Environment: Local/Static Mode. Connecting to AWS Live Database.');
-        window.API_BASE_URL = PROD_API_URL;
-    } else if (isLocalBackend && currentPort !== '3001') {
-        console.log('Environment: Local Dev (Port Mismatch). Connecting to local 3001.');
+        console.log('Environment: Static/Demo Mode detected. FORCING API for live testing.');
         window.API_BASE_URL = 'http://localhost:3001/api';
-    } else {
-        console.log('Environment: Live production (Same-origin). Using relative /api.');
+        window.USE_LOCAL_STORAGE = false; // Forced off as per user request
+    } else if (isLocalBackend && currentPort !== '3001') {
+        // If frontend is on 5500/8080 but wants to talk to local backend on 3001
+        // We typically handle this by manually setting isStaticMode above,
+        // but for a smooth 'npm start' experience on localhost:3001, we use relative /api.
+        window.API_BASE_URL = 'http://localhost:3001/api';
     }
 
     console.log('Final API Config:', {

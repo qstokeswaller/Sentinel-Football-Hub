@@ -261,3 +261,141 @@ function calculateAndRenderAnalytics() {
         tableBody.appendChild(tr);
     });
 }
+
+window.exportAnalyticsReport = function () {
+    if (!window.jspdf) {
+        if (window.showGlobalToast) window.showGlobalToast('PDF library not loaded', 'error');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+
+    // Collect stats from the UI
+    const goalsScored = document.getElementById('statGoalsScored').innerText;
+    const goalsScoredAvg = document.getElementById('statGoalsScoredAvg').innerText;
+    const goalsConceded = document.getElementById('statGoalsConceded').innerText;
+    const goalsConcededAvg = document.getElementById('statGoalsConcededAvg').innerText;
+    const avgPossession = document.getElementById('statAvgPossession').innerText;
+    const xgDiff = document.getElementById('statXgDiff').innerText;
+    const xgDetails = document.getElementById('statXgDetails').innerText;
+    const winRate = document.getElementById('formWinRate').innerText;
+
+    const ageFilter = document.getElementById('filterAgeGroup').value;
+    const coachFilter = document.getElementById('filterCoach').value;
+    const teamName = document.getElementById('filterTeam').options[document.getElementById('filterTeam').selectedIndex].text;
+
+    const doc = new jsPDF();
+    const PW = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const contentW = PW - (margin * 2);
+
+    // Header
+    doc.setFillColor(30, 58, 138); // Navy
+    doc.rect(0, 0, PW, 40, 'F');
+    doc.setTextColor(255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PERFORMANCE ANALYTICS REPORT', margin, 25);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`UP PERFORMANCE HUB · ${teamName}`, margin, 33);
+
+    let y = 55;
+
+    // Overview Section
+    doc.setTextColor(30, 58, 138);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(teamName, margin, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Age Group: ${ageFilter === 'all' ? 'All' : ageFilter} | Coach: ${coachFilter === 'all' ? 'All' : coachFilter} | ${winRate}`, margin, y);
+    y += 15;
+
+    // Stat Cards (Simulated)
+    const drawStatBox = (label, value, subtext, x, y, w) => {
+        doc.setFillColor(241, 245, 249);
+        doc.roundedRect(x, y, w, 30, 3, 3, 'F');
+        doc.setTextColor(100);
+        doc.setFontSize(8);
+        doc.text(label.toUpperCase(), x + 5, y + 8);
+        doc.setTextColor(30, 58, 138);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(value, x + 5, y + 18);
+        doc.setTextColor(150);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(subtext, x + 5, y + 26);
+    };
+
+    drawStatBox('Goals Scored', goalsScored, goalsScoredAvg, margin, y, (contentW / 2) - 5);
+    drawStatBox('Goals Conceded', goalsConceded, goalsConcededAvg, margin + (contentW / 2) + 5, y, (contentW / 2) - 5);
+    y += 35;
+    drawStatBox('Avg Possession', avgPossession, 'Team Average', margin, y, (contentW / 2) - 5);
+    drawStatBox('xG Difference', xgDiff, xgDetails, margin + (contentW / 2) + 5, y, (contentW / 2) - 5);
+    y += 45;
+
+    // Match History Section
+    doc.setFontSize(14);
+    doc.setTextColor(30, 58, 138);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MATCH HISTORY SUMMARY', margin, y);
+    y += 10;
+
+    // Table Header
+    doc.setFillColor(30, 58, 138);
+    doc.rect(margin, y, contentW, 8, 'F');
+    doc.setTextColor(255);
+    doc.setFontSize(8);
+    doc.text('DATE', margin + 2, y + 5);
+    doc.text('OPPONENT', margin + 40, y + 5);
+    doc.text('RES', margin + 110, y + 5);
+    doc.text('SCORE', margin + 130, y + 5);
+    y += 12;
+
+    // Rows from UI
+    const rows = document.querySelectorAll('#formHistoryTableBody tr');
+    rows.forEach(tr => {
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        const tds = tr.querySelectorAll('td');
+        if (tds.length < 5) return;
+
+        doc.setTextColor(40);
+        doc.setFont('helvetica', 'normal');
+        doc.text(tds[0].innerText, margin + 2, y);
+        doc.text(tds[2].innerText, margin + 40, y);
+        doc.text(tds[3].innerText, margin + 110, y);
+        doc.text(tds[4].innerText, margin + 130, y);
+
+        y += 8;
+        doc.setDrawColor(241, 245, 249);
+        doc.line(margin, y - 2, PW - margin, y - 2);
+    });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Generated on ${new Date().toLocaleString()} | UP Performance Hub`, PW / 2, 285, { align: 'center' });
+
+    const filename = `Performance_Analytics_${teamName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    try {
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (window.showGlobalToast) window.showGlobalToast(`PDF Exported: ${filename}`, 'success');
+    } catch (err) {
+        console.error('PDF Save failed:', err);
+    }
+}

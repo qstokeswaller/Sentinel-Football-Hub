@@ -364,15 +364,15 @@ async function saveSession() {
   });
 
   const session = {
-    id, title, date, startTime, venue, duration, playersCount, abilityLevel, equipment, purpose, author, team,
+    title, date, startTime, venue, duration, playersCount, abilityLevel, equipment, purpose, author, team,
     notes: '',
     createdAt: new Date().toISOString(),
     drills
   };
 
   try {
-    const method = currentSessionId ? 'PATCH' : 'POST';
-    const url = currentSessionId ? `${window.API_BASE_URL}/sessions/${id}` : `${window.API_BASE_URL}/sessions`;
+    const method = currentSessionId ? 'PUT' : 'POST';
+    const url = currentSessionId ? `${window.API_BASE_URL}/sessions/${currentSessionId}` : `${window.API_BASE_URL}/sessions`;
 
     const res = await fetch(url, {
       method: method,
@@ -381,7 +381,10 @@ async function saveSession() {
     });
 
     if (res.ok) {
-      currentSessionId = id;
+      const result = await res.json();
+      // If it was a new session, the API might have assigned an ID if we didn't provide a unique one.
+      // But here we are sending our generated ID. Let's ensure we use what the server returns.
+      currentSessionId = result.id || id;
       showToast('Session & Drills saved to Library ✓', 'success');
       localStorage.removeItem('up_planner_autosave'); // Clear autosave on manual save
     } else {
@@ -536,15 +539,15 @@ async function listSessions() {
       return;
     }
 
-    body.innerHTML = sessions.sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0)).map(s => {
+    body.innerHTML = sessions.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0)).map(s => {
       const date = s.date ? new Date(s.date).toLocaleDateString() : 'No date';
-      const count = (s.drills || []).length || 0; // The API listing might not have drills populated, but that's fine
+      const count = (s.drills || []).length || 0;
       return `
         <div class="session-list-item" onclick="loadSession('${s.id}')">
           <div class="session-list-title">${s.title || 'Untitled Session'}</div>
           <div class="session-list-meta">
             <span><i class="fas fa-calendar-alt"></i> ${date}</span>
-            <span><i class="fas fa-layer-group"></i> ${s.blocks ? s.blocks.length : '—'} blocks</span>
+            <span><i class="fas fa-layer-group"></i> ${count} drills</span>
             ${s.author ? `<span><i class="fas fa-user"></i> ${s.author}</span>` : ''}
           </div>
         </div>
@@ -593,19 +596,7 @@ async function loadSession(id) {
     drillCounter = 0;
 
     // Load Items (drills/sections)
-    // The API might return 'drills' array (old schema?) or we rely on logic. 
-    // Wait, the API returns what exactly? GET /sessions/:id returns session object with drills/sections embedded?
-    // Let's assume session.drills 
-
-    // Note: session.drills array from API
-    // We need to reconstruct blocks
     const items = session.drills || [];
-
-    // However, drills previously didn't store "sections".
-    // If we only saved drills, we only get drills.
-    // If we want sections, we'd need a more complex schema. 
-    // Current saveSession maps *drills* and saves them.
-    // So we only support drills for now.
 
     if (items.length === 0) {
       addBlock('drill');
@@ -614,15 +605,14 @@ async function loadSession(id) {
     }
 
     for (const item of items) {
-      const type = 'drill'; // We only save drills currently
+      const type = item.type || 'drill'; // Support sections if added later
       const id = addBlock(type);
 
-      // Populate drill data
+      // Populate data
       const el = document.getElementById(id);
       if (el) {
         el.querySelector('.block-title-input').value = item.title || '';
-        const textId = 'rte-' + id;
-        const rte = document.getElementById(textId);
+        const rte = document.getElementById('rte-' + id);
         if (rte) rte.innerHTML = item.description || '';
       }
 
@@ -638,22 +628,25 @@ async function loadSession(id) {
           } else {
             s.width = 860; s.height = 460;
           }
-          // Update UI
+
           const btn = document.getElementById(`btn-orient-${id}`);
           if (btn) {
-            if (s.orientation === 'portrait') { btn.classList.add('active'); btn.innerHTML = `<i class="fas fa-arrows-alt-v"></i> Portrait`; }
-            else { btn.classList.remove('active'); btn.innerHTML = `<i class="fas fa-arrows-alt-h"></i> Landscape`; }
+            if (s.orientation === 'portrait') {
+              btn.classList.add('active');
+              btn.innerHTML = `<i class="fas fa-arrows-alt-v"></i> Portrait`;
+            } else {
+              btn.classList.remove('active');
+              btn.innerHTML = `<i class="fas fa-arrows-alt-h"></i> Landscape`;
+            }
           }
 
           setPT(id, s.pitchType, canvases);
 
-          // Restore Tokens & Paths
           let data = item.drawingData;
           if (typeof data === 'string') {
             try { data = JSON.parse(data); } catch (e) { }
           }
 
-          // Handle Format: Array (tokens) vs Object {tokens, paths}
           if (Array.isArray(data)) {
             s.tokens = data;
             s.paths = [];

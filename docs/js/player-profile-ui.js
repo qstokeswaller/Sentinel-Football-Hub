@@ -212,7 +212,7 @@ window.deleteDevStructure = async (id) => {
 
 window.viewDevStructureDetails = async (id) => {
     const records = await squadManager.getDevStructures(currentPlayerId);
-    const rec = records.find(r => r.id === id);
+    const rec = records.find(r => r.id == id);
     if (!rec) return;
 
     const s = rec.structures;
@@ -243,7 +243,7 @@ window.viewDevStructureDetails = async (id) => {
                 <div class="modal-footer-bubble">
                     <button class="dash-btn outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
                     <button class="dash-btn primary" onclick="printDevAssessment()">
-                        <i class="fas fa-print"></i> Print Report
+                        <i class="fas fa-file-download"></i> Download PDF
                     </button>
                 </div>
             </div>
@@ -252,26 +252,131 @@ window.viewDevStructureDetails = async (id) => {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 };
 
-window.printDevAssessment = () => {
-    const printContent = document.getElementById('print-area-dev').innerHTML;
-    const originalContent = document.body.innerHTML;
+window.printDevAssessment = (elementId) => {
+    if (!window.jspdf) {
+        if (window.showGlobalToast) window.showGlobalToast('PDF library not loaded', 'error');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const element = document.getElementById(elementId || 'print-area-dev');
+    if (!element) return;
 
-    // Simple print approach
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write('<html><head><title>Print Assessment</title>');
-    printWindow.document.write('<link rel="stylesheet" href="css/style.css">');
-    printWindow.document.write('<style>body{padding:40px;} .dash-card{border:1px solid #ddd; padding:15px; margin-bottom:15px;}</style>');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(printContent);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+    const doc = new jsPDF();
+    const margin = 20;
+    const PW = doc.internal.pageSize.getWidth();
+    const contentW = PW - (margin * 2);
+
+    // Branded Header
+    doc.setFillColor(30, 58, 138); // Navy
+    doc.rect(0, 0, PW, 40, 'F');
+    doc.setTextColor(255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PLAYER PROFILE REPORT', margin, 25);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`UP PERFORMANCE HUB · ${currentPlayer?.name || 'Player Report'}`, margin, 33);
+
+    let y = 55;
+
+    // Player Header in PDF
+    doc.setTextColor(30, 58, 138);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(currentPlayer?.name || 'Player Name', margin, y);
+    y += 7;
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Position: ${currentPlayer?.position || 'N/A'} | Squad: ${document.getElementById('profSquad')?.textContent || 'N/A'}`, margin, y);
+    y += 15;
+
+    // Determine if we are printing Dev Structures (cards) or Performance Report (bubble groups)
+    const cards = element.querySelectorAll('.dash-card');
+    const bubbleGroups = element.querySelectorAll('.form-group-bubble');
+
+    if (cards.length > 0) {
+        // Dev Structures specialized logic
+        cards.forEach(card => {
+            const title = card.querySelector('h4')?.innerText || '';
+            const bodyText = card.querySelector('div')?.innerText || '';
+
+            if (y > 250) {
+                doc.addPage();
+                y = 20;
+            }
+
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 138);
+            doc.setFont('helvetica', 'bold');
+            doc.text(title.toUpperCase(), margin, y);
+            y += 6;
+
+            doc.setFontSize(10);
+            doc.setTextColor(60);
+            doc.setFont('helvetica', 'normal');
+            const splitText = doc.splitTextToSize(bodyText, contentW);
+            doc.text(splitText, margin, y);
+            y += (splitText.length * 5) + 12;
+        });
+    } else if (bubbleGroups.length > 0) {
+        // Performance Report specialized logic
+        bubbleGroups.forEach(group => {
+            const label = group.querySelector('label')?.innerText || '';
+            const content = group.querySelector('div')?.innerText || '';
+
+            if (!label || !content) return;
+
+            if (y > 250) {
+                doc.addPage();
+                y = 20;
+            }
+
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 138);
+            doc.setFont('helvetica', 'bold');
+            doc.text(label.toUpperCase(), margin, y);
+            y += 6;
+
+            doc.setFontSize(10);
+            doc.setTextColor(60);
+            doc.setFont('helvetica', 'normal');
+
+            // For ratings, we might want to represent stars as text for now
+            // or just the text if it's qualitative feedback
+            const splitText = doc.splitTextToSize(content.trim(), contentW);
+            doc.text(splitText, margin, y);
+            y += (splitText.length * 5) + 12;
+        });
+    }
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Generated on ${new Date().toLocaleString()} | UP Performance Hub`, PW / 2, 285, { align: 'center' });
+
+    const filename = `Player_Report_${currentPlayer?.name || 'Report'}_${new Date().toISOString().split('T')[0]}.pdf`.replace(/\s+/g, '_');
+
+    try {
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (window.showGlobalToast) window.showGlobalToast(`PDF Exported: ${filename}`, 'success');
+    } catch (err) {
+        console.error('PDF Save failed:', err);
+    }
 };
 
 // Global export for internal loading
 window.loadOverviewFromHistory = async (id) => {
     const records = await squadManager.getDevStructures(currentPlayerId);
-    const fullRecord = records.find(r => r.id === id);
+    const fullRecord = records.find(r => r.id == id);
     if (!fullRecord) return;
 
     const s = fullRecord.structures;
@@ -383,11 +488,17 @@ function setupAssessmentForm() {
     }
 
     // Modal Close Logic
-    const closeBtns = document.querySelectorAll('.btn-close-modal');
+    const closeBtns = document.querySelectorAll('.btn-close-modal, [data-close-modal]');
     closeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
             const modals = document.querySelectorAll('.modal-overlay');
             modals.forEach(m => m.classList.remove('active'));
+            // If the element was dynamically added (bubble modal), also remove it
+            const bubbleModal = btn.closest('.modal-overlay');
+            if (bubbleModal && bubbleModal.hasAttribute('id') === false) {
+                bubbleModal.remove();
+            }
         });
     });
 
@@ -420,7 +531,7 @@ async function saveAssessment() {
         id: editingAssessmentId,
         playerId: currentPlayerId,
         date: document.getElementById('assessDate').value,
-        evaluator: document.getElementById('assessEvaluator').value || 'System',
+        author: document.getElementById('assessEvaluator').value || 'System',
         team: document.getElementById('assessTeam').value,
         matchId: document.getElementById('assessMatch').value,
         ratings: {
@@ -515,7 +626,7 @@ async function renderAssessmentHistory() {
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <h4 style="margin: 0 0 4px 0; color: var(--navy-dark); font-size: 1.05rem;">${title}</h4>
-                    <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i> ${d} &nbsp; | &nbsp; <i class="far fa-user" style="margin-right: 4px;"></i> Evaluator: ${record.evaluator}</span>
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i> ${d} &nbsp; | &nbsp; <i class="far fa-user" style="margin-right: 4px;"></i> Evaluator: ${record.author || record.evaluator || 'Unknown'}</span>
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="dash-btn outline sm" onclick="viewAssessmentDetails('${record.id}')">
@@ -542,12 +653,13 @@ window.deleteAssessment = async (id) => {
 
 window.loadAssessmentForEdit = async (id) => {
     const historyData = await squadManager.getAssessments(currentPlayerId);
-    const rec = historyData.find(r => r.id === id);
-    if (!rec) return;
+    const record = historyData.find(r => String(r.id) === String(id));
+    if (!record) {
+        console.error('Assessment not found for ID:', id);
+        return;
+    }
 
     // Populate metadata
-    document.getElementById('assessDate').value = rec.date;
-    document.getElementById('assessEvaluator').value = rec.evaluator || '';
     document.getElementById('assessTeam').value = rec.team || '';
     document.getElementById('assessMatch').value = rec.matchId || '';
     editingAssessmentId = rec.id;
@@ -610,13 +722,14 @@ window.loadAssessmentForEdit = async (id) => {
     }
 };
 
-async function viewAssessmentDetails(assessId) {
+window.viewAssessmentDetails = async (assessId) => {
     const historyData = await squadManager.getAssessments(currentPlayerId);
-    const record = historyData.find(r => r.id === assessId);
+    const record = historyData.find(r => r.id == assessId);
     if (!record) return;
 
     // Set Header
-    document.getElementById('viewAssessMeta').textContent = `Date: ${new Date(record.date).toLocaleDateString()} | Evaluator: ${record.evaluator} | Team: ${record.team || 'N/A'}`;
+    const evaluatorName = record.author || record.evaluator || 'Unknown';
+    document.getElementById('viewAssessMeta').textContent = `Date: ${new Date(record.date).toLocaleDateString()} | Evaluator: ${evaluatorName} | Team: ${record.team || 'N/A'}`;
     if (record.match) {
         document.getElementById('viewAssessTitle').textContent = `Match Report: ${record.match}`;
     } else {
@@ -765,23 +878,6 @@ async function saveProfileInfo() {
     }
 }
 
-window.loadAssessmentForEdit = async (id) => {
-    const historyData = await squadManager.getAssessments(currentPlayerId);
-    const rec = historyData.find(r => r.id === id);
-    if (!rec) {
-        if (window.showGlobalToast) window.showGlobalToast('Assessment not found.', 'error');
-        return;
-    }
 
-    // Store the ID for upsert on save
-    window._editingAssessmentId = id;
-    window._editingAssessmentCreatedAt = rec.createdAt;
 
-    // Open the assessment details modal instead of trying to navigate to a form tab
-    if (typeof viewAssessmentDetails === 'function') {
-        viewAssessmentDetails(id);
-    }
-
-    if (window.showGlobalToast) window.showGlobalToast('Assessment opened for viewing. Use the full profile Assessment tab to create edits.', 'info');
-};
 

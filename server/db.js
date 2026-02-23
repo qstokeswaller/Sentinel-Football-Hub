@@ -1,13 +1,15 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
-const fs = require('fs');
 
-const DATA_DIR = path.join(__dirname, '../data');
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+const DB_PATH = path.join(__dirname, '../data/data.db');
+
+// Ensure data directory exists
+const fs = require('fs');
+const dir = path.dirname(DB_PATH);
+if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
 }
 
-const DB_PATH = path.join(DATA_DIR, 'data.db');
 const db = new sqlite3.Database(DB_PATH);
 
 db.serialize(() => {
@@ -169,7 +171,8 @@ db.serialize(() => {
 
     addColumnIfNotExists('sessions', 'author', 'TEXT');
     addColumnIfNotExists('sessions', 'team', 'TEXT');
-    addColumnIfNotExists('drills', 'image', 'TEXT');
+    addColumnIfNotExists('drills', 'orderIndex', 'INTEGER');
+    addColumnIfNotExists('drills', 'orientation', 'TEXT');
     addColumnIfNotExists('drills', 'category', 'TEXT');
     addColumnIfNotExists('drills', 'author', 'TEXT');
     addColumnIfNotExists('drills', 'team', 'TEXT');
@@ -182,6 +185,44 @@ db.serialize(() => {
     addColumnIfNotExists('matches', 'homeTeam', 'TEXT');
     addColumnIfNotExists('matches', 'awayTeam', 'TEXT');
     addColumnIfNotExists('matches', 'ourSide', 'TEXT');
+    addColumnIfNotExists('matches', 'result', 'TEXT');
+    addColumnIfNotExists('matches', 'notes', 'TEXT');
+
+    // Data Backfill for Legacy Matches
+    db.all(`SELECT id, squadId, homeTeam, awayTeam, ourSide FROM matches 
+            WHERE homeTeam IS NULL OR awayTeam IS NULL OR ourSide IS NULL`, (err, rows) => {
+        if (err) {
+            console.error('Error fetching matches for backfill:', err);
+            return;
+        }
+
+        if (rows && rows.length > 0) {
+            console.log(`Starting backfill for ${rows.length} matches...`);
+            // We need squad names to backfill. Fetch all squads.
+            db.all(`SELECT id, name FROM squads`, (sErr, squads) => {
+                if (sErr) {
+                    console.error('Error fetching squads for backfill:', sErr);
+                    return;
+                }
+
+                const squadMap = {};
+                squads.forEach(s => squadMap[s.id] = s.name);
+
+                rows.forEach(m => {
+                    const squadName = squadMap[m.squadId] || 'UP Performance';
+                    const home = m.homeTeam || squadName;
+                    const away = m.awayTeam || (m.opponent || 'Opponent');
+                    const side = m.ourSide || 'home';
+
+                    db.run(`UPDATE matches SET homeTeam = ?, awayTeam = ?, ourSide = ? WHERE id = ?`,
+                        [home, away, side, m.id], (upErr) => {
+                            if (upErr) console.error(`Error backfilling match ${m.id}:`, upErr);
+                        });
+                });
+                console.log('Backfill process initiated.');
+            });
+        }
+    });
 
     console.log('Database initialized successfully.');
 });

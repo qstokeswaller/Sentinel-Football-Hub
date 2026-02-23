@@ -67,9 +67,14 @@ class MatchManager {
         const match = this.matches.find(m => m.id === id);
         if (match) {
             // Merge existing stats with new stats
-            const updatedStats = { ...match.stats, ...stats };
-            if (stats.home) updatedStats.home = { ...(match.stats.home || {}), ...stats.home };
-            if (stats.away) updatedStats.away = { ...(match.stats.away || {}), ...stats.away };
+            const updatedStats = { ...(match.stats || {}), ...stats };
+            if (stats.home) updatedStats.home = { ...(match.stats?.home || {}), ...stats.home };
+            if (stats.away) updatedStats.away = { ...(match.stats?.away || {}), ...stats.away };
+
+            console.log(`MatchManager: Updating stats for ${id}`, {
+                newStatsKeys: Object.keys(stats),
+                mergedStatsKeys: Object.keys(updatedStats)
+            });
 
             if (window.USE_LOCAL_STORAGE) {
                 match.stats = updatedStats;

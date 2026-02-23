@@ -1727,3 +1727,46 @@ body {
 .bubble-team-default {
   background: #64748b;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════════════════ */
+@media print {
+  .sidebar,
+  .sidebar-footer,
+  .sidebar-nav,
+  .header-actions,
+  .dash-btn,
+  .page-header,
+  .edit-mode-container,
+  #toggleSidebar,
+  aside,
+  .app-container > aside {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-container {
+    display: block !important;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  .section-card {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  #matchHero {
+    border-radius: 0 !important;
+    margin-bottom: 20px !important;
+  }
+}

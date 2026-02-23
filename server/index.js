@@ -96,10 +96,22 @@ app.get('/api/players/:id/assessments', (req, res) => {
     const { id } = req.params;
     db.all('SELECT * FROM assessments WHERE playerId = ? ORDER BY date DESC', [id], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        const parsed = rows.map(r => ({
-            ...r,
-            ratings: JSON.parse(r.ratings || '{}')
-        }));
+        const parsed = rows.map(r => {
+            let feedback = { strength: 'None', comments: 'No feedback provided' };
+            try {
+                if (r.notes && r.notes.startsWith('{')) {
+                    feedback = JSON.parse(r.notes);
+                }
+            } catch (e) {
+                console.warn(`Failed to parse feedback for assessment ${r.id}`);
+            }
+            return {
+                ...r,
+                ratings: JSON.parse(r.ratings || '{}'),
+                evaluator: r.author,
+                feedback: feedback
+            };
+        });
         res.json(parsed);
     });
 });
@@ -140,15 +152,25 @@ app.get('/api/dev-structures/:id', (req, res) => {
 });
 
 app.get('/api/assessments/:id', (req, res) => {
-
     const { id } = req.params;
     db.get('SELECT * FROM assessments WHERE id = ?', [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: 'Assessment not found' });
+
+        let feedback = { strength: 'None', comments: 'No feedback provided' };
+        try {
+            if (row.notes && row.notes.startsWith('{')) {
+                feedback = JSON.parse(row.notes);
+            }
+        } catch (e) {
+            console.warn(`Failed to parse feedback for assessment ${row.id}`);
+        }
+
         res.json({
             ...row,
             ratings: JSON.parse(row.ratings || '{}'),
-            feedback: JSON.parse(row.feedback || '{}')
+            feedback: feedback,
+            evaluator: row.author
         });
     });
 });
@@ -244,13 +266,30 @@ app.get('/api/matches', (req, res) => {
     });
 });
 
-app.post('/api/matches', (req, res) => {
-    const { id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, stats, videos, links } = req.body;
-    const sql = `INSERT INTO matches (id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, stats, videos, links) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [id, date, time, venue, opponent, competition, isPast ? 1 : 0, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, JSON.stringify(stats), JSON.stringify(videos), JSON.stringify(links)], function (err) {
+app.get('/api/matches/:id', (req, res) => {
+    const { id } = req.params;
+    db.get('SELECT * FROM matches WHERE id = ?', [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, stats, videos, links });
+        if (!row) return res.status(404).json({ error: 'Match not found' });
+
+        const parsed = {
+            ...row,
+            stats: JSON.parse(row.stats || '{}'),
+            videos: JSON.parse(row.videos || '[]'),
+            links: JSON.parse(row.links || '[]'),
+            isPast: !!row.isPast
+        };
+        res.json(parsed);
+    });
+});
+
+app.post('/api/matches', (req, res) => {
+    const { id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links } = req.body;
+    const sql = `INSERT INTO matches (id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.run(sql, [id, date, time, venue, opponent, competition, isPast ? 1 : 0, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, JSON.stringify(stats), JSON.stringify(videos), JSON.stringify(links)], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links });
     });
 });
 
@@ -260,6 +299,12 @@ app.patch('/api/matches/:id', (req, res) => {
     const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
     const values = Object.values(updates).map(v => (typeof v === 'object' ? JSON.stringify(v) : v));
     const sql = `UPDATE matches SET ${fields} WHERE id = ?`;
+
+    console.log(`Backend: Updating match ${id}`, {
+        fields: Object.keys(updates),
+        statsKeys: updates.stats ? Object.keys(updates.stats) : 'N/A'
+    });
+
     db.run(sql, [...values, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ updated: this.changes });
@@ -512,6 +557,21 @@ app.get('/api/reports', (req, res) => {
     });
 });
 
+// GET single report by ID — required by the Reports Hub "view details" modal
+app.get('/api/reports/:id', (req, res) => {
+    const { id } = req.params;
+    db.get('SELECT * FROM reports WHERE id = ?', [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: 'Report not found' });
+        res.json({
+            ...row,
+            drillNotes: JSON.parse(row.drillNotes || '{}'),
+            trainingLoad: JSON.parse(row.trainingLoad || '{}'),
+            attachments: JSON.parse(row.attachments || '[]')
+        });
+    });
+});
+
 app.post('/api/reports', (req, res) => {
     const { id, sessionId, date, attendanceCount, attendanceTotal, notes, drillNotes, trainingLoad, intensity, focus, rating, attachments, createdAt } = req.body;
 
@@ -567,8 +627,23 @@ app.delete('/api/drills/:id', (req, res) => {
     });
 });
 
+
+// Explicitly serve index.html for the root route
+app.get('/', (req, res) => {
+    const docsPath = path.resolve(__dirname, '..', 'docs');
+    res.sendFile('index.html', { root: docsPath }, (err) => {
+        if (err) {
+            console.error('Error sending index.html:', err);
+            if (!res.headersSent) {
+                res.status(err.status || 500).send('Error loading index page');
+            }
+        }
+    });
+});
+
 // Serve static files from the docs directory with caching strictly disabled for development
-app.use(express.static(path.join(__dirname, '../docs'), {
+const docsPath = path.resolve(__dirname, '..', 'docs');
+app.use(express.static(docsPath, {
     etag: false,
     setHeaders: (res, path) => {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
@@ -576,11 +651,6 @@ app.use(express.static(path.join(__dirname, '../docs'), {
         res.setHeader('Expires', '0');
     }
 }));
-
-// Explicitly serve index.html for the root route
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../docs/index.html'));
-});
 
 const server = app.listen(port, () => {
     console.log(`Backend server running at http://localhost:${port}`);

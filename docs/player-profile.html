@@ -14,6 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="js/api-config.js"></script>
     <style>
         /* Custom Scrollbar */
@@ -838,10 +839,11 @@
                             style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);"></p>
                     </div>
                 </div>
-                <button class="btn-close-modal"><i class="fas fa-times"></i></button>
+                <button class="btn-close-modal" onclick="this.closest('.modal-overlay').classList.remove('active')"><i
+                        class="fas fa-times"></i></button>
             </div>
 
-            <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+            <div class="modal-body-bubble" id="print-area-performance" style="max-height: 70vh; overflow-y: auto;">
                 <div id="viewAssessRatings" class="bubble-grid-2">
                     <!-- Dynamic Rating Sections -->
                 </div>
@@ -856,8 +858,10 @@
             </div>
 
             <div class="modal-footer-bubble">
-                <button class="dash-btn outline btn-close-modal">Close Report</button>
-                <button class="dash-btn primary" onclick="window.print()"><i class="fas fa-print"></i> Print
+                <button class="dash-btn outline btn-close-modal"
+                    onclick="this.closest('.modal-overlay').classList.remove('active')">Close Report</button>
+                <button class="dash-btn primary" onclick="printDevAssessment('print-area-performance')"><i
+                        class="fas fa-print"></i> Print
                     PDF</button>
             </div>
         </div>

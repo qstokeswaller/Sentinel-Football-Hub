@@ -48,19 +48,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Initialize Manager
+    // Initialize Managers
     try {
-        await matchManager.init();
-        const match = await matchManager.getMatch(matchId);
+        await Promise.all([
+            matchManager.init(),
+            squadManager.init()
+        ]);
 
+        const match = await matchManager.getMatch(matchId);
         if (!match) {
-            console.error('Match not found');
+            console.error('Match not found after init for id:', matchId);
+            const mainContent = document.querySelector('.main-content');
+            if (mainContent) mainContent.innerHTML = '<div style="text-align:center;padding:80px 20px;color:var(--text-secondary);"><i class="fas fa-exclamation-triangle" style="font-size:2rem;margin-bottom:16px;display:block;color:#ef4444;"></i><p style="font-size:1.1rem;margin-bottom:16px;">Match not found. It may have been deleted.</p><a href="matches.html" class="dash-btn primary">Back to Matches</a></div>';
             return;
         }
-
+        window._matchData = match; // Store globally for downloadReportPDF
         renderMatchInfo(match);
         renderStatsDisplay(match.stats || {});
-        renderReportDisplay(match.stats || {});
+        renderReportDisplay(match.stats || {}, match);
         fillEditForm(match);
 
         // 3. Handle Auto-Download (Print from Match Reports hub)
@@ -95,14 +100,21 @@ function resolveTeamNames(m) {
     let home = m.homeTeam;
     let away = m.awayTeam;
 
+    // Helper to get squad name
+    const getSquadName = (sid) => {
+        const squad = squadManager.getSquad(sid);
+        return squad ? squad.name : 'UP Performance';
+    };
+
     // Fallback for legacy data or missing explicit sides
     if (!home || !away) {
+        const squadName = getSquadName(m.squadId);
         // Default to Squad on LEFT unless explicitly marked as 'away'
         if (m.ourSide === 'away') {
             home = m.opponent || 'Home Team';
-            away = 'UP - Tuks'; // Default squad fallback
+            away = squadName;
         } else {
-            home = 'UP - Tuks'; // Default squad fallback
+            home = squadName;
             away = m.opponent || 'Away Team';
         }
     }
@@ -115,14 +127,26 @@ function renderMatchInfo(match) {
     const awayScore = match.awayScore !== undefined ? match.awayScore : 0;
 
     document.title = `${homeName} vs ${awayName} | UP Performance`;
-    document.getElementById('matchOpponent').textContent = `${homeName} vs ${awayName}`;
-    document.getElementById('matchScore').textContent = `${homeScore} - ${awayScore}`;
-    document.getElementById('matchMeta').textContent = `${match.date || 'TBD'} • ${match.venue || 'Tuks Stadium'}`;
-    document.getElementById('matchComp').textContent = match.competition || 'Competition';
+
+    // Update labels (Optional: only if elements exist)
+    const homeEl = document.getElementById('matchHomeTeamHeader');
+    const awayEl = document.getElementById('matchAwayTeamHeader');
+    if (homeEl) homeEl.textContent = homeName;
+    if (awayEl) awayEl.textContent = awayName;
+
+    const scoreEl = document.getElementById('matchScore');
+    if (scoreEl) scoreEl.textContent = `${homeScore} - ${awayScore}`;
+
+    const metaEl = document.getElementById('matchMeta');
+    if (metaEl) metaEl.textContent = `${match.date || 'TBD'} • ${match.venue || 'Venue TBD'}`;
+
+    const compEl = document.getElementById('matchComp');
+    if (compEl) compEl.textContent = match.competition || 'Competition';
 }
 
 function renderStatsDisplay(stats) {
     const list = document.getElementById('statsListView');
+    if (!list) return;
     const items = [
         { label: 'Possession', key: 'possession', suffix: '%', max: 100 },
         { label: 'Goals', key: 'goals', max: 5 }, // Replaced xG
@@ -175,53 +199,153 @@ function renderStatsDisplay(stats) {
     }).join('');
 }
 
-function downloadReportPDF() {
+window.downloadReportPDF = function () {
+    if (!window.jspdf) {
+        if (window.showGlobalToast) window.showGlobalToast('PDF library not loaded', 'error');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
     const element = document.getElementById('matchReportSection');
-    const opt = {
-        margin: [10, 10, 10, 10], // top, left, bottom, right
-        filename: 'Match_Report.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    if (!element) return;
 
-    // Use html2pdf if available
-    if (window.html2pdf) {
-        // Clone the element to modify it for PDF if needed (e.g., hiding buttons)
-        const clone = element.cloneNode(true);
-        const btn = clone.querySelector('#viewReportFile');
-        if (btn) btn.style.display = 'none'; // Hide download button in PDF
-
-        // Add a header with match info to the clone
-        const header = document.createElement('div');
-        header.style.marginBottom = '20px';
-        header.style.borderBottom = '2px solid var(--navy-dark)';
-        header.style.paddingBottom = '10px';
-        header.innerHTML = `
-            <h1 style="color: var(--navy-dark); font-size: 24px; margin: 0;">Match Analysis Report</h1>
-            <p style="color: var(--text-secondary); margin: 5px 0;">${document.getElementById('matchOpponent').textContent} | ${document.getElementById('matchScore').textContent}</p>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">${document.getElementById('matchMeta').textContent}</p>
-        `;
-        clone.insertBefore(header, clone.firstChild);
-
-        html2pdf().set(opt).from(clone).outputPdf('blob').then(function (blob) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = opt.filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            if (window.showGlobalToast) window.showGlobalToast('Report Downloaded', 'success');
-        }).catch(function (err) {
-            console.error('PDF Export failed:', err);
-            if (window.showGlobalToast) window.showGlobalToast('Error generating PDF', 'error');
-            else alert('Error generating PDF');
-        });
+    const match = window._matchData || {};
+    console.log('Starting PDF Export for match:', match?.id);
+    if (match && match.stats) {
+        console.log('Match Stats found for PDF:', Object.keys(match.stats));
     } else {
-        if (window.showGlobalToast) window.showGlobalToast('PDF generator library not loaded.', 'error');
-        else alert('PDF generator library not loaded. Please refresh the page.');
+        console.warn('No stats found in window._matchData for PDF generation');
+    }
+
+    const { home: homeName, away: awayName } = resolveTeamNames(match);
+    const hScore = match.homeScore !== undefined ? match.homeScore : 0;
+    const aScore = match.awayScore !== undefined ? match.awayScore : 0;
+    const matchScore = `${hScore} - ${aScore}`;
+    const matchMeta = document.getElementById('matchMeta')?.textContent || match.date || '';
+
+    const doc = new jsPDF();
+    const margin = 20;
+    const PW = doc.internal.pageSize.getWidth();
+    const contentW = PW - (margin * 2);
+
+    // Branded Header
+    doc.setFillColor(30, 58, 138); // Navy
+    doc.rect(0, 0, PW, 40, 'F');
+    doc.setTextColor(255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MATCH ANALYSIS REPORT', margin, 25);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`UP PERFORMANCE HUB · ${matchMeta}`, margin, 33);
+
+    let y = 55;
+
+    // Scoreline Box
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, contentW, 30, 3, 3, 'F');
+
+    doc.setTextColor(30, 58, 138);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${homeName} vs ${awayName}`, PW / 2, y + 12, { align: 'center' });
+    doc.setFontSize(18);
+    doc.text(matchScore, PW / 2, y + 22, { align: 'center' });
+
+    y += 45;
+
+    // Stats Selection
+    const stats = match.stats || {};
+    const homeStats = stats.home || stats;
+    const awayStats = stats.away || {};
+    const statItems = [
+        { label: 'Possession', key: 'possession', suffix: '%' },
+        { label: 'Shots', key: 'shots' },
+        { label: 'Shots on Target', key: 'shotsOnTarget' },
+        { label: 'Expected Goals (xG)', key: 'xG' },
+        { label: 'Corners', key: 'corners' }
+    ];
+
+    doc.setFontSize(14);
+    doc.setTextColor(30, 58, 138);
+    doc.text('KEY STATISTICS', margin, y);
+    y += 10;
+
+    statItems.forEach(item => {
+        const hVal = homeStats[item.key] || 0;
+        const aVal = awayStats[item.key] || 0;
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.setFont('helvetica', 'normal');
+        doc.text(item.label, PW / 2, y, { align: 'center' });
+
+        doc.setFontSize(12);
+        doc.setTextColor(40);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(hVal) + (item.suffix || ''), margin, y);
+        doc.text(String(aVal) + (item.suffix || ''), PW - margin, y, { align: 'right' });
+
+        // Horizontal bar comparison
+        y += 4;
+        doc.setFillColor(241, 245, 249);
+        doc.rect(margin, y, contentW, 2, 'F');
+
+        const total = (parseFloat(hVal) || 0) + (parseFloat(aVal) || 0) || 1;
+        const hWidth = (parseFloat(hVal) || 0) / total * contentW;
+        doc.setFillColor(30, 58, 138);
+        doc.rect(margin, y, hWidth, 2, 'F');
+
+        y += 12;
+    });
+
+    // Tactical Notes
+    const tacticalPhases = [
+        { title: 'In Possession', content: stats.tactical_in_possession },
+        { title: 'Out of Possession', content: stats.tactical_out_possession },
+        { title: 'Transitions', content: stats.tactical_transitions },
+        { title: 'Set Pieces', content: stats.tactical_set_pieces }
+    ];
+
+    tacticalPhases.forEach(phase => {
+        if (phase.content && phase.content.trim()) {
+            if (y > 240) { doc.addPage(); y = 20; }
+
+            y += 8;
+            doc.setFontSize(12);
+            doc.setTextColor(30, 58, 138);
+            doc.setFont('helvetica', 'bold');
+            doc.text(phase.title.toUpperCase(), margin, y);
+            y += 6;
+
+            doc.setFontSize(10);
+            doc.setTextColor(60);
+            doc.setFont('helvetica', 'normal');
+            const splitContent = doc.splitTextToSize(phase.content.replace(/<[^>]*>/g, ''), contentW);
+            doc.text(splitContent, margin, y);
+            y += (splitContent.length * 5) + 5;
+        }
+    });
+
+    // Footer
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Generated on ${new Date().toLocaleString()} | UP Performance Hub`, PW / 2, 285, { align: 'center' });
+
+    const filename = `Match_Report_${homeName}_vs_${awayName}_${match.date || ''}.pdf`.replace(/\s+/g, '_');
+
+    try {
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (window.showGlobalToast) window.showGlobalToast(`PDF Exported: ${filename}`, 'success');
+    } catch (err) {
+        console.error('PDF Save failed:', err);
     }
 }
 
@@ -231,9 +355,8 @@ function fillEditForm(match) {
     const homeStats = stats.home || stats;
     const awayStats = stats.away || {};
 
-    // Dynamic Headers
-    const homeName = match.homeTeam || (match.ourSide === 'home' ? 'UP - Tuks' : 'Home Team');
-    const awayName = match.awayTeam || (match.ourSide === 'away' ? 'UP - Tuks' : 'Away Team');
+    // Dynamic Headers — use resolveTeamNames to stay consistent with view mode and reports hub
+    const { home: homeName, away: awayName } = resolveTeamNames(match);
 
     // Helper to safely set text
     const setText = (id, text) => {
@@ -277,6 +400,7 @@ function fillEditForm(match) {
     ];
 
     phases.forEach(phase => {
+        const editor = document.getElementById(phase.id);
         if (editor) {
             // Special handling for migration: if home/away empty but legacy lineup exists
             let content = stats[phase.key] || '';
@@ -290,45 +414,42 @@ function fillEditForm(match) {
     });
 }
 
-function resolveTeamNames(m) {
-    let home = m.homeTeam;
-    let away = m.awayTeam;
-
-    if (!home || !away) {
-        // We don't have squadManager globally here, but we can assume 'UP - Tuks' or use opponent
-        if (m.ourSide === 'home') {
-            home = 'UP - Tuks';
-            away = m.opponent || 'Away Team';
-        } else {
-            home = m.opponent || 'Home Team';
-            away = 'UP - Tuks';
-        }
-    }
-    return { home, away };
-}
 
 async function saveStats(matchId) {
     const form = document.getElementById('matchStatsForm');
     const formData = new FormData(form);
 
     // 1. Capture Tactical Phases from Rich Text Editors
+    // Use innerText to detect if editor is actually empty (avoids false positives from <br> only)
     const getEditorContent = (id) => {
         const el = document.getElementById(id);
-        return el ? el.innerHTML : '';
+        if (!el) return null; // null = skip this key (don't overwrite existing DB data)
+        const text = el.innerText ? el.innerText.trim() : '';
+        return text.length > 0 ? el.innerHTML : null; // null = empty, do not overwrite
     };
 
     const newStats = {
         home: {},
-        away: {},
-        tactical_lineup_home: getEditorContent('editor_lineup_home'),
-        tactical_lineup_away: getEditorContent('editor_lineup_away'),
-        // tactical_lineup: getEditorContent('editor_lineup'), // Deprecated
-        tactical_timeline: getEditorContent('editor_timeline'),
-        tactical_in_possession: getEditorContent('editor_in_possession'),
-        tactical_out_possession: getEditorContent('editor_out_possession'),
-        tactical_transitions: getEditorContent('editor_transitions'),
-        tactical_set_pieces: getEditorContent('editor_set_pieces')
+        away: {}
     };
+
+    // Only include tactical keys with actual content — prevents overwriting DB with empty strings
+    const tacticalFields = [
+        { key: 'tactical_lineup_home', id: 'editor_lineup_home' },
+        { key: 'tactical_lineup_away', id: 'editor_lineup_away' },
+        { key: 'tactical_timeline', id: 'editor_timeline' },
+        { key: 'tactical_in_possession', id: 'editor_in_possession' },
+        { key: 'tactical_out_possession', id: 'editor_out_possession' },
+        { key: 'tactical_transitions', id: 'editor_transitions' },
+        { key: 'tactical_set_pieces', id: 'editor_set_pieces' }
+    ];
+
+    tacticalFields.forEach(({ key, id }) => {
+        const content = getEditorContent(id);
+        if (content !== null) {
+            newStats[key] = content;
+        }
+    });
 
     // 2. Capture Stats
     const keys = ['possession', 'goals', 'shots', 'shotsOnTarget', 'corners', 'fouls', 'yellowCards', 'redCards'];
@@ -344,6 +465,8 @@ async function saveStats(matchId) {
     if (homeScore > awayScore) result = 'Win';
     if (homeScore < awayScore) result = 'Loss';
 
+    console.log('saveStats: Saving to DB with stats keys:', Object.keys(newStats));
+
     try {
         // Update Info (Score/Result)
         await matchManager.updateMatchInfo(matchId, {
@@ -355,10 +478,34 @@ async function saveStats(matchId) {
         // Update Stats
         await matchManager.updateMatchStats(matchId, newStats);
 
-        // Update UI
-        renderMatchInfo({ ...matchManager.getMatch(matchId), homeScore, awayScore }); // Optimistic update
-        renderStatsDisplay(newStats);
-        renderReportDisplay(newStats);
+        // Update Match Notes for sync with Reports Hub if empty
+        const isTacticalFilled = !!(newStats.tactical_lineup_home || newStats.tactical_lineup_away ||
+            newStats.tactical_timeline || newStats.tactical_in_possession ||
+            newStats.tactical_out_possession || newStats.tactical_transitions ||
+            newStats.tactical_set_pieces);
+
+        const currentMatch = await matchManager.getMatch(matchId);
+        if (currentMatch && isTacticalFilled && (!currentMatch.notes || currentMatch.notes === 'No notes provided.')) {
+            await matchManager.updateMatchInfo(matchId, { notes: 'Report filled via tactical analysis.' });
+        }
+
+        // Re-fetch fresh from API to guarantee display matches what is persisted in DB
+        await matchManager.init();
+        const updatedMatch = await matchManager.getMatch(matchId);
+        if (!updatedMatch) {
+            console.error('Could not reload match after save — matchId:', matchId);
+            return;
+        }
+        console.log('Match saved & re-fetched from API. Tactical keys in DB:',
+            Object.keys(updatedMatch.stats || {}).filter(k => k.startsWith('tactical_')));
+
+        // Sync the global _matchData used by PDF generator
+        window._matchData = updatedMatch;
+
+        renderMatchInfo(updatedMatch);
+        renderStatsDisplay(updatedMatch.stats || {});
+        renderReportDisplay(updatedMatch.stats || {}, updatedMatch);
+        fillEditForm(updatedMatch);
 
         // Switch back to display
         document.getElementById('editMode').style.display = 'none';
@@ -366,17 +513,34 @@ async function saveStats(matchId) {
         document.getElementById('btnSaveStats').style.display = 'none';
         document.getElementById('btnToggleEdit').innerHTML = '<i class="fas fa-edit"></i> Edit';
 
+        if (window.showGlobalToast) window.showGlobalToast('Match report saved successfully!', 'success');
+
     } catch (error) {
         console.error("Error saving stats:", error);
-        alert("Failed to save changes. Please try again.");
+        if (window.showGlobalToast) window.showGlobalToast('Failed to save. Please try again.', 'error');
+        else alert("Failed to save changes. Please try again.");
     }
 }
 
-function renderReportDisplay(stats) {
+function renderReportDisplay(stats, match) {
+    // Update team name headers in the view-mode lineup section
+    if (match) {
+        const { home: homeName, away: awayName } = resolveTeamNames(match);
+        const homeTitle = document.getElementById('viewLineupHomeTitle');
+        const awayTitle = document.getElementById('viewLineupAwayTitle');
+        const statsHomeName = document.getElementById('viewStatsHomeName');
+        const statsAwayName = document.getElementById('viewStatsAwayName');
+        if (homeTitle) homeTitle.textContent = homeName;
+        if (awayTitle) awayTitle.textContent = awayName;
+        if (statsHomeName) statsHomeName.textContent = homeName;
+        if (statsAwayName) statsAwayName.textContent = awayName;
+    }
+
     // Helper to render phase content
     const renderPhase = (elementId, content) => {
         const el = document.getElementById(elementId);
-        if (content && content.trim()) {
+        if (!el) return;
+        if (content && content.trim() && content !== 'No notes provided.') {
             el.innerHTML = content.replace(/\n/g, '<br>');
             el.style.color = 'var(--navy-dark)';
         } else {

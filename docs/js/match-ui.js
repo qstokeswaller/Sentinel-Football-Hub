@@ -345,6 +345,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (leagueFilter) {
         leagueFilter.addEventListener('change', renderMatches);
     }
+
+    // Wire the Add Match button to open the modal
+    const btnNewMatch = document.getElementById('btn-new-match');
+    if (btnNewMatch) {
+        btnNewMatch.addEventListener('click', handleAddMatchClick);
+    }
 });
 
 /* --- Modal & Form Handling --- */
@@ -352,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.handleAddMatchClick = function () {
     const modal = document.getElementById('createMatchModal');
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
     switchTab('details');
 }
@@ -364,11 +370,11 @@ window.closeAddMatchModal = function () {
 
 window.switchTab = function (tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const targetBtn = document.getElementById(`tab - btn - ${tabId} `);
+    const targetBtn = document.getElementById(`tab-btn-${tabId}`);
     if (targetBtn) targetBtn.classList.add('active');
 
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    const targetContent = document.getElementById(`tab - ${tabId} `);
+    const targetContent = document.getElementById(`tab-${tabId}`);
     if (targetContent) targetContent.classList.add('active');
 }
 
@@ -522,5 +528,281 @@ window.handleDeleteMatch = async function (id) {
     } catch (error) {
         console.error('Failed to delete match:', error);
         if (window.showGlobalToast) window.showGlobalToast('Failed to delete match', 'error');
+    }
+};
+
+/**
+ * Module-level resolveTeamNames — available to all functions in this file.
+ * (renderMatches() has its own inline copy scoped inside that function;
+ *  this one serves exportMatchReportPDF and any other module-level callers.)
+ */
+function resolveTeamNamesGlobal(m) {
+    let home = m.homeTeam;
+    let away = m.awayTeam;
+    if (!home || !away) {
+        const squadName = (window.squadManager && squadManager.getSquad(m.squadId))
+            ? squadManager.getSquad(m.squadId).name
+            : 'Home';
+        if (m.ourSide === 'away') {
+            home = m.opponent || 'Home Team';
+            away = squadName;
+        } else {
+            home = squadName;
+            away = m.opponent || 'Away Team';
+        }
+    }
+    return { home, away };
+}
+
+/**
+ * Shared PDF builder — produces a fully-structured match analysis PDF.
+ * Identical output to the version in match-details-ui.js.
+ */
+function buildMatchPDF(match, resolveNames) {
+    if (!window.jspdf) {
+        if (window.showGlobalToast) window.showGlobalToast('PDF library not loaded', 'error');
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+
+    const { home: homeName, away: awayName } = resolveNames(match);
+    const hScore = match.homeScore !== undefined ? match.homeScore : 0;
+    const aScore = match.awayScore !== undefined ? match.awayScore : 0;
+    const matchScore = `${hScore} - ${aScore}`;
+    const matchDate = match.date || 'TBD';
+    const competition = match.competition || 'Friendly';
+    const venue = match.venue || 'Venue TBD';
+
+    let resultColor = [100, 116, 139];
+    if (hScore !== aScore) {
+        const ourSide = match.ourSide || 'home';
+        const weWon = (ourSide === 'home' && hScore > aScore) || (ourSide === 'away' && aScore > hScore);
+        resultColor = weWon ? [16, 185, 129] : [239, 68, 68];
+    }
+
+    const doc = new jsPDF();
+    const margin = 20;
+    const PW = doc.internal.pageSize.getWidth();
+    const PH = doc.internal.pageSize.getHeight();
+    const contentW = PW - (margin * 2);
+    const halfW = contentW / 2;
+
+    // ── HEADER BANNER ─────────────────────────────────────────────────────────
+    doc.setFillColor(30, 58, 138);
+    doc.rect(0, 0, PW, 44, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MATCH ANALYSIS REPORT', margin, 22);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('UP PERFORMANCE HUB  ·  CONFIDENTIAL', margin, 31);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, PW - margin, 31, { align: 'right' });
+
+    let y = 54;
+
+    // ── SCORELINE CARD ────────────────────────────────────────────────────────
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(margin, y, contentW, 36, 4, 4, 'F');
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text(homeName, margin + 6, y + 13, { maxWidth: halfW - 20 });
+    doc.text(awayName, PW - margin - 6, y + 13, { align: 'right', maxWidth: halfW - 20 });
+
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...resultColor);
+    doc.text(matchScore, PW / 2, y + 15, { align: 'center' });
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text(`${competition}  ·  ${venue}  ·  ${matchDate}`, PW / 2, y + 28, { align: 'center' });
+
+    y += 46;
+
+    // ── KEY STATISTICS ────────────────────────────────────────────────────────
+    const stats = match.stats || {};
+    const homeStats = stats.home || {};
+    const awayStats = stats.away || {};
+
+    const statItems = [
+        { label: 'Goals', key: 'goals' },
+        { label: 'Possession', key: 'possession', suffix: '%' },
+        { label: 'Shots', key: 'shots' },
+        { label: 'Shots on Target', key: 'shotsOnTarget' },
+        { label: 'Corners', key: 'corners' },
+        { label: 'Fouls', key: 'fouls' },
+        { label: 'Yellow Cards', key: 'yellowCards' },
+        { label: 'Red Cards', key: 'redCards' },
+    ];
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text('KEY STATISTICS', margin, y);
+    y += 5;
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text(homeName, margin, y + 4);
+    doc.setTextColor(100, 116, 139);
+    doc.text(awayName, PW - margin, y + 4, { align: 'right' });
+    y += 10;
+
+    doc.setDrawColor(226, 232, 240);
+    doc.line(margin, y, PW - margin, y);
+    y += 6;
+
+    statItems.forEach(item => {
+        const hVal = parseFloat(homeStats[item.key]) || 0;
+        const aVal = parseFloat(awayStats[item.key]) || 0;
+        const suffix = item.suffix || '';
+        const total = hVal + aVal || 1;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 58, 138);
+        doc.text(`${hVal}${suffix}`, margin, y);
+
+        doc.setTextColor(100);
+        doc.setFont('helvetica', 'normal');
+        doc.text(item.label, PW / 2, y, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text(`${aVal}${suffix}`, PW - margin, y, { align: 'right' });
+
+        const barH = 4;
+        const barY = y + 2;
+
+        doc.setFillColor(226, 232, 240);
+        doc.rect(margin, barY, contentW, barH, 'F');
+
+        const hWidth = (hVal / total) * halfW;
+        doc.setFillColor(30, 58, 138);
+        doc.rect(margin, barY, hWidth, barH, 'F');
+
+        const aWidth = (aVal / total) * halfW;
+        doc.setFillColor(100, 116, 139);
+        doc.rect(PW - margin - aWidth, barY, aWidth, barH, 'F');
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(PW / 2 - 0.5, barY, 1, barH, 'F');
+
+        y += 14;
+        if (y > PH - 40) { doc.addPage(); y = 20; }
+    });
+
+    y += 4;
+
+    // ── TACTICAL PHASES ───────────────────────────────────────────────────────
+    const tacticalPhases = [
+        { title: 'Starting XI — ' + homeName, content: stats.tactical_lineup_home, color: [30, 58, 138] },
+        { title: 'Starting XI — ' + awayName, content: stats.tactical_lineup_away, color: [100, 116, 139] },
+        { title: 'Timeline / Key Events', content: stats.tactical_timeline, color: [30, 58, 138] },
+        { title: 'In Possession (Attacking)', content: stats.tactical_in_possession, color: [16, 185, 129] },
+        { title: 'Out of Possession (Defence)', content: stats.tactical_out_possession, color: [239, 68, 68] },
+        { title: 'Transitions', content: stats.tactical_transitions, color: [245, 158, 11] },
+        { title: 'Set Pieces', content: stats.tactical_set_pieces, color: [99, 102, 241] },
+    ];
+
+    const stripHtml = (html) => (html || '')
+        .replace(/<li>/gi, '\n• ')
+        .replace(/<\/li>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    if (y > PH - 50) { doc.addPage(); y = 20; }
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 58, 138);
+    doc.text('TACTICAL ANALYSIS', margin, y);
+    y += 3;
+    doc.setDrawColor(30, 58, 138);
+    doc.line(margin, y, PW - margin, y);
+    y += 8;
+
+    tacticalPhases.forEach(phase => {
+        const text = stripHtml(phase.content);
+        if (!text) return;
+
+        if (y > PH - 40) { doc.addPage(); y = 20; }
+
+        doc.setFillColor(...phase.color);
+        doc.rect(margin, y - 3, 3, 7, 'F');
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...phase.color);
+        doc.text(phase.title.toUpperCase(), margin + 6, y + 1);
+        y += 8;
+
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+        const lines = doc.splitTextToSize(text, contentW - 6);
+        lines.forEach(line => {
+            if (y > PH - 20) { doc.addPage(); y = 20; }
+            doc.text(line, margin + 6, y);
+            y += 5;
+        });
+        y += 6;
+    });
+
+    // ── FOOTER (all pages) ────────────────────────────────────────────────────
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7.5);
+        doc.setTextColor(148, 163, 184);
+        doc.setFont('helvetica', 'normal');
+        doc.line(margin, PH - 12, PW - margin, PH - 12);
+        doc.text('UP Performance Hub  ·  Confidential', margin, PH - 7);
+        doc.text(`Page ${i} of ${totalPages}`, PW - margin, PH - 7, { align: 'right' });
+    }
+
+    // ── DOWNLOAD ──────────────────────────────────────────────────────────────
+    const filename = `Match_Report_${homeName}_vs_${awayName}_${matchDate}.pdf`
+        .replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    if (window.showGlobalToast) window.showGlobalToast(`PDF Exported: ${filename}`, 'success');
+}
+
+/**
+ * PDF Export — called from the Print button on match cards in the Matches Hub.
+ */
+window.exportMatchReportPDF = async function (matchId) {
+    if (!matchId) return;
+    try {
+        const m = await matchManager.getMatch(matchId);
+        if (!m) {
+            if (window.showGlobalToast) window.showGlobalToast('Match not found', 'error');
+            return;
+        }
+        buildMatchPDF(m, resolveTeamNamesGlobal);
+    } catch (err) {
+        console.error('Match PDF Export Error:', err);
+        if (window.showGlobalToast) window.showGlobalToast('Failed to export PDF', 'error');
     }
 };
