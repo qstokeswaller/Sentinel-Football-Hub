@@ -67,6 +67,7 @@
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -91,91 +92,80 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <header class="top-header" style="margin-bottom: 24px;">
-                <div class="header-left">
+            <header class="page-header">
+                <div class="header-info" style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="page-title">Player Management</h1>
+                    </div>
                     <div class="date-display"><i class="far fa-calendar-alt"></i> <span id="currentDate"></span></div>
-                    <h1 class="page-title">Player Management</h1>
                 </div>
-                <div class="header-right">
+
+                <div class="header-actions" style="display: flex; align-items: flex-end; gap: 16px;">
+                    <!-- Search Bubble -->
+                    <div class="search-bubble-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="playerSearch" placeholder="Search by name, position or squad...">
+                    </div>
+
+                    <!-- Position Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Position</label>
+                        <div class="filter-pill-container">
+                            <select id="filterPosition" class="filter-select-pill">
+                                <option value="all">All Positions</option>
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <!-- Squad Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Squad</label>
+                        <div class="filter-pill-container">
+                            <select id="filterSquad" class="filter-select-pill">
+                                <option value="all">All Squads</option>
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <button id="btnAddPlayer" class="dash-btn primary"
+                        style="border-radius: 9999px; height: 44px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                        <i class="fas fa-plus"></i> Add New Player
+                    </button>
                 </div>
             </header>
 
-            <!-- Dashboard Content -->
-            <div class="dashboard-content max-w">
+            <!-- Table View -->
+            <div class="section-card"
+                style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
+                <div style="overflow-x: auto;">
+                    <table class="table" style="width: 100%; border-collapse: collapse; margin: 0;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Pos</th>
+                                <th>Age</th>
+                                <th>Squad</th>
+                                <th>Height</th>
+                                <th>Weight</th>
+                                <th>Foot</th>
 
-                <!-- Roster & Add Player Row -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <h2 style="font-size: 1.25rem; color: var(--navy-dark); margin: 0; font-weight: 700;">Club
-                            Roster</h2>
-                        <span
-                            style="display: inline-block; padding: 2px 10px; background: var(--primary-light); color: var(--primary); border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;"
-                            id="playerCount">
-                            0 Players
-                        </span>
-                    </div>
-                    <button id="btnAddPlayer" class="dash-btn primary"
-                        style="border-radius: 9999px; padding: 12px 28px; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); font-weight: 700; cursor: pointer;">
-                        <i class="fas fa-plus" style="margin-right: 8px;"></i> Add New Player
-                    </button>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="playerTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Prominent Filter Bar -->
-                <div style="margin-bottom: 32px;">
-                    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 400px; position: relative;">
-                            <i class="fas fa-search"
-                                style="position: absolute; left: 24px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 1.2rem; z-index: 10;"></i>
-                            <input type="text" id="playerSearch" placeholder="Search by name, position or squad..."
-                                class="form-control-bubble"
-                                style="margin-bottom: 0; padding: 18px 24px 18px 64px; background: white; border: 2px solid var(--primary-light); font-size: 1.05rem; border-radius: 20px; box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05), var(--shadow-sm); width: 100%; transition: all 0.2s; font-weight: 500;" />
-                        </div>
-                        <div style="position: relative; width: 180px;">
-                            <select id="filterPosition" class="form-control-bubble"
-                                style="appearance: none; padding: 16px 40px 16px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 20px; font-weight: 600; font-size: 0.95rem; cursor: pointer;">
-                                <option value="all">All Positions</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.8rem;"></i>
-                        </div>
-                        <div style="position: relative; width: 180px;">
-                            <select id="filterSquad" class="form-control-bubble"
-                                style="appearance: none; padding: 16px 40px 16px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 20px; font-weight: 600; font-size: 0.95rem; cursor: pointer;">
-                                <option value="all">All Squads</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.8rem;"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Table View -->
-                <div class="section-card"
-                    style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
-                    <div style="overflow-x: auto;">
-                        <table class="table" style="width: 100%; border-collapse: collapse; margin: 0;">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Pos</th>
-                                    <th>Age</th>
-                                    <th>Squad</th>
-                                    <th>Height</th>
-                                    <th>Weight</th>
-                                    <th>Foot</th>
-
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="playerTableBody">
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
             </div>
-        </main>
+
+    </div>
+    </main>
     </div>
 
     <!-- Modals -->

@@ -14,26 +14,24 @@
     const currentHost = window.location.hostname;
     const currentPort = window.location.port;
 
-    // Default configuration (Same-origin API)
-    window.API_BASE_URL = PROD_API_URL;
-    window.USE_LOCAL_STORAGE = false;
-
-    // Detection for Local Development (Node.js backend)
+    // Environment Detection
     const isLocalBackend = currentHost === 'localhost' || currentHost === '127.0.0.1';
-
-    // Detection for Static Hosting (GitHub Pages / port 5500 / file://)
     const isGitHubPages = currentHost.includes('github.io');
     const isStaticMode = currentPort === '5500' || currentPort === '8080' || window.location.protocol === 'file:';
 
-    if (isGitHubPages || isStaticMode) {
-        console.log('Environment: Static/Demo Mode detected. FORCING API for live testing.');
+    if (isLocalBackend) {
+        // If we are on localhost, always prioritize the local backend
+        // If served from the same port, use relative /api
+        window.API_BASE_URL = (currentPort === '3001') ? '/api' : 'http://localhost:3001/api';
+        window.USE_LOCAL_STORAGE = false;
+    } else if (isGitHubPages || isStaticMode) {
+        // Fallback for static demo hosting
         window.API_BASE_URL = 'http://localhost:3001/api';
-        window.USE_LOCAL_STORAGE = false; // Forced off as per user request
-    } else if (isLocalBackend && currentPort !== '3001') {
-        // If frontend is on 5500/8080 but wants to talk to local backend on 3001
-        // We typically handle this by manually setting isStaticMode above,
-        // but for a smooth 'npm start' experience on localhost:3001, we use relative /api.
-        window.API_BASE_URL = 'http://localhost:3001/api';
+        window.USE_LOCAL_STORAGE = false;
+    } else {
+        // Production (AWS)
+        window.API_BASE_URL = PROD_API_URL;
+        window.USE_LOCAL_STORAGE = false;
     }
 
     console.log('Final API Config:', {

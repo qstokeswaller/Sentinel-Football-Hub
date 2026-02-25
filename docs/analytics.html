@@ -100,6 +100,23 @@
             box-shadow: var(--shadow-sm);
         }
 
+        @media screen and (max-width: 768px) {
+            .analytics-filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 16px;
+            }
+
+            .analytics-filter-bar>div {
+                grid-template-columns: 1fr !important;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+        }
+
         @media print {
 
             .sidebar,
@@ -123,10 +140,11 @@
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
-                <div class="brand-text">
+                                <div class="brand-text">
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+                
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -154,11 +172,14 @@
             <header class="page-header" style="margin-bottom: 40px;">
                 <div class="header-info">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
                         <span
                             style="background: var(--primary-light); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Intelligence
                             Hub</span>
                     </div>
-                    <h1 style="font-size: 2.5rem; letter-spacing: -1px;">Performance Analytics</h1>
+                    <h1>Performance Analytics</h1>
                     <p style="font-size: 1.1rem; opacity: 0.8;">Advanced insights for team performance optimization</p>
                 </div>
                 <div class="header-actions">
@@ -172,36 +193,39 @@
             <!-- Filters Section -->
             <div class="analytics-filter-bar">
                 <div style="flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-                    <div class="filter-col">
-                        <label
-                            style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block;">Age
-                            Group</label>
-                        <select id="filterAgeGroup" class="form-select"
-                            style="background: #f8fafc; border-radius: 12px;">
-                            <option value="all">All Age Groups</option>
-                        </select>
+                    <div class="filter-group">
+                        <label class="filter-label">Age Group</label>
+                        <div class="filter-pill-container">
+                            <select id="filterAgeGroup" class="filter-select-pill">
+                                <option value="all">All Age Groups</option>
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
-                    <div class="filter-col">
-                        <label
-                            style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block;">Lead
-                            Coach</label>
-                        <select id="filterCoach" class="form-select" style="background: #f8fafc; border-radius: 12px;">
-                            <option value="all">All Coaches</option>
-                        </select>
+                    <div class="filter-group">
+                        <label class="filter-label">Lead Coach</label>
+                        <div class="filter-pill-container">
+                            <select id="filterCoach" class="filter-select-pill">
+                                <option value="all">All Coaches</option>
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
-                    <div class="filter-col">
-                        <label
-                            style="font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; display: block;">Select
-                            Team</label>
-                        <select id="filterTeam" class="form-select" style="background: #f8fafc; border-radius: 12px;">
-                            <option value="all">All Teams</option>
-                        </select>
+                    <div class="filter-group">
+                        <label class="filter-label">Select Team</label>
+                        <div class="filter-pill-container">
+                            <select id="filterTeam" class="filter-select-pill">
+                                <option value="all">All Teams</option>
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Key Metrics Grid -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 40px;">
+            <div class="metrics-grid"
+                style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 40px;">
                 <div class="premium-stat-card">
                     <div>
                         <div class="stat-icon-wrapper" style="background: #eff6ff; color: #3b82f6;">

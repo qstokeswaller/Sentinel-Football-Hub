@@ -336,6 +336,7 @@ function loadMatchRepository() {
         const res = calculateResult(hScore, aScore, m.ourSide);
         const resultColor = res.color;
         const resText = res.text;
+        const resultClass = resText.toLowerCase();
 
         const completed = isReportCompleted(m);
         const statusBadge = completed
@@ -364,7 +365,7 @@ function loadMatchRepository() {
                     <div style="text-align: center; flex: 1;">
                         <div style="font-weight: 800; font-size: 1.1rem; color: var(--navy-dark);">${homeName}</div>
                     </div>
-                    <div style="padding: 5px 15px; background: #f1f5f9; border-radius: 20px; font-weight: 800; font-size: 1.2rem; color: var(--primary);">
+                    <div class="match-score-badge past ${resultClass}">
                         ${hScore} - ${aScore}
                     </div>
                     <div style="text-align: center; flex: 1;">

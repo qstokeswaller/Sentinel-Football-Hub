@@ -174,6 +174,7 @@
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -199,6 +200,9 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="page-header">
+                <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="header-info">
                     <h1>Reports Hub</h1>
                     <p>Centralized repository for feedback, reports, and performance history.</p>
@@ -298,24 +302,27 @@
 
             <!-- VIEW: MATCH REPOSITORY (The "Separate Match Reports" feature) -->
             <div id="view-match-repo" class="main-view" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-                    <h2 style="font-size: 18px; font-weight: 700; color: var(--text-dark); margin:0;">Match Reports
-                        Repository</h2>
-                    <div style="display:flex; gap: 12px; align-items: center;">
-                        <div style="position: relative; width: 180px;">
-                            <select id="match-repo-team-filter" class="form-control-bubble"
-                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
-                                <option value="all">All Teams</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                <header class="page-header">
+                    <div class="header-info" style="flex: 1;">
+                        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--navy-dark); margin:0;">Match
+                            Reports Repository</h2>
+                    </div>
+                    <div class="header-actions" style="display: flex; align-items: flex-end; gap: 16px;">
+                        <div class="filter-group">
+                            <label class="filter-label">Select Team</label>
+                            <div class="filter-pill-container">
+                                <select id="match-repo-team-filter" class="filter-select-pill">
+                                    <option value="all">All Teams</option>
+                                </select>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
                         </div>
                         <a href="matches.html" class="dash-btn primary"
-                            style="border-radius: 9999px; padding: 8px 20px;">
-                            <i class="fas fa-plus"></i> New Match report
+                            style="border-radius: 9999px; height: 44px; display: flex; align-items: center; white-space: nowrap;">
+                            <i class="fas fa-plus" style="margin-right: 8px;"></i> New Match report
                         </a>
                     </div>
-                </div>
+                </header>
 
                 <div class="match-grid" id="match-reports-grid"
                     style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
@@ -328,28 +335,32 @@
 
             <!-- VIEW: MATCHES (Team Reports History) -->
             <div id="view-matches" class="main-view" style="display:none;">
-                <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-                    <h2 style="font-size: 18px; font-weight: 700; color: var(--text-dark); margin:0;">Team Performance
-                        Reports</h2>
-                    <div style="display:flex; gap: 12px; align-items: center;">
-                        <div style="position: relative; width: 180px;">
-                            <select id="team-report-league-filter" class="form-control-bubble"
-                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
-                                <option value="all">All Leagues</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                <header class="page-header">
+                    <div class="header-info" style="flex: 1;">
+                        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--navy-dark); margin:0;">Team
+                            Performance Reports</h2>
+                    </div>
+                    <div class="header-actions" style="display: flex; align-items: flex-end; gap: 16px;">
+                        <div class="filter-group">
+                            <label class="filter-label">League</label>
+                            <div class="filter-pill-container">
+                                <select id="team-report-league-filter" class="filter-select-pill">
+                                    <option value="all">All Leagues</option>
+                                </select>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
                         </div>
-                        <div style="position: relative; width: 180px;">
-                            <select id="team-report-squad-filter" class="form-control-bubble"
-                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
-                                <option value="all">All Teams</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                        <div class="filter-group">
+                            <label class="filter-label">Squad</label>
+                            <div class="filter-pill-container">
+                                <select id="team-report-squad-filter" class="filter-select-pill">
+                                    <option value="all">All Teams</option>
+                                </select>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
                         </div>
                         <button id="btnAssessTeam" class="dash-btn primary"
-                            style="border-radius: 9999px; padding: 10px 20px; display: flex; align-items: center; gap: 8px;">
+                            style="border-radius: 9999px; height: 44px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
                             <i class="fas fa-plus"></i> Assess Team
                         </button>
                     </div>
@@ -365,33 +376,34 @@
 
             <!-- VIEW: PLAYERS (Player Reports History) -->
             <div id="view-players" class="main-view" style="display:none;">
-                <header style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px;">
-                    <div style="display:flex; flex-direction:column; gap:4px;">
-                        <h2 style="font-size: 18px; font-weight: 700; color: var(--text-dark); margin:0;">Player Reports
-                            & History</h2>
+                <header class="page-header">
+                    <div class="header-info" style="flex: 1;">
+                        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--navy-dark); margin:0;">Player
+                            Reports & History</h2>
                     </div>
-                    <div style="display:flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <div style="position: relative; width: 160px;">
-                            <select id="player-report-squad-filter" class="form-control-bubble"
-                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
-                                <option value="">Select Team</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                    <div class="header-actions" style="display: flex; align-items: flex-end; gap: 16px;">
+                        <!-- Search Bubble -->
+                        <div class="search-bubble-container">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="player-report-search-filter" placeholder="Search player...">
                         </div>
-                        <div style="position: relative; width: 160px;">
-                            <select id="player-report-position-filter" class="form-control-bubble"
-                                style="appearance: none; padding: 10px 40px 10px 20px; margin-bottom: 0; background: white; border: 2px solid var(--primary-light); border-radius: 9999px; font-weight: 600; font-size: 0.85rem; cursor: pointer; height: auto;">
-                                <option value="all">All Positions</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; font-size: 0.75rem;"></i>
+                        <div class="filter-group">
+                            <label class="filter-label">Team</label>
+                            <div class="filter-pill-container">
+                                <select id="player-report-squad-filter" class="filter-select-pill">
+                                    <option value="">Select Team</option>
+                                </select>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
                         </div>
-                        <div style="position: relative; width: 220px;">
-                            <i class="fas fa-search"
-                                style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 0.85rem; z-index: 10;"></i>
-                            <input type="text" id="player-report-search-filter" placeholder="Search player..."
-                                style="padding: 10px 16px 10px 42px; background: white; border: 2px solid var(--primary-light); font-size: 0.85rem; border-radius: 9999px; width: 100%; outline: none; font-weight: 500;">
+                        <div class="filter-group">
+                            <label class="filter-label">Position</label>
+                            <div class="filter-pill-container">
+                                <select id="player-report-position-filter" class="filter-select-pill">
+                                    <option value="all">All Positions</option>
+                                </select>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
                         </div>
                     </div>
                 </header>

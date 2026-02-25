@@ -666,7 +666,12 @@ function gPos(id, e, canvases) {
     let cx, cy;
     if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
     else { cx = e.clientX; cy = e.clientY; }
-    return { x: (cx - r.left) * (s.width / r.width), y: (cy - r.top) * (s.height / r.height) };
+
+    // This handles the scaling ratio between the internal canvas size and the displayed CSS size
+    return {
+        x: (cx - r.left) * (s.canvas.width / r.width),
+        y: (cy - r.top) * (s.canvas.height / r.height)
+    };
 }
 
 function findTok(s, x, y) {

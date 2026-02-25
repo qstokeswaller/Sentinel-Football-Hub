@@ -40,6 +40,11 @@
   /* 12px */
   --radius-xl: 1rem;
   /* 16px */
+
+  /* Sidebar Variables */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 70px;
+  --sidebar-mobile-width: 280px;
 }
 
 * {
@@ -59,6 +64,7 @@ body {
 .app-container {
   display: flex;
   min-height: 100vh;
+  background-color: var(--bg-body);
 }
 
 /* Sidebar */
@@ -71,7 +77,7 @@ body {
   position: fixed;
   height: 100vh;
   transition: width 0.3s ease;
-  z-index: 50;
+  z-index: 100;
 }
 
 .sidebar-brand {
@@ -218,23 +224,83 @@ body {
 /* Main Content */
 .main-content {
   flex: 1;
-  margin-left: 260px;
-  /* Width of sidebar */
+  margin-left: var(--sidebar-width);
   padding: 32px;
-  width: calc(100% - 260px);
+  width: calc(100% - var(--sidebar-width));
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .main-content.sidebar-collapsed {
-  margin-left: 70px;
-  width: calc(100% - 70px);
+  margin-left: var(--sidebar-collapsed-width);
+  width: calc(100% - var(--sidebar-collapsed-width));
+}
+
+.main-view {
+  animation: mIn 0.3s ease-out;
+  display: none;
+  /* Controlled by JS */
+}
+
+.main-view[style*="display: block"] {
+  display: block !important;
+}
+
+/* Mobile Nav Toggle Button */
+.mobile-nav-toggle {
+  display: none;
+  background: white;
+  border: 1px solid var(--border-light);
+  color: var(--navy-dark);
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow-sm);
+  z-index: 80;
+  transition: all 0.2s;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav-toggle:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Sidebar Mobile Overlay Background */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+  opacity: 0;
+  transition: opacity 0.30s ease;
+}
+
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 32px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
 }
 
 .header-info h1 {
@@ -568,6 +634,98 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+}
+
+/* Filter Pill Styles (Standardized V2) */
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #94a3b8;
+  /* Slate 400 */
+  text-transform: uppercase;
+  margin-left: 4px;
+  letter-spacing: 0.5px;
+}
+
+.filter-pill-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.filter-select-pill {
+  appearance: none;
+  -webkit-appearance: none;
+  background: white;
+  border: 2px solid var(--primary-light);
+  border-radius: 20px;
+  padding: 12px 40px 12px 20px;
+  font-size: 0.95rem;
+  color: var(--navy-dark);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  outline: none;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+
+.filter-select-pill:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-pill-container .fa-chevron-down {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary);
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+/* Search Bar (Standardized) */
+.search-bubble-container {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  padding: 10px 18px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  flex: 1;
+  min-width: 260px;
+  transition: all 0.2s;
+}
+
+.search-bubble-container:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-bubble-container i {
+  color: var(--text-medium);
+  margin-right: 12px;
+  font-size: 0.9rem;
+}
+
+.search-bubble-container input {
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  width: 100%;
+  color: var(--navy-dark);
+  background: transparent;
+  font-family: inherit;
 }
 
 /* Utilities */
@@ -1732,6 +1890,7 @@ body {
    PRINT STYLES
    ═══════════════════════════════════════════════════════════ */
 @media print {
+
   .sidebar,
   .sidebar-footer,
   .sidebar-nav,
@@ -1741,7 +1900,7 @@ body {
   .edit-mode-container,
   #toggleSidebar,
   aside,
-  .app-container > aside {
+  .app-container>aside {
     display: none !important;
   }
 
@@ -1768,5 +1927,367 @@ body {
   #matchHero {
     border-radius: 0 !important;
     margin-bottom: 20px !important;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE MEDIA QUERIES
+   ========================================================================== */
+
+/* TABLETS & SMALL DESKTOPS */
+@media screen and (max-width: 1100px) {
+  .dash-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .form-row {
+    gap: 16px;
+  }
+}
+
+/* PHONES & TABLETS (Portrait) */
+@media screen and (max-width: 768px) {
+  :root {
+    --sidebar-width: 0px;
+    --sidebar-collapsed-width: 0px;
+  }
+
+  .app-container {
+    flex-direction: column;
+  }
+
+  /* Sidebar as Mobile Overlay */
+  .sidebar {
+    width: var(--sidebar-mobile-width);
+    left: calc(-1 * var(--sidebar-mobile-width));
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-lg);
+    position: fixed;
+    background-color: #ffffff !important;
+    /* Force solid white on mobile */
+    z-index: 110 !important;
+  }
+
+  .sidebar.mobile-active {
+    left: 0;
+  }
+
+  .sidebar.collapsed {
+    width: var(--sidebar-mobile-width);
+    /* Don't collapse on mobile */
+  }
+
+  /* Hide brand-text/nav-span if sidebar is collapsed on desktop, 
+     but NOT on mobile overlay */
+  .sidebar.mobile-active .brand-text,
+  .sidebar.mobile-active .sidebar-nav span {
+    display: block !important;
+  }
+
+  .sidebar-footer {
+    display: block;
+    /* Make toggle button act as close button on mobile menu */
+    text-align: right;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 20px;
+  }
+
+  .main-content.sidebar-collapsed {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Header adjustments */
+  .mobile-nav-toggle {
+    display: flex;
+    /* Show hamburger menu */
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .header-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  /* Dashboard Cards */
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Form Layouts */
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  /* Modal Container */
+  .modal-container {
+    width: 95% !important;
+    margin: 10px;
+    max-height: 90vh;
+  }
+
+  /* Table Responsiveness */
+  .section-card {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 600px;
+    /* Ensure some breathing room */
+  }
+
+  /* Filters */
+  #squadFilterBar,
+  .top-header,
+  .dashboard-content .filter-bar-row {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px;
+  }
+
+  #squadFilterBar>div,
+  .dashboard-content .filter-bar-row>div {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  #squadFilterBar select,
+  #squadFilterBar input,
+  .dashboard-content select,
+  .dashboard-content .header-actions input {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch !important;
+    width: 100%;
+    gap: 12px;
+  }
+
+  /* Search bar min-width fix */
+  .dashboard-content input[id="playerSearch"] {
+    min-width: 0 !important;
+  }
+
+  .filter-select-pill {
+    width: auto !important;
+    /* Allow it to be compact */
+    min-width: 100% !important;
+    /* But still fill its container if needed */
+    max-width: none !important;
+  }
+
+  .filter-pill-container {
+    width: fit-content;
+    /* THIS IS THE KEY: Keep the container snug */
+    align-self: flex-start;
+    /* Don't stretch to full width */
+  }
+
+  .header-info h1 {
+    font-size: 20px;
+  }
+}
+
+/* Match Card Responsive Layouts */
+.match-card-grid {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 20px;
+}
+
+.match-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.match-teams-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  /* Slightly reduced gap for better fit */
+  flex: 1;
+}
+
+.match-team-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--navy-dark);
+  width: 140px;
+}
+
+.match-team-name.home {
+  text-align: right;
+}
+
+.match-team-name.away {
+  text-align: left;
+}
+
+.match-score-badge {
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-width: 44px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.match-score-badge.past {
+  color: var(--navy-dark);
+  padding: 8px 18px;
+  font-size: 1.1rem;
+  min-width: 80px;
+}
+
+/* Match Result Tints */
+.match-score-badge.win {
+  background: #dcfce7 !important;
+  /* light green */
+  color: #166534 !important;
+  /* dark green text */
+  border: 1px solid #bbf7d0;
+}
+
+.match-score-badge.loss {
+  background: #fee2e2 !important;
+  /* light red */
+  color: #991b1b !important;
+  /* dark red text */
+  border: 1px solid #fecaca;
+}
+
+.match-score-badge.draw {
+  background: #f1f5f9 !important;
+  /* slate background */
+  color: #475569 !important;
+  /* slate text */
+  border: 1px solid #e2e8f0;
+}
+
+.match-meta-info {
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  font-weight: 600;
+  min-width: 80px;
+  text-align: center;
+  margin-right: 12px;
+}
+
+@media (max-width: 850px) {
+  .match-card-grid {
+    flex-direction: column;
+    align-items: center;
+    /* Center the whole stack */
+    text-align: center;
+    gap: 16px;
+    padding: 24px !important;
+  }
+
+  .match-card-info {
+    min-width: auto;
+    width: 100%;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 12px;
+    align-items: center;
+    /* Center date/league */
+  }
+
+  .match-teams-score {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    /* Center teams and VS */
+    width: 100%;
+  }
+
+  .match-team-name {
+    width: 100%;
+    text-align: center !important;
+    font-size: 1.2rem;
+  }
+
+  .match-score-badge {
+    align-self: center;
+    /* Overriding previous flex-start */
+    margin: 4px 0;
+  }
+
+  .match-meta-info {
+    width: 100%;
+    text-align: center;
+    margin-right: 0 !important;
+  }
+
+  .match-actions {
+    width: 100%;
+    justify-content: center !important;
+    /* Center buttons */
+    flex-wrap: wrap;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+    gap: 12px !important;
+  }
+
+  .match-actions .dash-btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 110px;
+    padding: 12px !important;
+  }
+}
+
+/* SMALL PHONES */
+@media screen and (max-width: 480px) {
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .dash-card {
+    padding: 20px;
+  }
+
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .dash-btn {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .mobile-nav-toggle {
+    display: flex;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 24px 16px;
   }
 }

@@ -60,9 +60,19 @@
     gap: 20px;
 }
 
+/* Session Details Grid - Balance title/date/time */
 .form-grid-3 {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1.5fr 1fr 1fr;
+    /* Give title more space */
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* Generic 3-column grid for other areas like Venue/Duration/Players */
+.form-grid-3-even {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
     gap: 20px;
     margin-bottom: 20px;
 }
@@ -172,6 +182,8 @@
     padding: 16px 24px;
     border-bottom: 1px solid var(--border-light);
     background: var(--bg-body);
+    flex-wrap: wrap;
+    /* Allow wrapping on very small screens */
 }
 
 .block-pill {
@@ -227,6 +239,8 @@
     display: flex;
     gap: 8px;
     margin-left: auto;
+    flex-shrink: 0;
+    /* Don't let actions squash */
 }
 
 .block-icon-btn {
@@ -344,6 +358,8 @@
     flex-direction: column;
     gap: 16px;
     align-items: center;
+    width: 100%;
+    /* Ensure container takes full width */
 }
 
 .drill-canvas-wrap.visible {
@@ -361,6 +377,25 @@
     border: 1px solid var(--border-light);
     justify-content: center;
     box-shadow: var(--shadow-sm);
+    width: 100%;
+}
+
+.canvas-el {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.canvas-el canvas {
+    max-width: 100%;
+    height: auto !important;
+    /* Force proportional scaling */
+    touch-action: none;
+    /* Prevent scrolling while drawing */
+    background: #1e5c30;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
 }
 
 .pitch-btn {
@@ -394,9 +429,13 @@
     padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     box-shadow: var(--shadow-md);
-    width: fit-content;
+    width: 100%;
+    /* Take full width on mobile */
+    max-width: 100%;
+    overflow-x: auto;
+    /* Enable scrolling for tools */
     animation: fadeIn 0.2s ease-out;
 }
 
@@ -420,17 +459,18 @@
 }
 
 .mini-row-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
-    letter-spacing: 1.2px;
+    letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--text-light);
-    padding-right: 12px;
+    padding-right: 8px;
     margin-right: 4px;
     border-right: 2px solid var(--border-light);
-    height: 20px;
+    height: 16px;
     display: flex;
     align-items: center;
+    white-space: nowrap;
 }
 
 .mt-btn {
@@ -557,13 +597,47 @@
 @media (max-width: 768px) {
 
     .form-grid-6,
+    .form-grid-3,
+    .form-grid-3-even,
     .form-grid-2 {
         grid-template-columns: 1fr;
     }
 
     .mini-toolbar {
         width: 100%;
-        overflow-x: auto;
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .mini-tool-row {
+        padding-bottom: 4px;
+    }
+
+    .mt-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .pitch-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .drill-block-header {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .block-header-actions {
+        width: 100%;
+        justify-content: flex-end;
+        padding-top: 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.03);
+        margin-top: 4px;
+    }
+
+    .block-title-input {
+        font-size: 15px;
     }
 }
 

@@ -132,6 +132,7 @@
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -155,169 +156,110 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content" style="margin-left: 260px; width: calc(100% - 260px); padding: 32px;">
-            <!-- Page Header & Actions -->
-            <div class="page-header" style="flex-direction: column; align-items: flex-start; gap: 24px;">
-                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                    <div class="header-info">
-                        <h1>Squad Management</h1>
-                        <p>Manage roster, availability, and player profiles • <span id="playerCount"
-                                style="font-weight: 600; color: var(--primary);">0 registered players</span></p>
-                    </div>
-                    <div style="display: flex; gap: 12px;">
-                        <button id="btnAddSquad" class="dash-btn primary" style="
-                            border-radius: 9999px; 
-                            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
-                        ">
-                            <i class="fas fa-layer-group"></i> Add Squad
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-info" style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                            <i class="fas fa-bars"></i>
                         </button>
+                        <h1>Squad Management</h1>
                     </div>
+                    <p>Manage roster, availability, and player profiles • <span id="playerCount"
+                            style="font-weight: 600; color: var(--primary);">0 registered players</span></p>
                 </div>
 
-                <!-- Unified Filter Bar -->
-                <div id="squadFilterBar"
-                    style="width: 100%; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <!-- Search Bubble -->
-                        <div style="
-                            display: flex; 
-                            align-items: center; 
-                            background: white; 
-                            border: 1px solid var(--border-light); 
-                            border-radius: 9999px; 
-                            padding: 8px 16px; 
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                            border: 1px solid #e2e8f0;
-                            min-width: 260px;
-                        ">
-                            <i class="fas fa-search" style="color: var(--text-medium); margin-right: 10px;"></i>
-                            <input type="text" id="playerSearch" placeholder="Search players..." style="
-                                border: none; 
-                                outline: none; 
-                                font-size: 0.95rem; 
-                                width: 100%; 
-                                color: var(--navy-dark);
-                                background: transparent;
-                            ">
-                        </div>
+                <div class="header-actions" style="display: flex; align-items: flex-end; gap: 16px;">
+                    <!-- Search Bubble -->
+                    <div class="search-bubble-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="playerSearch" placeholder="Search squads...">
+                    </div>
 
-                        <!-- League Filter -->
-                        <div style="position: relative;">
-                            <select id="filterLeague" style="
-                                appearance: none; 
-                                background: white; 
-                                border: 1px solid var(--border-light); 
-                                border-radius: 9999px; 
-                                padding: 8px 36px 8px 16px; 
-                                font-size: 0.95rem; 
-                                color: var(--navy-dark); 
-                                font-weight: 500; 
-                                cursor: pointer; 
-                                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                                border: 1px solid #e2e8f0;
-                                outline: none;
-                            ">
+                    <!-- League Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">League</label>
+                        <div class="filter-pill-container">
+                            <select id="filterLeague" class="filter-select-pill">
                                 <option value="all">All Leagues</option>
                             </select>
-                            <i class="fas fa-chevron-down" style="
-                                position: absolute; 
-                                right: 14px; 
-                                top: 50%; 
-                                transform: translateY(-50%); 
-                                color: var(--text-medium); 
-                                pointer-events: none; 
-                                font-size: 0.8rem;
-                            "></i>
+                            <i class="fas fa-chevron-down"></i>
                         </div>
+                    </div>
 
-                        <!-- Age Group Filter -->
-                        <div style="position: relative;">
-                            <select id="filterAgeGroup" style="
-                                appearance: none; 
-                                background: white; 
-                                border: 1px solid var(--border-light); 
-                                border-radius: 9999px; 
-                                padding: 8px 36px 8px 16px; 
-                                font-size: 0.95rem; 
-                                color: var(--navy-dark); 
-                                font-weight: 500; 
-                                cursor: pointer; 
-                                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                                border: 1px solid #e2e8f0;
-                                outline: none;
-                            ">
+                    <!-- Age Group Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Age Group</label>
+                        <div class="filter-pill-container">
+                            <select id="filterAgeGroup" class="filter-select-pill">
                                 <option value="all">All Age Groups</option>
                                 <option value="Senior">Senior</option>
                                 <option value="U23">U23</option>
                                 <option value="U18">U18</option>
                                 <option value="U16">U16</option>
                             </select>
-                            <i class="fas fa-chevron-down" style="
-                                position: absolute; 
-                                right: 14px; 
-                                top: 50%; 
-                                transform: translateY(-50%); 
-                                color: var(--text-medium); 
-                                pointer-events: none; 
-                                font-size: 0.8rem;
-                            "></i>
+                            <i class="fas fa-chevron-down"></i>
                         </div>
                     </div>
 
-                    <!-- Removed View Toggle -->
-                </div>
-            </div>
-
-            <!-- Player Grid Removed -->
-
-            <div id="squadGrid" class="player-grid" style="display: none;">
-                <!-- Squads will be rendered here -->
-            </div>
-
-            <!-- Squad Detail Sheet View -->
-            <div id="squadDetailView" class="section-card" style="display: none; padding: 0; overflow: hidden;">
-                <div class="sheet-header"
-                    style="padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-                    <button class="dash-btn outline sm" id="btnBackToSquads"
-                        style="flex: 0 0 auto; width: auto; padding-right: 16px;">
-                        <i class="fas fa-arrow-left"></i> Back to Squads
+                    <button id="btnAddSquad" class="dash-btn primary"
+                        style="border-radius: 9999px; height: 44px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                        <i class="fas fa-layer-group"></i> Add Squad
                     </button>
-                    <div style="display: flex; align-items: center; gap: 16px;">
-                        <div style="text-align: right;">
-                            <h2 id="detailSquadName" style="margin: 0; color: var(--navy-dark);">Squad Name</h2>
-                            <span id="detailSquadMeta" style="color: var(--text-secondary); font-size: 0.9rem;">Meta
-                                Info</span>
-                        </div>
-                        <button class="dash-btn outline" id="btnAssignPlayerModal" style="border-radius: 9999px;">
-                            <i class="fas fa-user-plus" style="margin-right: 6px;"></i> Assign Player
-                        </button>
-                        <button class="dash-btn primary" id="btnAssessSquad"
-                            style="border-radius: 9999px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
-                            <i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> Assess Squad
-                        </button>
-                    </div>
                 </div>
-                <div style="overflow-x: auto;">
-                    <table class="table" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Position</th>
-                                <th>Age</th>
-                                <th>Height</th>
-                                <th>Weight</th>
-                                <th>Foot</th>
+            </header>
+    </div>
 
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="squadDetailTableBody">
-                            <!-- Rows -->
-                        </tbody>
-                    </table>
+    <!-- Player Grid Removed -->
+
+    <div id="squadGrid" class="player-grid" style="display: none;">
+        <!-- Squads will be rendered here -->
+    </div>
+
+    <!-- Squad Detail Sheet View -->
+    <div id="squadDetailView" class="section-card" style="display: none; padding: 0; overflow: hidden;">
+        <div class="sheet-header"
+            style="padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <button class="dash-btn outline sm" id="btnBackToSquads"
+                style="flex: 0 0 auto; width: auto; padding-right: 16px;">
+                <i class="fas fa-arrow-left"></i> Back to Squads
+            </button>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="text-align: right;">
+                    <h2 id="detailSquadName" style="margin: 0; color: var(--navy-dark);">Squad Name</h2>
+                    <span id="detailSquadMeta" style="color: var(--text-secondary); font-size: 0.9rem;">Meta
+                        Info</span>
                 </div>
+                <button class="dash-btn outline" id="btnAssignPlayerModal" style="border-radius: 9999px;">
+                    <i class="fas fa-user-plus" style="margin-right: 6px;"></i> Assign Player
+                </button>
+                <button class="dash-btn primary" id="btnAssessSquad"
+                    style="border-radius: 9999px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                    <i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> Assess Squad
+                </button>
             </div>
-        </main>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Position</th>
+                        <th>Age</th>
+                        <th>Height</th>
+                        <th>Weight</th>
+                        <th>Foot</th>
+
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="squadDetailTableBody">
+                    <!-- Rows -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </main>
     </div>
 
     <!-- Modals -->

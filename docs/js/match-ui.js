@@ -231,26 +231,14 @@ function renderMatches() {
         const res = calculateResult(hScore, aScore, m.ourSide);
         const resultColor = res.color;
         const resText = res.text;
-
-        let centerBadge = '';
-        if (isPast) {
-            centerBadge = `
-                <div style="background: ${resultColor}20; color: var(--navy-dark); padding: 8px 18px; border-radius: 20px; font-weight: 800; border: 1px solid ${resultColor}40; font-size: 1.1rem; min-width: 80px; text-align: center;">
-                    ${hScore} - ${aScore}
-                </div>`;
-        } else {
-            centerBadge = `
-                <div style="background: #f1f5f9; color: #64748b; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">
-                    VS
-                </div>`;
-        }
+        const resultClass = resText.toLowerCase(); // 'win', 'loss', or 'draw'
 
         return `
         <div class="dash-card match-card" data-id="${m.id}" style="margin-bottom: 12px; padding: 0; overflow: hidden; transition: all 0.2s ease;">
-            <div class="match-card-header" onclick="toggleMatchVenue('${m.id}')" style="padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+            <div class="match-card-header match-card-grid" onclick="toggleMatchVenue('${m.id}')" style="padding: 20px 24px; cursor: pointer;">
                 
                 <!-- Left: Date & League -->
-                <div style="display: flex; flex-direction: column; gap: 4px; min-width: 150px;">
+                <div class="match-card-info">
                     <span style="font-weight: 700; color: var(--navy-dark); font-size: 1rem;">
                         <i class="far fa-calendar-alt" style="margin-right: 6px; color: var(--text-medium); opacity: 0.7;"></i> ${m.date}
                     </span>
@@ -260,28 +248,32 @@ function renderMatches() {
                 </div>
 
                 <!-- Center: Teams & Score -->
-                <div style="display: flex; align-items: center; justify-content: center; gap: 24px; flex: 1;">
-                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--navy-dark); width: 140px; text-align: right;">
+                <div class="match-teams-score">
+                    <div class="match-team-name home">
                         ${homeName}
                     </div>
-                    ${centerBadge}
-                    <div style="font-weight: 700; font-size: 1.1rem; color: var(--navy-dark); width: 140px; text-align: left;">
+                    <div class="match-score-badge ${isPast ? 'past' : ''} ${isPast ? resultClass : ''}">
+                        ${isPast ? `${hScore} - ${aScore}` : 'VS'}
+                    </div>
+                    <div class="match-team-name away">
                         ${awayName}
                     </div>
                 </div>
 
-                <!-- Center Right: Time (if upcoming) -->
-                ${!isPast ? `<div style="font-size: 0.9rem; color: var(--text-medium); font-weight: 600; margin-right: 24px;"><i class="far fa-clock"></i> ${m.time || 'TBA'}</div>` : `<div style="font-weight: 800; color: ${resultColor}; font-size: 0.8rem; margin-right: 24px; letter-spacing: 1px;">${resText}</div>`}
+                <!-- Center Right: Time (if upcoming) / Result (if past) -->
+                <div class="match-meta-info">
+                    ${!isPast ? `<i class="far fa-clock"></i> ${m.time || 'TBA'}` : `<span style="color: ${resultColor}; letter-spacing: 1px; font-weight: 800;">${resText}</span>`}
+                </div>
 
                 <!-- Right: Actions -->
                 <div class="match-actions" style="display: flex; gap: 8px;" onclick="event.stopPropagation()">
-                    <a href="match-details.html?id=${m.id}" class="dash-btn outline sm">
+                    <a href="match-details.html?id=${m.id}" class="dash-btn outline sm" title="Report">
                         <i class="fas fa-file-alt"></i> ${isPast ? 'Report' : 'Details'}
                     </a>
-                    <a href="match-analysis.html?id=${m.id}" class="dash-btn outline sm">
+                    <a href="match-analysis.html?id=${m.id}" class="dash-btn outline sm" title="Analysis">
                         <i class="fas fa-video"></i> Analysis
                     </a>
-                    <button onclick="handleDeleteMatch('${m.id}')" class="dash-btn outline sm danger" style="padding: 0 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+                    <button onclick="handleDeleteMatch('${m.id}')" class="dash-btn outline sm danger" style="padding: 0 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Delete">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>

@@ -69,6 +69,36 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
         }
 
+        @media screen and (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+
+            .header-actions {
+                flex-direction: column;
+                align-items: stretch !important;
+                width: 100%;
+            }
+
+            .header-actions>div,
+            .header-actions button {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            .modal-tabs {
+                overflow-x: auto;
+                margin: 0 15px 20px !important;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+        }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -89,10 +119,11 @@
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
-                <div class="brand-text">
+                                <div class="brand-text">
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+                
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -118,91 +149,41 @@
         <main class="main-content">
             <header class="page-header">
                 <div class="header-info">
+                    <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <h1>Matches</h1>
                     <p>Manage results and view upcoming fixtures</p>
                 </div>
-                <div class="header-actions" style="display: flex; align-items: center; gap: 16px;">
+                <div class="header-actions dashboard-content" style="display: flex; align-items: flex-end; gap: 16px;">
                     <!-- Search Bar -->
-                    <div style="
-                        display: flex; 
-                        align-items: center; 
-                        background: white; 
-                        border: 1px solid var(--border-light); 
-                        border-radius: 9999px; 
-                        padding: 8px 16px; 
-                        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                        border: 1px solid #e2e8f0;
-                        min-width: 260px;
-                    ">
-                        <i class="fas fa-search" style="color: var(--text-medium); margin-right: 10px;"></i>
-                        <input type="text" id="matchesSearch" oninput="renderMatches()" placeholder="Search matches..."
-                            style="
-                            border: none; 
-                            outline: none; 
-                            font-size: 0.95rem; 
-                            width: 100%; 
-                            color: var(--navy-dark);
-                            background: transparent;
-                        ">
+                    <div class="search-bubble-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="matchesSearch" oninput="renderMatches()" placeholder="Search matches...">
                     </div>
 
                     <!-- Team Selector -->
-                    <div style="position: relative;">
-                        <select id="matchesTeamSelector" onchange="renderMatches()" style="
-                            appearance: none; 
-                            background: white; 
-                            border: 1px solid var(--border-light); 
-                            border-radius: 9999px; 
-                            padding: 8px 36px 8px 16px; 
-                            font-size: 0.95rem; 
-                            color: var(--navy-dark); 
-                            font-weight: 500; 
-                            cursor: pointer; 
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                            border: 1px solid #e2e8f0;
-                            outline: none;
-                        ">
-                            <option value="all">All Teams</option>
-                            <!-- Populated by JS -->
-                        </select>
-                        <i class="fas fa-chevron-down" style="
-                            position: absolute; 
-                            right: 14px; 
-                            top: 50%; 
-                            transform: translateY(-50%); 
-                            color: var(--text-medium); 
-                            pointer-events: none; 
-                            font-size: 0.8rem;
-                        "></i>
+                    <div class="filter-group">
+                        <label class="filter-label">Select Team</label>
+                        <div class="filter-pill-container">
+                            <select id="matchesTeamSelector" onchange="renderMatches()" class="filter-select-pill">
+                                <option value="all">All Teams</option>
+                                <!-- Populated by JS -->
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
 
                     <!-- League Filter -->
-                    <div style="position: relative;">
-                        <select id="matchesLeagueFilter" style="
-                            appearance: none; 
-                            background: white; 
-                            border: 1px solid #e2e8f0; 
-                            border-radius: 9999px; 
-                            padding: 8px 36px 8px 16px; 
-                            font-size: 0.95rem; 
-                            color: var(--navy-dark); 
-                            font-weight: 500; 
-                            cursor: pointer; 
-                            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                            outline: none;
-                        ">
-                            <option value="all">All Leagues</option>
-                            <!-- Populated by JS -->
-                        </select>
-                        <i class="fas fa-chevron-down" style="
-                            position: absolute; 
-                            right: 14px; 
-                            top: 50%; 
-                            transform: translateY(-50%); 
-                            color: var(--text-medium); 
-                            pointer-events: none; 
-                            font-size: 0.8rem;
-                        "></i>
+                    <div class="filter-group">
+                        <label class="filter-label">League</label>
+                        <div class="filter-pill-container">
+                            <select id="matchesLeagueFilter" class="filter-select-pill">
+                                <option value="all">All Leagues</option>
+                                <!-- Populated by JS -->
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
                     </div>
 
                     <!-- Add Match Button -->

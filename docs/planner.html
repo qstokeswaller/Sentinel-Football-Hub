@@ -25,10 +25,11 @@
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
-                <div class="brand-text">
+                                <div class="brand-text">
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+                
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -54,11 +55,14 @@
         <main class="main-content">
             <header class="page-header">
                 <div class="header-info">
+                    <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
                     <h1>Session Planner</h1>
                     <p>Build sessions, add drills, export to PDF</p>
                 </div>
                 <div class="header-actions">
-                    <button class="dash-btn outline" onclick="listSessions()" style="margin-right:8px;">
+                    <button class="dash-btn outline" onclick="listSessions()">
                         <i class="fas fa-folder-open"></i> Load Session
                     </button>
                     <button class="dash-btn primary" onclick="saveSession()">
@@ -67,7 +71,7 @@
                     <button class="dash-btn outline" onclick="exportSessionPDF()">
                         <i class="fas fa-file-pdf"></i> Export PDF
                     </button>
-                    <button class="dash-btn outline" onclick="newSession()" style="margin-left:4px;">
+                    <button class="dash-btn outline" onclick="newSession()">
                         <i class="fas fa-plus"></i> New
                     </button>
                 </div>
@@ -93,7 +97,7 @@
                         <input type="time" id="sessionStartTime" class="form-input">
                     </div>
                 </div>
-                <div class="form-grid-3">
+                <div class="form-grid-3-even">
                     <div class="form-group">
                         <label class="form-label">Venue</label>
                         <input type="text" id="sessionVenue" class="form-input" placeholder="Tuks Stadium">
@@ -123,8 +127,8 @@
                     <input type="text" id="sessionPurpose" class="form-input"
                         placeholder="Improve transition from defence to attack">
                 </div>
-                <div
-                    style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px; padding-top:20px; border-top:1px solid var(--border-light);">
+                <div class="form-grid-2"
+                    style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border-light);">
                     <div class="form-group">
                         <label class="form-label">Author / Coach</label>
                         <input type="text" id="sessionAuthor" class="form-input" placeholder="e.g. Coach Ndlovu">

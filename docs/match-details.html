@@ -132,7 +132,47 @@
         @media (max-width: 1200px) {
             .edit-split-container {
                 grid-template-columns: 1fr;
-                /* Stack on smaller screens */
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .match-header-hero {
+                padding: 24px;
+            }
+
+            .hero-teams {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .hero-team {
+                width: 100%;
+                text-align: center !important;
+            }
+
+            .hero-score {
+                font-size: 3rem;
+            }
+
+            .stats-grid-edit {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .stats-grid-edit::after {
+                display: none;
+            }
+
+            .edit-row {
+                justify-content: flex-start !important;
+            }
+
+            #matchReportSection>div:last-child {
+                grid-template-columns: 1fr !important;
+            }
+
+            #matchReportSection .report-card {
+                grid-column: span 1 !important;
             }
         }
 
@@ -288,6 +328,7 @@
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+                
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -318,18 +359,23 @@
             </div>
 
 
-            <div class="page-header">
+            <header class="page-header">
                 <div class="header-info">
-                    <h2>Match Statistics</h2>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h2>Match Statistics</h2>
+                    </div>
                     <p>Performance analysis data</p>
                 </div>
-                <div class="header-actions">
+                <div class="header-actions" style="display: flex; align-items: flex-end; gap: 12px;">
                     <button class="dash-btn primary" id="btnToggleEdit"><i class="fas fa-edit"></i> Edit</button>
                     <button class="dash-btn primary" id="btnSaveStats" style="display: none;"><i
                             class="fas fa-save"></i>
                         Save Report</button>
                 </div>
-            </div>
+            </header>
 
             <!-- Display Mode -->
             <div id="displayMode" class="section-card stats-container">
@@ -357,8 +403,7 @@
                                 Starting XI / Lineup</h4>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                                 <div>
-                                    <h5
-                                        style="color: var(--navy-dark); margin-top: 0; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;"
+                                    <h5 style="color: var(--navy-dark); margin-top: 0; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;"
                                         id="viewLineupHomeTitle">Home Team</h5>
                                     <div id="viewPhaseLineupHome"
                                         style="font-size: 0.95rem; line-height: 1.6; color: var(--navy-dark); white-space: pre-wrap;">
@@ -366,8 +411,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <h5
-                                        style="color: var(--text-secondary); margin-top: 0; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;"
+                                    <h5 style="color: var(--text-secondary); margin-top: 0; margin-bottom: 8px; font-size: 0.9rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;"
                                         id="viewLineupAwayTitle">Away Team</h5>
                                     <div id="viewPhaseLineupAway"
                                         style="font-size: 0.95rem; line-height: 1.6; color: var(--navy-dark); white-space: pre-wrap;">
@@ -436,8 +480,10 @@
 
                 <div id="statsListView">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 16px; padding: 0 4px;">
-                        <span id="viewStatsHomeName" style="font-weight: 700; color: var(--navy-dark); font-size: 0.95rem;"></span>
-                        <span id="viewStatsAwayName" style="font-weight: 700; color: var(--text-secondary); font-size: 0.95rem;"></span>
+                        <span id="viewStatsHomeName"
+                            style="font-weight: 700; color: var(--navy-dark); font-size: 0.95rem;"></span>
+                        <span id="viewStatsAwayName"
+                            style="font-weight: 700; color: var(--text-secondary); font-size: 0.95rem;"></span>
                     </div>
                     <!-- Stats will be injected here -->
                 </div>

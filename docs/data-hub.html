@@ -21,10 +21,11 @@
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
-                <div class="brand-text">
+                                <div class="brand-text">
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
+                
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -50,9 +51,14 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="top-nav">
-                <div class="page-title">
-                    <h1>Data Hub</h1>
-                    <p class="subtitle">Raw performance data & export</p>
+                <div class="page-title" style="display: flex; align-items: center; gap: 12px;">
+                    <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1>Data Hub</h1>
+                        <p class="subtitle">Raw performance data & export</p>
+                    </div>
                 </div>
                 <div class="top-nav-actions">
                     <button class="btn btn-primary"><i class="fas fa-download"></i> Export CSV</button>
