@@ -46,7 +46,6 @@
             margin-bottom: 0 !important;
         }
 
-
         /* Alignment for Add Staff Member Button */
         #btnAddCoachRow {
             margin-top: 8px !important;
@@ -71,7 +70,6 @@
             color: var(--navy-primary);
         }
 
-        /* Ensure consistency in the Add Player modal too */
         #modalPlayer .form-group,
         #modalPlayerProfile .form-group {
             margin-bottom: 12px;
@@ -132,7 +130,6 @@
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
-
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -165,7 +162,7 @@
                         </button>
                         <h1>Squad Management</h1>
                     </div>
-                    <p>Manage roster, availability, and player profiles • <span id="playerCount"
+                    <p>Manage roster, availability, and player profiles &bull; <span id="playerCount"
                             style="font-weight: 600; color: var(--primary);">0 registered players</span></p>
                 </div>
 
@@ -208,256 +205,267 @@
                     </button>
                 </div>
             </header>
+
+            <!-- Squad Grid -->
+            <div id="squadGrid" class="player-grid" style="display: none; margin-top: 24px;">
+                <!-- Squads will be rendered here -->
+            </div>
+
+            <!-- Squad Detail Sheet View -->
+            <div id="squadDetailView" class="section-card"
+                style="display: none; margin-top: 24px; padding: 0; overflow: hidden;">
+                <div class="sheet-header"
+                    style="padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                    <button class="dash-btn outline sm" id="btnBackToSquads"
+                        style="flex: 0 0 auto; width: auto; padding-right: 16px;">
+                        <i class="fas fa-arrow-left"></i> Back to Squads
+                    </button>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div style="text-align: right;">
+                            <h2 id="detailSquadName" style="margin: 0; color: var(--navy-dark);">Squad Name</h2>
+                            <span id="detailSquadMeta" style="color: var(--text-secondary); font-size: 0.9rem;">Meta
+                                Info</span>
+                        </div>
+                        <button class="dash-btn outline" id="btnAssignPlayerModal" style="border-radius: 9999px;">
+                            <i class="fas fa-user-plus" style="margin-right: 6px;"></i> Assign Player
+                        </button>
+                        <button class="dash-btn primary" id="btnAssessSquad"
+                            style="border-radius: 9999px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                            <i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> Assess Squad
+                        </button>
+                    </div>
+                </div>
+                <!-- Table View -->
+                <div id="squadDetailTableWrapper" style="overflow-x: auto; display: none;">
+                    <table class="table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Position</th>
+                                <th>Age</th>
+                                <th>Height</th>
+                                <th>Weight</th>
+                                <th>Foot</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="squadDetailTableBody">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Grid View (default) -->
+                <div id="squadDetailGridWrapper">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- Player Grid Removed -->
 
-    <div id="squadGrid" class="player-grid" style="display: none;">
-        <!-- Squads will be rendered here -->
-    </div>
+                <!-- Modals -->
+                <div class="modal-overlay" id="modalSquad">
+                    <div class="modal-container modal-bubble" style="max-width: 550px;">
+                        <div class="modal-header-bubble">
+                            <h2>New Squad</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
 
-    <!-- Squad Detail Sheet View -->
-    <div id="squadDetailView" class="section-card" style="display: none; padding: 0; overflow: hidden;">
-        <div class="sheet-header"
-            style="padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-            <button class="dash-btn outline sm" id="btnBackToSquads"
-                style="flex: 0 0 auto; width: auto; padding-right: 16px;">
-                <i class="fas fa-arrow-left"></i> Back to Squads
-            </button>
-            <div style="display: flex; align-items: center; gap: 16px;">
-                <div style="text-align: right;">
-                    <h2 id="detailSquadName" style="margin: 0; color: var(--navy-dark);">Squad Name</h2>
-                    <span id="detailSquadMeta" style="color: var(--text-secondary); font-size: 0.9rem;">Meta
-                        Info</span>
-                </div>
-                <button class="dash-btn outline" id="btnAssignPlayerModal" style="border-radius: 9999px;">
-                    <i class="fas fa-user-plus" style="margin-right: 6px;"></i> Assign Player
-                </button>
-                <button class="dash-btn primary" id="btnAssessSquad"
-                    style="border-radius: 9999px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
-                    <i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> Assess Squad
-                </button>
-            </div>
-        </div>
-        <div style="overflow-x: auto;">
-            <table class="table" style="width: 100%; border-collapse: collapse;">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Position</th>
-                        <th>Age</th>
-                        <th>Height</th>
-                        <th>Weight</th>
-                        <th>Foot</th>
+                        <div class="modal-body-bubble">
+                            <div class="form-group-bubble">
+                                <label>Squad Name</label>
+                                <input type="text" id="squadNameInput" class="form-control-bubble"
+                                    placeholder="e.g. First Team">
+                            </div>
 
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="squadDetailTableBody">
-                    <!-- Rows -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-    </main>
-    </div>
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Age Group</label>
+                                    <input type="text" id="squadAgeGroupInput" class="form-control-bubble"
+                                        placeholder="e.g. Senior">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>League</label>
+                                    <input type="text" id="squadLeagueInput" class="form-control-bubble"
+                                        placeholder="e.g. Premier">
+                                </div>
+                            </div>
 
-    <!-- Modals -->
-    <div class="modal-overlay" id="modalSquad">
-        <div class="modal-container modal-bubble" style="max-width: 550px;">
-            <div class="modal-header-bubble">
-                <h2>New Squad</h2>
-                <button class="btn-close-modal">&times;</button>
-            </div>
+                            <div class="bubble-section-title">Coaching Staff</div>
+                            <div id="coachesContainer">
+                                <!-- Dynamic Rows -->
+                            </div>
 
-            <div class="modal-body-bubble">
-                <div class="form-group-bubble">
-                    <label>Squad Name</label>
-                    <input type="text" id="squadNameInput" class="form-control-bubble" placeholder="e.g. First Team">
-                </div>
+                            <button type="button" id="btnAddCoachRow">
+                                <i class="fas fa-plus-circle"></i> Add Coach
+                            </button>
 
-                <div class="bubble-grid-2">
-                    <div class="form-group-bubble">
-                        <label>Age Group</label>
-                        <input type="text" id="squadAgeGroupInput" class="form-control-bubble"
-                            placeholder="e.g. Senior">
-                    </div>
-                    <div class="form-group-bubble">
-                        <label>League</label>
-                        <input type="text" id="squadLeagueInput" class="form-control-bubble" placeholder="e.g. Premier">
+                            <div style="margin-top: 32px; display: flex; justify-content: flex-end; gap: 12px;">
+                                <button class="dash-btn ghost btn-close-modal">Cancel</button>
+                                <button class="dash-btn primary" id="btnSaveSquad"
+                                    style="border-radius: 12px; padding: 10px 24px;">Create Squad</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bubble-section-title">Coaching Staff</div>
-                <div id="coachesContainer">
-                    <!-- Dynamic Rows -->
-                </div>
+                <!-- Squad Assessment Modal -->
+                <div class="modal-overlay" id="modalSquadAssessment">
+                    <div class="modal-container modal-bubble" style="max-width: 800px;">
+                        <div class="modal-header-bubble">
+                            <h2>Comprehensive Squad Assessment</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
 
-                <button type="button" id="btnAddCoachRow">
-                    <i class="fas fa-plus-circle"></i> Add Coach
-                </button>
+                        <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+                            <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                                <div class="form-group-bubble">
+                                    <label>Assessment Date</label>
+                                    <input type="date" id="squadAssessDate" class="form-control-bubble">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Context</label>
+                                    <select id="squadAssessContext" class="form-control-bubble">
+                                        <option value="Match">Match Performance</option>
+                                        <option value="Training">Training Block</option>
+                                        <option value="General">General Review</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                <div style="margin-top: 32px; display: flex; justify-content: flex-end; gap: 12px;">
-                    <button class="dash-btn ghost btn-close-modal">Cancel</button>
-                    <button class="dash-btn primary" id="btnSaveSquad"
-                        style="border-radius: 12px; padding: 10px 24px;">Create Squad</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                            <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Group Ratings
+                                (1-10)</h3>
+                            <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                                <div class="form-group-bubble">
+                                    <label>Tactical Execution</label>
+                                    <input type="number" id="squadAssessTactical" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 7">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Physical Condition</label>
+                                    <input type="number" id="squadAssessPhysical" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 8">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Squad Cohesion &amp; Mentality</label>
+                                    <input type="number" id="squadAssessMentality" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 9">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Overall Rating</label>
+                                    <input type="number" id="squadAssessOverall" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 8">
+                                </div>
+                            </div>
 
-    <!-- Player Modals Removed -->
+                            <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Qualitative
+                                Feedback</h3>
+                            <div class="form-group-bubble">
+                                <label>Key Strengths</label>
+                                <textarea id="squadAssessStrengths" class="form-control-bubble" rows="3"
+                                    placeholder="What did the squad do well?"></textarea>
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Areas for Improvement</label>
+                                <textarea id="squadAssessImprovements" class="form-control-bubble" rows="3"
+                                    placeholder="Where does the squad need work?"></textarea>
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Additional Notes</label>
+                                <textarea id="squadAssessNotes" class="form-control-bubble" rows="3"
+                                    placeholder="Any other observations..."></textarea>
+                            </div>
+                        </div>
 
-    <!-- Squad Assessment Modal -->
-    <div class="modal-overlay" id="modalSquadAssessment">
-        <div class="modal-container modal-bubble" style="max-width: 800px;">
-            <div class="modal-header-bubble">
-                <h2>Comprehensive Squad Assessment</h2>
-                <button class="btn-close-modal">&times;</button>
-            </div>
-
-            <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
-                <div class="bubble-grid-2" style="margin-bottom: 24px;">
-                    <div class="form-group-bubble">
-                        <label>Assessment Date</label>
-                        <input type="date" id="squadAssessDate" class="form-control-bubble">
-                    </div>
-                    <div class="form-group-bubble">
-                        <label>Context</label>
-                        <select id="squadAssessContext" class="form-control-bubble">
-                            <option value="Match">Match Performance</option>
-                            <option value="Training">Training Block</option>
-                            <option value="General">General Review</option>
-                        </select>
-                    </div>
-                </div>
-
-                <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Group Ratings (1-10)</h3>
-                <div class="bubble-grid-2" style="margin-bottom: 24px;">
-                    <div class="form-group-bubble">
-                        <label>Tactical Execution</label>
-                        <input type="number" id="squadAssessTactical" class="form-control-bubble" min="1" max="10"
-                            placeholder="e.g. 7">
-                    </div>
-                    <div class="form-group-bubble">
-                        <label>Physical Condition</label>
-                        <input type="number" id="squadAssessPhysical" class="form-control-bubble" min="1" max="10"
-                            placeholder="e.g. 8">
-                    </div>
-                    <div class="form-group-bubble">
-                        <label>Squad Cohesion & Mentality</label>
-                        <input type="number" id="squadAssessMentality" class="form-control-bubble" min="1" max="10"
-                            placeholder="e.g. 9">
-                    </div>
-                    <div class="form-group-bubble">
-                        <label>Overall Rating</label>
-                        <input type="number" id="squadAssessOverall" class="form-control-bubble" min="1" max="10"
-                            placeholder="e.g. 8">
-                    </div>
-                </div>
-
-                <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Qualitative Feedback</h3>
-                <div class="form-group-bubble">
-                    <label>Key Strengths</label>
-                    <textarea id="squadAssessStrengths" class="form-control-bubble" rows="3"
-                        placeholder="What did the squad do well?"></textarea>
-                </div>
-                <div class="form-group-bubble">
-                    <label>Areas for Improvement</label>
-                    <textarea id="squadAssessImprovements" class="form-control-bubble" rows="3"
-                        placeholder="Where does the squad need work?"></textarea>
-                </div>
-                <div class="form-group-bubble">
-                    <label>Additional Notes</label>
-                    <textarea id="squadAssessNotes" class="form-control-bubble" rows="3"
-                        placeholder="Any other observations..."></textarea>
-                </div>
-            </div>
-
-            <div class="modal-footer-bubble">
-                <button class="dash-btn outline btn-close-modal">Cancel</button>
-                <button class="dash-btn primary" id="btnSaveSquadAssessment">Save Assessment</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Assign Player Modal -->
-    <div class="modal-overlay" id="modalAssignPlayer">
-        <div class="modal-container modal-bubble" style="max-width: 450px;">
-            <div class="modal-header-bubble">
-                <h2>Assign Player</h2>
-                <button class="btn-close-modal">&times;</button>
-            </div>
-
-            <div class="modal-body-bubble">
-                <div class="form-group-bubble">
-                    <label>Select Existing Player to Assign</label>
-                    <select id="assignExistingPlayerSelect" class="form-control-bubble">
-                        <!-- Populated by JS -->
-                    </select>
-                    <button id="btnAssignExistingPlayer" class="dash-btn primary"
-                        style="width: 100%; margin-top: 12px;">Assign to Squad</button>
-                </div>
-
-                <div style="text-align: center; margin: 24px 0; color: #94a3b8; font-size: 0.85rem; font-weight: 600;">
-                    OR CREATE NEW</div>
-
-                <div class="form-group-bubble">
-                    <label>Player Name</label>
-                    <input type="text" id="newPlayerNameAssign" class="form-control-bubble" placeholder="e.g. John Doe">
-                </div>
-                <div class="bubble-grid-2">
-                    <div class="form-group-bubble">
-                        <label>Age</label>
-                        <input type="number" id="newPlayerAgeAssign" class="form-control-bubble" placeholder="e.g. 19">
-                    </div>
-                    <div class="form-group-bubble">
-                        <label>Position</label>
-                        <select id="newPlayerPositionAssign" class="form-control-bubble">
-                            <option value="GK">Goalkeeper</option>
-                            <option value="DEF">Defender</option>
-                            <option value="MID">Midfielder</option>
-                            <option value="FWD">Forward</option>
-                        </select>
+                        <div class="modal-footer-bubble">
+                            <button class="dash-btn outline btn-close-modal">Cancel</button>
+                            <button class="dash-btn primary" id="btnSaveSquadAssessment">Save Assessment</button>
+                        </div>
                     </div>
                 </div>
-                <button id="btnCreateAndAssignPlayer" class="dash-btn outline"
-                    style="width: 100%; margin-top: 8px;">Create & Assign</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Move Player Modal -->
-    <div class="modal-overlay" id="modalMovePlayer">
-        <div class="modal-container modal-bubble" style="max-width: 400px;">
-            <div class="modal-header-bubble">
-                <h2>Move Player</h2>
-                <button class="btn-close-modal">&times;</button>
-            </div>
-            <div class="modal-body-bubble">
-                <p style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-medium);">
-                    Move <strong id="movePlayerNameDisplay" style="color: var(--navy-dark);"></strong> to another squad:
-                </p>
-                <input type="hidden" id="movePlayerIdInput">
-                <div class="form-group-bubble">
-                    <label>Destination Squad</label>
-                    <select id="movePlayerSquadSelect" class="form-control-bubble">
-                        <!-- Populated by JS -->
-                    </select>
+                <!-- Assign Player Modal -->
+                <div class="modal-overlay" id="modalAssignPlayer">
+                    <div class="modal-container modal-bubble" style="max-width: 450px;">
+                        <div class="modal-header-bubble">
+                            <h2>Assign Player</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body-bubble">
+                            <div class="form-group-bubble">
+                                <label>Select Existing Player to Assign</label>
+                                <select id="assignExistingPlayerSelect" class="form-control-bubble">
+                                    <!-- Populated by JS -->
+                                </select>
+                                <button id="btnAssignExistingPlayer" class="dash-btn primary"
+                                    style="width: 100%; margin-top: 12px;">Assign to Squad</button>
+                            </div>
+
+                            <div
+                                style="text-align: center; margin: 24px 0; color: #94a3b8; font-size: 0.85rem; font-weight: 600;">
+                                OR CREATE NEW</div>
+
+                            <div class="form-group-bubble">
+                                <label>Player Name</label>
+                                <input type="text" id="newPlayerNameAssign" class="form-control-bubble"
+                                    placeholder="e.g. John Doe">
+                            </div>
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Age</label>
+                                    <input type="number" id="newPlayerAgeAssign" class="form-control-bubble"
+                                        placeholder="e.g. 19">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Position</label>
+                                    <select id="newPlayerPositionAssign" class="form-control-bubble">
+                                        <option value="GK">Goalkeeper</option>
+                                        <option value="DEF">Defender</option>
+                                        <option value="MID">Midfielder</option>
+                                        <option value="FWD">Forward</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button id="btnCreateAndAssignPlayer" class="dash-btn outline"
+                                style="width: 100%; margin-top: 8px;">Create &amp; Assign</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer-bubble">
-                <button class="dash-btn outline btn-close-modal">Cancel</button>
-                <button class="dash-btn primary" id="btnConfirmMovePlayer">Move Player</button>
-            </div>
-        </div>
-    </div>
 
-    <script src="js/squad-manager.js?v=9"></script>
-    <script src="js/squad-ui.js?v=13"></script>
-    <script src="js/sidebar-toggle.js?v=6"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                <!-- Move Player Modal -->
+                <div class="modal-overlay" id="modalMovePlayer">
+                    <div class="modal-container modal-bubble" style="max-width: 400px;">
+                        <div class="modal-header-bubble">
+                            <h2>Move Player</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
+                        <div class="modal-body-bubble">
+                            <p style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-medium);">
+                                Move <strong id="movePlayerNameDisplay" style="color: var(--navy-dark);"></strong> to
+                                another squad:
+                            </p>
+                            <input type="hidden" id="movePlayerIdInput">
+                            <div class="form-group-bubble">
+                                <label>Destination Squad</label>
+                                <select id="movePlayerSquadSelect" class="form-control-bubble">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer-bubble">
+                            <button class="dash-btn outline btn-close-modal">Cancel</button>
+                            <button class="dash-btn primary" id="btnConfirmMovePlayer">Move Player</button>
+                        </div>
+                    </div>
+                </div>
+
+                <script src="js/squad-manager.js?v=9"></script>
+                <script src="js/squad-ui.js?v=14"></script>
+                <script src="js/sidebar-toggle.js?v=6"></script>
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
 
 </html>

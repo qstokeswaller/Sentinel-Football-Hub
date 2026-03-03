@@ -4,7 +4,7 @@
 (function () {
     // --- AWS PRODUCTION CONFIGURATION ---
     const AWS_STATIC_IP = '54.170.115.131';
-    const PROD_API_URL = `http://${AWS_STATIC_IP}:3001/api`;
+    const PROD_API_URL = `http://${AWS_STATIC_IP}:3002/api`;
     // -------------------------------------
 
     // --- OLD FALLBACK (same-origin relative path) ---
@@ -22,11 +22,11 @@
     if (isLocalBackend) {
         // If we are on localhost, always prioritize the local backend
         // If served from the same port, use relative /api
-        window.API_BASE_URL = (currentPort === '3001') ? '/api' : 'http://localhost:3001/api';
+        window.API_BASE_URL = (currentPort === '3002') ? '/api' : 'http://localhost:3002/api';
         window.USE_LOCAL_STORAGE = false;
     } else if (isGitHubPages || isStaticMode) {
         // Fallback for static demo hosting
-        window.API_BASE_URL = 'http://localhost:3001/api';
+        window.API_BASE_URL = 'http://localhost:3002/api';
         window.USE_LOCAL_STORAGE = false;
     } else {
         // Production (AWS)

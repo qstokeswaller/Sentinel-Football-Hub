@@ -180,6 +180,13 @@ db.serialize(() => {
     // Phase 9 Migrations
     addColumnIfNotExists('assessments', 'matchId', 'TEXT');
     addColumnIfNotExists('assessments', 'attachment', 'TEXT');
+    addColumnIfNotExists('sessions', 'image', 'TEXT');
+    addColumnIfNotExists('reports', 'absentPlayerIds', 'TEXT');
+    addColumnIfNotExists('players', 'highlights', 'TEXT');
+    addColumnIfNotExists('players', 'analysisVideos', 'TEXT');
+    addColumnIfNotExists('sessions', 'playerIds', 'TEXT'); // Store JSON array of player IDs
+    addColumnIfNotExists('matches', 'observedPlayerIds', 'TEXT'); // Store JSON array of player IDs
+    addColumnIfNotExists('sessions', 'isTemplate', 'INTEGER DEFAULT 0'); // 1 = reusable template
 
     // Rendering Persistence Migrations
     addColumnIfNotExists('matches', 'homeTeam', 'TEXT');

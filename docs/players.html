@@ -16,7 +16,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="js/api-config.js"></script>
     <style>
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -67,7 +66,6 @@
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
-
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -100,10 +98,23 @@
                         </button>
                         <h1 class="page-title">Player Management</h1>
                     </div>
-                    <div class="date-display"><i class="far fa-calendar-alt"></i> <span id="currentDate"></span></div>
+                    <p>Manage your players &bull; <span id="playerCount"
+                            style="font-weight: 600; color: var(--primary);">0 players found</span></p>
                 </div>
 
                 <div class="header-actions" style="display: flex; align-items: flex-end; gap: 16px;">
+                    <!-- View Toggle -->
+                    <div id="viewToggleGroup" class="view-toggle-group">
+                        <button class="view-toggle-btn" id="btnListView" title="List View"
+                            onclick="setPlayerView('list')">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button class="view-toggle-btn active" id="btnGridView" title="Grid View"
+                            onclick="setPlayerView('grid')">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                    </div>
+
                     <!-- Search Bubble -->
                     <div class="search-bubble-container">
                         <i class="fas fa-search"></i>
@@ -140,8 +151,8 @@
             </header>
 
             <!-- Table View -->
-            <div class="section-card"
-                style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);">
+            <div id="playerTableWrapper" class="section-card"
+                style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); display: none;">
                 <div style="overflow-x: auto;">
                     <table class="table" style="width: 100%; border-collapse: collapse; margin: 0;">
                         <thead>
@@ -153,7 +164,6 @@
                                 <th>Height</th>
                                 <th>Weight</th>
                                 <th>Foot</th>
-
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -164,8 +174,12 @@
                 </div>
             </div>
 
-    </div>
-    </main>
+            <!-- Grid View -->
+            <div id="playerGridWrapper">
+                <!-- Populated by JS -->
+            </div>
+
+        </main>
     </div>
 
     <!-- Modals -->
@@ -203,7 +217,6 @@
                             <option value="DEF">Defender</option>
                             <option value="MID">Midfielder</option>
                             <option value="FWD">Forward</option>
-                            <!-- Additional custom positions populated by JS -->
                         </select>
                     </div>
                     <div class="form-group-bubble">
@@ -241,7 +254,7 @@
             <div class="modal-footer-bubble"
                 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 12px; padding: 20px 24px;">
                 <button class="dash-btn outline" id="btnSavePlayerAnother"
-                    style="white-space: nowrap; flex-shrink: 0;">Save & Add Another</button>
+                    style="white-space: nowrap; flex-shrink: 0;">Save &amp; Add Another</button>
                 <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: nowrap; width: 100%;">
                     <button class="dash-btn outline btn-close-modal" style="flex-shrink: 0;">Cancel</button>
                     <button class="dash-btn primary" id="btnSavePlayer"
@@ -252,10 +265,10 @@
     </div>
 
     <script src="js/squad-manager.js?v=9"></script>
-    <script src="js/player-ui.js?v=1"></script>
+    <script src="js/player-ui.js?v=2"></script>
     <script src="js/sidebar-toggle.js"></script>
     <script>
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        document.getElementById('currentDate') && (document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }));
     </script>
 </body>
 

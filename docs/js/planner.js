@@ -6,6 +6,7 @@
 let blockCounter = 0, drillCounter = 0;
 let currentSessionId = null;
 const canvases = {};
+let _pendingRestorePlayerIds = [];
 window.canvases = canvases;
 
 // Global hook for drill-builder to trigger autosave
@@ -99,27 +100,34 @@ function buildBlockHTML(id, type, num) {
           <button class="pitch-btn"        onclick="setPT('${id}','blank', canvases)"      data-pt="blank">Blank</button>
           <div style="flex:1;"></div>
           <button class="pitch-btn" id="btn-orient-${id}" onclick="toggleOrientation('${id}', canvases)" title="Switch Landscape/Portrait"><i class="fas fa-arrows-alt-h"></i> Landscape</button>
+          <button class="pitch-btn" onclick="toggleFullscreen('${id}')" title="Enter Fullscreen"><i class="fas fa-expand"></i> Fullscreen</button>
         </div>
         <div class="canvas-el" id="ce-${id}">
           <canvas id="dc-${id}"></canvas>
+          <button class="fullscreen-exit-btn" onclick="toggleFullscreen('${id}')" title="Exit Fullscreen">
+            <i class="fas fa-compress"></i> Exit
+          </button>
+          <button class="fullscreen-tools-btn" onclick="toggleFullscreenTools('${id}')" title="Toggle Tools">
+            <i class="fas fa-bars"></i>
+          </button>
         </div>
         <div class="mini-toolbar">
           <div class="mini-tool-row">
             <span class="mini-row-label">Draw</span>
-            <button class="mt-btn active" id="mt-${id}-pencil"      onclick="setMT('${id}','pencil', canvases)">✏ Pencil</button>
-            <button class="mt-btn"        id="mt-${id}-arrow"       onclick="setMT('${id}','arrow', canvases)">→ Arrow</button>
-            <button class="mt-btn"        id="mt-${id}-dashed"      onclick="setMT('${id}','dashed', canvases)">⤳ Dashed Arrow</button>
-            <button class="mt-btn"        id="mt-${id}-dashed-line" onclick="setMT('${id}','dashed-line', canvases)">- - Dash Line</button>
-            <button class="mt-btn"        id="mt-${id}-line"        onclick="setMT('${id}','line', canvases)">/ Line</button>
-            <button class="mt-btn"        id="mt-${id}-curved"      onclick="setMT('${id}','curved', canvases)">↩ Curved</button>
-            <button class="mt-btn"        id="mt-${id}-rect"        onclick="setMT('${id}','rect', canvases)">▭ Rect</button>
-            <button class="mt-btn"        id="mt-${id}-rect-fill"   onclick="setMT('${id}','rect-fill', canvases)">▬ Rect Fill</button>
-            <button class="mt-btn"        id="mt-${id}-circle"      onclick="setMT('${id}','circle', canvases)">○ Circle</button>
-            <button class="mt-btn"        id="mt-${id}-circle-fill" onclick="setMT('${id}','circle-fill', canvases)">● Circle Fill</button>
-            <button class="mt-btn"        id="mt-${id}-tri"         onclick="setMT('${id}','tri', canvases)">△ Tri</button>
-            <button class="mt-btn"        id="mt-${id}-tri-fill"    onclick="setMT('${id}','tri-fill', canvases)">▲ Tri Fill</button>
-            <button class="mt-btn"        id="mt-${id}-zone"        onclick="setMT('${id}','zone', canvases)">⬚ Zone</button>
-            <button class="mt-btn"        id="mt-${id}-eraser"      onclick="setMT('${id}','eraser', canvases)">⌫ Eraser</button>
+            <button class="mt-btn active" id="mt-${id}-pencil"      onclick="setMT('${id}','pencil', canvases); handleToolSelectionInFullscreen('${id}')">✏ Pencil</button>
+            <button class="mt-btn"        id="mt-${id}-arrow"       onclick="setMT('${id}','arrow', canvases); handleToolSelectionInFullscreen('${id}')">→ Arrow</button>
+            <button class="mt-btn"        id="mt-${id}-dashed"      onclick="setMT('${id}','dashed', canvases); handleToolSelectionInFullscreen('${id}')">⤳ Dashed Arrow</button>
+            <button class="mt-btn"        id="mt-${id}-dashed-line" onclick="setMT('${id}','dashed-line', canvases); handleToolSelectionInFullscreen('${id}')">- - Dash Line</button>
+            <button class="mt-btn"        id="mt-${id}-line"        onclick="setMT('${id}','line', canvases); handleToolSelectionInFullscreen('${id}')">/ Line</button>
+            <button class="mt-btn"        id="mt-${id}-curved"      onclick="setMT('${id}','curved', canvases); handleToolSelectionInFullscreen('${id}')">↩ Curved</button>
+            <button class="mt-btn"        id="mt-${id}-rect"        onclick="setMT('${id}','rect', canvases); handleToolSelectionInFullscreen('${id}')">▭ Rect</button>
+            <button class="mt-btn"        id="mt-${id}-rect-fill"   onclick="setMT('${id}','rect-fill', canvases); handleToolSelectionInFullscreen('${id}')">▬ Rect Fill</button>
+            <button class="mt-btn"        id="mt-${id}-circle"      onclick="setMT('${id}','circle', canvases); handleToolSelectionInFullscreen('${id}')">○ Circle</button>
+            <button class="mt-btn"        id="mt-${id}-circle-fill" onclick="setMT('${id}','circle-fill', canvases); handleToolSelectionInFullscreen('${id}')">● Circle Fill</button>
+            <button class="mt-btn"        id="mt-${id}-tri"         onclick="setMT('${id}','tri', canvases); handleToolSelectionInFullscreen('${id}')">△ Tri</button>
+            <button class="mt-btn"        id="mt-${id}-tri-fill"    onclick="setMT('${id}','tri-fill', canvases); handleToolSelectionInFullscreen('${id}')">▲ Tri Fill</button>
+            <button class="mt-btn"        id="mt-${id}-zone"        onclick="setMT('${id}','zone', canvases); handleToolSelectionInFullscreen('${id}')">⬚ Zone</button>
+            <button class="mt-btn"        id="mt-${id}-eraser"      onclick="setMT('${id}','eraser', canvases); handleToolSelectionInFullscreen('${id}')">⌫ Eraser</button>
             <div class="mt-divider"></div>
             <select class="mt-select" onchange="setMW('${id}',parseInt(this.value), canvases)">
               <option value="2">Thin</option>
@@ -130,32 +138,32 @@ function buildBlockHTML(id, type, num) {
           </div>
           <div class="mini-tool-row">
             <span class="mini-row-label">Place</span>
-            <button class="mt-btn" id="mt-${id}-move"       onclick="setMT('${id}','move', canvases)">✥ Move</button>
+            <button class="mt-btn" id="mt-${id}-move"       onclick="setMT('${id}','move', canvases); handleToolSelectionInFullscreen('${id}')">✥ Move</button>
             <div class="mt-divider"></div>
-            <button class="mt-btn" id="mt-${id}-player"     onclick="setMT('${id}','player', canvases)">● Player</button>
-            <button class="mt-btn" id="mt-${id}-goalkeeper" onclick="setMT('${id}','goalkeeper', canvases)">GK</button>
-            <button class="mt-btn" id="mt-${id}-cone"       onclick="setMT('${id}','cone', canvases)">▲ Cone</button>
-            <button class="mt-btn" id="mt-${id}-ball"       onclick="setMT('${id}','ball', canvases)">⚽ Ball</button>
-            <button class="mt-btn" id="mt-${id}-goalpost"   onclick="setMT('${id}','goalpost', canvases)">🥅 Goalpost</button>
-            <button class="mt-btn" id="mt-${id}-flag"       onclick="setMT('${id}','flag', canvases)">⚑ Flag</button>
-            <button class="mt-btn" id="mt-${id}-number"     onclick="setMT('${id}','number', canvases)"># Num</button>
+            <button class="mt-btn" id="mt-${id}-player"     onclick="setMT('${id}','player', canvases); handleToolSelectionInFullscreen('${id}')">● Player</button>
+            <button class="mt-btn" id="mt-${id}-goalkeeper" onclick="setMT('${id}','goalkeeper', canvases); handleToolSelectionInFullscreen('${id}')">GK</button>
+            <button class="mt-btn" id="mt-${id}-cone"       onclick="setMT('${id}','cone', canvases); handleToolSelectionInFullscreen('${id}')">▲ Cone</button>
+            <button class="mt-btn" id="mt-${id}-ball"       onclick="setMT('${id}','ball', canvases); handleToolSelectionInFullscreen('${id}')">⚽ Ball</button>
+            <button class="mt-btn" id="mt-${id}-goalpost"   onclick="setMT('${id}','goalpost', canvases); handleToolSelectionInFullscreen('${id}')">🥅 Goalpost</button>
+            <button class="mt-btn" id="mt-${id}-flag"       onclick="setMT('${id}','flag', canvases); handleToolSelectionInFullscreen('${id}')">⚑ Flag</button>
+            <button class="mt-btn" id="mt-${id}-number"     onclick="setMT('${id}','number', canvases); handleToolSelectionInFullscreen('${id}')"># Num</button>
           </div>
           <div class="mini-tool-row">
             <span class="mini-row-label">Team</span>
-            <div class="mt-swatch active" data-color="#e53935" onclick="setMC('${id}',this, canvases)" style="background:#e53935" title="Red">👕</div>
-            <div class="mt-swatch" data-color="#1e88e5" onclick="setMC('${id}',this, canvases)" style="background:#1e88e5" title="Blue">👕</div>
-            <div class="mt-swatch" data-color="#43a047" onclick="setMC('${id}',this, canvases)" style="background:#43a047" title="Green">👕</div>
-            <div class="mt-swatch" data-color="#fdd835" onclick="setMC('${id}',this, canvases)" style="background:#fdd835" title="Yellow">👕</div>
-            <div class="mt-swatch" data-color="#f57c00" onclick="setMC('${id}',this, canvases)" style="background:#f57c00" title="Orange">👕</div>
-            <div class="mt-swatch" data-color="#8e24aa" onclick="setMC('${id}',this, canvases)" style="background:#8e24aa" title="Purple">👕</div>
-            <div class="mt-swatch" data-color="#ffffff" onclick="setMC('${id}',this, canvases)" style="background:#fff;border:1px solid #e2e8f0" title="White">👕</div>
-            <div class="mt-swatch" data-color="#212121" onclick="setMC('${id}',this, canvases)" style="background:#212121" title="Black">👕</div>
-            <div class="mt-swatch" data-color="#e91e63" onclick="setMC('${id}',this, canvases)" style="background:#e91e63" title="Pink">👕</div>
-            <div class="mt-swatch" data-color="#ffeb3b" onclick="setMC('${id}',this, canvases)" style="background:#ffeb3b" title="GK Yellow">🧤</div>
+            <div class="mt-swatch active" data-color="#e53935" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#e53935" title="Red">👕</div>
+            <div class="mt-swatch" data-color="#1e88e5" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#1e88e5" title="Blue">👕</div>
+            <div class="mt-swatch" data-color="#43a047" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#43a047" title="Green">👕</div>
+            <div class="mt-swatch" data-color="#fdd835" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#fdd835" title="Yellow">👕</div>
+            <div class="mt-swatch" data-color="#f57c00" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#f57c00" title="Orange">👕</div>
+            <div class="mt-swatch" data-color="#8e24aa" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#8e24aa" title="Purple">👕</div>
+            <div class="mt-swatch" data-color="#ffffff" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#fff;border:1px solid #e2e8f0" title="White">👕</div>
+            <div class="mt-swatch" data-color="#212121" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#212121" title="Black">👕</div>
+            <div class="mt-swatch" data-color="#e91e63" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#e91e63" title="Pink">👕</div>
+            <div class="mt-swatch" data-color="#ffeb3b" onclick="setMC('${id}',this, canvases); handleToolSelectionInFullscreen('${id}')" style="background:#ffeb3b" title="GK Yellow">🧤</div>
             <div class="mt-divider"></div>
             <div style="display:flex;align-items:center;gap:5px;">
               <span style="font-size:10px;color:#a0aec0;font-weight:600;">Line:</span>
-              <input type="color" value="#ffffff" oninput="setMDC('${id}',this.value, canvases)"
+              <input type="color" value="#ffffff" oninput="setMDC('${id}',this.value, canvases); handleToolSelectionInFullscreen('${id}')"
                      style="width:24px;height:24px;border:1px solid #e2e8f0;border-radius:50%;cursor:pointer;padding:0;">
             </div>
           </div>
@@ -188,6 +196,49 @@ function toggleCanvas(id) {
     : '<i class="fas fa-futbol"></i> Open Drill Builder';
   if (open && canvases[id]) drawAll(id, canvases);
 }
+
+function toggleFullscreen(id) {
+  const wrap = document.getElementById('dcw-' + id);
+  if (!wrap) return;
+  const isFullscreen = wrap.classList.toggle('is-fullscreen');
+  if (isFullscreen) {
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+    // Auto-portrait for small devices (under 768px)
+    if (window.innerWidth < 768) {
+      if (canvases[id]) {
+        if (canvases[id].orientation !== 'portrait') {
+          if (typeof toggleOrientation === 'function') toggleOrientation(id, canvases);
+        } else {
+          // Robustness: Ensure class is there if already portrait
+          wrap.classList.add('is-portrait');
+        }
+      }
+    } else if (canvases[id] && canvases[id].orientation === 'portrait') {
+      // Ensure class is synced even on larger screens if portrait manually selected
+      wrap.classList.add('is-portrait');
+    }
+  } else {
+    document.body.style.overflow = '';
+    wrap.classList.remove('show-fullscreen-tools'); // Reset tools menu state
+  }
+}
+window.toggleFullscreen = toggleFullscreen;
+
+function toggleFullscreenTools(id) {
+  const wrap = document.getElementById('dcw-' + id);
+  if (wrap) wrap.classList.toggle('show-fullscreen-tools');
+}
+window.toggleFullscreenTools = toggleFullscreenTools;
+
+// Helper to auto-hide tools menu in fullscreen mode when a tool is selected
+function handleToolSelectionInFullscreen(id) {
+  const wrap = document.getElementById('dcw-' + id);
+  if (wrap && wrap.classList.contains('is-fullscreen')) {
+    wrap.classList.remove('show-fullscreen-tools');
+  }
+}
+window.handleToolSelectionInFullscreen = handleToolSelectionInFullscreen;
 
 // ═══════════════════════════════════════════════════════════
 //  RICH TEXT
@@ -339,8 +390,11 @@ async function saveSession() {
   const equipment = document.getElementById('sessionEquipment')?.value || '';
   const purpose = document.getElementById('sessionPurpose')?.value || '';
   const author = document.getElementById('sessionAuthor')?.value || '';
-  const team = document.getElementById('sessionTeam')?.value || '';
+  const team = getSelectedSquadNames();
   const startTime = document.getElementById('sessionStartTime')?.value || '';
+
+  // Collect Individual Player IDs
+  const playerIds = Array.from(document.querySelectorAll('.player-cb:checked')).map(cb => cb.value);
 
   const drills = [];
   document.querySelectorAll('#blocksContainer .drill-block').forEach((el, index) => {
@@ -364,16 +418,20 @@ async function saveSession() {
   });
 
   const session = {
-    title, date, startTime, venue, duration, playersCount, abilityLevel, equipment, purpose, author, team,
+    id, title, date, startTime, venue, duration, playersCount, abilityLevel, equipment, purpose, author, team,
     notes: '',
     createdAt: new Date().toISOString(),
-    drills
+    image: drills.length > 0 ? drills[0].image : null,
+    drills,
+    playerIds
   };
 
-  try {
-    const method = currentSessionId ? 'PUT' : 'POST';
-    const url = currentSessionId ? `${window.API_BASE_URL}/sessions/${currentSessionId}` : `${window.API_BASE_URL}/sessions`;
+  const method = currentSessionId ? 'PATCH' : 'POST';
+  const url = currentSessionId
+    ? `${window.API_BASE_URL}/sessions/${currentSessionId}`
+    : `${window.API_BASE_URL}/sessions`;
 
+  try {
     const res = await fetch(url, {
       method: method,
       headers: { 'Content-Type': 'application/json' },
@@ -382,11 +440,9 @@ async function saveSession() {
 
     if (res.ok) {
       const result = await res.json();
-      // If it was a new session, the API might have assigned an ID if we didn't provide a unique one.
-      // But here we are sending our generated ID. Let's ensure we use what the server returns.
       currentSessionId = result.id || id;
       showToast('Session & Drills saved to Library ✓', 'success');
-      localStorage.removeItem('up_planner_autosave'); // Clear autosave on manual save
+      localStorage.removeItem('up_planner_autosave');
     } else {
       console.error(await res.text());
       showToast('Failed to save session', 'error');
@@ -398,18 +454,17 @@ async function saveSession() {
 }
 
 function exportSessionPDF() {
-  if (!window.jspdf) { showToast('PDF library not loaded', 'error'); return; }
   const { jsPDF } = window.jspdf;
-  const title = document.getElementById('sessionTitle').value.trim() || 'Session';
-  const date = document.getElementById('sessionDate').value;
-  const venue = document.getElementById('sessionVenue').value;
-  const duration = document.getElementById('sessionDuration').value;
-  const players = document.getElementById('sessionPlayers').value;
-  const level = document.getElementById('sessionLevel').value;
-  const equipment = document.getElementById('sessionEquipment').value;
-  const purpose = document.getElementById('sessionPurpose').value;
-  const author = document.getElementById('sessionAuthor').value;
-  const team = document.getElementById('sessionTeam').value;
+  const title = document.getElementById('sessionTitle')?.value?.trim() || 'Session';
+  const date = document.getElementById('sessionDate')?.value || '';
+  const venue = document.getElementById('sessionVenue')?.value || '';
+  const duration = document.getElementById('sessionDuration')?.value || '';
+  const players = document.getElementById('sessionPlayers')?.value || '';
+  const level = document.getElementById('sessionLevel')?.value || '';
+  const equipment = document.getElementById('sessionEquipment')?.value || '';
+  const purpose = document.getElementById('sessionPurpose')?.value || '';
+  const author = document.getElementById('sessionAuthor')?.value || '';
+  const team = getSelectedSquadNames();
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth();
@@ -465,7 +520,6 @@ function exportSessionPDF() {
 
     doc.setFillColor(74, 144, 217); doc.rect(0, 0, pw, 15, 'F');
     doc.setTextColor(255); doc.setFontSize(10); doc.text(title.toUpperCase() + ' · DRILL ' + (idx + 1), margin, 10);
-
     doc.setTextColor(26, 32, 44); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
     doc.text(btitle, margin, 30);
 
@@ -507,11 +561,15 @@ function exportSessionPDF() {
 window.exportSessionPDF = exportSessionPDF;
 
 function newSession() {
-  ['sessionTitle', 'sessionDate', 'sessionVenue', 'sessionDuration', 'sessionPlayers', 'sessionLevel', 'sessionEquipment', 'sessionPurpose', 'sessionAuthor', 'sessionTeam']
+  ['sessionTitle', 'sessionDate', 'sessionVenue', 'sessionDuration', 'sessionPlayers', 'sessionLevel', 'sessionEquipment', 'sessionPurpose', 'sessionAuthor', 'sessionStartTime']
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   document.getElementById('blocksContainer').innerHTML = '';
   Object.keys(canvases).forEach(k => delete canvases[k]);
   blockCounter = 0; drillCounter = 0;
+  const checklist = document.getElementById('playerChecklist');
+  if (checklist) checklist.innerHTML = '';
+  const group = document.getElementById('playerSelectionGroup');
+  if (group) group.style.display = 'none';
   showToast('New session started', '');
   addBlock('drill');
 }
@@ -564,6 +622,138 @@ function closeSessionModal() {
   document.getElementById('session-modal').classList.remove('open');
 }
 
+// ═══════════════════════════════════════════════════════════
+//  TEMPLATE LOADING
+// ═══════════════════════════════════════════════════════════
+async function listTemplates() {
+  const modal = document.getElementById('template-modal');
+  const body = document.getElementById('template-list-body');
+  if (!modal || !body) return;
+
+  modal.classList.add('open');
+  body.innerHTML = '<div class="session-list-empty"><i class="fas fa-circle-notch fa-spin"></i> Loading...</div>';
+
+  try {
+    const res = await fetch(`${window.API_BASE_URL}/templates`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to load');
+    const templates = await res.json();
+
+    if (!templates.length) {
+      body.innerHTML = '<div class="session-list-empty" style="padding:28px 20px;"><i class="fas fa-bookmark" style="font-size:1.6rem;color:#cbd5e0;display:block;margin-bottom:10px;"></i>No templates saved yet.<br><small style="color:#94a3b8;">Open a session in the Library and click "Save as Template".</small></div>';
+      return;
+    }
+
+    body.innerHTML = templates.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).map(s => {
+      const date = s.date ? new Date(s.date).toLocaleDateString() : 'No date';
+      const count = (s.drills || []).length || 0;
+      return `
+        <div class="session-list-item" onclick="loadTemplate('${s.id}')">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+            <span style="font-size:10px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:20px;padding:1px 7px;"><i class="fas fa-bookmark" style="font-size:9px;"></i> Template</span>
+          </div>
+          <div class="session-list-title">${s.title || 'Untitled Template'}</div>
+          <div class="session-list-meta">
+            <span><i class="fas fa-calendar-alt"></i> ${date}</span>
+            <span><i class="fas fa-layer-group"></i> ${count} drills</span>
+            ${s.author ? `<span><i class="fas fa-user"></i> ${s.author}</span>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    console.error(e);
+    body.innerHTML = '<div class="session-list-empty">Error loading templates.</div>';
+  }
+}
+
+function closeTemplateModal() {
+  document.getElementById('template-modal').classList.remove('open');
+}
+
+async function loadTemplate(templateId) {
+  closeTemplateModal();
+  showToast('Loading template...', '');
+
+  try {
+    const res = await fetch(`${window.API_BASE_URL}/sessions/${templateId}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch template');
+    const session = await res.json();
+
+    // Pre-fill meta but clear date/id so this becomes a fresh session
+    document.getElementById('sessionTitle').value = (session.title || '') + ' (copy)';
+    document.getElementById('sessionDate').value = '';
+    document.getElementById('sessionVenue').value = session.venue || '';
+    document.getElementById('sessionDuration').value = session.duration || '';
+    document.getElementById('sessionPlayers').value = session.playersCount || '';
+    document.getElementById('sessionLevel').value = session.abilityLevel || '';
+    document.getElementById('sessionEquipment').value = session.equipment || '';
+    document.getElementById('sessionPurpose').value = session.purpose || '';
+    document.getElementById('sessionAuthor').value = session.author || '';
+    document.getElementById('sessionStartTime').value = '';
+
+    // Fresh session — do not inherit the template's ID or player list
+    currentSessionId = null;
+    document.getElementById('playerChecklist').innerHTML = '';
+    const tmplGroup = document.getElementById('playerSelectionGroup');
+    if (tmplGroup) tmplGroup.style.display = 'none';
+
+    // Load drill blocks
+    const container = document.getElementById('blocksContainer');
+    container.innerHTML = '';
+    Object.keys(canvases).forEach(k => delete canvases[k]);
+    blockCounter = 0;
+    drillCounter = 0;
+
+    const items = session.drills || [];
+    if (items.length === 0) {
+      addBlock('drill');
+    } else {
+      for (const item of items) {
+        const type = item.type || 'drill';
+        const id = addBlock(type, true);
+        const el = document.getElementById(id);
+        if (el) {
+          el.querySelector('.block-title-input').value = item.title || '';
+          const rte = document.getElementById('rte-' + id);
+          if (rte) rte.innerHTML = item.description || '';
+        }
+        if (type === 'drill' && item.drawingData) {
+          const s = canvases[id];
+          if (s) {
+            s.pitchType = item.pitchType || 'full';
+            s.orientation = item.orientation || 'landscape';
+            if (s.orientation === 'portrait') { s.width = 460; s.height = 860; }
+            else { s.width = 860; s.height = 460; }
+            setPT(id, s.pitchType, canvases);
+            const btn = document.getElementById(`btn-orient-${id}`);
+            if (btn) {
+              if (s.orientation === 'portrait') { btn.classList.add('active'); btn.innerHTML = `<i class="fas fa-arrows-alt-v"></i> Portrait`; }
+              else { btn.classList.remove('active'); btn.innerHTML = `<i class="fas fa-arrows-alt-h"></i> Landscape`; }
+            }
+            let data = item.drawingData;
+            if (typeof data === 'string') { try { data = JSON.parse(data); } catch (e) { } }
+            s.tokens = Array.isArray(data) ? data : (data && data.tokens ? data.tokens : []);
+            s.paths = (data && data.paths) ? data.paths : [];
+            drawAll(id, canvases);
+          }
+        }
+      }
+    }
+
+    autosaveState();
+    showToast('Template loaded — save as a new session when ready', 'success');
+
+  } catch (e) {
+    console.error(e);
+    showToast('Error loading template', 'error');
+  }
+}
+
+window.listTemplates = listTemplates;
+window.closeTemplateModal = closeTemplateModal;
+window.loadTemplate = loadTemplate;
+
 async function loadSession(id) {
   closeSessionModal();
   showToast('Loading session...', '');
@@ -583,8 +773,20 @@ async function loadSession(id) {
     document.getElementById('sessionEquipment').value = session.equipment || '';
     document.getElementById('sessionPurpose').value = session.purpose || '';
     document.getElementById('sessionAuthor').value = session.author || '';
-    document.getElementById('sessionTeam').value = session.team || '';
     document.getElementById('sessionStartTime').value = session.startTime || '';
+
+    // Restore player selection from saved playerIds
+    const loadChecklist = document.getElementById('playerChecklist');
+    if (loadChecklist) loadChecklist.innerHTML = '';
+    if (session.playerIds && session.playerIds.length > 0 &&
+      window.addSquadPlayersToChecklist && typeof squadManager !== 'undefined' && squadManager.players) {
+      const squadIds = new Set(
+        session.playerIds
+          .map(pid => { const pl = squadManager.players.find(p => p.id === pid); return pl ? pl.squadId : null; })
+          .filter(Boolean)
+      );
+      squadIds.forEach(sqId => window.addSquadPlayersToChecklist(sqId, session.playerIds));
+    }
 
     currentSessionId = session.id;
 
@@ -668,8 +870,25 @@ async function loadSession(id) {
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  UTILS
+function getSelectedSquadNames() {
+  if (typeof squadManager === 'undefined' || !squadManager.players) return '';
+  const checkedIds = Array.from(document.querySelectorAll('.player-cb:checked')).map(cb => cb.value);
+  if (checkedIds.length === 0) return '';
+
+  const squadIds = new Set();
+  checkedIds.forEach(pid => {
+    const p = squadManager.getPlayer(pid);
+    if (p && p.squadId) squadIds.add(p.squadId);
+  });
+
+  const names = Array.from(squadIds).map(sid => {
+    const s = squadManager.getSquad(sid);
+    return s ? s.name : null;
+  }).filter(Boolean);
+
+  return names.join(', ');
+}
+
 // ═══════════════════════════════════════════════════════════
 
 function showToast(msg, type = '') {
@@ -697,8 +916,9 @@ function autosaveState() {
     equipment: document.getElementById('sessionEquipment')?.value || '',
     purpose: document.getElementById('sessionPurpose')?.value || '',
     author: document.getElementById('sessionAuthor')?.value || '',
-    team: document.getElementById('sessionTeam')?.value || '',
-    startTime: document.getElementById('sessionStartTime')?.value || ''
+    team: getSelectedSquadNames(),
+    startTime: document.getElementById('sessionStartTime')?.value || '',
+    playerIds: Array.from(document.querySelectorAll('.player-cb:checked')).map(cb => cb.value)
   };
 
   const blocks = [];
@@ -738,8 +958,9 @@ function restoreAutosave() {
       document.getElementById('sessionEquipment').value = meta.equipment || '';
       document.getElementById('sessionPurpose').value = meta.purpose || '';
       document.getElementById('sessionAuthor').value = meta.author || '';
-      document.getElementById('sessionTeam').value = meta.team || '';
+      // team metadata is now derived from players
       document.getElementById('sessionStartTime').value = meta.startTime || '';
+      _pendingRestorePlayerIds = meta.playerIds || [];
     }
     currentSessionId = sid;
 
@@ -795,21 +1016,118 @@ function restoreAutosave() {
 
 // Start with one drill OR restore
 document.addEventListener('DOMContentLoaded', async () => {
-  // Populate Squads
+  // ── Shared attendance count updater ──────────────────────
+  function syncAttendanceTotal() {
+    const checkedCount = document.querySelectorAll('#playerChecklist .player-cb:checked').length;
+    const playersInput = document.getElementById('sessionPlayers');
+    if (playersInput) playersInput.value = checkedCount;
+  }
+
+  // ── Add a single player row to the checklist ──────────────
+  function addPlayerRow(p, checklist, preSelected) {
+    // Avoid duplicates
+    if (checklist.querySelector(`.player-cb[value="${CSS.escape(p.id)}"]`)) return;
+
+    const div = document.createElement('div');
+    div.style.cssText = 'margin-bottom:5px; display:flex; align-items:center; gap:8px;';
+    div.dataset.playerId = p.id;
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = p.id;
+    cb.className = 'player-cb';
+    if (preSelected.includes(p.id)) cb.checked = true;
+    cb.addEventListener('change', () => { syncAttendanceTotal(); autosaveState(); });
+
+    const lbl = document.createElement('label');
+    lbl.textContent = p.name;
+    lbl.style.cssText = 'font-size:0.9rem; cursor:pointer;';
+    lbl.addEventListener('click', () => {
+      cb.checked = !cb.checked;
+      syncAttendanceTotal();
+      autosaveState();
+    });
+
+    div.appendChild(cb);
+    div.appendChild(lbl);
+    checklist.appendChild(div);
+  }
+
+  // ── Populate checklist from a squad (clears first) ────────
+  function populatePlayerChecklist(squadId, selectedIds = []) {
+    const group = document.getElementById('playerSelectionGroup');
+    const checklist = document.getElementById('playerChecklist');
+    if (!group || !checklist) return;
+
+    const squadPlayers = squadManager.players.filter(p => p.squadId === squadId);
+    if (squadPlayers.length === 0) { group.style.display = 'none'; return; }
+
+    group.style.display = 'block';
+    checklist.innerHTML = '';
+    squadPlayers.forEach(p => addPlayerRow(p, checklist, selectedIds));
+    if (selectedIds.length > 0) syncAttendanceTotal();
+  }
+  window.populatePlayerChecklist = populatePlayerChecklist;
+
+  // ── Add players from a squad WITHOUT clearing existing ────
+  function addSquadPlayersToChecklist(squadId, selectedIds = []) {
+    const group = document.getElementById('playerSelectionGroup');
+    const checklist = document.getElementById('playerChecklist');
+    if (!group || !checklist) return;
+
+    const squadPlayers = squadManager.players.filter(p => p.squadId === squadId);
+    if (squadPlayers.length === 0) return;
+
+    group.style.display = 'block';
+    squadPlayers.forEach(p => addPlayerRow(p, checklist, selectedIds));
+    syncAttendanceTotal();
+  }
+
+  // ── Populate Squads ───────────────────────────────────────
   if (typeof squadManager !== 'undefined') {
     await squadManager.init();
-    const teamSelect = document.getElementById('sessionTeam');
-    if (teamSelect) {
-      const squads = squadManager.getSquads();
-      squads.forEach(s => {
+
+    // Show the player section whenever squads are available
+    if (squadManager.getSquads().length > 0) {
+      const group = document.getElementById('playerSelectionGroup');
+      if (group) group.style.display = 'block';
+    }
+
+    const browseSelect = document.getElementById('playerSquadBrowse');
+
+    if (browseSelect) {
+      squadManager.getSquads().forEach(s => {
         const opt = document.createElement('option');
-        opt.value = s.name; // We'll use name for now to match old schema, but ID is better. System uses names.
-        opt.dataset.id = s.id;
+        opt.value = s.id;
         opt.textContent = s.name;
-        teamSelect.appendChild(opt);
+        browseSelect.appendChild(opt);
+      });
+
+      browseSelect.addEventListener('change', () => {
+        const squadId = browseSelect.value;
+        if (!squadId) return;
+        addSquadPlayersToChecklist(squadId);
+        browseSelect.value = '';
+        autosaveState();
       });
     }
+
+    const clearBtn = document.getElementById('clearPlayersBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        const checklist = document.getElementById('playerChecklist');
+        if (checklist) checklist.innerHTML = '';
+        const group = document.getElementById('playerSelectionGroup');
+        if (group) group.style.display = 'none';
+        syncAttendanceTotal();
+        autosaveState();
+      });
+    }
+
+    // Expose so loadSession/loadTemplate can use it after DOMContentLoaded
+    window.addSquadPlayersToChecklist = addSquadPlayersToChecklist;
   }
+
 
   if (document.getElementById('blocksContainer')) {
     const container = document.getElementById('blocksContainer');
@@ -819,9 +1137,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Global listeners for metadata
-    ['sessionTitle', 'sessionDate', 'sessionStartTime', 'sessionVenue', 'sessionDuration', 'sessionPlayers', 'sessionLevel', 'sessionEquipment', 'sessionPurpose', 'sessionAuthor', 'sessionTeam']
+    ['sessionTitle', 'sessionDate', 'sessionStartTime', 'sessionVenue', 'sessionDuration', 'sessionPlayers', 'sessionLevel', 'sessionEquipment', 'sessionPurpose', 'sessionAuthor']
       .forEach(id => {
         document.getElementById(id)?.addEventListener('input', () => autosaveState());
       });
+
+    // Initial checklist population — restore saved player selections
+    if (_pendingRestorePlayerIds.length > 0 && typeof squadManager !== 'undefined' && squadManager.players) {
+      const squadIds = new Set(
+        _pendingRestorePlayerIds
+          .map(pid => { const pl = squadManager.players.find(p => p.id === pid); return pl ? pl.squadId : null; })
+          .filter(Boolean)
+      );
+      squadIds.forEach(sqId => addSquadPlayersToChecklist(sqId, _pendingRestorePlayerIds));
+    }
+    _pendingRestorePlayerIds = [];
+
   }
 });

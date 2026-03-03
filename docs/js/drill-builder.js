@@ -219,6 +219,38 @@ function onDown(id, e, canvases) {
     const s = canvases[id]; if (!s) return;
     const { x, y } = gPos(id, e, canvases);
 
+    // Precision Selection & Dragging for all tools (except eraser)
+    if (s.tool !== 'eraser') {
+        const isMoveTool = s.tool === 'move';
+        // When not in move mode, be extra strict about hits to prevent accidental drags
+        const tok = findTok(s, x, y);
+        if (tok) {
+            const dx = x - tok.x, dy = y - tok.y;
+            const cos = Math.cos(-(tok.rot || 0)), sin = Math.sin(-(tok.rot || 0));
+            const lx = dx * cos - dy * sin, ly = dx * sin + dy * cos;
+            const sc = tok.scale || 1;
+
+            // Rotation handle check
+            if (Math.hypot(lx, ly + 42) < (isMoveTool ? 22 : 14)) { s.rotating = tok; return; }
+            // Resize handle check
+            if (Math.hypot(lx - 25, ly - 25) < (isMoveTool ? 22 : 14)) { s.resizing = tok; s.rBase = Math.hypot(lx, ly); s.sBase = tok.scale || 1; return; }
+
+            // Start dragging the token
+            saveH(id, canvases);
+            s.dragging = tok; s.dx = x - tok.x; s.dy = y - tok.y;
+            return;
+        }
+
+        // Try selecting a path if no token hit
+        const path = findPath(s, x, y, isMoveTool ? 14 : 7);
+        if (path) {
+            saveH(id, canvases);
+            s.draggingPath = path;
+            s.dx = x; s.dy = y;
+            return;
+        }
+    }
+
     // Curved Tool
     if (s.tool === 'curved') {
         if (s.cPhase === 0) { s.cPts = [{ x, y }]; s.cPhase = 1; }
@@ -231,20 +263,6 @@ function onDown(id, e, canvases) {
             s.paths.push({ type: 'curved', points: [p0, p2, cp], color: s.drawColor, width: s.lineWidth });
             s.cPhase = 0; s.cPts = []; s.currentPath = null;
             drawAll(id, canvases);
-        }
-        return;
-    }
-
-    if (s.tool === 'move') {
-        const tok = findTok(s, x, y);
-        if (tok) {
-            const dx = x - tok.x, dy = y - tok.y;
-            const cos = Math.cos(-(tok.rot || 0)), sin = Math.sin(-(tok.rot || 0));
-            const lx = dx * cos - dy * sin, ly = dx * sin + dy * cos;
-            if (Math.hypot(lx, ly + 42) < 16) { s.rotating = tok; return; }
-            if (Math.hypot(lx - 25, ly - 25) < 16) { s.resizing = tok; s.rBase = Math.hypot(lx, ly); s.sBase = tok.scale || 1; return; }
-            saveH(id, canvases);
-            s.dragging = tok; s.dx = x - tok.x; s.dy = y - tok.y;
         }
         return;
     }
@@ -274,10 +292,21 @@ function onMove(id, e, canvases) {
     const s = canvases[id]; if (!s) return;
     const { x, y } = gPos(id, e, canvases);
     s.hovered = findTok(s, x, y);
+    const hoveredPath = s.hovered ? null : findPath(s, x, y);
 
     if (s.rotating) { s.rotating.rot = Math.atan2(y - s.rotating.y, x - s.rotating.x) + Math.PI / 2; drawAll(id, canvases); return; }
     if (s.resizing) { const dx = x - s.resizing.x, dy = y - s.resizing.y; s.resizing.scale = (Math.hypot(dx, dy) / s.rBase) * s.sBase; drawAll(id, canvases); return; }
     if (s.dragging) { s.dragging.x = x - s.dx; s.dragging.y = y - s.dy; drawAll(id, canvases); return; }
+
+    if (s.draggingPath) {
+        const dx = x - s.dx, dy = y - s.dy;
+        s.dx = x; s.dy = y;
+        const p = s.draggingPath;
+        if (p.points) p.points.forEach(pt => { pt.x += dx; pt.y += dy; });
+        if (p.x1 !== undefined) { p.x1 += dx; p.y1 += dy; p.x2 += dx; p.y2 += dy; }
+        drawAll(id, canvases);
+        return;
+    }
 
     // Curved Preview
     if (s.tool === 'curved' && s.cPhase > 0) {
@@ -291,7 +320,24 @@ function onMove(id, e, canvases) {
         return;
     }
 
-    if (!s.isDrawing || !s.currentPath) { s.canvas.style.cursor = s.hovered ? 'grab' : 'default'; return; }
+    if (!s.isDrawing || !s.currentPath) {
+        if (s.hovered && s.tool !== 'eraser') {
+            const dx = x - s.hovered.x, dy = y - s.hovered.y;
+            const cos = Math.cos(-(s.hovered.rot || 0)), sin = Math.sin(-(s.hovered.rot || 0));
+            const lx = dx * cos - dy * sin, ly = dx * sin + dy * cos;
+            const sc = s.hovered.scale || 1;
+
+            if (Math.hypot(lx, ly + 42 / sc) < 16 / sc) s.canvas.style.cursor = 'pointer'; // Rotation
+            else if (Math.hypot(lx - 25 / sc, ly - 25 / sc) < 16 / sc) s.canvas.style.cursor = 'nwse-resize'; // Resize
+            else s.canvas.style.cursor = 'grab';
+        } else if (hoveredPath && s.tool !== 'eraser') {
+            s.canvas.style.cursor = 'move';
+        } else {
+            const cm = { eraser: 'cell', player: 'copy', goalkeeper: 'copy', cone: 'copy', ball: 'copy', goalpost: 'copy', flag: 'copy', number: 'copy' };
+            s.canvas.style.cursor = cm[s.tool] || 'default';
+        }
+        return;
+    }
 
     if (s.tool === 'pencil') s.currentPath.points.push({ x, y });
     else if (s.tool === 'eraser') {
@@ -311,7 +357,7 @@ function onUp(id, canvases) {
         if (s.tool !== 'eraser' && s.tool !== 'curved') s.paths.push(s.currentPath);
         s.currentPath = null;
     }
-    s.isDrawing = false; s.dragging = null; s.rotating = null; s.resizing = null;
+    s.isDrawing = false; s.dragging = null; s.rotating = null; s.resizing = null; s.draggingPath = null;
     drawAll(id, canvases);
     if (window.triggerAutosave) window.triggerAutosave();
 }
@@ -329,20 +375,63 @@ function mUndo(id, canvases) {
     drawAll(id, canvases);
     if (window.triggerAutosave) window.triggerAutosave();
 }
-function mClear(id, canvases) {
-    const s = canvases[id]; saveH(id, canvases); s.paths = []; s.tokens = []; s.pCount = 1; s.nCount = 1; drawAll(id, canvases);
-    if (window.triggerAutosave) window.triggerAutosave();
+function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+    const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+    if (l2 === 0) return Math.hypot(px - x1, py - y1);
+    let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(px - (x1 + t * (x2 - x1)), py - (y1 + t * (y2 - y1)));
 }
 
 function pathHitTest(p, x, y, tol) {
     if (p.type === 'pencil') return p.points.some(pt => Math.hypot(pt.x - x, pt.y - y) < tol);
+
     if (p.type === 'curved' && p.points && p.points.length === 3) {
-        return p.points.some(pt => Math.hypot(pt.x - x, pt.y - y) < tol * 2);
+        // Simple approximation for curved: check distance to midpoints and endpoints
+        const [p0, p2, cp] = p.points;
+        const d0 = Math.hypot(p0.x - x, p0.y - y);
+        const d2 = Math.hypot(p2.x - x, p2.y - y);
+        const dcp = Math.hypot(cp.x - x, cp.y - y);
+        if (d0 < tol || d2 < tol) return true;
+
+        // Check distance to the quadratic curve at t=0.5
+        const midX = 0.25 * p0.x + 0.5 * cp.x + 0.25 * p2.x;
+        const midY = 0.25 * p0.y + 0.5 * cp.y + 0.25 * p2.y;
+        if (Math.hypot(midX - x, midY - y) < tol * 1.5) return true;
+        return false;
     }
-    if (p.x1 !== undefined) {
-        const minX = Math.min(p.x1, p.x2) - tol, maxX = Math.max(p.x1, p.x2) + tol;
-        const minY = Math.min(p.y1, p.y2) - tol, maxY = Math.max(p.y1, p.y2) + tol;
-        return x >= minX && x <= maxX && y >= minY && y <= maxY;
+
+    if (p.x1 !== undefined && p.y1 !== undefined && p.x2 !== undefined && p.y2 !== undefined) {
+        if (p.type === 'rect' || p.type === 'zone') {
+            const minX = Math.min(p.x1, p.x2), maxX = Math.max(p.x1, p.x2);
+            const minY = Math.min(p.y1, p.y2), maxY = Math.max(p.y1, p.y2);
+
+            // If filled, any point inside is a hit
+            if (p.filled && x >= minX && x <= maxX && y >= minY && y <= maxY) return true;
+
+            // Check distance to the 4 edges
+            const d1 = pointToSegmentDistance(x, y, p.x1, p.y1, p.x2, p.y1);
+            const d2 = pointToSegmentDistance(x, y, p.x2, p.y1, p.x2, p.y2);
+            const d3 = pointToSegmentDistance(x, y, p.x2, p.y2, p.x1, p.y2);
+            const d4 = pointToSegmentDistance(x, y, p.x1, p.y2, p.x1, p.y1);
+            return Math.min(d1, d2, d3, d4) < tol;
+        }
+
+        if (p.type === 'circle') {
+            const cx = (p.x1 + p.x2) / 2, cy = (p.y1 + p.y2) / 2;
+            const rx = Math.abs(p.x2 - p.x1) / 2, ry = Math.abs(p.y2 - p.y1) / 2;
+
+            // Ellipse hit test: (x-h)^2/a^2 + (y-k)^2/b^2 <= 1
+            const normX = (x - cx) / (rx || 1), normY = (y - cy) / (ry || 1);
+            const distSq = normX * normX + normY * normY;
+
+            if (p.filled && distSq <= 1.1) return true;
+            // Border check: check if it's "close enough" to the edge
+            return Math.abs(Math.sqrt(distSq) - 1) < (tol / Math.max(rx, ry, 1)) * 1.5;
+        }
+
+        // Lines and Arrows: use point-to-segment distance
+        return pointToSegmentDistance(x, y, p.x1, p.y1, p.x2, p.y2) < tol;
     }
     return false;
 }
@@ -367,6 +456,11 @@ function toggleOrientation(id, canvases) {
     const oldOr = s.orientation || 'landscape';
     const newOr = oldOr === 'landscape' ? 'portrait' : 'landscape';
     s.orientation = newOr;
+    const wrap = document.getElementById(`dcw-${id}`);
+    if (wrap) {
+        if (newOr === 'portrait') wrap.classList.add('is-portrait');
+        else wrap.classList.remove('is-portrait');
+    }
     rotateCanvasContent(s, oldOr, newOr);
     const btn = document.getElementById(`btn-orient-${id}`);
     if (btn) {
@@ -609,7 +703,7 @@ function renderTok(s, t) {
     const sc = t.scale || 1;
     c.scale(sc, sc);
 
-    if (t === s.hovered && s.tool === 'move') {
+    if (t === s.hovered && s.tool !== 'eraser') {
         c.beginPath(); c.arc(0, 0, 22 / sc, 0, Math.PI * 2);
         c.strokeStyle = 'rgba(74,144,217,0.7)'; c.lineWidth = 2 / sc; c.setLineDash([4 / sc, 3 / sc]); c.stroke(); c.setLineDash([]);
         c.beginPath(); c.moveTo(0, -22 / sc); c.lineTo(0, -42 / sc); c.stroke();
@@ -675,10 +769,47 @@ function gPos(id, e, canvases) {
 }
 
 function findTok(s, x, y) {
-    const rad = s.tool === 'move' ? 60 : 25;
+    const handleTol = 20; // Tolerance for rotation/resize handles in screen px
+
     for (let i = s.tokens.length - 1; i >= 0; i--) {
         const t = s.tokens[i];
-        if (Math.hypot(t.x - x, t.y - y) < rad * (t.scale || 1)) return t;
+        const dx = x - t.x, dy = y - t.y;
+
+        // Rotate the click point into the token's local coordinate system
+        const cos = Math.cos(-(t.rot || 0)), sin = Math.sin(-(t.rot || 0));
+        const lx = dx * cos - dy * sin, ly = dx * sin + dy * cos;
+        const sc = t.scale || 1;
+
+        // 1. Check Handles (Rotation & Resize) - they exist at fixed offsets in local space
+        // Rotation handle is at (0, -42) in local space
+        if (Math.hypot(lx, ly + 42) < handleTol) return t;
+        // Resize handle is at (25, 25) in local space
+        if (Math.hypot(lx - 25, ly - 25) < handleTol) return t;
+
+        // 2. Shape-aware body hit testing
+        let hit = false;
+        if (t.type === 'player' || t.type === 'goalkeeper' || t.type === 'ball') {
+            const rad = (t.type === 'ball' ? 11 : 16) * sc;
+            hit = Math.hypot(dx, dy) < rad + 5; // Slight padding for easier selection
+        } else if (t.type === 'goalpost') {
+            const gw = 90 * sc, gd = 34 * sc;
+            // Goalpost is centered at (t.x, t.y), but the drawing logic uses -gw/2
+            hit = lx >= -gw / 2 - 10 && lx <= gw / 2 + 10 && ly >= -10 && ly <= gd + 10;
+        } else if (t.type === 'cone') {
+            hit = Math.hypot(dx, dy) < 18 * sc;
+        } else if (t.type === 'flag' || t.type === 'number') {
+            hit = Math.hypot(dx, dy) < 22 * sc;
+        }
+
+        if (hit) return t;
+    }
+    return null;
+}
+
+function findPath(s, x, y, tol = 12) {
+    // Return the last created path that satisfies the hit test
+    for (let i = s.paths.length - 1; i >= 0; i--) {
+        if (pathHitTest(s.paths[i], x, y, tol)) return s.paths[i];
     }
     return null;
 }

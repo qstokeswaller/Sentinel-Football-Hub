@@ -50,8 +50,64 @@ async function initProfileUI() {
         setupTabs();
         setupAssessmentForm();
         setupOverviewEditor();
+        setupAnalysisTab();
         renderAssessmentHistory();
         renderOverviewHistory();
+
+        // --- Profile Header Action Buttons ---
+        const btnProfileDelete = document.getElementById('btnProfileDeletePlayer');
+        if (btnProfileDelete) {
+            btnProfileDelete.addEventListener('click', async () => {
+                if (!confirm(`Delete ${currentPlayer.name}? This cannot be undone.`)) return;
+                const ok = await squadManager.deletePlayer(currentPlayerId);
+                if (ok) {
+                    window.location.href = 'players.html';
+                } else {
+                    alert('Failed to delete player.');
+                }
+            });
+        }
+
+        const btnProfileAssign = document.getElementById('btnProfileAssignSquad');
+        if (btnProfileAssign) {
+            btnProfileAssign.addEventListener('click', () => {
+                const squads = squadManager.getSquads();
+                if (!squads.length) { alert('No squads available.'); return; }
+                const options = squads.map(s => `<option value="${s.id}" ${s.id === currentPlayer.squadId ? 'selected' : ''}>${s.name}</option>`).join('');
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay active';
+                overlay.style.zIndex = '9999';
+                overlay.innerHTML = `
+                    <div class="modal-container" style="max-width: 400px;">
+                        <div class="modal-header">
+                            <h2>Assign Squad</h2>
+                            <button class="btn-close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                        </div>
+                        <div class="modal-body" style="padding: 24px;">
+                            <p style="margin-bottom: 12px; font-size: 0.9rem; color: #64748b;">Assign <strong>${currentPlayer.name}</strong> to a squad:</p>
+                            <select id="profileSquadSelect" class="form-control-bubble">${options}</select>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="dash-btn outline" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                            <button class="dash-btn primary" id="btnConfirmProfileAssign">Assign</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(overlay);
+                overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+                document.getElementById('btnConfirmProfileAssign').addEventListener('click', async () => {
+                    const newSquadId = document.getElementById('profileSquadSelect').value;
+                    currentPlayer.squadId = newSquadId;
+                    const ok = await squadManager.updatePlayer(currentPlayer);
+                    overlay.remove();
+                    if (ok) {
+                        const squad = squads.find(s => s.id === newSquadId);
+                        const profSquadEl = document.getElementById('profSquad');
+                        if (profSquadEl && squad) profSquadEl.textContent = squad.name;
+                        if (window.showGlobalToast) window.showGlobalToast('Squad updated', 'success');
+                    } else { alert('Failed to update squad.'); }
+                });
+            });
+        }
 
     } catch (err) {
         console.error('Player Profile UI: Critical Error in init:', err);
@@ -373,6 +429,244 @@ window.printDevAssessment = (elementId) => {
     }
 };
 
+// ─── Full Player Development Report PDF ──────────────────────────────────────
+window.exportPlayerFullReport = async () => {
+    if (!window.jspdf) {
+        if (window.showGlobalToast) window.showGlobalToast('PDF library not loaded', 'error');
+        return;
+    }
+    if (!currentPlayer) {
+        if (window.showGlobalToast) window.showGlobalToast('No player loaded', 'error');
+        return;
+    }
+
+    if (window.showGlobalToast) window.showGlobalToast('Generating report...', '');
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const margin = 20;
+    const PW = doc.internal.pageSize.getWidth();
+    const PH = doc.internal.pageSize.getHeight();
+    const cW = PW - margin * 2;
+
+    // Fetch assessments
+    let assessments = [];
+    try { assessments = await squadManager.getAssessments(currentPlayerId) || []; } catch (e) {}
+
+    const checkY = (y, needed = 20) => {
+        if (y + needed > PH - 22) { doc.addPage(); return 28; }
+        return y;
+    };
+
+    const catDefs = {
+        tactical:      { label: 'Tactical',      keys: ['positioning', 'decision', 'awareness', 'creativity'] },
+        technical:     { label: 'Technical',     keys: ['passing', 'touch', 'control', 'dribbling'] },
+        physical:      { label: 'Physical',      keys: ['speed', 'agility', 'stamina', 'strength'] },
+        psychological: { label: 'Psychological', keys: ['workEthic', 'communication', 'focus', 'resilience'] }
+    };
+
+    const subAvg = (obj, keys) => {
+        if (!obj) return null;
+        const vals = keys.map(k => obj[k]).filter(v => typeof v === 'number');
+        return vals.length ? +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : null;
+    };
+
+    // ── Header ──
+    doc.setFillColor(30, 58, 138);
+    doc.rect(0, 0, PW, 44, 'F');
+    doc.setTextColor(255);
+    doc.setFontSize(19);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PLAYER DEVELOPMENT REPORT', margin, 22);
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`UP PERFORMANCE HUB  ·  ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`, margin, 34);
+
+    let y = 56;
+
+    // ── Player bio ──
+    const squadName = squadManager.getSquad(currentPlayer.squadId)?.name || 'Unassigned';
+    doc.setTextColor(30, 58, 138);
+    doc.setFontSize(17);
+    doc.setFont('helvetica', 'bold');
+    doc.text(currentPlayer.name, margin, y);
+    y += 7;
+
+    doc.setFontSize(8.5);
+    doc.setTextColor(100);
+    doc.setFont('helvetica', 'normal');
+    const bioLine = [
+        currentPlayer.position ? `Position: ${currentPlayer.position}` : null,
+        currentPlayer.age ? `Age: ${currentPlayer.age}` : null,
+        `Squad: ${squadName}`,
+        currentPlayer.foot ? `Foot: ${currentPlayer.foot}` : null
+    ].filter(Boolean).join('   ·   ');
+    doc.text(bioLine, margin, y);
+    y += 5;
+    doc.setDrawColor(220);
+    doc.line(margin, y, PW - margin, y);
+    y += 12;
+
+    if (assessments.length === 0) {
+        doc.setFontSize(10);
+        doc.setTextColor(170);
+        doc.text('No assessment records on file for this player.', margin, y);
+        y += 16;
+    } else {
+        const sorted = [...assessments].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // ── Category averages across all assessments ──
+        const overallAvgs = {};
+        Object.entries(catDefs).forEach(([key, def]) => {
+            const vals = sorted.map(a => subAvg(a.ratings?.[key], def.keys)).filter(v => v !== null);
+            overallAvgs[key] = vals.length ? +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : null;
+        });
+
+        doc.setFontSize(11);
+        doc.setTextColor(30, 58, 138);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`PERFORMANCE SUMMARY  (${assessments.length} report${assessments.length !== 1 ? 's' : ''})`, margin, y);
+        y += 8;
+
+        // 4 coloured boxes
+        const boxW = (cW - 9) / 4;
+        Object.entries(catDefs).forEach(([key, def], i) => {
+            const val = overallAvgs[key];
+            const bx = margin + i * (boxW + 3);
+            let rf, gf, bf, rt, gt, bt;
+            if (val === null)        { rf=241;gf=245;bf=249; rt=180;gt=180;bt=180; }
+            else if (val >= 4.5)     { rf=220;gf=252;bf=231; rt=22; gt=163;bt=74; }
+            else if (val >= 3.5)     { rf=219;gf=234;bf=254; rt=29; gt=78; bt=216; }
+            else if (val >= 2.5)     { rf=254;gf=243;bf=199; rt=146;gt=64; bt=14; }
+            else                     { rf=254;gf=226;bf=226; rt=153;gt=27; bt=27; }
+
+            doc.setFillColor(rf, gf, bf);
+            doc.roundedRect(bx, y, boxW, 22, 2, 2, 'F');
+
+            doc.setFontSize(6.5);
+            doc.setTextColor(110);
+            doc.setFont('helvetica', 'normal');
+            doc.text(def.label.toUpperCase(), bx + boxW / 2, y + 7, { align: 'center' });
+
+            doc.setFontSize(13);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(rt, gt, bt);
+            doc.text(val !== null ? `${val.toFixed(1)}/5` : '—', bx + boxW / 2, y + 17, { align: 'center' });
+        });
+        y += 28;
+
+        // ── Assessment history table ──
+        y = checkY(y, 30);
+        doc.setFontSize(11);
+        doc.setTextColor(30, 58, 138);
+        doc.setFont('helvetica', 'bold');
+        doc.text('ASSESSMENT HISTORY', margin, y);
+        y += 7;
+
+        const cols = { date: 34, evaluator: 38, tactical: 26, technical: 26, physical: 26, psych: 26 };
+        const colX = [margin];
+        Object.values(cols).forEach((w, i) => colX.push(colX[i] + w));
+
+        doc.setFillColor(30, 58, 138);
+        doc.rect(margin, y, cW, 7, 'F');
+        doc.setTextColor(255);
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'bold');
+        ['Date', 'Evaluator', 'Tactical', 'Technical', 'Physical', 'Psych'].forEach((lbl, i) => {
+            doc.text(lbl, colX[i] + 2, y + 4.8);
+        });
+        y += 9;
+
+        sorted.forEach((a, idx) => {
+            y = checkY(y, 8);
+            if (idx % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(margin, y - 1, cW, 7, 'F'); }
+
+            const rowVals = [
+                a.date || '—',
+                (a.author || a.evaluator || '—').slice(0, 16),
+                subAvg(a.ratings?.tactical, catDefs.tactical.keys),
+                subAvg(a.ratings?.technical, catDefs.technical.keys),
+                subAvg(a.ratings?.physical, catDefs.physical.keys),
+                subAvg(a.ratings?.psychological, catDefs.psychological.keys)
+            ];
+
+            doc.setTextColor(40);
+            doc.setFontSize(7.5);
+            doc.setFont('helvetica', 'normal');
+            rowVals.forEach((v, i) => {
+                const txt = typeof v === 'number' ? v.toFixed(1) : (v || '—');
+                doc.text(String(txt), colX[i] + 2, y + 4.5);
+            });
+            y += 7;
+        });
+        y += 8;
+
+        // ── Latest qualitative feedback ──
+        const withFeedback = sorted.find(a => a.feedback && (a.feedback.strength || a.feedback.improvement || a.feedback.comments));
+        if (withFeedback) {
+            y = checkY(y, 30);
+            doc.setFontSize(11);
+            doc.setTextColor(30, 58, 138);
+            doc.setFont('helvetica', 'bold');
+            doc.text('LATEST ASSESSMENT FEEDBACK', margin, y);
+            y += 5;
+            doc.setFontSize(7.5);
+            doc.setTextColor(150);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${withFeedback.date || ''}  ·  ${withFeedback.author || withFeedback.evaluator || ''}`, margin, y);
+            y += 9;
+
+            const feedItems = [
+                { label: 'KEY STRENGTHS',         text: withFeedback.feedback?.strength },
+                { label: 'AREAS TO IMPROVE',       text: withFeedback.feedback?.improvement },
+                { label: 'SUGGESTIONS FOR GROWTH', text: withFeedback.feedback?.growth },
+                { label: 'FINAL COMMENTS',         text: withFeedback.feedback?.comments }
+            ].filter(f => f.text && f.text.trim() && f.text !== 'N/A');
+
+            feedItems.forEach(f => {
+                y = checkY(y, 18);
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(30, 58, 138);
+                doc.text(f.label, margin, y);
+                y += 5;
+                doc.setFontSize(8.5);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(55);
+                const lines = doc.splitTextToSize(f.text, cW);
+                y = checkY(y, lines.length * 5 + 6);
+                doc.text(lines, margin, y);
+                y += lines.length * 5 + 8;
+            });
+        }
+    }
+
+    // ── Footer on every page ──
+    const pages = doc.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+        doc.setPage(p);
+        doc.setFontSize(7);
+        doc.setTextColor(180);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generated ${new Date().toLocaleString()}  ·  UP Performance Hub  ·  Page ${p}/${pages}`, PW / 2, PH - 7, { align: 'center' });
+    }
+
+    const filename = `PlayerReport_${currentPlayer.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    try {
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (window.showGlobalToast) window.showGlobalToast(`Exported: ${filename}`, 'success');
+    } catch (err) {
+        console.error('PDF export failed:', err);
+        if (window.showGlobalToast) window.showGlobalToast('Export failed', 'error');
+    }
+};
+
 // Global export for internal loading
 window.loadOverviewFromHistory = async (id) => {
     const records = await squadManager.getDevStructures(currentPlayerId);
@@ -439,12 +733,7 @@ function populateProfileHeader() {
     if (btnCancelEdit) btnCancelEdit.addEventListener('click', () => toggleEditMode(false));
     if (btnSave) btnSave.addEventListener('click', saveProfileInfo);
 
-    const allSquads = squadManager.getSquads();
-    const assessTeamSelect = document.getElementById('assessTeam');
-    if (assessTeamSelect) {
-        assessTeamSelect.innerHTML = '<option value="">Select Team / Squad</option>' +
-            allSquads.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-    }
+    // Team select for assessment - Now a text input, no need to populate options
 }
 
 function setupTabs() {
@@ -474,6 +763,11 @@ function setupTabs() {
             if (tabName === 'history') {
                 renderAssessmentHistory();
                 renderOverviewHistory();
+            }
+
+            if (tabName === 'player-analysis') {
+                renderHighlights();
+                renderAnalysisVideos();
             }
         });
     });
@@ -876,8 +1170,216 @@ async function saveProfileInfo() {
             btn.disabled = false;
         }, 2000);
     }
+}// --- Player Analysis Logic ---
+function setupAnalysisTab() {
+    console.log('Player Profile: Setting up Analysis Tab...');
+
+    // Global functions for buttons in HTML
+    window.openHighlightModal = () => {
+        document.getElementById('modalAddHighlight').classList.add('active');
+    };
+
+    window.openAnalysisVideoModal = () => {
+        document.getElementById('modalAddAnalysisVideo').classList.add('active');
+    };
+
+    window.closeModal = (id) => {
+        document.getElementById(id).classList.remove('active');
+    };
+
+    renderHighlights();
+    renderAnalysisVideos();
 }
 
+async function renderHighlights() {
+    const grid = document.getElementById('highlightsGrid');
+    const emptyState = document.getElementById('emptyHighlightsState');
+    if (!grid || !currentPlayer) return;
 
+    const highlights = typeof currentPlayer.highlights === 'string'
+        ? JSON.parse(currentPlayer.highlights || '[]')
+        : (currentPlayer.highlights || []);
 
+    if (highlights.length === 0) {
+        grid.style.display = 'none';
+        emptyState.style.display = 'flex';
+        return;
+    }
+
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+
+    grid.innerHTML = highlights.map((h, index) => `
+        <div class="dash-card" style="padding: 0; overflow: hidden; position: relative;">
+            <div style="background: #f1f5f9; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative;">
+                <i class="fas fa-play-circle" style="font-size: 3rem; color: var(--blue-accent); opacity: 0.8;"></i>
+                <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
+                    <button class="dash-btn sm" onclick="deleteHighlight(${index})" style="background: rgba(239, 68, 68, 0.9); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div style="padding: 16px;">
+                <h5 style="margin: 0 0 8px 0; font-size: 1rem; color: var(--navy-dark);">${h.title}</h5>
+                <p style="margin: 0 0 16px 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">${h.description || 'No description provided.'}</p>
+                <a href="${h.url}" target="_blank" class="dash-btn outline sm" style="width: 100%; text-align: center; display: block; text-decoration: none;">
+                    <i class="fas fa-external-link-alt"></i> View Highlight
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function renderAnalysisVideos() {
+    const grid = document.getElementById('analysisVideosGrid');
+    const emptyState = document.getElementById('emptyAnalysisVideosState');
+    if (!grid || !currentPlayer) return;
+
+    const videos = typeof currentPlayer.analysisVideos === 'string'
+        ? JSON.parse(currentPlayer.analysisVideos || '[]')
+        : (currentPlayer.analysisVideos || []);
+
+    if (videos.length === 0) {
+        grid.style.display = 'none';
+        emptyState.style.display = 'flex';
+        return;
+    }
+
+    grid.style.display = 'grid';
+    emptyState.style.display = 'none';
+
+    grid.innerHTML = videos.map((v, index) => `
+        <div class="dash-card" style="padding: 0; overflow: hidden; position: relative;">
+            <div style="background: #f1f5f9; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative;">
+                <i class="fas fa-film" style="font-size: 3rem; color: var(--blue-accent); opacity: 0.8;"></i>
+                <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
+                    <button class="dash-btn sm" onclick="deleteAnalysisVideo(${index})" style="background: rgba(239, 68, 68, 0.9); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div style="padding: 16px;">
+                <h5 style="margin: 0 0 8px 0; font-size: 1rem; color: var(--navy-dark);">${v.title}</h5>
+                <p style="margin: 0 0 16px 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">${v.notes || 'No notes provided.'}</p>
+                <a href="${v.url}" target="_blank" class="dash-btn outline sm" style="width: 100%; text-align: center; display: block; text-decoration: none;">
+                    <i class="fas fa-video"></i> Watch Video
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.saveHighlight = async () => {
+    const title = document.getElementById('highlightTitle').value;
+    const url = document.getElementById('highlightUrl').value;
+    const description = document.getElementById('highlightDescription').value;
+
+    if (!title || !url) {
+        alert('Please provide at least a title and a URL.');
+        return;
+    }
+
+    const currentHighlights = typeof currentPlayer.highlights === 'string'
+        ? JSON.parse(currentPlayer.highlights || '[]')
+        : (currentPlayer.highlights || []);
+
+    const newHighlight = { title, url, description, timestamp: new Date().toISOString() };
+    const updatedHighlights = [...currentHighlights, newHighlight];
+
+    const success = await squadManager.updatePlayer(currentPlayerId, {
+        highlights: JSON.stringify(updatedHighlights)
+    });
+
+    if (success) {
+        currentPlayer.highlights = updatedHighlights;
+        renderHighlights();
+        closeModal('modalAddHighlight');
+        // Clear inputs
+        document.getElementById('highlightTitle').value = '';
+        document.getElementById('highlightUrl').value = '';
+        document.getElementById('highlightDescription').value = '';
+        if (window.showGlobalToast) window.showGlobalToast('Highlight added successfully', 'success');
+    } else {
+        alert('Failed to save highlight.');
+    }
+};
+
+window.saveAnalysisVideo = async () => {
+    const title = document.getElementById('analysisVideoTitle').value;
+    const url = document.getElementById('analysisVideoUrl').value;
+    const notes = document.getElementById('analysisVideoNotes').value;
+
+    if (!title || !url) {
+        alert('Please provide at least a title and a URL.');
+        return;
+    }
+
+    const currentVideos = typeof currentPlayer.analysisVideos === 'string'
+        ? JSON.parse(currentPlayer.analysisVideos || '[]')
+        : (currentPlayer.analysisVideos || []);
+
+    const newVideo = { title, url, notes, timestamp: new Date().toISOString() };
+    const updatedVideos = [...currentVideos, newVideo];
+
+    const success = await squadManager.updatePlayer(currentPlayerId, {
+        analysisVideos: JSON.stringify(updatedVideos)
+    });
+
+    if (success) {
+        currentPlayer.analysisVideos = updatedVideos;
+        renderAnalysisVideos();
+        closeModal('modalAddAnalysisVideo');
+        // Clear inputs
+        document.getElementById('analysisVideoTitle').value = '';
+        document.getElementById('analysisVideoUrl').value = '';
+        document.getElementById('analysisVideoNotes').value = '';
+        if (window.showGlobalToast) window.showGlobalToast('Analysis video added successfully', 'success');
+    } else {
+        alert('Failed to save analysis video.');
+    }
+};
+
+window.deleteHighlight = async (index) => {
+    if (!confirm('Are you sure you want to delete this highlight?')) return;
+
+    const highlights = typeof currentPlayer.highlights === 'string'
+        ? JSON.parse(currentPlayer.highlights || '[]')
+        : (currentPlayer.highlights || []);
+
+    highlights.splice(index, 1);
+
+    const success = await squadManager.updatePlayer(currentPlayerId, {
+        highlights: JSON.stringify(highlights)
+    });
+
+    if (success) {
+        currentPlayer.highlights = highlights;
+        renderHighlights();
+        if (window.showGlobalToast) window.showGlobalToast('Highlight deleted', 'success');
+    } else {
+        alert('Failed to delete highlight.');
+    }
+};
+
+window.deleteAnalysisVideo = async (index) => {
+    if (!confirm('Are you sure you want to delete this analysis video?')) return;
+
+    const videos = typeof currentPlayer.analysisVideos === 'string'
+        ? JSON.parse(currentPlayer.analysisVideos || '[]')
+        : (currentPlayer.analysisVideos || []);
+
+    videos.splice(index, 1);
+
+    const success = await squadManager.updatePlayer(currentPlayerId, {
+        analysisVideos: JSON.stringify(videos)
+    });
+
+    if (success) {
+        currentPlayer.analysisVideos = videos;
+        renderAnalysisVideos();
+        if (window.showGlobalToast) window.showGlobalToast('Analysis video deleted', 'success');
+    } else {
+        alert('Failed to delete analysis video.');
+    }
+};
 

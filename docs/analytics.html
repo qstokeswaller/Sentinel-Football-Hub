@@ -13,13 +13,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Premium Analytics Styles */
         :root {
             --glass-bg: rgba(255, 255, 255, 0.7);
             --glass-border: rgba(255, 255, 255, 0.3);
-            --navy-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
 
         .premium-stat-card {
@@ -28,64 +25,8 @@
             padding: 24px;
             border: 1px solid #f1f5f9;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
             position: relative;
             overflow: hidden;
-        }
-
-        .premium-stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -6px rgba(0, 0, 0, 0.1);
-        }
-
-        .premium-stat-card::after {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.03) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .stat-icon-wrapper {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            margin-bottom: 20px;
-        }
-
-        .form-dot {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-            font-size: 0.8rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .form-dot-w {
-            background: #22c55e;
-        }
-
-        .form-dot-d {
-            background: #94a3b8;
-        }
-
-        .form-dot-l {
-            background: #f43f5e;
         }
 
         .analytics-filter-bar {
@@ -97,7 +38,196 @@
             gap: 20px;
             align-items: flex-end;
             margin-bottom: 32px;
-            box-shadow: var(--shadow-sm);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+        }
+
+        .section-header p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin: 0;
+        }
+
+        /* Player Matrix Table */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .matrix-table th {
+            background: #f8fafc;
+            color: #64748b;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .matrix-table th.center {
+            text-align: center;
+        }
+
+        .matrix-table td {
+            padding: 13px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #1e293b;
+        }
+
+        .matrix-table td.center {
+            text-align: center;
+        }
+
+        .matrix-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .matrix-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .player-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: white;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+        }
+
+        .player-name-text {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .position-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        /* Rating Badge */
+        .rating-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            min-width: 70px;
+            justify-content: center;
+        }
+
+        .rating-badge.green  { background: #dcfce7; color: #166534; }
+        .rating-badge.blue   { background: #dbeafe; color: #1d4ed8; }
+        .rating-badge.amber  { background: #fef3c7; color: #92400e; }
+        .rating-badge.red    { background: #fee2e2; color: #991b1b; }
+        .rating-badge.none   { background: #f1f5f9; color: #94a3b8; }
+
+        .rating-stars {
+            letter-spacing: 1px;
+            font-size: 0.7rem;
+        }
+
+        /* Attendance Table */
+        .att-pct-bar {
+            width: 80px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .att-pct-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .att-pct-green  { background: #22c55e; }
+        .att-pct-blue   { background: #3b82f6; }
+        .att-pct-amber  { background: #f59e0b; }
+        .att-pct-red    { background: #ef4444; }
+
+        .missed-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+
+        .missed-badge.none  { background: #dcfce7; color: #166534; }
+        .missed-badge.low   { background: #fef3c7; color: #92400e; }
+        .missed-badge.high  { background: #fee2e2; color: #991b1b; }
+
+        .month-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .month-controls select {
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #1e293b;
+            background: #f8fafc;
+            cursor: pointer;
+        }
+
+        .table-empty {
+            padding: 40px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .table-loading {
+            padding: 40px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
         }
 
         @media screen and (max-width: 768px) {
@@ -107,29 +237,25 @@
                 padding: 16px;
             }
 
-            .analytics-filter-bar>div {
-                grid-template-columns: 1fr !important;
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
             }
 
-            .metrics-grid {
-                grid-template-columns: 1fr !important;
-                gap: 16px !important;
+            .matrix-table {
+                font-size: 0.8rem;
+            }
+
+            .matrix-table th,
+            .matrix-table td {
+                padding: 10px 10px;
             }
         }
 
         @media print {
-
-            .sidebar,
-            .analytics-filter-bar,
-            .header-actions {
-                display: none !important;
-            }
-
-            .main-content {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-            }
+            .sidebar, .analytics-filter-bar, .header-actions { display: none !important; }
+            .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
         }
     </style>
 </head>
@@ -140,24 +266,21 @@
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
-                                <div class="brand-text">
+                <div class="brand-text">
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
-                
             </div>
             <nav class="sidebar-nav">
                 <ul>
                     <li><a href="dashboard_v2.html"><i class="fas fa-th-large"></i><span>Dashboard</span></a></li>
-                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a>
-                    </li>
+                    <li><a href="planner.html"><i class="fas fa-clipboard-list"></i><span>Session Planner</span></a></li>
                     <li><a href="library.html"><i class="fas fa-book"></i><span>Library</span></a></li>
                     <li><a href="reports.html"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
                     <li><a href="squad.html"><i class="fas fa-user-friends"></i><span>Squad Management</span></a></li>
                     <li><a href="players.html"><i class="fas fa-user"></i><span>Player Management</span></a></li>
                     <li><a href="matches.html"><i class="fas fa-futbol"></i><span>Matches</span></a></li>
-                    <li class="active"><a href="analytics.html"><i
-                                class="fas fa-chart-line"></i><span>Analytics</span></a></li>
+                    <li class="active"><a href="analytics.html"><i class="fas fa-chart-line"></i><span>Analytics</span></a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -175,154 +298,102 @@
                         <button id="mobileMenuToggle" class="mobile-nav-toggle">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <span
-                            style="background: var(--primary-light); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Intelligence
-                            Hub</span>
+                        <span style="background: var(--primary-light); color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Intelligence Hub</span>
                     </div>
                     <h1>Performance Analytics</h1>
-                    <p style="font-size: 1.1rem; opacity: 0.8;">Advanced insights for team performance optimization</p>
-                </div>
-                <div class="header-actions">
-                    <button class="dash-btn primary" onclick="exportAnalyticsReport()"
-                        style="padding: 12px 28px; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">
-                        <i class="fas fa-file-export"></i> Export Report
-                    </button>
+                    <p style="font-size: 1.1rem; opacity: 0.8;">Individual player performance and attendance insights</p>
                 </div>
             </header>
 
-            <!-- Filters Section -->
+            <!-- Filter Bar -->
             <div class="analytics-filter-bar">
-                <div style="flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-                    <div class="filter-group">
-                        <label class="filter-label">Age Group</label>
-                        <div class="filter-pill-container">
-                            <select id="filterAgeGroup" class="filter-select-pill">
-                                <option value="all">All Age Groups</option>
-                            </select>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Lead Coach</label>
-                        <div class="filter-pill-container">
-                            <select id="filterCoach" class="filter-select-pill">
-                                <option value="all">All Coaches</option>
-                            </select>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label class="filter-label">Select Team</label>
-                        <div class="filter-pill-container">
-                            <select id="filterTeam" class="filter-select-pill">
-                                <option value="all">All Teams</option>
-                            </select>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
+                <div class="filter-group">
+                    <label class="filter-label">Filter by Squad</label>
+                    <div class="filter-pill-container">
+                        <select id="filterSquad" class="filter-select-pill">
+                            <option value="all">All Players</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
                     </div>
                 </div>
             </div>
 
-            <!-- Key Metrics Grid -->
-            <div class="metrics-grid"
-                style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 40px;">
-                <div class="premium-stat-card">
+            <!-- Section 1: Player Performance Matrix -->
+            <div class="premium-stat-card" style="margin-bottom: 32px;">
+                <div class="section-header">
                     <div>
-                        <div class="stat-icon-wrapper" style="background: #eff6ff; color: #3b82f6;">
-                            <i class="fas fa-futbol"></i>
-                        </div>
-                        <span
-                            style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Goals
-                            Scored</span>
-                        <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <h2 style="font-size: 2.2rem; margin: 4px 0;" id="statGoalsScored">0</h2>
-                            <span style="color: #10b981; font-weight: 600; font-size: 0.9rem;"
-                                id="statGoalsScoredAvg">+0.0/g</span>
-                        </div>
+                        <h3><i class="fas fa-table" style="color: #3b82f6; margin-right: 8px;"></i>Player Performance Matrix</h3>
+                        <p>Historical average ratings across all assessment reports — scored 1–5 per category</p>
                     </div>
+                    <div id="perfMatrixMeta" style="font-size: 0.8rem; color: #94a3b8;"></div>
                 </div>
-
-                <div class="premium-stat-card">
-                    <div>
-                        <div class="stat-icon-wrapper" style="background: #fee2e2; color: #ef4444;">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <span
-                            style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Goals
-                            Conceded</span>
-                        <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <h2 style="font-size: 2.2rem; margin: 4px 0;" id="statGoalsConceded">0</h2>
-                            <span style="color: #ef4444; font-weight: 600; font-size: 0.9rem;"
-                                id="statGoalsConcededAvg">0.0/g</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="premium-stat-card">
-                    <div>
-                        <div class="stat-icon-wrapper" style="background: #fdf4ff; color: #d946ef;">
-                            <i class="fas fa-stopwatch"></i>
-                        </div>
-                        <span
-                            style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Avg
-                            Possession</span>
-                        <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <h2 style="font-size: 2.2rem; margin: 4px 0;" id="statAvgPossession">0%</h2>
-                            <span style="color: #64748b; font-size: 0.8rem;" id="statMatchesTrackedPos">0 tracked</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="premium-stat-card">
-                    <div>
-                        <div class="stat-icon-wrapper" style="background: #ecfdf5; color: #10b981;">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <span
-                            style="font-size: 0.8rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">xG
-                            Difference</span>
-                        <div style="display: flex; align-items: baseline; gap: 8px;">
-                            <h2 style="font-size: 2.2rem; margin: 4px 0;" id="statXgDiff">+0.0</h2>
-                            <span style="color: #64748b; font-size: 0.75rem;" id="statXgDetails">xG: 0.0 | xGA:
-                                0.0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Form Section -->
-            <div class="premium-stat-card" style="margin-bottom: 40px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <div>
-                        <h3 style="font-size: 1.2rem; margin: 0;">Recent Form</h3>
-                        <p style="font-size: 0.9rem; color: #94a3b8; margin: 4px 0 0 0;">Last 5 performance snapshots
-                        </p>
-                    </div>
-                    <div id="formWinRate"
-                        style="background: #f0fdf4; color: #166534; padding: 6px 16px; border-radius: 12px; font-weight: 700; font-size: 0.9rem;">
-                        Win Rate: 0%
-                    </div>
-                </div>
-
-                <div id="recentFormContainer"
-                    style="display: flex; gap: 16px; align-items: center; margin-bottom: 32px;">
-                    <div style="color: #94a3b8;">No match data available</div>
-                </div>
-
-                <div class="table-container" style="border: 1px solid #f1f5f9; border-radius: 16px; overflow: hidden;">
-                    <table class="table" style="margin: 0;">
-                        <thead style="background: #f8fafc;">
+                <div class="table-container" style="border: 1px solid #f1f5f9; border-radius: 14px; overflow: hidden;">
+                    <table class="matrix-table">
+                        <thead>
                             <tr>
-                                <th style="padding: 16px 24px;">Match Date</th>
-                                <th>Competition</th>
-                                <th>Opponent</th>
-                                <th style="text-align: center;">Result</th>
-                                <th style="text-align: center;">Score</th>
-                                <th style="padding: 16px 24px; text-align: right;">Action</th>
+                                <th>Player</th>
+                                <th>Position</th>
+                                <th class="center" style="color: #6366f1;">
+                                    <i class="fas fa-brain" style="margin-right: 4px;"></i>Tactical
+                                </th>
+                                <th class="center" style="color: #3b82f6;">
+                                    <i class="fas fa-futbol" style="margin-right: 4px;"></i>Technical
+                                </th>
+                                <th class="center" style="color: #10b981;">
+                                    <i class="fas fa-running" style="margin-right: 4px;"></i>Physical
+                                </th>
+                                <th class="center" style="color: #f59e0b;">
+                                    <i class="fas fa-heart" style="margin-right: 4px;"></i>Psychological
+                                </th>
+                                <th class="center">Reports</th>
                             </tr>
                         </thead>
-                        <tbody id="formHistoryTableBody">
-                            <!-- Injected via JS -->
+                        <tbody id="performanceTableBody">
+                            <tr><td colspan="7" class="table-loading"><i class="fas fa-spinner fa-spin"></i> Loading player data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section 2: Attendance Tracker -->
+            <div class="premium-stat-card" style="margin-bottom: 40px;">
+                <div class="section-header">
+                    <div>
+                        <h3><i class="fas fa-calendar-check" style="color: #10b981; margin-right: 8px;"></i>Attendance Tracker</h3>
+                        <p>Sessions missed per player — only counts sessions that have a filed report</p>
+                    </div>
+                    <div class="month-controls">
+                        <select id="filterMonth">
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                        <select id="filterYear"></select>
+                    </div>
+                </div>
+                <div class="table-container" style="border: 1px solid #f1f5f9; border-radius: 14px; overflow: hidden;">
+                    <table class="matrix-table">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Position</th>
+                                <th class="center">Sessions This Month</th>
+                                <th class="center">Attended</th>
+                                <th class="center">Missed</th>
+                                <th class="center">Attendance %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                            <tr><td colspan="6" class="table-loading"><i class="fas fa-spinner fa-spin"></i> Loading attendance data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -331,11 +402,8 @@
         </main>
     </div>
 
-    <!-- Analytics logic -->
     <script src="js/api-config.js?v=2"></script>
-    <script src="js/squad-manager.js?v=2"></script>
-    <script src="js/match-manager.js?v=2"></script>
-    <script src="js/analytics-ui.js?v=2"></script>
+    <script src="js/analytics-ui.js?v=3"></script>
     <script src="js/sidebar-toggle.js"></script>
 </body>
 

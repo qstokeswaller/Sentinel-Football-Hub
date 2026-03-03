@@ -94,21 +94,16 @@ window.onTeamSelectChange = function (side) {
     if (side === 'home') {
         const val = homeSelect.value;
         if (val && val !== '__other__' && val !== '') {
-            // A squad was selected as Home — Away becomes text input for opponent
             awayWrapper.style.display = 'none';
             awayTextWrapper.style.display = 'block';
-            // Reset home text wrapper
             homeTextWrapper.style.display = 'none';
             homeWrapper.style.display = 'block';
         } else if (val === '__other__') {
-            // Other selected for Home — show text input for home
             homeWrapper.style.display = 'none';
             homeTextWrapper.style.display = 'block';
-            // Reset away to dropdown
             awayWrapper.style.display = 'block';
             awayTextWrapper.style.display = 'none';
         } else {
-            // Reset both
             homeWrapper.style.display = 'block';
             homeTextWrapper.style.display = 'none';
             awayWrapper.style.display = 'block';
@@ -117,21 +112,16 @@ window.onTeamSelectChange = function (side) {
     } else if (side === 'away') {
         const val = awaySelect.value;
         if (val && val !== '__other__' && val !== '') {
-            // A squad was selected as Away — Home becomes text input for opponent
             homeWrapper.style.display = 'none';
             homeTextWrapper.style.display = 'block';
-            // Reset away text wrapper
             awayTextWrapper.style.display = 'none';
             awayWrapper.style.display = 'block';
         } else if (val === '__other__') {
-            // Other selected for Away — show text input for away
             awayWrapper.style.display = 'none';
             awayTextWrapper.style.display = 'block';
-            // Reset home to dropdown
             homeWrapper.style.display = 'block';
             homeTextWrapper.style.display = 'none';
         } else {
-            // Reset both
             homeWrapper.style.display = 'block';
             homeTextWrapper.style.display = 'none';
             awayWrapper.style.display = 'block';

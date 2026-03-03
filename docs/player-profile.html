@@ -342,11 +342,10 @@
         <aside class="sidebar">
             <div class="sidebar-brand">
                 <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
-                                <div class="brand-text">
+                <div class="brand-text">
                     <h3>Football</h3>
                     <p>Performance Hub</p>
                 </div>
-                
             </div>
             <nav class="sidebar-nav">
                 <ul>
@@ -382,7 +381,6 @@
                     <h1 class="page-title">Player Profile</h1>
                 </div>
                 <div class="header-right">
-                    <!-- Cleaned up headers as requested -->
                 </div>
             </header>
 
@@ -399,12 +397,18 @@
                                 <p class="subtitle"><span id="profPosition">POS</span> | <span id="profSquad">Squad
                                         Name</span></p>
                             </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button id="btnToggleEditProfile" class="dash-btn outline sm"
-                                    style="height: fit-content; align-self: center;">
-                                    <i class="fas fa-edit"></i> Edit Info
-                                </button>
-                            </div>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;"><button
+                                    id="btnToggleEditProfile" class="dash-btn outline sm"
+                                    style="height: fit-content; align-self: center;"><i class="fas fa-edit"></i> Edit
+                                    Info</button><button id="btnProfileAssignSquad" class="dash-btn outline sm"
+                                    style="height: fit-content; align-self: center; color: #2563eb; border-color: #93c5fd;"><i
+                                        class="fas fa-exchange-alt"></i> Assign Squad</button><button
+                                    onclick="exportPlayerFullReport()" class="dash-btn outline sm"
+                                    style="height: fit-content; align-self: center; color: #6366f1; border-color: #a5b4fc;"><i
+                                        class="fas fa-file-download"></i> Full Report</button><button
+                                    id="btnProfileDeletePlayer" class="dash-btn sm"
+                                    style="height: fit-content; align-self: center; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5;"><i
+                                        class="fas fa-trash-alt"></i> Delete</button></div>
                         </div>
 
                         <!-- Read-Only View State -->
@@ -518,6 +522,9 @@
                             style="margin-right: 6px;"></i> New Assessment</button>
                     <button class="tab-btn" data-tab="history"><i class="fas fa-history" style="margin-right: 6px;"></i>
                         Assessment History</button>
+                    <button class="tab-btn" data-tab="player-analysis"><i class="fas fa-video"
+                            style="margin-right: 6px;"></i>
+                        Player Analysis</button>
                 </div>
 
                 <!-- Tab 1: Overview (Dev Structures) -->
@@ -602,278 +609,335 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Tab 2: Assessment History -->
-            <div class="tab-content" id="tab-history">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <i class="fas fa-folder-open" style="color: var(--blue-accent); font-size: 1.25rem;"></i>
-                        <h3 style="margin: 0; font-size: 1.2rem; color: var(--navy-dark);">Intelligence & Reports
-                            History</h3>
-                    </div>
-                </div>
-
-                <h4
-                    style="margin: 32px 0 16px 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-chart-line" style="color: var(--blue-accent);"></i> Performance Reports
-                </h4>
-                <div id="assessmentHistoryContainer" class="history-list">
-                    <!-- Populated by JS -->
-                </div>
-
-                <h4
-                    style="margin: 40px 0 16px 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-seedling" style="color: var(--green-accent);"></i> Development Structures
-                </h4>
-                <div id="devHistoryContainer" class="history-list">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Tab 3: New Assessment (Detailed Form) -->
-            <div class="tab-content" id="tab-new-assessment">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                    <i class="fas fa-clipboard-check" style="color: var(--blue-accent); font-size: 1.25rem;"></i>
-                    <h3 style="margin: 0; font-size: 1.2rem; color: var(--navy-dark);">Official Athletic Performance
-                        Report</h3>
-                </div>
-
-                <div
-                    style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div class="bubble-grid-2" style="margin-bottom: 24px;">
-                        <div class="form-group-bubble">
-                            <label>Date of Assessment</label>
-                            <input type="date" id="assessDate" class="form-control-bubble">
-                        </div>
-                        <div class="form-group-bubble">
-                            <label>Evaluator</label>
-                            <input type="text" id="assessEvaluator" class="form-control-bubble"
-                                placeholder="Coach Name">
-                        </div>
-                        <div class="form-group-bubble">
-                            <label>Team Context</label>
-                            <select id="assessTeam" class="form-control-bubble">
-                                <option value="">Select Team / Squad</option>
-                                <option value="First Team">First Team</option>
-                                <option value="U23">U23</option>
-                                <option value="U19">U19</option>
-                            </select>
-                        </div>
-                        <div class="form-group-bubble">
-                            <label>Match Details (Optional)</label>
-                            <input type="text" id="assessMatch" class="form-control-bubble"
-                                placeholder="e.g. vs SuperSport Utd (Home)">
+                <!-- Tab 2: Assessment History -->
+                <div class="tab-content" id="tab-history">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-folder-open" style="color: var(--blue-accent); font-size: 1.25rem;"></i>
+                            <h3 style="margin: 0; font-size: 1.2rem; color: var(--navy-dark);">Intelligence & Reports
+                                History</h3>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                        <!-- Tactical -->
-                        <div class="rating-matrix">
-                            <div class="rating-matrix-header">
-                                <h3><i class="fas fa-chess-knight"></i> Tactical</h3>
-                                <div class="rating-scale-hint">
-                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Positioning</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tac_pos" value="1"><input type="radio" name="tac_pos"
-                                        value="2"><input type="radio" name="tac_pos" value="3"><input type="radio"
-                                        name="tac_pos" value="4"><input type="radio" name="tac_pos" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Decision Making</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tac_dec" value="1"><input type="radio" name="tac_dec"
-                                        value="2"><input type="radio" name="tac_dec" value="3"><input type="radio"
-                                        name="tac_dec" value="4"><input type="radio" name="tac_dec" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Game Awareness</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tac_awa" value="1"><input type="radio" name="tac_awa"
-                                        value="2"><input type="radio" name="tac_awa" value="3"><input type="radio"
-                                        name="tac_awa" value="4"><input type="radio" name="tac_awa" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Creativity</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tac_cre" value="1"><input type="radio" name="tac_cre"
-                                        value="2"><input type="radio" name="tac_cre" value="3"><input type="radio"
-                                        name="tac_cre" value="4"><input type="radio" name="tac_cre" value="5">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Technical -->
-                        <div class="rating-matrix">
-                            <div class="rating-matrix-header">
-                                <h3><i class="fas fa-bolt"></i> Technical</h3>
-                                <div class="rating-scale-hint">
-                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Passing Accuracy</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tec_pas" value="1"><input type="radio" name="tec_pas"
-                                        value="2"><input type="radio" name="tec_pas" value="3"><input type="radio"
-                                        name="tec_pas" value="4"><input type="radio" name="tec_pas" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">First Touch</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tec_tou" value="1"><input type="radio" name="tec_tou"
-                                        value="2"><input type="radio" name="tec_tou" value="3"><input type="radio"
-                                        name="tec_tou" value="4"><input type="radio" name="tec_tou" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Ball Control</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tec_con" value="1"><input type="radio" name="tec_con"
-                                        value="2"><input type="radio" name="tec_con" value="3"><input type="radio"
-                                        name="tec_con" value="4"><input type="radio" name="tec_con" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Dribbling</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="tec_dri" value="1"><input type="radio" name="tec_dri"
-                                        value="2"><input type="radio" name="tec_dri" value="3"><input type="radio"
-                                        name="tec_dri" value="4"><input type="radio" name="tec_dri" value="5">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Physical -->
-                        <div class="rating-matrix">
-                            <div class="rating-matrix-header">
-                                <h3><i class="fas fa-dumbbell"></i> Physical</h3>
-                                <div class="rating-scale-hint">
-                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Speed / Acceleration</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="phy_spe" value="1"><input type="radio" name="phy_spe"
-                                        value="2"><input type="radio" name="phy_spe" value="3"><input type="radio"
-                                        name="phy_spe" value="4"><input type="radio" name="phy_spe" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Agility / Balance</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="phy_agi" value="1"><input type="radio" name="phy_agi"
-                                        value="2"><input type="radio" name="phy_agi" value="3"><input type="radio"
-                                        name="phy_agi" value="4"><input type="radio" name="phy_agi" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Stamina / Endurance</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="phy_sta" value="1"><input type="radio" name="phy_sta"
-                                        value="2"><input type="radio" name="phy_sta" value="3"><input type="radio"
-                                        name="phy_sta" value="4"><input type="radio" name="phy_sta" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Strength / Power</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="phy_str" value="1"><input type="radio" name="phy_str"
-                                        value="2"><input type="radio" name="phy_str" value="3"><input type="radio"
-                                        name="phy_str" value="4"><input type="radio" name="phy_str" value="5">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Psychological -->
-                        <div class="rating-matrix">
-                            <div class="rating-matrix-header">
-                                <h3><i class="fas fa-brain"></i> Psychological</h3>
-                                <div class="rating-scale-hint">
-                                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Work Ethic</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="psy_wor" value="1"><input type="radio" name="psy_wor"
-                                        value="2"><input type="radio" name="psy_wor" value="3"><input type="radio"
-                                        name="psy_wor" value="4"><input type="radio" name="psy_wor" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Communication</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="psy_com" value="1"><input type="radio" name="psy_com"
-                                        value="2"><input type="radio" name="psy_com" value="3"><input type="radio"
-                                        name="psy_com" value="4"><input type="radio" name="psy_com" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Focus / Concentration</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="psy_foc" value="1"><input type="radio" name="psy_foc"
-                                        value="2"><input type="radio" name="psy_foc" value="3"><input type="radio"
-                                        name="psy_foc" value="4"><input type="radio" name="psy_foc" value="5">
-                                </div>
-                            </div>
-                            <div class="rating-row">
-                                <span class="attribute">Resilience</span>
-                                <div class="rating-radios">
-                                    <input type="radio" name="psy_res" value="1"><input type="radio" name="psy_res"
-                                        value="2"><input type="radio" name="psy_res" value="3"><input type="radio"
-                                        name="psy_res" value="4"><input type="radio" name="psy_res" value="5">
-                                </div>
-                            </div>
-                        </div>
+                    <h4
+                        style="margin: 32px 0 16px 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-chart-line" style="color: var(--blue-accent);"></i> Performance Reports
+                    </h4>
+                    <div id="assessmentHistoryContainer" class="history-list">
+                        <!-- Populated by JS -->
                     </div>
 
-                    <h4 style="margin: 24px 0 16px 0; color: var(--navy-dark); font-size: 1.05rem;">Qualitative
-                        Feedback</h4>
-                    <div class="bubble-grid-2">
-                        <div class="form-group-bubble">
-                            <label>Areas of Strength</label>
-                            <textarea id="assessStrength" class="form-control-bubble" rows="3"
-                                placeholder="Core strengths..."></textarea>
-                        </div>
-                        <div class="form-group-bubble">
-                            <label>Areas to Improve</label>
-                            <textarea id="assessImprove" class="form-control-bubble" rows="3"
-                                placeholder="Focus areas..."></textarea>
-                        </div>
-                        <div class="form-group-bubble" style="grid-column: 1 / -1;">
-                            <label>Suggestions for Growth</label>
-                            <textarea id="assessGrowth" class="form-control-bubble" rows="2"
-                                placeholder="Specific drills or habits..."></textarea>
-                        </div>
-                        <div class="form-group-bubble" style="grid-column: 1 / -1;">
-                            <label>Final Comments</label>
-                            <textarea id="assessComments" class="form-control-bubble" rows="3"
-                                placeholder="Summary and overall impression..."></textarea>
-                        </div>
+                    <h4
+                        style="margin: 40px 0 16px 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-seedling" style="color: var(--green-accent);"></i> Development Structures
+                    </h4>
+                    <div id="devHistoryContainer" class="history-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Tab 3: New Assessment (Detailed Form) -->
+                <div class="tab-content" id="tab-new-assessment">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <i class="fas fa-clipboard-check" style="color: var(--blue-accent); font-size: 1.25rem;"></i>
+                        <h3 style="margin: 0; font-size: 1.2rem; color: var(--navy-dark);">Official Athletic Performance
+                            Report</h3>
                     </div>
 
                     <div
-                        style="display: flex; justify-content: flex-end; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px;">
-                        <button class="dash-btn primary" id="btnSubmitAssessment"
-                            style="box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); padding: 12px 24px; font-size: 1rem;">
-                            Submit Report
-                        </button>
+                        style="background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                            <div class="form-group-bubble">
+                                <label>Date of Assessment</label>
+                                <input type="date" id="assessDate" class="form-control-bubble">
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Evaluator</label>
+                                <input type="text" id="assessEvaluator" class="form-control-bubble"
+                                    placeholder="Coach Name">
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Team Context</label>
+                                <input type="text" id="assessTeam" class="form-control-bubble"
+                                    placeholder="Team/Athlete context">
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Match Details (Optional)</label>
+                                <input type="text" id="assessMatch" class="form-control-bubble"
+                                    placeholder="e.g. vs SuperSport Utd (Home)">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                            <!-- Tactical -->
+                            <div class="rating-matrix">
+                                <div class="rating-matrix-header">
+                                    <h3><i class="fas fa-chess-knight"></i> Tactical</h3>
+                                    <div class="rating-scale-hint">
+                                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Positioning</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tac_pos" value="1"><input type="radio" name="tac_pos"
+                                            value="2"><input type="radio" name="tac_pos" value="3"><input type="radio"
+                                            name="tac_pos" value="4"><input type="radio" name="tac_pos" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Decision Making</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tac_dec" value="1"><input type="radio" name="tac_dec"
+                                            value="2"><input type="radio" name="tac_dec" value="3"><input type="radio"
+                                            name="tac_dec" value="4"><input type="radio" name="tac_dec" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Game Awareness</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tac_awa" value="1"><input type="radio" name="tac_awa"
+                                            value="2"><input type="radio" name="tac_awa" value="3"><input type="radio"
+                                            name="tac_awa" value="4"><input type="radio" name="tac_awa" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Creativity</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tac_cre" value="1"><input type="radio" name="tac_cre"
+                                            value="2"><input type="radio" name="tac_cre" value="3"><input type="radio"
+                                            name="tac_cre" value="4"><input type="radio" name="tac_cre" value="5">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Technical -->
+                            <div class="rating-matrix">
+                                <div class="rating-matrix-header">
+                                    <h3><i class="fas fa-bolt"></i> Technical</h3>
+                                    <div class="rating-scale-hint">
+                                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Passing Accuracy</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tec_pas" value="1"><input type="radio" name="tec_pas"
+                                            value="2"><input type="radio" name="tec_pas" value="3"><input type="radio"
+                                            name="tec_pas" value="4"><input type="radio" name="tec_pas" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">First Touch</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tec_tou" value="1"><input type="radio" name="tec_tou"
+                                            value="2"><input type="radio" name="tec_tou" value="3"><input type="radio"
+                                            name="tec_tou" value="4"><input type="radio" name="tec_tou" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Ball Control</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tec_con" value="1"><input type="radio" name="tec_con"
+                                            value="2"><input type="radio" name="tec_con" value="3"><input type="radio"
+                                            name="tec_con" value="4"><input type="radio" name="tec_con" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Dribbling</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="tec_dri" value="1"><input type="radio" name="tec_dri"
+                                            value="2"><input type="radio" name="tec_dri" value="3"><input type="radio"
+                                            name="tec_dri" value="4"><input type="radio" name="tec_dri" value="5">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Physical -->
+                            <div class="rating-matrix">
+                                <div class="rating-matrix-header">
+                                    <h3><i class="fas fa-dumbbell"></i> Physical</h3>
+                                    <div class="rating-scale-hint">
+                                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Speed / Acceleration</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="phy_spe" value="1"><input type="radio" name="phy_spe"
+                                            value="2"><input type="radio" name="phy_spe" value="3"><input type="radio"
+                                            name="phy_spe" value="4"><input type="radio" name="phy_spe" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Agility / Balance</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="phy_agi" value="1"><input type="radio" name="phy_agi"
+                                            value="2"><input type="radio" name="phy_agi" value="3"><input type="radio"
+                                            name="phy_agi" value="4"><input type="radio" name="phy_agi" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Stamina / Endurance</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="phy_sta" value="1"><input type="radio" name="phy_sta"
+                                            value="2"><input type="radio" name="phy_sta" value="3"><input type="radio"
+                                            name="phy_sta" value="4"><input type="radio" name="phy_sta" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Strength / Power</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="phy_str" value="1"><input type="radio" name="phy_str"
+                                            value="2"><input type="radio" name="phy_str" value="3"><input type="radio"
+                                            name="phy_str" value="4"><input type="radio" name="phy_str" value="5">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Psychological -->
+                            <div class="rating-matrix">
+                                <div class="rating-matrix-header">
+                                    <h3><i class="fas fa-brain"></i> Psychological</h3>
+                                    <div class="rating-scale-hint">
+                                        <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Work Ethic</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="psy_wor" value="1"><input type="radio" name="psy_wor"
+                                            value="2"><input type="radio" name="psy_wor" value="3"><input type="radio"
+                                            name="psy_wor" value="4"><input type="radio" name="psy_wor" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Communication</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="psy_com" value="1"><input type="radio" name="psy_com"
+                                            value="2"><input type="radio" name="psy_com" value="3"><input type="radio"
+                                            name="psy_com" value="4"><input type="radio" name="psy_com" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Focus / Concentration</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="psy_foc" value="1"><input type="radio" name="psy_foc"
+                                            value="2"><input type="radio" name="psy_foc" value="3"><input type="radio"
+                                            name="psy_foc" value="4"><input type="radio" name="psy_foc" value="5">
+                                    </div>
+                                </div>
+                                <div class="rating-row">
+                                    <span class="attribute">Resilience</span>
+                                    <div class="rating-radios">
+                                        <input type="radio" name="psy_res" value="1"><input type="radio" name="psy_res"
+                                            value="2"><input type="radio" name="psy_res" value="3"><input type="radio"
+                                            name="psy_res" value="4"><input type="radio" name="psy_res" value="5">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 style="margin: 24px 0 16px 0; color: var(--navy-dark); font-size: 1.05rem;">Qualitative
+                            Feedback</h4>
+                        <div class="bubble-grid-2">
+                            <div class="form-group-bubble">
+                                <label>Areas of Strength</label>
+                                <textarea id="assessStrength" class="form-control-bubble" rows="3"
+                                    placeholder="Core strengths..."></textarea>
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Areas to Improve</label>
+                                <textarea id="assessImprove" class="form-control-bubble" rows="3"
+                                    placeholder="Focus areas..."></textarea>
+                            </div>
+                            <div class="form-group-bubble" style="grid-column: 1 / -1;">
+                                <label>Suggestions for Growth</label>
+                                <textarea id="assessGrowth" class="form-control-bubble" rows="2"
+                                    placeholder="Specific drills or habits..."></textarea>
+                            </div>
+                            <div class="form-group-bubble" style="grid-column: 1 / -1;">
+                                <label>Final Comments</label>
+                                <textarea id="assessComments" class="form-control-bubble" rows="3"
+                                    placeholder="Summary and overall impression..."></textarea>
+                            </div>
+                        </div>
+
+                        <div
+                            style="display: flex; justify-content: flex-end; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 24px;">
+                            <button class="dash-btn primary" id="btnSubmitAssessment"
+                                style="box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2); padding: 12px 24px; font-size: 1rem;">
+                                Submit Report
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-    </div>
-    </main>
+                <!-- Tab 4: Player Analysis -->
+                <div class="tab-content" id="tab-player-analysis">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i class="fas fa-video" style="color: var(--blue-accent); font-size: 1.25rem;"></i>
+                            <h3 style="margin: 0; font-size: 1.2rem; color: var(--navy-dark);">Player Video Analysis
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="section-card" style="margin-bottom: 30px;">
+                        <div class="section-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4
+                                style="margin: 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-star" style="color: var(--blue-accent);"></i> Player Highlights
+                            </h4>
+                            <button class="dash-btn primary sm" onclick="openHighlightModal()">
+                                <i class="fas fa-plus"></i> Add Highlight
+                            </button>
+                        </div>
+                        <div id="highlightsGrid" class="analysis-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                            <!-- Highlights injected here -->
+                        </div>
+                        <div id="emptyHighlightsState" class="upload-drop-zone" onclick="openHighlightModal()"
+                            style="display: flex; flex-direction: column; align-items: center; padding: 40px; cursor: pointer; margin-top: 16px;">
+                            <i class="fas fa-plus-circle"
+                                style="font-size: 2.5rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+                            <p style="margin: 0; font-weight: 600; color: #64748b;">No highlights added yet.</p>
+                            <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Click to add a key moment or
+                                goal clip</p>
+                        </div>
+                    </div>
+
+                    <div class="section-card">
+                        <div class="section-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4
+                                style="margin: 0; font-size: 1.1rem; color: var(--navy-dark); display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-film" style="color: var(--blue-accent);"></i> Analysis Videos
+                            </h4>
+                            <button class="dash-btn primary sm" onclick="openAnalysisVideoModal()">
+                                <i class="fas fa-upload"></i> Add Video Link
+                            </button>
+                        </div>
+                        <div id="analysisVideosGrid" class="analysis-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                            <!-- Videos injected here -->
+                        </div>
+                        <div id="emptyAnalysisVideosState" class="upload-drop-zone" onclick="openAnalysisVideoModal()"
+                            style="display: flex; flex-direction: column; align-items: center; padding: 40px; cursor: pointer; margin-top: 16px;">
+                            <i class="fas fa-video" style="font-size: 2.5rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+                            <p style="margin: 0; font-weight: 600; color: #64748b;">No analysis videos yet.</p>
+                            <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">Link a full analysis session
+                                for this player</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
     </div>
 
     <!-- Modals -->
@@ -915,6 +979,72 @@
                 <button class="dash-btn primary" onclick="printDevAssessment('print-area-performance')"><i
                         class="fas fa-print"></i> Print
                     PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Highlight -->
+    <div class="modal-overlay" id="modalAddHighlight">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Add Player Highlight</h2>
+                <button class="btn-close-modal" onclick="closeModal('modalAddHighlight')"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div class="form-group-bubble">
+                    <label>Highlight Title</label>
+                    <input type="text" id="highlightTitle" class="form-control-bubble"
+                        placeholder="e.g., Solo Run Goal vs United">
+                </div>
+                <div class="form-group-bubble">
+                    <label>Video Link / URL</label>
+                    <input type="text" id="highlightUrl" class="form-control-bubble"
+                        placeholder="YouTube, Vimeo or direct video link">
+                </div>
+                <div class="form-group-bubble">
+                    <label>Description (Optional)</label>
+                    <textarea id="highlightDescription" class="form-control-bubble"
+                        style="border-radius: 16px; min-height: 100px; padding: 14px 18px;"
+                        placeholder="Briefly describe the key moment..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="dash-btn outline" onclick="closeModal('modalAddHighlight')">Cancel</button>
+                <button class="dash-btn primary" onclick="saveHighlight()">Add Highlight</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Analysis Video -->
+    <div class="modal-overlay" id="modalAddAnalysisVideo">
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Add Analysis Video</h2>
+                <button class="btn-close-modal" onclick="closeModal('modalAddAnalysisVideo')"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div class="form-group-bubble">
+                    <label>Video Title</label>
+                    <input type="text" id="analysisVideoTitle" class="form-control-bubble"
+                        placeholder="e.g., Performance Analysis - Match 5">
+                </div>
+                <div class="form-group-bubble">
+                    <label>Video Link / URL</label>
+                    <input type="text" id="analysisVideoUrl" class="form-control-bubble"
+                        placeholder="YouTube, Vimeo or direct video link">
+                </div>
+                <div class="form-group-bubble">
+                    <label>Notes (Optional)</label>
+                    <textarea id="analysisVideoNotes" class="form-control-bubble"
+                        style="border-radius: 16px; min-height: 100px; padding: 14px 18px;"
+                        placeholder="Specific tactical notes or observations..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="dash-btn outline" onclick="closeModal('modalAddAnalysisVideo')">Cancel</button>
+                <button class="dash-btn primary" onclick="saveAnalysisVideo()">Add Video</button>
             </div>
         </div>
     </div>

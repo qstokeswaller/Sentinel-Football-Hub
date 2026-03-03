@@ -685,11 +685,11 @@
     <aside class="sidebar">
       <div class="sidebar-brand">
         <div class="sidebar-logo"><i class="fas fa-futbol"></i></div>
-                        <div class="brand-text">
-                    <h3>Football</h3>
-                    <p>Performance Hub</p>
-                </div>
-                
+        <div class="brand-text">
+          <h3>Football</h3>
+          <p>Performance Hub</p>
+        </div>
+
       </div>
       <nav class="sidebar-nav">
         <ul>
@@ -784,6 +784,7 @@
               <option value="all">All Items</option>
               <option value="session">Sessions Only</option>
               <option value="drill">Drills Only</option>
+              <option value="template">Templates</option>
             </select>
             <i class="fas fa-chevron-down"></i>
           </div>
@@ -796,10 +797,10 @@
         </button>
       </div>
 
-      <!-- SESSIONS -->
+      <!-- SESSIONS / TEMPLATES -->
       <div class="lib-section" id="sessions-section">
         <div class="lib-section-hd">
-          <h2><i class="fas fa-clipboard-list"></i> Sessions</h2>
+          <h2 id="sessions-section-heading"><i class="fas fa-clipboard-list"></i> Sessions</h2>
           <span class="count-badge" id="sessions-count">0</span>
         </div>
         <div class="lib-grid" id="sessions-grid"></div>
@@ -903,7 +904,10 @@
         document.getElementById('stat-recent').textContent = isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
       }
 
+      const isTemplateFilter = currentFilter === 'template';
+
       function matches(item) {
+        if (isTemplateFilter) return item.type === 'session' && item.isTemplate == 1;
         if (currentFilter !== 'all' && item.type !== currentFilter) return false;
         if (currentSearch) {
           const hay = [item.title, item.author, item.team, item.venue, item.purpose, item.description].filter(Boolean).join(' ').toLowerCase();
@@ -915,14 +919,20 @@
       const fSessions = sessions.filter(matches);
       const fDrills = drills.filter(matches);
 
-      // Section visibility
-      document.getElementById('sessions-section').style.display = currentFilter === 'drill' ? 'none' : '';
-      document.getElementById('drills-section').style.display = currentFilter === 'session' ? 'none' : '';
+      // Section visibility + heading
+      const sessSection = document.getElementById('sessions-section');
+      const drillsSection = document.getElementById('drills-section');
+      const sessHeading = document.getElementById('sessions-section-heading');
+      sessSection.style.display = currentFilter === 'drill' ? 'none' : '';
+      drillsSection.style.display = (currentFilter === 'session' || isTemplateFilter) ? 'none' : '';
+      if (sessHeading) sessHeading.innerHTML = isTemplateFilter
+        ? '<i class="fas fa-bookmark"></i> Templates'
+        : '<i class="fas fa-clipboard-list"></i> Sessions';
 
       document.getElementById('sessions-count').textContent = fSessions.length;
       document.getElementById('drills-count').textContent = fDrills.length;
 
-      renderGrid('sessions-grid', fSessions, 'session');
+      renderGrid('sessions-grid', fSessions, isTemplateFilter ? 'template' : 'session');
       renderGrid('drills-grid', fDrills, 'drill');
     }
 
@@ -930,12 +940,13 @@
       const grid = document.getElementById(gridId);
       if (!items.length) {
         const isSearch = !!currentSearch;
+        const isTempl = type === 'template';
         grid.innerHTML = `
       <div class="lib-empty">
-        <div class="empty-icon">${type === 'session' ? '📋' : '⚽'}</div>
-        <h3>No ${type === 'session' ? 'sessions' : 'drills'} yet</h3>
-        <p>${isSearch ? 'No results match your search.' : 'Save a ' + type + ' from the Session Planner to see it here.'}</p>
-        ${!isSearch ? `<a href="planner.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:9999px;background:var(--primary);color:#fff;font-size:14px;font-weight:700;text-decoration:none;border:none;box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);"><i class="fas fa-plus-circle"></i> Go to Planner</a>` : ''}
+        <div class="empty-icon">${isTempl ? '📌' : type === 'session' ? '📋' : '⚽'}</div>
+        <h3>No ${isTempl ? 'templates' : type === 'session' ? 'sessions' : 'drills'} yet</h3>
+        <p>${isSearch ? 'No results match your search.' : isTempl ? 'Open a session and click "Save as Template" to create one.' : 'Save a ' + type + ' from the Session Planner to see it here.'}</p>
+        ${!isSearch && !isTempl ? `<a href="planner.html" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:9999px;background:var(--primary);color:#fff;font-size:14px;font-weight:700;text-decoration:none;border:none;box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);"><i class="fas fa-plus-circle"></i> Go to Planner</a>` : ''}
       </div>`;
         return;
       }
@@ -944,15 +955,20 @@
 
     function buildCard(item) {
       const isSess = item.type === 'session';
+      const isTempl = isSess && item.isTemplate == 1;
       const date = item.date ? new Date(item.date).toLocaleDateString('en-GB') : '';
 
       // Thumbnail
       const thumbHTML = item.image
         ? `<img src="${item.image}" class="card-thumb" alt="${esc(item.title)}">`
-        : `<div class="card-thumb-placeholder">${isSess ? '📋' : '⚽'}</div>`;
+        : `<div class="card-thumb-placeholder">${isTempl ? '📌' : isSess ? '📋' : '⚽'}</div>`;
 
       const authorLine = (item.author || item.team)
         ? `<div class="card-author"><i class="fas fa-user-tie"></i>${esc([item.author, item.team].filter(Boolean).join(' · '))}</div>`
+        : '';
+
+      const templateBadge = isTempl
+        ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:20px;padding:2px 8px;"><i class="fas fa-bookmark" style="font-size:9px;"></i> Template</span>`
         : '';
 
       return `
@@ -962,6 +978,7 @@
            <div class="card-title">${esc(item.title || 'Untitled')}</div>
            <span class="card-pill ${item.type}">${isSess ? 'Session' : 'Drill'}</span>
         </div>
+        ${templateBadge ? `<div style="margin-top:5px;">${templateBadge}</div>` : ''}
         ${authorLine}
       </div>
       ${thumbHTML}
@@ -980,8 +997,11 @@
     // ═══════════════════════════════════════════════════════════
     async function openModal(id, e) {
       if (e) { e.stopPropagation(); e.preventDefault(); }
-      const item = [...sessions, ...drills].find(i => i.id === id);
-      if (!item) return;
+      const item = [...sessions, ...drills].find(i => String(i.id) === String(id));
+      if (!item) {
+        console.warn(`Item not found for modal: ${id}`);
+        return;
+      }
 
       const isSess = item.type === 'session';
       const pill = document.getElementById('modal-head-pill');
@@ -1004,9 +1024,13 @@
         document.getElementById('modal-body').innerHTML = buildDrillModalBody(item);
       }
 
+      const isTempl = isSess && item.isTemplate == 1;
       document.getElementById('modal-foot').innerHTML = `
     ${!isSess ? `<button class="modal-btn png" onclick="exportPNG('${item.id}', event)" style="background:var(--success);"><i class="fas fa-file-image"></i> Export PNG</button>` : ''}
     <button class="modal-btn pdf" onclick="exportPDF('${item.id}')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+    ${isSess ? `<button class="modal-btn" onclick="toggleTemplate('${item.id}', ${isTempl ? 0 : 1})" style="background:${isTempl ? '#fef3c7' : '#f0fdf4'};color:${isTempl ? '#92400e' : '#166534'};border-color:${isTempl ? '#fde68a' : '#bbf7d0'};border-radius:9999px;">
+      <i class="fas fa-bookmark"></i> ${isTempl ? 'Remove Template' : 'Save as Template'}
+    </button>` : ''}
     <button class="modal-btn del" onclick="deleteItem('${item.id}', '${item.type}')"><i class="fas fa-trash"></i> Delete</button>
   `;
 
@@ -1122,6 +1146,27 @@
     }
     window.deleteItem = deleteItem;
 
+    async function toggleTemplate(id, makeTemplate) {
+      try {
+        const res = await fetch(`${window.API_BASE_URL}/sessions/${id}/template`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isTemplate: makeTemplate })
+        });
+        if (!res.ok) throw new Error('Failed');
+        // Update local state so re-render reflects change
+        const sess = sessions.find(s => String(s.id) === String(id));
+        if (sess) sess.isTemplate = makeTemplate ? 1 : 0;
+        closeModal();
+        renderAll();
+        showToast(makeTemplate ? 'Saved as template' : 'Removed from templates');
+      } catch (e) {
+        console.error('toggleTemplate error:', e);
+        showToast('Failed to update template status');
+      }
+    }
+    window.toggleTemplate = toggleTemplate;
+
     async function clearAll() {
       if (!confirm('This will delete ALL sessions and drills. Continue?')) return;
       showToast('Clearing all...');
@@ -1143,11 +1188,10 @@
     // ═══════════════════════════════════════════════════════════
     async function exportPDF(id, e) {
       if (e) { e.stopPropagation(); e.preventDefault(); }
-      console.trace(`exportPDF called for id ${id}`);
       if (!window.jspdf) { showToast('PDF library not loaded'); return; }
       const { jsPDF } = window.jspdf;
 
-      const item = [...sessions, ...drills].find(i => i.id === id);
+      const item = [...sessions, ...drills].find(i => String(i.id) === String(id));
       if (!item) { console.error('Item not found for export:', id); return; }
 
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1189,7 +1233,6 @@
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          console.log(`PDF saved: ${filename}`);
           showToast(`Exported ${filename}`);
         } catch (err) {
           console.error('PDF Save failed:', err);
@@ -1227,7 +1270,7 @@
             try {
               const imgProps = doc.getImageProperties(b.image);
               const imgH = (imgProps.height * contentW) / imgProps.width;
-              doc.addImage(b.image, 'PNG', margin, curY, contentW, Math.min(imgH, 150)); // Cap height to allow text
+              doc.addImage(b.image, 'PNG', margin, curY, contentW, Math.min(imgH, 150));
               curY += Math.min(imgH, 150) + 10;
             } catch (e) { }
           }
@@ -1248,7 +1291,6 @@
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        console.log(`PDF saved: ${filename}`);
         showToast(`Exported ${filename}`);
       } catch (e) {
         console.error("PDF Export failed:", e);

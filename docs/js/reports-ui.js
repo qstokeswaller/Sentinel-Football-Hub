@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         matchManager.init()
     ]);
 
-    // Initial population
+    // Set default tab and initial population
+    switchMainTab('sessions');
     loadSessionReports();
     populateFilters();
     setupRating();
@@ -26,25 +27,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('match-repo-team-filter').addEventListener('change', loadMatchRepository);
     }
 
-    const leagueFilter = document.getElementById('team-report-league-filter');
-    if (leagueFilter) {
-        leagueFilter.addEventListener('change', onLeagueChange);
-    }
-
-    document.getElementById('team-report-squad-filter').addEventListener('change', loadTeamReports);
     document.getElementById('player-report-squad-filter').addEventListener('change', onPlayerSquadChange);
     document.getElementById('player-report-position-filter').addEventListener('change', loadPlayerReports);
     document.getElementById('player-report-search-filter').addEventListener('input', loadPlayerReports);
 
-    // Assessment Modal Listeners
-    const btnAssess = document.getElementById('btnAssessTeam');
-    if (btnAssess) {
-        btnAssess.addEventListener('click', openTeamAssessmentModal);
-    }
-    const btnSaveAssess = document.getElementById('btnSaveSquadAssessment');
-    if (btnSaveAssess) {
-        btnSaveAssess.addEventListener('click', saveTeamAssessment);
-    }
     document.querySelectorAll('.btn-close-modal').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
@@ -83,9 +69,15 @@ function populateFilters() {
     const leagueFilter = document.getElementById('team-report-league-filter');
     const playerSquadSelect = document.getElementById('player-report-squad-filter');
     const playerPositionSelect = document.getElementById('player-report-position-filter');
+    const reportTeamSelect = document.getElementById('report-team-select');
 
     const squads = squadManager.getSquads();
     const players = squadManager.players;
+
+    if (reportTeamSelect) {
+        reportTeamSelect.innerHTML = '<option value="">-- No Team / General --</option>' +
+            squads.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    }
 
     // Populate Leagues
     if (leagueFilter) {
@@ -103,9 +95,8 @@ function populateFilters() {
     // Populate Squads
     const squadOptions = squads.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
-    if (matchRepoSelect) matchRepoSelect.innerHTML = '<option value="all">All Teams</option>' + squadOptions;
-    if (teamReportSelect) teamReportSelect.innerHTML = '<option value="all">All Teams</option>' + squadOptions;
-    if (playerSquadSelect) playerSquadSelect.innerHTML = '<option value="">Select Team</option>' + squadOptions;
+    if (matchRepoSelect) matchRepoSelect.innerHTML = '<option value="all">All Squads</option>' + squadOptions;
+    if (playerSquadSelect) playerSquadSelect.innerHTML = '<option value="">Select Squad</option>' + squadOptions;
 
     // Populate Positions dynamically
     if (playerPositionSelect) {
@@ -116,21 +107,6 @@ function populateFilters() {
     }
 }
 
-function onLeagueChange() {
-    const league = document.getElementById('team-report-league-filter').value;
-    const squadSelect = document.getElementById('team-report-squad-filter');
-    if (!squadSelect) return;
-
-    let squads = squadManager.getSquads();
-    if (league !== 'all') {
-        squads = squads.filter(s => s.leagues && s.leagues.includes(league));
-    }
-
-    squadSelect.innerHTML = '<option value="all">All Teams</option>' +
-        squads.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-
-    loadTeamReports();
-}
 
 function onPlayerSquadChange() {
     loadPlayerReports();
@@ -156,10 +132,11 @@ async function loadSessionReports() {
         const sel = document.getElementById('session-select');
         if (sel) {
             sel.innerHTML = '<option value="">-- Select a Session --</option>';
-            sessions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(s => {
+            sessions.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
-                opt.textContent = `${s.title} (${new Date(s.createdAt).toLocaleDateString()})`;
+                const displayDate = s.date ? s.date : new Date(s.createdAt).toLocaleDateString();
+                opt.textContent = `${s.title} (${displayDate})`;
                 sel.appendChild(opt);
             });
         }
@@ -209,26 +186,39 @@ async function openDailyReportDetails(id) {
         return;
     }
 
-    // Use local cache to avoid server round-trip (GET /api/reports/:id route issues)
     const r = _reportCache.reports.find(rep => rep.id === id);
     if (!r) {
-        content.innerHTML = '<div style="color:red;padding:20px;">Report not found in cache. Please refresh the page and try again.</div>';
+        content.innerHTML = '<div style="color:red;padding:20px;">Report not found in cache. Please refresh the page and try again. refreshed.</div>';
         return;
     }
 
     const s = _reportCache.sessions.find(sess => sess.id === r.sessionId) || null;
+    const dateStr = r.date ? new Date(r.date) : (s ? new Date(s.date) : new Date());
+    const dateFormatted = isNaN(dateStr) ? 'No date' : dateStr.toLocaleDateString();
+
+    let absentNames = 'None';
+    if (r.absentPlayerIds && Array.isArray(r.absentPlayerIds) && r.absentPlayerIds.length > 0) {
+        absentNames = r.absentPlayerIds.map(pid => {
+            const p = squadManager.players.find(player => player.id === pid);
+            return p ? p.name : 'Unknown Player';
+        }).join(', ');
+    }
 
     // drillNotes is already an object from GET /api/reports parsing
     const drillNotes = (typeof r.drillNotes === 'string') ? JSON.parse(r.drillNotes || '{}') : (r.drillNotes || {});
     const drillNotesEntries = Object.entries(drillNotes);
-    const dateStr = r.date ? new Date(r.date).toLocaleDateString() : 'No date';
 
     content.innerHTML = `
         <div style="background: var(--bg-light); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
-            <h3 style="margin-top:0; color:var(--primary);">${s ? s.title : 'Daily Session'}</h3>
+            <h3 style="margin-top:0; color:var(--primary);">${s ? s.title : 'General Report'}</h3>
             <div style="display: flex; gap: 15px; font-size: 0.9rem; opacity: 0.8;">
-                <span><i class="far fa-calendar-alt"></i> ${dateStr}</span>
+                <span><i class="far fa-calendar-alt"></i> ${dateFormatted}</span>
                 <span><i class="fas fa-users"></i> ${r.attendanceCount || 0}/${r.attendanceTotal || 0} Attendance</span>
+            </div>
+            ${r.absentPlayerIds && r.absentPlayerIds.length > 0 ? `
+            <div style="margin-top:10px; font-size: 0.85rem; color: #e53e3e; font-weight: 600;">
+                <i class="fas fa-user-times"></i> Absent: ${absentNames}
+            </div>` : ''}
             </div>
         </div>
 
@@ -242,6 +232,18 @@ async function openDailyReportDetails(id) {
                 <div style="font-weight: 700; color: var(--warning); font-size: 1.2rem; letter-spacing: 2px;">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</div>
             </div>
         </div>
+
+        ${r.absentPlayerIds && r.absentPlayerIds.length > 0 ? `
+            <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Absent Players (${r.absentPlayerIds.length})</h4>
+            <div class="dash-card" style="padding: 12px; margin-bottom: 20px; background: #fff1f2; border: 1px solid #fecaca;">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${r.absentPlayerIds.map(pid => {
+        const p = squadManager.getPlayer(pid);
+        return `<span style="background: white; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; border: 1px solid #fecaca; color: #b91c1c;">${p ? p.name : 'Unknown Player'}</span>`;
+    }).join('')}
+                </div>
+            </div>
+        ` : ''}
 
         <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Session Focus</h4>
         <div class="dash-card" style="padding: 16px; margin-bottom: 20px; background: white;">
@@ -380,59 +382,6 @@ function loadMatchRepository() {
     }).join('');
 }
 
-// --- TEAM REPORTS (History) ---
-async function loadTeamReports() {
-    const squadId = document.getElementById('team-report-squad-filter').value;
-    const container = document.getElementById('team-history-timeline');
-    if (!container) return;
-
-    if (squadId === 'all') {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><p>Select a specific team to view report history.</p></div>';
-        return;
-    }
-
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><i class="fas fa-circle-notch fa-spin"></i> Loading team history...</div>';
-
-    try {
-        const assessments = await squadManager.getSquadAssessments(squadId);
-
-        if (assessments.length === 0) {
-            container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><p>No team assessments found for this squad.</p></div>';
-            return;
-        }
-
-        // Sort by date descending
-        const sortedAssessments = assessments.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        container.innerHTML = sortedAssessments.map(item => {
-            const d = new Date(item.date);
-            const day = d.getDate();
-            const month = d.toLocaleDateString(undefined, { month: 'short' });
-
-            return `
-                <div class="history-item" onclick="openSquadAssessmentDetails('${item.id}')" style="border-left: 3px solid var(--primary);">
-                    <div class="history-date">
-                        <div class="day">${day}</div>
-                        <div class="month">${month}</div>
-                    </div>
-                    <div class="history-content">
-                        <div class="history-title">${item.context} Assessment</div>
-                        <div class="history-meta">Overall Rating: <strong>${item.ratings?.overall || 0}/10</strong></div>
-                        <div class="history-tags">
-                            <span class="badge badge-primary">Squad Review</span>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; color: var(--primary);">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    } catch (e) {
-        console.error('Error loading team reports:', e);
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-light);"><p>Error loading team reports. Please try again.</p></div>';
-    }
-}
 
 // --- PLAYER REPORTS (History) ---
 async function loadPlayerReports(playerId) {
@@ -677,7 +626,6 @@ window.viewDevStructureDetails = viewDevStructureDetails;
 // Export to window for HTML access
 window.viewPlayerTimeline = viewPlayerTimeline;
 window.openAssessmentDetails = openAssessmentDetails;
-window.openSquadAssessmentDetails = openSquadAssessmentDetails;
 // window.printReport is assigned below after its definition
 
 async function openAssessmentDetails(id) {
@@ -792,69 +740,6 @@ async function openAssessmentDetails(id) {
     }
 }
 
-async function openSquadAssessmentDetails(id) {
-    const modal = document.getElementById('modalViewSquadAssessment');
-    const content = document.getElementById('viewSquadAssessContent');
-    if (!modal || !content) return;
-
-    content.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-    modal.classList.add('active');
-
-    try {
-        const r = await squadManager.getSquadAssessment(id);
-        if (!r) throw new Error('Not found');
-
-        content.innerHTML = `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-                <div class="dash-card" style="padding: 16px;">
-                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">Report Date</div>
-                    <div style="font-weight: 700; color: var(--navy-dark);">${new Date(r.date).toLocaleDateString()}</div>
-                </div>
-                <div class="dash-card" style="padding: 16px;">
-                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">Context</div>
-                    <div style="font-weight: 700; color: var(--navy-dark);">${r.context || 'General'}</div>
-                </div>
-            </div>
-
-            <h3 style="margin-bottom: 16px; color: var(--navy-dark); font-size: 1.1rem; border-bottom: 2px solid var(--primary); display: inline-block;">Squad Ratings (1-10)</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px;">
-                <div style="background: var(--bg-light); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.85rem;">Tactical</span>
-                    <span style="font-weight: 700; color: var(--primary);">${r.ratings?.tactical || 0}/10</span>
-                </div>
-                <div style="background: var(--bg-light); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.85rem;">Physical</span>
-                    <span style="font-weight: 700; color: var(--primary);">${r.ratings?.physical || 0}/10</span>
-                </div>
-                <div style="background: var(--bg-light); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.85rem;">Mentality</span>
-                    <span style="font-weight: 700; color: var(--primary);">${r.ratings?.mentality || 0}/10</span>
-                </div>
-                <div style="background: var(--bg-light); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 2px solid var(--primary);">
-                    <span style="font-size: 0.85rem; font-weight: 700;">Overall</span>
-                    <span style="font-weight: 800; color: var(--primary);">${r.ratings?.overall || 0}/10</span>
-                </div>
-            </div>
-
-            <h3 style="margin-bottom: 12px; color: var(--navy-dark); font-size: 1.05rem;">Strengths</h3>
-            <div class="dash-card" style="padding: 16px; margin-bottom: 16px; background: white; border-left: 4px solid var(--green-accent);">
-                ${r.feedback?.strengths || 'None recorded.'}
-            </div>
-
-            <h3 style="margin-bottom: 12px; color: var(--navy-dark); font-size: 1.05rem;">Areas for Improvement</h3>
-            <div class="dash-card" style="padding: 16px; margin-bottom: 16px; background: white; border-left: 4px solid var(--red-accent);">
-                ${r.feedback?.improvements || 'None recorded.'}
-            </div>
-
-            <h3 style="margin-bottom: 12px; color: var(--navy-dark); font-size: 1.05rem;">Additional Observations</h3>
-            <div class="dash-card" style="padding: 16px; background: #f8fafc; font-style: italic;">
-                ${r.feedback?.notes || 'No additional notes.'}
-            </div>
-        `;
-    } catch (e) {
-        content.innerHTML = '<div style="color:red;padding:20px;">Error loading report details.</div>';
-    }
-}
 
 
 async function viewPlayerTimeline(playerId) {
@@ -903,16 +788,140 @@ async function onSessionSelect() {
 
         // Auto-populate Date Conducted if available
         const dateInput = document.getElementById('report-date');
-        if (dateInput && s.date) dateInput.value = s.date;
+        if (dateInput && s.date) {
+            // Ensure YYYY-MM-DD for date input. 
+            // The input type="date" strictly expects this format.
+            const isoDate = s.date.includes('T') ? s.date.split('T')[0] : s.date;
+            dateInput.value = isoDate;
+        }
 
-        // Auto-populate Attendance Total from playersCount
+        // --- INDIVIDUAL PLAYER SYNC ---
+        const absentSection = document.getElementById('absent-players-section');
+        const absentList = document.getElementById('absent-players-list');
+        const absentCountLabel = document.getElementById('absent-count-label');
         const attTotal = document.getElementById('att-total');
-        if (attTotal && s.playersCount) attTotal.value = s.playersCount;
+        const attCountInput = document.getElementById('att-count');
+
+        if (absentSection && absentList) {
+            absentSection.style.display = 'none';
+            absentList.innerHTML = '';
+            if (absentCountLabel) absentCountLabel.textContent = '0 Absences';
+
+            const playerIds = s.playerIds || [];
+            if (playerIds.length > 0) {
+                absentSection.style.display = 'block';
+                if (attTotal) attTotal.value = playerIds.length;
+                if (attCountInput) attCountInput.value = playerIds.length;
+
+                playerIds.forEach(pid => {
+                    const p = squadManager.players.find(player => String(player.id) === String(pid));
+                    if (p) {
+                        const chip = document.createElement('div');
+                        chip.className = 'player-chip';
+                        chip.dataset.id = p.id;
+                        chip.innerHTML = `<i class="fas fa-user"></i> ${p.name}`;
+                        chip.onclick = () => togglePlayerAbsence(chip);
+                        absentList.appendChild(chip);
+                    }
+                });
+            } else {
+                // Fallback: If no individual players, try to use the squad from session
+                const sName = (s.team || '').trim().toLowerCase();
+                const squad = squadManager.getSquads().find(sq => sq.name.trim().toLowerCase() === sName);
+                if (squad) {
+                    const players = squadManager.players.filter(p => p.squadId === squad.id);
+                    if (players.length > 0) {
+                        absentSection.style.display = 'block';
+                        if (attTotal) attTotal.value = players.length;
+                        if (attCountInput) attCountInput.value = players.length;
+                        players.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+                            const chip = document.createElement('div');
+                            chip.className = 'player-chip';
+                            chip.dataset.id = p.id;
+                            chip.innerHTML = `<i class="fas fa-user"></i> ${p.name}`;
+                            chip.onclick = () => togglePlayerAbsence(chip);
+                            absentList.appendChild(chip);
+                        });
+                    }
+                }
+            }
+        }
+
+        // Auto-populate Attendance Total from playersCount if not already set by team select
+        // This block is now mostly redundant if playerIds or squad is found, but kept for robustness
+        // in case session data is incomplete.
+        const reportTeamSelect = document.getElementById('report-team-select'); // Still needed for the condition
+        if (attTotal && s.playersCount && (!reportTeamSelect || !reportTeamSelect.value)) {
+            attTotal.value = s.playersCount;
+            const attCountInput = document.getElementById('att-count');
+            if (attCountInput) attCountInput.value = s.playersCount;
+        }
 
     } catch (e) {
         console.error('Error fetching session preview:', e);
-        preview.classList.remove('visible');
+        if (preview) preview.classList.remove('visible');
     }
+}
+
+function onReportTeamSelect() {
+    const squadId = document.getElementById('report-team-select').value;
+    const absentSection = document.getElementById('absent-players-section');
+    const absentList = document.getElementById('absent-players-list');
+    const absentCountLabel = document.getElementById('absent-count-label');
+    const attTotal = document.getElementById('att-total');
+    const attCountInput = document.getElementById('att-count');
+
+    if (!absentSection || !absentList) return;
+
+    absentSection.style.display = 'none';
+    absentList.innerHTML = '';
+    if (absentCountLabel) absentCountLabel.textContent = '0 Absences';
+
+    if (!squadId) return;
+
+    const squad = squadManager.getSquad(squadId);
+    if (squad) {
+        const players = squadManager.players.filter(p => p.squadId === squadId);
+
+        // Update Attendance Total based on squad size
+        if (attTotal) {
+            attTotal.value = players.length;
+            if (attCountInput) attCountInput.value = players.length;
+        }
+
+        if (players.length > 0) {
+            absentSection.style.display = 'block';
+            players.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+                const chip = document.createElement('div');
+                chip.className = 'player-chip';
+                chip.dataset.id = p.id;
+                chip.innerHTML = `<i class="fas fa-user"></i> ${p.name}`;
+                chip.onclick = () => togglePlayerAbsence(chip);
+                absentList.appendChild(chip);
+            });
+        }
+    }
+}
+
+function togglePlayerAbsence(chip) {
+    chip.classList.toggle('absent');
+    const icon = chip.querySelector('i');
+    if (chip.classList.contains('absent')) {
+        icon.className = 'fas fa-user-times';
+    } else {
+        icon.className = 'fas fa-user';
+    }
+
+    // Update Attendance Count
+    const total = parseInt(document.getElementById('att-total').value) || 0;
+    const absentCount = document.querySelectorAll('.player-chip.absent').length;
+    const presentCount = Math.max(0, total - absentCount);
+
+    const attCountInput = document.getElementById('att-count');
+    if (attCountInput) attCountInput.value = presentCount;
+
+    const label = document.getElementById('absent-count-label');
+    if (label) label.textContent = `${absentCount} Absence${absentCount === 1 ? '' : 's'}`;
 }
 
 function setupRating() {
@@ -930,74 +939,6 @@ function setupRating() {
     });
 }
 
-// --- TEAM ASSESSMENTS ---
-function openTeamAssessmentModal() {
-    const squadId = document.getElementById('team-report-squad-filter').value;
-    if (squadId === 'all') {
-        alert('Please select a specific team to assess.');
-        return;
-    }
-
-    // Set default date to today
-    const dateInput = document.getElementById('squadAssessDate');
-    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-
-    document.getElementById('modalSquadAssessment').classList.add('active');
-}
-
-async function saveTeamAssessment() {
-    const squadId = document.getElementById('team-report-squad-filter').value;
-    const btn = document.getElementById('btnSaveSquadAssessment');
-    if (!btn || squadId === 'all') return;
-
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    btn.disabled = true;
-
-    const payload = {
-        squadId: squadId,
-        date: document.getElementById('squadAssessDate').value,
-        context: document.getElementById('squadAssessContext').value,
-        ratings: {
-            tactical: parseInt(document.getElementById('squadAssessTactical').value) || 0,
-            physical: parseInt(document.getElementById('squadAssessPhysical').value) || 0,
-            mentality: parseInt(document.getElementById('squadAssessMentality').value) || 0,
-            overall: parseInt(document.getElementById('squadAssessOverall').value) || 0
-        },
-        feedback: {
-            strengths: document.getElementById('squadAssessStrengths').value,
-            improvements: document.getElementById('squadAssessImprovements').value,
-            notes: document.getElementById('squadAssessNotes').value
-        }
-    };
-
-    console.log('Saving Team Assessment:', payload);
-
-    try {
-        const success = await squadManager.saveSquadAssessment(payload);
-
-        if (success) {
-            btn.innerHTML = '<i class="fas fa-check"></i> Saved!';
-            btn.style.background = 'var(--green-accent)';
-
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = '';
-                btn.disabled = false;
-                document.getElementById('modalSquadAssessment').classList.remove('active');
-                showToast('Team Assessment Saved Successfully');
-                loadTeamReports(); // Refresh history
-            }, 1000);
-        } else {
-            throw new Error('Persistence failure');
-        }
-    } catch (e) {
-        console.error('SERVER ERROR during team assessment save:', e);
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-        alert('Error saving assessment to database. Please check server logs.');
-    }
-}
 
 function showToast(msg) {
     if (window.showGlobalToast) {
@@ -1022,11 +963,13 @@ async function saveReport() {
     const rating = document.getElementById('rating-val').value;
     const notes = document.getElementById('gen-notes').value;
 
-    if (!sessionId) {
-        if (window.showGlobalToast) window.showGlobalToast("Please select a session", "error");
-        else alert("Please select a session");
+    if (!sessionId && !date) {
+        if (window.showGlobalToast) window.showGlobalToast("Please select a session or date", "error");
+        else alert("Please select a session or date");
         return;
     }
+
+    const absentPlayerIds = Array.from(document.querySelectorAll('.player-chip.absent')).map(c => c.dataset.id);
 
     const reportData = {
         id: `report_${Date.now()}`,
@@ -1034,6 +977,7 @@ async function saveReport() {
         date,
         attendanceCount: parseInt(attendanceCount) || 0,
         attendanceTotal: parseInt(attendanceTotal) || 0,
+        absentPlayerIds,
         rating: parseInt(rating) || 0,
         notes,
         createdAt: new Date().toISOString()
@@ -1510,12 +1454,16 @@ function exportSessionReportPDF() {
     const rating = document.getElementById('rating-val').value || '0';
     const notes = document.getElementById('gen-notes').value || 'No additional notes provided.';
 
+    const absentChips = document.querySelectorAll('.player-chip.absent');
+    const absentNames = Array.from(absentChips).map(c => c.textContent.trim()).join(', ');
+
     const doc = new jsPDF();
     const PW = doc.internal.pageSize.getWidth();
+    // ... rest of setup ...
     const margin = 20;
     const contentW = PW - (margin * 2);
 
-    // Header
+    // Header ...
     doc.setFillColor(30, 58, 138); // Navy
     doc.rect(0, 0, PW, 40, 'F');
     doc.setTextColor(255);
@@ -1545,6 +1493,10 @@ function exportSessionReportPDF() {
 
     y += 20;
     drawField('Success Rating', `${rating} / 5 Stars`, margin);
+
+    if (absentNames) {
+        drawField('Absences', absentNames, margin + 70);
+    }
 
     y += 20;
     doc.setDrawColor(200);

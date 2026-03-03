@@ -439,6 +439,190 @@
     animation: fadeIn 0.2s ease-out;
 }
 
+/* Fullscreen Styles */
+.drill-canvas-wrap.is-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #0f172a;
+    /* Dark background for focus */
+    z-index: 99999;
+    margin: 0;
+    padding: 24px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.drill-canvas-wrap.is-fullscreen .pitch-bar {
+    display: none;
+    /* Hide top pitch controls */
+}
+
+.drill-canvas-wrap.is-fullscreen .canvas-el {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.drill-canvas-wrap.is-fullscreen .canvas-el canvas {
+    max-width: 95%;
+    /* Increased from 100% to fill more viewport considering padding */
+    max-height: 90vh;
+    /* Allow taking up to 90% of screen height */
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    /* Smooth corners */
+}
+
+/* Exit Button */
+.fullscreen-exit-btn {
+    display: none;
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 100000;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.drill-canvas-wrap.is-fullscreen .fullscreen-exit-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fullscreen-exit-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hamburger Tools Button */
+.fullscreen-tools-btn {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 100000;
+    transition: all 0.2s;
+    align-items: center;
+    justify-content: center;
+}
+
+.drill-canvas-wrap.is-fullscreen .fullscreen-tools-btn {
+    display: flex;
+}
+
+.fullscreen-tools-btn:hover {
+    transform: scale(1.05);
+    background: var(--primary-hover);
+}
+
+/* Floating Tools Menu */
+.drill-canvas-wrap.is-fullscreen .mini-toolbar {
+    display: none;
+    /* Hidden until activated */
+    position: fixed;
+    bottom: 84px;
+    /* Above hamburger */
+    left: 24px;
+    width: auto;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    z-index: 100000;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.drill-canvas-wrap.is-fullscreen.show-fullscreen-tools .mini-toolbar {
+    display: flex;
+}
+
+/* Portrait Fullscreen UI Adjustments */
+.drill-canvas-wrap.is-fullscreen.is-portrait .fullscreen-tools-btn {
+    top: 24px;
+    left: 24px;
+    right: auto;
+    bottom: auto;
+    transform: rotate(90deg);
+}
+
+.drill-canvas-wrap.is-fullscreen.is-portrait .mini-toolbar {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    width: 380px;
+    max-width: 85vh;
+    /* Constraints based on sideways view */
+    height: auto;
+    max-height: 85vw;
+    /* Constraints based on sideways view */
+    background: #fff;
+    padding: 24px;
+    border-radius: 20px;
+    z-index: 100001;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+.drill-canvas-wrap.is-fullscreen.is-portrait.show-fullscreen-tools .mini-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.drill-canvas-wrap.is-fullscreen.is-portrait .mini-tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.drill-canvas-wrap.is-fullscreen.is-portrait .mini-row-label {
+    width: 100%;
+    margin-bottom: 4px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+    height: auto;
+    padding-bottom: 4px;
+}
+
+.drill-canvas-wrap.is-fullscreen.is-portrait .fullscreen-exit-btn {
+    bottom: 24px;
+    left: 24px;
+    top: auto;
+    right: auto;
+    transform: rotate(90deg);
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

@@ -124,6 +124,19 @@
                 </div>
             </div>
 
+            <!-- Sessions Needing Reports Reminder -->
+            <div id="missing-reports-section" class="activity-section" style="margin-top: 24px; display: none; border-left: 3px solid #f59e0b; border-radius: 0 12px 12px 0;">
+                <div class="activity-header">
+                    <h2 style="display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-exclamation-triangle" style="color:#f59e0b;font-size:1rem;"></i>
+                        Sessions Missing Reports
+                        <span id="missing-reports-badge" style="background:#fef3c7;color:#92400e;border-radius:20px;padding:2px 10px;font-size:0.75rem;font-weight:700;"></span>
+                    </h2>
+                    <a href="reports.html" style="font-size:13px;color:var(--primary);text-decoration:none;font-weight:600;">Go to Reports</a>
+                </div>
+                <div id="missing-reports-list"></div>
+            </div>
+
             <!-- Training Calendar -->
             <div class="activity-section" style="margin-top: 24px;">
                 <div class="activity-header">
@@ -184,10 +197,38 @@
                 ]);
 
                 renderActivityLog(sessionsRes, reportsRes);
+                renderMissingReports(sessionsRes, reportsRes);
             } catch (e) {
                 console.error("Failed to load recent activity:", e);
                 document.getElementById('recent-activity-list').innerHTML = 'Error loading activity.';
             }
+        }
+
+        function renderMissingReports(sessionsData, reportsData) {
+            const today = new Date().toISOString().split('T')[0];
+            const reportedIds = new Set((reportsData || []).map(r => r.sessionId).filter(Boolean));
+            const missing = (sessionsData || [])
+                .filter(s => s.date && s.date < today && !reportedIds.has(String(s.id)))
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .slice(0, 5);
+
+            const section = document.getElementById('missing-reports-section');
+            if (!section) return;
+
+            if (missing.length === 0) { section.style.display = 'none'; return; }
+
+            section.style.display = 'block';
+            document.getElementById('missing-reports-badge').textContent = missing.length;
+            document.getElementById('missing-reports-list').innerHTML = missing.map(s => `
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                    <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.875rem;color:#1e293b;">${s.title || 'Untitled Session'}</div>
+                        <div style="font-size:0.775rem;color:#94a3b8;">${s.date}${s.author ? ' · ' + s.author : ''}</div>
+                    </div>
+                    <a href="reports.html?action=new" style="font-size:0.8rem;color:#3b82f6;font-weight:600;text-decoration:none;white-space:nowrap;">File Report →</a>
+                </div>
+            `).join('');
         }
 
         function renderActivityLog(sessionsData, reportsData) {
