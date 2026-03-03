@@ -54,6 +54,26 @@ async function initProfileUI() {
         renderAssessmentHistory();
         renderOverviewHistory();
 
+        // --- URL param routing (from match card buttons) ---
+        const tab = urlParams.get('tab');
+        const matchIdParam = urlParams.get('matchId');
+        const matchDate = urlParams.get('matchDate');
+        const matchLabel = decodeURIComponent(urlParams.get('matchLabel') || '');
+
+        // Always load the "Link to Match" dropdown for standalone assessment access
+        populateLinkMatchDropdown();
+
+        if (tab === 'assessment') {
+            const btn = document.querySelector('[data-tab="new-assessment"]');
+            if (btn) btn.click();
+            if (matchIdParam) {
+                await preloadAssessmentFromMatch(matchIdParam, matchDate, matchLabel);
+            }
+        } else if (tab === 'analysis') {
+            const btn = document.querySelector('[data-tab="player-analysis"]');
+            if (btn) btn.click();
+        }
+
         // --- Profile Header Action Buttons ---
         const btnProfileDelete = document.getElementById('btnProfileDeletePlayer');
         if (btnProfileDelete) {
@@ -773,6 +793,102 @@ function setupTabs() {
     });
 }
 
+async function preloadAssessmentFromMatch(matchId, matchDate, matchLabel) {
+    // Check if an assessment already exists for this specific match
+    const existing = await squadManager.getAssessments(currentPlayerId);
+    const found = existing.find(a => a.matchId === matchId);
+
+    if (found) {
+        document.querySelector('[data-tab="history"]')?.click();
+        if (window.showGlobalToast) window.showGlobalToast('An assessment already exists for this match.', 'success');
+        return;
+    }
+
+    // Pre-fill date
+    if (matchDate) {
+        const dateEl = document.getElementById('assessDate');
+        if (dateEl) dateEl.value = matchDate;
+    }
+
+    // Pre-fill match details label
+    if (matchLabel) {
+        const matchEl = document.getElementById('assessMatch');
+        if (matchEl) matchEl.value = matchLabel;
+    }
+
+    // Store actual UUID in hidden field
+    const matchRefEl = document.getElementById('assessMatchRef');
+    if (matchRefEl) matchRefEl.value = matchId;
+
+    // Fetch match to get team context (homeTeam of the external club)
+    try {
+        const resp = await fetch(`${window.API_BASE_URL}/matches/${matchId}`);
+        if (resp.ok) {
+            const match = await resp.json();
+            const teamEl = document.getElementById('assessTeam');
+            if (teamEl) teamEl.value = match.homeTeam || '';
+        }
+    } catch (err) { /* silent fallback */ }
+
+    // Show linked match banner
+    const banner = document.getElementById('assessMatchBanner');
+    const bannerLabel = document.getElementById('assessMatchBannerLabel');
+    if (banner) banner.style.display = 'block';
+    if (bannerLabel) bannerLabel.textContent = `Linked to: ${matchLabel || matchId}`;
+}
+
+async function populateLinkMatchDropdown() {
+    const select = document.getElementById('assessLinkMatch');
+    const group = document.getElementById('assessLinkMatchGroup');
+    if (!select || !currentPlayerId) return;
+
+    try {
+        const resp = await fetch(`${window.API_BASE_URL}/matches?watchedPlayerId=${currentPlayerId}`);
+        if (!resp.ok) return;
+        const matches = await resp.json();
+        const playerWatchMatches = (matches || []).filter(m => m.matchType === 'player_watch');
+
+        if (playerWatchMatches.length === 0) return; // No player watch matches — hide
+
+        select.innerHTML = '<option value="">No match — standalone assessment</option>';
+        playerWatchMatches
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.dataset.date = m.date || '';
+                opt.dataset.homeTeam = m.homeTeam || '';
+                opt.dataset.awayTeam = m.awayTeam || m.opponent || '';
+                opt.textContent = `${m.date} — vs ${m.awayTeam || m.opponent || 'Opponent'} (${m.competition || 'Match'})`;
+                select.appendChild(opt);
+            });
+
+        if (group) group.style.display = 'block';
+
+        // Auto-fill form when a match is selected
+        select.addEventListener('change', () => {
+            const opt = select.options[select.selectedIndex];
+            const matchRefEl = document.getElementById('assessMatchRef');
+            const banner = document.getElementById('assessMatchBanner');
+            const bannerLabel = document.getElementById('assessMatchBannerLabel');
+
+            if (opt.value) {
+                document.getElementById('assessDate').value = opt.dataset.date || '';
+                document.getElementById('assessTeam').value = opt.dataset.homeTeam || '';
+                document.getElementById('assessMatch').value = `vs ${opt.dataset.awayTeam || 'Opponent'}`;
+                if (matchRefEl) matchRefEl.value = opt.value;
+                if (banner) banner.style.display = 'block';
+                if (bannerLabel) bannerLabel.textContent = `Linked to: vs ${opt.dataset.awayTeam || 'Opponent'} — ${opt.dataset.date || ''}`;
+            } else {
+                if (matchRefEl) matchRefEl.value = '';
+                if (banner) banner.style.display = 'none';
+            }
+        });
+    } catch (err) {
+        console.error('Failed to load player watch matches for assessment link:', err);
+    }
+}
+
 function setupAssessmentForm() {
     document.getElementById('assessDate').valueAsDate = new Date();
 
@@ -827,7 +943,8 @@ async function saveAssessment() {
         date: document.getElementById('assessDate').value,
         author: document.getElementById('assessEvaluator').value || 'System',
         team: document.getElementById('assessTeam').value,
-        matchId: document.getElementById('assessMatch').value,
+        matchId: document.getElementById('assessMatchRef')?.value || null,
+        matchDetails: document.getElementById('assessMatch').value,
         ratings: {
             tactical: {
                 positioning: getRadioValue('tac_pos'),
@@ -882,8 +999,20 @@ async function saveAssessment() {
             document.getElementById('assessImprove').value = '';
             document.getElementById('assessGrowth').value = '';
             document.getElementById('assessComments').value = '';
-            document.getElementById('assessEvaluator').value = ''; // Added this back
-            document.getElementById('assessMatch').value = ''; // Added this back
+            document.getElementById('assessEvaluator').value = '';
+            document.getElementById('assessMatch').value = '';
+            // Clear match reference fields
+            const matchRefEl = document.getElementById('assessMatchRef');
+            if (matchRefEl) matchRefEl.value = '';
+            const banner = document.getElementById('assessMatchBanner');
+            if (banner) banner.style.display = 'none';
+            const linkSelect = document.getElementById('assessLinkMatch');
+            if (linkSelect) linkSelect.value = '';
+            // Reset date + team back to defaults
+            const assessDateEl = document.getElementById('assessDate');
+            if (assessDateEl) assessDateEl.valueAsDate = new Date();
+            const assessTeamEl = document.getElementById('assessTeam');
+            if (assessTeamEl) assessTeamEl.value = '';
 
             // Refresh history
             renderAssessmentHistory();
@@ -913,7 +1042,13 @@ async function renderAssessmentHistory() {
 
     container.innerHTML = historyData.map(record => {
         const d = new Date(record.date).toLocaleDateString();
-        const title = record.matchId ? `Match Report: ${record.matchId}` : 'Overall Performance Review';
+        const isLinkedMatch = record.matchId && record.matchId.startsWith('match_');
+        const hasMatchContext = Boolean(record.matchId || record.matchDetails);
+        const title = hasMatchContext ? 'Match Performance Report' : 'Overall Performance Review';
+        const matchChip = isLinkedMatch
+            ? `<a href="matches.html" style="display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; background: #eff6ff; color: #3b82f6; border-radius: 6px; padding: 3px 9px; font-size: 0.78rem; font-weight: 600; text-decoration: none; border: 1px solid #bfdbfe;">
+                <i class="fas fa-link" style="font-size: 0.7rem;"></i> Match Reference
+               </a>` : '';
 
         return `
         <div class="dash-card history-item" style="margin-bottom: 12px;">
@@ -921,6 +1056,7 @@ async function renderAssessmentHistory() {
                 <div>
                     <h4 style="margin: 0 0 4px 0; color: var(--navy-dark); font-size: 1.05rem;">${title}</h4>
                     <span style="font-size: 0.85rem; color: var(--text-secondary);"><i class="far fa-calendar-alt" style="margin-right: 4px;"></i> ${d} &nbsp; | &nbsp; <i class="far fa-user" style="margin-right: 4px;"></i> Evaluator: ${record.author || record.evaluator || 'Unknown'}</span>
+                    ${matchChip}
                 </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="dash-btn outline sm" onclick="viewAssessmentDetails('${record.id}')">
@@ -954,9 +1090,13 @@ window.loadAssessmentForEdit = async (id) => {
     }
 
     // Populate metadata
-    document.getElementById('assessTeam').value = rec.team || '';
-    document.getElementById('assessMatch').value = rec.matchId || '';
-    editingAssessmentId = rec.id;
+    document.getElementById('assessTeam').value = record.team || '';
+    document.getElementById('assessMatch').value = record.matchDetails || '';
+    editingAssessmentId = record.id;
+    if (record.matchId) {
+        const matchRefEl = document.getElementById('assessMatchRef');
+        if (matchRefEl) matchRefEl.value = record.matchId;
+    }
 
     // Helper to set radio buttons
     const setRadio = (category, name, value) => {
@@ -965,7 +1105,7 @@ window.loadAssessmentForEdit = async (id) => {
     };
 
     // Populate Ratings
-    const r = rec.ratings;
+    const r = record.ratings;
     if (r) {
         if (r.tactical) {
             setRadio('tac', 'pos', r.tactical.positioning);
@@ -994,7 +1134,7 @@ window.loadAssessmentForEdit = async (id) => {
     }
 
     // Populate Feedback
-    const f = rec.feedback;
+    const f = record.feedback;
     if (f) {
         document.getElementById('assessStrength').value = f.strength || '';
         document.getElementById('assessImprove').value = f.improvement || '';

@@ -186,10 +186,10 @@ app.get('/api/players/:id/assessments', (req, res) => {
 });
 
 app.post('/api/assessments', (req, res) => {
-    const { id, playerId, matchId, date, type, ratings, notes, attachment, author, createdAt } = req.body;
-    const sql = `REPLACE INTO assessments (id, playerId, matchId, date, type, ratings, notes, attachment, author, createdAt) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [id, playerId, matchId, date, type, JSON.stringify(ratings || {}), notes, attachment, author, createdAt], function (err) {
+    const { id, playerId, matchId, matchDetails, team, date, type, ratings, notes, attachment, author, createdAt } = req.body;
+    const sql = `REPLACE INTO assessments (id, playerId, matchId, matchDetails, team, date, type, ratings, notes, attachment, author, createdAt)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.run(sql, [id, playerId, matchId, matchDetails, team, date, type, JSON.stringify(ratings || {}), notes, attachment, author, createdAt], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ id });
     });
@@ -322,7 +322,16 @@ app.get('/api/squad-assessments/:id', (req, res) => {
 
 // --- MATCHES API ---
 app.get('/api/matches', (req, res) => {
-    db.all('SELECT * FROM matches', [], (err, rows) => {
+    const { watchedPlayerId } = req.query;
+    let sql = `SELECT m.*, p.name AS watchedPlayerName, p.position AS watchedPlayerPosition
+               FROM matches m
+               LEFT JOIN players p ON p.id = m.watchedPlayerId`;
+    const params = [];
+    if (watchedPlayerId && watchedPlayerId !== 'all') {
+        sql += ' WHERE m.watchedPlayerId = ?';
+        params.push(watchedPlayerId);
+    }
+    db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         const parsed = rows.map(r => ({
             ...r,
@@ -337,7 +346,11 @@ app.get('/api/matches', (req, res) => {
 
 app.get('/api/matches/:id', (req, res) => {
     const { id } = req.params;
-    db.get('SELECT * FROM matches WHERE id = ?', [id], (err, row) => {
+    const sql = `SELECT m.*, p.name AS watchedPlayerName, p.position AS watchedPlayerPosition
+                 FROM matches m
+                 LEFT JOIN players p ON p.id = m.watchedPlayerId
+                 WHERE m.id = ?`;
+    db.get(sql, [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: 'Match not found' });
 
@@ -353,12 +366,12 @@ app.get('/api/matches/:id', (req, res) => {
 });
 
 app.post('/api/matches', (req, res) => {
-    const { id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links } = req.body;
-    const sql = `INSERT INTO matches (id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [id, date, time, venue, opponent, competition, isPast ? 1 : 0, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, JSON.stringify(stats), JSON.stringify(videos), JSON.stringify(links)], function (err) {
+    const { id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links, matchType, watchedPlayerId } = req.body;
+    const sql = `INSERT INTO matches (id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links, matchType, watchedPlayerId)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    db.run(sql, [id, date, time, venue, opponent, competition, isPast ? 1 : 0, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, JSON.stringify(stats), JSON.stringify(videos), JSON.stringify(links), matchType || 'team', watchedPlayerId || null], function (err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links });
+        res.status(201).json({ id, date, time, venue, opponent, competition, isPast, homeScore, awayScore, squadId, homeTeam, awayTeam, ourSide, result, notes, stats, videos, links, matchType, watchedPlayerId });
     });
 });
 
@@ -624,25 +637,11 @@ app.patch('/api/sessions/:id', (req, res) => {
 
 app.delete('/api/sessions/:id', (req, res) => {
     const { id } = req.params;
-    db.serialize(() => {
-        db.run('BEGIN TRANSACTION');
-        db.run('DELETE FROM drills WHERE sessionId = ?', [id], (err) => {
-            if (err) {
-                db.run('ROLLBACK');
-                return res.status(500).json({ error: err.message });
-            }
-            db.run('DELETE FROM sessions WHERE id = ?', [id], function (err) {
-                if (err) {
-                    db.run('ROLLBACK');
-                    return res.status(500).json({ error: err.message });
-                }
-                console.log(`Deleted session ${id} and its drills. Changes: ${this.changes}`);
-                db.run('COMMIT', (err) => {
-                    if (err) return res.status(500).json({ error: err.message });
-                    res.json({ deleted: this.changes });
-                });
-            });
-        });
+    // Drills are NOT deleted — they remain in the library as standalone drills.
+    db.run('DELETE FROM sessions WHERE id = ?', [id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        console.log(`Deleted session ${id}. Drills preserved. Changes: ${this.changes}`);
+        res.json({ deleted: this.changes });
     });
 });
 
@@ -738,18 +737,36 @@ app.delete('/api/drills/:id', (req, res) => {
 
 // Player performance ratings: average per category across all assessments
 app.get('/api/analytics/player-ratings', (req, res) => {
-    const { squadId } = req.query;
-    let playerSql = 'SELECT id, name, position, squadId FROM players ORDER BY name ASC';
-    const playerParams = [];
-    if (squadId && squadId !== 'all') {
+    const { squadId, playerId, month, year } = req.query;
+
+    // Build player query — playerId takes priority over squadId
+    let playerSql, playerParams = [];
+    if (playerId && playerId !== 'all') {
+        playerSql = 'SELECT id, name, position, squadId FROM players WHERE id = ? ORDER BY name ASC';
+        playerParams = [playerId];
+    } else if (squadId && squadId !== 'all') {
         playerSql = 'SELECT id, name, position, squadId FROM players WHERE squadId = ? ORDER BY name ASC';
-        playerParams.push(squadId);
+        playerParams = [squadId];
+    } else {
+        playerSql = 'SELECT id, name, position, squadId FROM players ORDER BY name ASC';
     }
 
     db.all(playerSql, playerParams, (err, players) => {
         if (err) return res.status(500).json({ error: err.message });
 
-        db.all('SELECT playerId, ratings FROM assessments', [], (err2, assessments) => {
+        // Build assessments query with optional month/year filter
+        let assessmentSql = 'SELECT playerId, ratings FROM assessments';
+        const assessmentParams = [];
+        if (month && month !== 'all' && year) {
+            const m = String(parseInt(month)).padStart(2, '0');
+            const y = parseInt(year);
+            const nextY = parseInt(month) === 12 ? y + 1 : y;
+            const nextM = String(parseInt(month) === 12 ? 1 : parseInt(month) + 1).padStart(2, '0');
+            assessmentSql += ' WHERE date >= ? AND date < ?';
+            assessmentParams.push(`${y}-${m}-01`, `${nextY}-${nextM}-01`);
+        }
+
+        db.all(assessmentSql, assessmentParams, (err2, assessments) => {
             if (err2) return res.status(500).json({ error: err2.message });
 
             const byPlayer = {};
@@ -789,71 +806,80 @@ app.get('/api/analytics/player-ratings', (req, res) => {
     });
 });
 
-// Attendance: per-player missed sessions for a given month (year + month query params, 1-indexed month)
+// Attendance: per-player missed sessions — supports month/year filter or all-time
 app.get('/api/analytics/attendance', (req, res) => {
     const now = new Date();
-    const year = parseInt(req.query.year) || now.getFullYear();
-    const month = parseInt(req.query.month) || (now.getMonth() + 1);
-    const { squadId } = req.query;
+    const { squadId, playerId, month: rawMonth, year: rawYear } = req.query;
+    const allTime = rawMonth === 'all' || !rawMonth;
+    const year = parseInt(rawYear) || now.getFullYear();
+    const month = parseInt(rawMonth) || (now.getMonth() + 1);
 
-    const monthStr = String(month).padStart(2, '0');
-    const monthStart = `${year}-${monthStr}-01`;
-    const nextYear = month === 12 ? year + 1 : year;
-    const nextMonthStr = String(month === 12 ? 1 : month + 1).padStart(2, '0');
-    const monthEnd = `${nextYear}-${nextMonthStr}-01`;
-
-    let playerSql = 'SELECT id, name, position, squadId FROM players ORDER BY name ASC';
-    const playerParams = [];
-    if (squadId && squadId !== 'all') {
+    // Build player query — playerId takes priority over squadId
+    let playerSql, playerParams = [];
+    if (playerId && playerId !== 'all') {
+        playerSql = 'SELECT id, name, position, squadId FROM players WHERE id = ? ORDER BY name ASC';
+        playerParams = [playerId];
+    } else if (squadId && squadId !== 'all') {
         playerSql = 'SELECT id, name, position, squadId FROM players WHERE squadId = ? ORDER BY name ASC';
-        playerParams.push(squadId);
+        playerParams = [squadId];
+    } else {
+        playerSql = 'SELECT id, name, position, squadId FROM players ORDER BY name ASC';
     }
 
     db.all(playerSql, playerParams, (err, players) => {
         if (err) return res.status(500).json({ error: err.message });
 
-        db.all(
-            `SELECT s.id as sessionId, s.playerIds, r.absentPlayerIds
+        // Build session query with optional date filter
+        let sessionSql = `SELECT s.id as sessionId, s.playerIds, r.absentPlayerIds
              FROM sessions s
-             JOIN reports r ON r.sessionId = s.id
-             WHERE s.date >= ? AND s.date < ?`,
-            [monthStart, monthEnd],
-            (err2, rows) => {
-                if (err2) return res.status(500).json({ error: err2.message });
+             JOIN reports r ON r.sessionId = s.id`;
+        const sessionParams = [];
 
-                const sessions = rows.map(row => ({
-                    sessionId: row.sessionId,
-                    playerIds: (() => { try { return JSON.parse(row.playerIds || '[]'); } catch (e) { return []; } })(),
-                    absentPlayerIds: (() => { try { return JSON.parse(row.absentPlayerIds || '[]'); } catch (e) { return []; } })()
-                }));
+        if (!allTime) {
+            const monthStr = String(month).padStart(2, '0');
+            const monthStart = `${year}-${monthStr}-01`;
+            const nextYear = month === 12 ? year + 1 : year;
+            const nextMonthStr = String(month === 12 ? 1 : month + 1).padStart(2, '0');
+            const monthEnd = `${nextYear}-${nextMonthStr}-01`;
+            sessionSql += ' WHERE s.date >= ? AND s.date < ?';
+            sessionParams.push(monthStart, monthEnd);
+        }
 
-                const result = players.map(p => {
-                    let totalSessions = 0;
-                    let missedSessions = 0;
+        db.all(sessionSql, sessionParams, (err2, rows) => {
+            if (err2) return res.status(500).json({ error: err2.message });
 
-                    sessions.forEach(s => {
-                        const expected = s.playerIds.length === 0 || s.playerIds.includes(p.id);
-                        if (expected) {
-                            totalSessions++;
-                            if (s.absentPlayerIds.includes(p.id)) missedSessions++;
-                        }
-                    });
+            const sessions = rows.map(row => ({
+                sessionId: row.sessionId,
+                playerIds: (() => { try { return JSON.parse(row.playerIds || '[]'); } catch (e) { return []; } })(),
+                absentPlayerIds: (() => { try { return JSON.parse(row.absentPlayerIds || '[]'); } catch (e) { return []; } })()
+            }));
 
-                    return {
-                        id: p.id,
-                        name: p.name,
-                        position: p.position || '—',
-                        squadId: p.squadId,
-                        totalSessions,
-                        missedSessions,
-                        attendedSessions: totalSessions - missedSessions,
-                        attendancePct: totalSessions > 0 ? Math.round(((totalSessions - missedSessions) / totalSessions) * 100) : null
-                    };
+            const result = players.map(p => {
+                let totalSessions = 0;
+                let missedSessions = 0;
+
+                sessions.forEach(s => {
+                    const expected = s.playerIds.length === 0 || s.playerIds.includes(p.id);
+                    if (expected) {
+                        totalSessions++;
+                        if (s.absentPlayerIds.includes(p.id)) missedSessions++;
+                    }
                 });
 
-                res.json(result);
-            }
-        );
+                return {
+                    id: p.id,
+                    name: p.name,
+                    position: p.position || '—',
+                    squadId: p.squadId,
+                    totalSessions,
+                    missedSessions,
+                    attendedSessions: totalSessions - missedSessions,
+                    attendancePct: totalSessions > 0 ? Math.round(((totalSessions - missedSessions) / totalSessions) * 100) : null
+                };
+            });
+
+            res.json(result);
+        });
     });
 });
 

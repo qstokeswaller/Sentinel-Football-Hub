@@ -126,10 +126,10 @@ class MatchManager {
     async createMatch(matchData) {
         const newMatch = {
             id: 'match_' + Date.now(),
-            ...matchData,
             stats: this.getDefaultStats(),
             videos: [],
-            links: []
+            links: [],
+            ...matchData   // matchData values (including any videos/links) take priority
         };
 
         if (window.USE_LOCAL_STORAGE) {

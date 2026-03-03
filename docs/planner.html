@@ -65,9 +65,6 @@
                     <button class="dash-btn outline" onclick="listTemplates()">
                         <i class="fas fa-bookmark"></i> From Template
                     </button>
-                    <button class="dash-btn outline" onclick="listSessions()">
-                        <i class="fas fa-folder-open"></i> Load Session
-                    </button>
                     <button class="dash-btn primary" onclick="saveSession()">
                         <i class="fas fa-save"></i> Save Session
                     </button>
@@ -184,19 +181,6 @@
 
 
     <div id="planner-toast"></div>
-
-    <!-- LOAD SESSION MODAL -->
-    <div id="session-modal" class="modal-overlay"> <!-- ID Must be session-modal per planner.js -->
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3><i class="fas fa-folder-open"></i> Load Session</h3>
-                <button class="modal-close" onclick="closeSessionModal()">×</button>
-            </div>
-            <div class="modal-body" id="session-list-body">
-                <div class="session-list-empty">Loading saved sessions...</div>
-            </div>
-        </div>
-    </div>
 
     <!-- LOAD FROM TEMPLATE MODAL -->
     <div id="template-modal" class="modal-overlay">

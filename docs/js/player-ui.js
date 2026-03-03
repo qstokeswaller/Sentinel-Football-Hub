@@ -474,8 +474,8 @@ async function savePlayer(keepOpen) {
     const foot = document.getElementById('playerFootInput').value;
     const clubs = document.getElementById('playerClubsInput').value;
 
-    if (!name || !age || !squadId) {
-        alert("Name, Age, and Squad are required.");
+    if (!name || !age) {
+        alert("Name and Age are required.");
         return;
     }
 

@@ -230,11 +230,105 @@
             font-size: 0.9rem;
         }
 
+        /* ── Mobile player bubble cards ── */
+        .mobile-player-cards { display: none; }
+
+        .player-bubble-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .player-bubble-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .player-bubble-header:active { background: #f8fafc; }
+
+        .player-bubble-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .player-bubble-name {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 0.9rem;
+        }
+
+        .player-bubble-arrow {
+            color: #94a3b8;
+            transition: transform 0.2s ease;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .player-bubble-body {
+            display: none;
+            padding: 12px 16px;
+            border-top: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+
+        .player-bubble-body.open { display: block; }
+
+        .bubble-stat-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .bubble-stat-row:last-child { border-bottom: none; }
+
+        .bubble-stat-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mobile-loading, .mobile-empty {
+            padding: 30px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .att-pct-bar-mobile {
+            width: 60px;
+            height: 5px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        .att-pct-bar-mobile .att-pct-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+
         @media screen and (max-width: 768px) {
             .analytics-filter-bar {
                 flex-direction: column;
                 align-items: stretch;
                 padding: 16px;
+                gap: 12px;
             }
 
             .section-header {
@@ -243,14 +337,8 @@
                 gap: 12px;
             }
 
-            .matrix-table {
-                font-size: 0.8rem;
-            }
-
-            .matrix-table th,
-            .matrix-table td {
-                padding: 10px 10px;
-            }
+            .table-container { display: none !important; }
+            .mobile-player-cards { display: block; }
         }
 
         @media print {
@@ -311,6 +399,15 @@
                     <label class="filter-label">Filter by Squad</label>
                     <div class="filter-pill-container">
                         <select id="filterSquad" class="filter-select-pill">
+                            <option value="all">All Squads</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Filter by Player</label>
+                    <div class="filter-pill-container">
+                        <select id="filterPlayer" class="filter-select-pill">
                             <option value="all">All Players</option>
                         </select>
                         <i class="fas fa-chevron-down"></i>
@@ -323,9 +420,29 @@
                 <div class="section-header">
                     <div>
                         <h3><i class="fas fa-table" style="color: #3b82f6; margin-right: 8px;"></i>Player Performance Matrix</h3>
-                        <p>Historical average ratings across all assessment reports — scored 1–5 per category</p>
+                        <p>Average ratings across assessment reports — scored 1–5 per category</p>
                     </div>
-                    <div id="perfMatrixMeta" style="font-size: 0.8rem; color: #94a3b8;"></div>
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <div id="perfMatrixMeta" style="font-size: 0.8rem; color: #94a3b8;"></div>
+                        <div class="month-controls">
+                            <select id="filterPerfMonth">
+                                <option value="all">All Time</option>
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                            <select id="filterPerfYear" style="display:none;"></select>
+                        </div>
+                    </div>
                 </div>
                 <div class="table-container" style="border: 1px solid #f1f5f9; border-radius: 14px; overflow: hidden;">
                     <table class="matrix-table">
@@ -353,6 +470,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="mobile-player-cards" id="perf-mobile-cards"></div>
             </div>
 
             <!-- Section 2: Attendance Tracker -->
@@ -360,10 +478,11 @@
                 <div class="section-header">
                     <div>
                         <h3><i class="fas fa-calendar-check" style="color: #10b981; margin-right: 8px;"></i>Attendance Tracker</h3>
-                        <p>Sessions missed per player — only counts sessions that have a filed report</p>
+                        <p>Sessions missed per player — only counts sessions with a filed report</p>
                     </div>
                     <div class="month-controls">
                         <select id="filterMonth">
+                            <option value="all">All Time</option>
                             <option value="1">January</option>
                             <option value="2">February</option>
                             <option value="3">March</option>
@@ -386,7 +505,7 @@
                             <tr>
                                 <th>Player</th>
                                 <th>Position</th>
-                                <th class="center">Sessions This Month</th>
+                                <th class="center" id="attSessionsHeader">Sessions</th>
                                 <th class="center">Attended</th>
                                 <th class="center">Missed</th>
                                 <th class="center">Attendance %</th>
@@ -397,6 +516,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="mobile-player-cards" id="att-mobile-cards"></div>
             </div>
 
         </main>

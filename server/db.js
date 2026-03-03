@@ -188,6 +188,12 @@ db.serialize(() => {
     addColumnIfNotExists('matches', 'observedPlayerIds', 'TEXT'); // Store JSON array of player IDs
     addColumnIfNotExists('sessions', 'isTemplate', 'INTEGER DEFAULT 0'); // 1 = reusable template
 
+    // Phase 10 Migrations — Player Watch matches
+    addColumnIfNotExists('matches', 'matchType', 'TEXT');        // 'team' | 'player_watch'
+    addColumnIfNotExists('matches', 'watchedPlayerId', 'TEXT'); // FK → players.id for player_watch matches
+    addColumnIfNotExists('assessments', 'matchDetails', 'TEXT'); // Human-readable match context label
+    addColumnIfNotExists('assessments', 'team', 'TEXT');         // Team context field
+
     // Rendering Persistence Migrations
     addColumnIfNotExists('matches', 'homeTeam', 'TEXT');
     addColumnIfNotExists('matches', 'awayTeam', 'TEXT');

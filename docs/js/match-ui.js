@@ -2,6 +2,9 @@
  * Match Hub UI Logic
  */
 
+// Track current match type selection in modal
+let currentMatchType = 'team';
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Both managers must be initialized before rendering
     await Promise.all([
@@ -152,10 +155,19 @@ function renderMatches() {
     const teamId = teamSelector ? teamSelector.value : 'all';
     const leagueFilter = document.getElementById('matchesLeagueFilter');
     const leagueVal = leagueFilter ? leagueFilter.value : 'all';
+    const typeFilter = document.getElementById('matchesTypeFilter');
+    const typeVal = typeFilter ? typeFilter.value : 'all';
 
     let matches = matchManager.matches;
 
-    // Filter by team
+    // Filter by match type (all / team / player_watch)
+    if (typeVal === 'team') {
+        matches = matches.filter(m => m.matchType !== 'player_watch');
+    } else if (typeVal === 'player_watch') {
+        matches = matches.filter(m => m.matchType === 'player_watch');
+    }
+
+    // Filter by team (only relevant for team matches)
     if (teamId !== 'all') {
         matches = matches.filter(m => m.squadId === teamId);
     }
@@ -165,13 +177,14 @@ function renderMatches() {
         matches = matches.filter(m => m.competition === leagueVal);
     }
 
-    // Filter by search term (opponent, homeTeam, awayTeam, venue)
+    // Filter by search term (opponent, homeTeam, awayTeam, venue, watched player name)
     if (searchTerm) {
         matches = matches.filter(m =>
             (m.opponent && m.opponent.toLowerCase().includes(searchTerm)) ||
             (m.homeTeam && m.homeTeam.toLowerCase().includes(searchTerm)) ||
             (m.awayTeam && m.awayTeam.toLowerCase().includes(searchTerm)) ||
-            (m.venue && m.venue.toLowerCase().includes(searchTerm))
+            (m.venue && m.venue.toLowerCase().includes(searchTerm)) ||
+            (m.watchedPlayerName && m.watchedPlayerName.toLowerCase().includes(searchTerm))
         );
     }
 
@@ -214,6 +227,77 @@ function renderMatches() {
     };
 
     const createMatchCard = (m, isPast) => {
+        const isPlayerWatch = m.matchType === 'player_watch';
+
+        // --- Player Watch Card ---
+        if (isPlayerWatch) {
+            const playerName = m.watchedPlayerName || 'Unknown Player';
+            const initials = playerName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            const hScore = m.homeScore || 0;
+            const aScore = m.awayScore || 0;
+            const hasScore = isPast && (hScore > 0 || aScore > 0);
+            const playerProfileBase = `player-profile.html?id=${m.watchedPlayerId}`;
+            const assessUrl = `${playerProfileBase}&tab=assessment&matchId=${m.id}&matchDate=${encodeURIComponent(m.date)}&matchLabel=${encodeURIComponent('vs ' + (m.awayTeam || m.opponent || 'Opponent'))}`;
+            const clipsUrl = `${playerProfileBase}&tab=analysis`;
+
+            return `
+            <div class="dash-card match-card" data-id="${m.id}" style="margin-bottom: 12px; padding: 0; overflow: hidden; transition: all 0.2s ease; border-left: 3px solid #3b82f6;">
+                <div class="match-card-header match-card-grid" onclick="toggleMatchVenue('${m.id}')" style="padding: 20px 24px; cursor: pointer;">
+
+                    <!-- Left: Date & Badge -->
+                    <div class="match-card-info">
+                        <span style="font-weight: 700; color: var(--navy-dark); font-size: 1rem;">
+                            <i class="far fa-calendar-alt" style="margin-right: 6px; color: var(--text-medium); opacity: 0.7;"></i> ${m.date}
+                        </span>
+                        <span style="display: inline-block; margin-left: 10px; background: #eff6ff; color: #3b82f6; border-radius: 6px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;">
+                            <i class="fas fa-eye" style="margin-right: 4px;"></i>Player Watch
+                        </span>
+                        <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 24px; height: 24px; border-radius: 50%; background: #3b82f6; color: white; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center;">${initials}</div>
+                            <span style="font-size: 0.88rem; font-weight: 600; color: var(--navy-primary);">${playerName}</span>
+                        </div>
+                    </div>
+
+                    <!-- Center: Teams & Score -->
+                    <div class="match-teams-score">
+                        <div class="match-team-name home">${m.homeTeam || 'Home'}</div>
+                        <div class="match-score-badge ${hasScore ? 'past' : ''}">
+                            ${hasScore ? `${hScore} - ${aScore}` : 'VS'}
+                        </div>
+                        <div class="match-team-name away">${m.awayTeam || m.opponent || 'Away'}</div>
+                    </div>
+
+                    <!-- Center Right: Competition / Time -->
+                    <div class="match-meta-info">
+                        ${!isPast ? `<i class="far fa-clock"></i> ${m.time || 'TBA'}` : `<span style="color: #64748b; font-size: 0.8rem;">${m.competition || 'Player Watch'}</span>`}
+                    </div>
+
+                    <!-- Right: Actions -->
+                    <div class="match-actions" style="display: flex; gap: 8px;" onclick="event.stopPropagation()">
+                        <a href="${assessUrl}" class="dash-btn outline sm" title="Assessment" style="color: #3b82f6; border-color: rgba(59,130,246,0.3);">
+                            <i class="fas fa-clipboard-check"></i> Assessment
+                        </a>
+                        <a href="${clipsUrl}" class="dash-btn outline sm" title="Player Clips">
+                            <i class="fas fa-video"></i> Clips
+                        </a>
+                        <button onclick="handleDeleteMatch('${m.id}')" class="dash-btn outline sm danger" style="padding: 0 10px; color: #ef4444; border-color: rgba(239,68,68,0.3);" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Expanded Venue Info -->
+                <div id="match-venue-${m.id}" style="display: none; background: #f8fafc; padding: 12px 24px; border-top: 1px solid var(--border-light); font-size: 0.9rem; color: var(--text-medium);">
+                    <div style="display: flex; gap: 24px;">
+                        <span><i class="fas fa-map-marker-alt" style="margin-right: 6px; color: var(--primary);"></i> <strong>Venue:</strong> ${m.venue || 'TBD'}</span>
+                        ${!isPast ? `<span><i class="fas fa-clock" style="margin-right: 6px; color: var(--primary);"></i> <strong>Kickoff:</strong> ${m.time || 'TBA'}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // --- Team Match Card (existing) ---
         const { home: homeName, away: awayName } = resolveTeamNames(m);
         const hScore = m.homeScore || 0;
         const aScore = m.awayScore || 0;
@@ -226,7 +310,7 @@ function renderMatches() {
         return `
         <div class="dash-card match-card" data-id="${m.id}" style="margin-bottom: 12px; padding: 0; overflow: hidden; transition: all 0.2s ease;">
             <div class="match-card-header match-card-grid" onclick="toggleMatchVenue('${m.id}')" style="padding: 20px 24px; cursor: pointer;">
-                
+
                 <!-- Left: Date & League -->
                 <div class="match-card-info">
                     <span style="font-weight: 700; color: var(--navy-dark); font-size: 1rem;">
@@ -306,7 +390,7 @@ function renderMatches() {
 }
 
 function toggleMatchVenue(id) {
-    const el = document.getElementById(`match - venue - ${id} `);
+    const el = document.getElementById(`match-venue-${id}`);
     if (el) {
         el.style.display = el.style.display === 'none' ? 'block' : 'none';
     }
@@ -327,6 +411,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (leagueFilter) {
         leagueFilter.addEventListener('change', renderMatches);
     }
+    const typeFilter = document.getElementById('matchesTypeFilter');
+    if (typeFilter) {
+        typeFilter.addEventListener('change', renderMatches);
+    }
 
     // Wire the Add Match button to open the modal
     const btnNewMatch = document.getElementById('btn-new-match');
@@ -342,7 +430,99 @@ window.handleAddMatchClick = function () {
     if (modal) {
         modal.style.display = 'flex';
     }
+    setMatchType('team');
     switchTab('details');
+    populateWatchedPlayerDropdown();
+}
+
+/* --- Match Type Toggle --- */
+
+window.setMatchType = function (type) {
+    currentMatchType = type;
+
+    document.getElementById('type-btn-team').classList.toggle('active', type === 'team');
+    document.getElementById('type-btn-player').classList.toggle('active', type === 'player_watch');
+
+    const isPlayerWatch = type === 'player_watch';
+
+    // Show/hide watched player section
+    const watchedSection = document.getElementById('watchedPlayerSection');
+    if (watchedSection) watchedSection.style.display = isPlayerWatch ? 'block' : 'none';
+
+    // Show/hide player clips note + clip title in analysis tab
+    const clipsNote = document.getElementById('playerWatchClipsNote');
+    if (clipsNote) clipsNote.style.display = isPlayerWatch ? 'block' : 'none';
+    const clipTitleGroup = document.getElementById('clipTitleGroup');
+    if (clipTitleGroup) clipTitleGroup.style.display = isPlayerWatch ? 'block' : 'none';
+
+    // Rename analysis + report tabs
+    const tabAnalysis = document.getElementById('tab-btn-analysis');
+    const tabReport = document.getElementById('tab-btn-report');
+    if (tabAnalysis) tabAnalysis.textContent = isPlayerWatch ? 'Player Clips' : 'Analysis Links';
+    if (tabReport) tabReport.textContent = isPlayerWatch ? 'Match Context' : 'Stats Report';
+
+    // Show/hide Post-Match Result section (colour-coded W/L/D is Team Match only)
+    const postMatchSection = document.getElementById('postMatchResultSection');
+    if (postMatchSection) postMatchSection.style.display = isPlayerWatch ? 'none' : 'block';
+
+    // Player Watch: show plain text inputs for both teams (external clubs)
+    // Team Match: restore squad dropdowns
+    if (isPlayerWatch) {
+        document.getElementById('homeTeamWrapper').style.display = 'none';
+        document.getElementById('homeTeamTextWrapper').style.display = 'block';
+        document.getElementById('awayTeamWrapper').style.display = 'none';
+        document.getElementById('awayTeamTextWrapper').style.display = 'block';
+        const comp = document.getElementById('matchCompetition');
+        if (comp) comp.removeAttribute('required');
+    } else {
+        document.getElementById('homeTeamWrapper').style.display = 'block';
+        document.getElementById('homeTeamTextWrapper').style.display = 'none';
+        document.getElementById('awayTeamWrapper').style.display = 'block';
+        document.getElementById('awayTeamTextWrapper').style.display = 'none';
+        const comp = document.getElementById('matchCompetition');
+        if (comp && comp.options.length > 1) comp.setAttribute('required', '');
+    }
+};
+
+async function populateWatchedPlayerDropdown() {
+    const select = document.getElementById('watchedPlayerId');
+    if (!select) return;
+    try {
+        const resp = await fetch(`${window.API_BASE_URL}/players`);
+        const players = await resp.json();
+        select.innerHTML = '<option value="">Select Player...</option>';
+        players
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name + (p.position ? ` (${p.position})` : '');
+                select.appendChild(opt);
+            });
+    } catch (err) {
+        console.error('Failed to load players for watched dropdown:', err);
+    }
+}
+
+async function syncVideosToPlayer(playerId, videos, matchId) {
+    try {
+        const resp = await fetch(`${window.API_BASE_URL}/players/${playerId}`);
+        const player = await resp.json();
+        const existing = player.analysisVideos || [];
+        const newEntries = videos.map(v => ({
+            title: v.title || 'Video Clip',
+            url: v.url,
+            timestamp: new Date().toISOString(),
+            matchRef: matchId || null
+        }));
+        await fetch(`${window.API_BASE_URL}/players/${playerId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ analysisVideos: [...existing, ...newEntries] })
+        });
+    } catch (err) {
+        console.error('Failed to sync videos to player:', err);
+    }
 }
 
 window.closeAddMatchModal = function () {
@@ -379,6 +559,85 @@ window.handleSaveMatch = async function () {
         return el ? el.value : '';
     };
 
+    // --- Player Watch branch ---
+    if (currentMatchType === 'player_watch') {
+        const watchedPlayerId = getVal('watchedPlayerId');
+        if (!watchedPlayerId) {
+            alert('Please select a player to watch.');
+            return;
+        }
+
+        const homeTeam = getVal('matchHomeTeamText');
+        const awayTeam = getVal('matchAwayTeamText');
+        if (!homeTeam || !awayTeam) {
+            alert('Please specify both Home and Away teams.');
+            return;
+        }
+
+        const date = getVal('matchDate');
+        if (!date) {
+            alert('Please fill in the Date.');
+            return;
+        }
+
+        const status = getVal('matchStatus') || 'upcoming';
+        const isPast = status === 'completed';
+        const clipTitle = getVal('matchClipTitle');
+        const videoLink = getVal('matchVideoLink');
+        const highlightsLink = getVal('matchHighlightsLink');
+        const reportLink = getVal('matchReportLink');
+        const reportText = getVal('matchTakeaways');
+
+        const videos = [];
+        const links = [];
+
+        const videoFileEl = document.getElementById('matchVideoFile');
+        if (videoFileEl && videoFileEl.files.length > 0) {
+            videos.push({ title: clipTitle || 'Video File', url: '#', type: 'file' });
+        }
+        if (videoLink) videos.push({ title: clipTitle || 'Full Match', url: videoLink, type: 'full' });
+        if (highlightsLink) videos.push({ title: (clipTitle ? clipTitle + ' — Highlights' : 'Highlights'), url: highlightsLink, type: 'highlights' });
+        if (reportLink) links.push({ title: 'Match Report', url: reportLink, type: 'report' });
+
+        const matchData = {
+            matchType: 'player_watch',
+            watchedPlayerId,
+            competition: getVal('matchCompetition') || 'Player Watch',
+            date,
+            time: getVal('matchTime'),
+            venue: getVal('matchVenue'),
+            homeTeam,
+            awayTeam,
+            opponent: awayTeam,
+            ourSide: null,
+            squadId: null,
+            isPast,
+            homeScore: isPast ? parseInt(getVal('matchHomeScore') || 0) : 0,
+            awayScore: isPast ? parseInt(getVal('matchAwayScore') || 0) : 0,
+            status,
+            videos,
+            links
+        };
+        if (reportText) matchData.notes = reportText;
+
+        try {
+            const saved = await matchManager.createMatch(matchData);
+            if (videos.length > 0) {
+                await syncVideosToPlayer(watchedPlayerId, videos, saved.id);
+            }
+            if (window.showGlobalToast) window.showGlobalToast('Player Watch Match Added!', 'success');
+            else alert('Player Watch Match Added!');
+            closeAddMatchModal();
+            await matchManager.init();
+            renderMatches();
+        } catch (err) {
+            console.error('Failed to save player watch match:', err);
+            if (window.showGlobalToast) window.showGlobalToast('Error saving match.', 'error');
+        }
+        return;
+    }
+
+    // --- Team Match branch (existing logic) ---
     // Determine Home & Away team names captured exactly as entered
     const homeSelect = document.getElementById('matchHomeTeam');
     const awaySelect = document.getElementById('matchAwayTeam');

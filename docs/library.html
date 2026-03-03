@@ -21,9 +21,11 @@
     /* Stats row */
     .lib-stats-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 14px;
       margin-bottom: 28px;
+      max-width: 100%;
+      overflow: hidden;
     }
 
     .lib-stat {
@@ -740,24 +742,10 @@
         </div>
         <div class="lib-stat">
           <div class="left">
-            <div class="num green" id="stat-drills">0</div>
-            <div class="lbl">Drills in Library</div>
-          </div>
-          <div class="icon green"><i class="fas fa-futbol"></i></div>
-        </div>
-        <div class="lib-stat">
-          <div class="left">
             <div class="num orange" id="stat-authors">0</div>
             <div class="lbl">Authors / Coaches</div>
           </div>
           <div class="icon orange"><i class="fas fa-user-tie"></i></div>
-        </div>
-        <div class="lib-stat">
-          <div class="left">
-            <div class="num" id="stat-recent" style="font-size:18px;padding-top:4px;">—</div>
-            <div class="lbl">Last Updated</div>
-          </div>
-          <div class="icon grey"><i class="fas fa-clock"></i></div>
         </div>
       </div>
 
@@ -878,6 +866,14 @@
         }));
 
         renderAll();
+
+        // If arriving from dashboard calendar "View in Library" link, auto-open the session modal
+        const viewParam = new URLSearchParams(window.location.search).get('view');
+        if (viewParam) {
+            openModal(viewParam);
+            // Clean the URL so refreshing doesn't re-open the modal
+            history.replaceState(null, '', window.location.pathname);
+        }
       } catch (e) {
         console.error("Failed to load data:", e);
         showToast('Error loading data');
@@ -890,18 +886,19 @@
     function renderAll() {
       const all = [...sessions, ...drills];
 
-      // Stats
-      document.getElementById('stat-sessions').textContent = sessions.length;
-      document.getElementById('stat-drills').textContent = drills.length;
+      // Stats — guard against elements that may not exist in the current layout
+      const _set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      _set('stat-sessions', sessions.length);
+      _set('stat-drills',   drills.length);
 
       const authors = new Set(all.map(i => i.author).filter(Boolean));
-      document.getElementById('stat-authors').textContent = authors.size || 0;
+      _set('stat-authors', authors.size || 0);
 
       if (all.length) {
         const sorted = [...all].sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
         const latest = sorted[0];
         const d = new Date(latest.savedAt);
-        document.getElementById('stat-recent').textContent = isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        _set('stat-recent', isNaN(d) ? '—' : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }));
       }
 
       const isTemplateFilter = currentFilter === 'template';
