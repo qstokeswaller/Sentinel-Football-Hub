@@ -163,7 +163,17 @@ class SquadManager {
                 method: 'DELETE'
             });
             if (!response.ok) throw new Error('Failed to delete squad');
-            this.squads = this.squads.filter(s => s.id !== id);
+
+            // Local state update
+            this.squads = this.squads.filter(s => String(s.id) !== String(id));
+            this.players = this.players.map(p => {
+                if (String(p.squadId) === String(id)) {
+                    return { ...p, squadId: null };
+                }
+                return p;
+            });
+
+            console.log(`SquadManager: Deleted squad ${id} and unassigned its players locally`);
             return true;
         } catch (error) {
             console.error('Error deleting squad:', error);

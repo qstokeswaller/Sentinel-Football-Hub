@@ -33,12 +33,73 @@ app.get('/api/squads', (req, res) => {
     });
 });
 
+app.get('/api/squads/:id', (req, res) => {
+    const { id } = req.params;
+    db.get('SELECT * FROM squads WHERE id = ?', [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: 'Squad not found' });
+        res.json({
+            ...row,
+            leagues: JSON.parse(row.leagues || '[]'),
+            coaches: JSON.parse(row.coaches || '[]')
+        });
+    });
+});
+
 app.post('/api/squads', (req, res) => {
     const { id, name, ageGroup, leagues, coaches } = req.body;
     const sql = `INSERT INTO squads (id, name, ageGroup, leagues, coaches) VALUES (?, ?, ?, ?, ?)`;
     db.run(sql, [id, name, ageGroup, JSON.stringify(leagues), JSON.stringify(coaches)], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ id });
+    });
+});
+
+app.patch('/api/squads/:id', (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+    const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+    const values = Object.values(updates).map(v => (typeof v === 'object' ? JSON.stringify(v) : v));
+    const sql = `UPDATE squads SET ${fields} WHERE id = ?`;
+    db.run(sql, [...values, id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ updated: this.changes });
+    });
+});
+
+app.delete('/api/squads/:id', (req, res) => {
+    const { id } = req.params;
+    console.log(`[BACKEND] Attempting to delete squad: ${id}`);
+
+    db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+
+        // Unassign players (set squadId to null for players in this squad)
+        db.run('UPDATE players SET squadId = NULL WHERE squadId = ?', [id], (err) => {
+            if (err) {
+                console.error(`[BACKEND] Error unassigning players from squad ${id}:`, err.message);
+                db.run('ROLLBACK');
+                return res.status(500).json({ error: err.message });
+            }
+
+            // Delete the squad
+            db.run('DELETE FROM squads WHERE id = ?', [id], function (err) {
+                if (err) {
+                    console.error(`[BACKEND] Error deleting squad ${id}:`, err.message);
+                    db.run('ROLLBACK');
+                    return res.status(500).json({ error: err.message });
+                }
+
+                db.run('COMMIT', (commitErr) => {
+                    if (commitErr) {
+                        console.error(`[BACKEND] Transaction commit error for squad ${id}:`, commitErr.message);
+                        return res.status(500).json({ error: commitErr.message });
+                    }
+                    console.log(`[BACKEND] Successfully deleted squad ${id}. Rows affected: ${this.changes}`);
+                    res.json({ deleted: this.changes, unassigned: true });
+                });
+            });
+        });
     });
 });
 
@@ -694,7 +755,7 @@ app.get('/api/analytics/player-ratings', (req, res) => {
             const byPlayer = {};
             assessments.forEach(a => {
                 if (!byPlayer[a.playerId]) byPlayer[a.playerId] = [];
-                try { byPlayer[a.playerId].push(JSON.parse(a.ratings || '{}')); } catch (e) {}
+                try { byPlayer[a.playerId].push(JSON.parse(a.ratings || '{}')); } catch (e) { }
             });
 
             const subAvg = (obj, keys) => {
