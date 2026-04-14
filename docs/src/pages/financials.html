@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financials | Sentinel Football Hub</title>
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── Tabs ── */
+        .fin-tabs { display:flex; gap:4px; padding:0 24px; margin-bottom:0; border-bottom:2px solid var(--border-light); }
+        .fin-tab-btn { padding:12px 20px; border:none; background:none; font-family:inherit; font-size:0.85rem; font-weight:600; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; display:flex; align-items:center; gap:8px; }
+        .fin-tab-btn:hover { color:var(--text-primary); }
+        .fin-tab-btn.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .fin-view { padding:24px; display:none; }
+
+        /* ── Pricing Rules ── */
+        .fin-rule-card { display:flex; align-items:center; gap:16px; padding:16px; background:var(--bg-card); border:1px solid var(--border-light); border-radius:12px; margin-bottom:8px; }
+        .fin-rule-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+        .fin-rule-body { flex:1; min-width:0; }
+        .fin-rule-name { font-weight:700; font-size:0.9rem; color:var(--text-primary); }
+        .fin-rule-desc { font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
+        .fin-rule-cond { font-size:0.72rem; color:var(--text-secondary); margin-top:4px; }
+        .fin-rule-amount { font-weight:800; font-size:1.1rem; white-space:nowrap; }
+        .fin-rule-actions { display:flex; gap:6px; }
+        .fin-icon-btn { width:32px; height:32px; border:none; background:var(--bg-body); border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--text-muted); transition:all 0.15s; }
+        .fin-icon-btn:hover { background:var(--primary); color:#fff; }
+        .fin-icon-btn.danger:hover { background:#ef4444; color:#fff; }
+
+        /* ── Rule Modal ── */
+        .fin-modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:none; align-items:center; justify-content:center; }
+        .fin-modal.open { display:flex; }
+        .fin-modal-box { background:var(--bg-card); border-radius:16px; padding:28px; max-width:480px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+        .fin-modal-box h3 { margin:0 0 20px; font-size:1.1rem; color:var(--text-primary); }
+        .fin-form-group { margin-bottom:14px; }
+        .fin-form-group label { display:block; font-size:0.78rem; font-weight:600; color:var(--text-secondary); margin-bottom:4px; }
+        .fin-form-group input, .fin-form-group select, .fin-form-group textarea { width:100%; padding:10px 14px; border:1px solid var(--border-light); border-radius:8px; font-family:inherit; font-size:0.85rem; background:var(--bg-body); color:var(--text-primary); box-sizing:border-box; }
+        .fin-form-group textarea { min-height:60px; resize:vertical; }
+        .fin-modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
+
+        /* ── Generate Tab ── */
+        .fin-month-picker { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+        .fin-month-picker input[type="month"] { padding:10px 14px; border:1px solid var(--border-light); border-radius:8px; font-family:inherit; font-size:0.85rem; background:var(--bg-body); color:var(--text-primary); }
+        .fin-preview-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
+        .fin-preview-header h3 { margin:0; font-size:1rem; color:var(--text-primary); }
+
+        .fin-player-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:12px; margin-bottom:8px; overflow:hidden; }
+        .fin-player-header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; cursor:pointer; transition:background 0.1s; }
+        .fin-player-header:hover { background:var(--bg-body); }
+        .fin-player-info strong { font-size:0.9rem; color:var(--text-primary); }
+        .fin-player-meta { font-size:0.75rem; color:var(--text-muted); margin-left:8px; }
+        .fin-player-total { font-weight:700; font-size:0.95rem; color:var(--text-primary); display:flex; align-items:center; gap:10px; }
+        .fin-chevron { font-size:0.7rem; color:var(--text-muted); transition:transform 0.2s; }
+        .fin-chevron.open { transform:rotate(180deg); }
+
+        .fin-player-detail { padding:0 18px 18px; border-top:1px solid var(--border-light); }
+        .fin-line-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:0.82rem; }
+        .fin-line-table th { text-align:left; font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); padding:6px 8px; border-bottom:1px solid var(--border-light); }
+        .fin-line-table td { padding:8px; border-bottom:1px solid var(--border-light); color:var(--text-primary); }
+        .fin-line-row.discount td { color:#10b981; }
+        .fin-line-row.penalty td { color:#ef4444; }
+        .negative { color:#10b981 !important; }
+        .penalty { color:#ef4444 !important; }
+
+        .fin-adjust-bar { display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; }
+        .dash-btn.sm { font-size:0.75rem; padding:6px 12px; }
+        .fin-totals { margin-top:14px; text-align:right; font-size:0.85rem; color:var(--text-secondary); }
+        .fin-totals div { margin-bottom:4px; }
+        .fin-grand-total { font-size:1.05rem; font-weight:800; color:var(--text-primary); margin-top:6px; padding-top:6px; border-top:2px solid var(--border-light); }
+        .fin-card-actions { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; }
+
+        /* ── History Tab ── */
+        .fin-history-filters { margin-bottom:16px; }
+        .fin-history-filters select { padding:8px 14px; border:1px solid var(--border-light); border-radius:8px; font-family:inherit; font-size:0.82rem; background:var(--bg-body); color:var(--text-primary); }
+        .fin-month-group { margin-bottom:24px; }
+        .fin-month-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .fin-month-header h3 { margin:0; font-size:0.95rem; color:var(--text-primary); }
+        .fin-month-summary { font-size:0.78rem; color:var(--text-muted); }
+        .fin-history-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+        .fin-history-table th { text-align:left; font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); padding:8px; border-bottom:1px solid var(--border-light); }
+        .fin-history-table td { padding:10px 8px; border-bottom:1px solid var(--border-light); color:var(--text-primary); }
+        .fin-actions-cell { display:flex; align-items:center; gap:6px; }
+        .fin-status-select { padding:4px 8px; border:1px solid var(--border-light); border-radius:6px; font-size:0.75rem; background:var(--bg-body); color:var(--text-primary); }
+
+        /* ── Status badges ── */
+        .fin-status-badge { font-size:0.7rem; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; }
+        .fin-status-badge.draft { background:#f1f5f9; color:#64748b; }
+        .fin-status-badge.sent { background:#dbeafe; color:#2563eb; }
+        .fin-status-badge.paid { background:#d1fae5; color:#059669; }
+        .fin-status-badge.overdue { background:#fee2e2; color:#dc2626; }
+        .fin-status-badge.cancelled { background:#f3f4f6; color:#9ca3af; }
+
+        /* ── Shared ── */
+        .fin-empty { text-align:center; padding:60px 20px; color:var(--text-muted); }
+        .fin-empty i { font-size:2.5rem; margin-bottom:16px; display:block; opacity:0.3; }
+        .fin-empty p { font-size:0.88rem; }
+        .fin-loading { text-align:center; padding:40px; color:var(--text-muted); }
+        .fin-condition-group { background:var(--bg-body); border:1px solid var(--border-light); border-radius:10px; padding:14px; margin-top:8px; }
+
+        /* Tier selector in invoice preview */
+        .fin-tier-selector { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--bg-body); border:1px solid var(--border-light); border-radius:10px; margin-bottom:12px; flex-wrap:wrap; }
+        .fin-tier-selector label { font-size:0.78rem; font-weight:600; color:var(--text-secondary); white-space:nowrap; }
+        .fin-tier-select { padding:6px 10px; border:1px solid var(--border-light); border-radius:8px; font-family:inherit; font-size:0.8rem; background:var(--bg-card); color:var(--text-primary); flex:1; min-width:180px; }
+        .fin-tier-auto { font-size:0.7rem; color:var(--text-muted); font-style:italic; }
+
+        /* Invoice history improvements */
+        .fin-history-month-filter { display:flex; align-items:center; gap:10px; margin-bottom:20px; padding:12px 16px; background:var(--bg-body); border-radius:10px; border:1px solid var(--border-light); flex-wrap:wrap; }
+        .fin-history-month-filter label { font-size:0.8rem; font-weight:600; color:var(--text-secondary); }
+        .fin-history-month-filter input, .fin-history-month-filter select { padding:8px 12px; border:1px solid var(--border-light); border-radius:8px; font-family:inherit; font-size:0.82rem; background:var(--bg-card); color:var(--text-primary); }
+        .fin-invoice-card { background:var(--bg-card); border:1px solid var(--border-light); border-radius:12px; padding:16px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:12px; transition:all 0.15s; flex-wrap:wrap; }
+        .fin-invoice-card:hover { border-color:var(--primary); box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+        .fin-invoice-card .fin-inv-player { font-weight:700; font-size:0.9rem; color:var(--text-primary); min-width:140px; }
+        .fin-invoice-card .fin-inv-meta { font-size:0.78rem; color:var(--text-muted); display:flex; gap:12px; }
+        .fin-invoice-card .fin-inv-amount { font-weight:700; font-size:1rem; color:var(--text-primary); }
+        .fin-invoice-card .fin-inv-actions { display:flex; align-items:center; gap:8px; }
+    </style>
+  <script type="module" crossorigin src="/assets/financials-D5WXRT8-.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/supabase-CNU450ah.js">
+  <link rel="modulepreload" crossorigin href="/assets/auth-Cf7XUdJT.js">
+  <link rel="modulepreload" crossorigin href="/assets/squad-manager-D2hlnoPD.js">
+  <link rel="modulepreload" crossorigin href="/assets/preload-helper-BlTxHScW.js">
+  <link rel="modulepreload" crossorigin href="/assets/rbac-LN74jxRk.js">
+  <link rel="modulepreload" crossorigin href="/assets/page-init-BoM5fSij.js">
+  <link rel="stylesheet" crossorigin href="/assets/squad-manager-yQOeqsqp.css">
+
+<style>
+  .sidebar-shell {
+    position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+    background: #0D1B2A; z-index: 99;
+  }
+  /* Hide shell once real sidebar is loaded */
+  .sidebar ~ .sidebar-shell,
+  .sidebar-loaded .sidebar-shell { display: none; }
+  .sidebar-loaded::before { display: none !important; }
+  @media (max-width: 768px) { .sidebar-shell { display: none; } }
+</style>
+</head>
+<body>
+    <div class="app-container"><div class="sidebar-shell" aria-hidden="true"></div>
+        <main class="main-content">
+            <header class="page-header">
+                <button id="mobileMenuToggle" class="mobile-nav-toggle"><i class="fas fa-bars"></i></button>
+                <div class="header-info">
+                    <h1><i class="fas fa-file-invoice-dollar" style="margin-right:10px;color:var(--primary);"></i>Financials</h1>
+                    <p>Pricing rules, invoice generation, and payment tracking</p>
+                </div>
+            </header>
+
+            <!-- Tabs -->
+            <div class="fin-tabs">
+                <button class="fin-tab-btn active" data-tab="pricing"><i class="fas fa-coins"></i> Pricing Rules</button>
+                <button class="fin-tab-btn" data-tab="generate"><i class="fas fa-file-invoice"></i> Generate Invoices</button>
+                <button class="fin-tab-btn" data-tab="history"><i class="fas fa-history"></i> Invoice History</button>
+            </div>
+
+            <!-- Tab 1: Pricing Rules -->
+            <div class="fin-view" id="fin-pricing" style="display:block;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                    <div>
+                        <h3 style="margin:0 0 4px;font-size:1rem;color:var(--text-primary);">Session Pricing & Fees</h3>
+                        <p style="margin:0;font-size:0.78rem;color:var(--text-muted);">Define pricing tiers, penalties, discounts, and add-on charges.</p>
+                    </div>
+                    <button class="dash-btn primary" id="btnAddRule"><i class="fas fa-plus"></i> Add Rule</button>
+                </div>
+                <div id="pricingRulesGrid"></div>
+            </div>
+
+            <!-- Tab 2: Generate Invoices -->
+            <div class="fin-view" id="fin-generate">
+                <div class="fin-month-picker">
+                    <label style="font-weight:600;font-size:0.85rem;color:var(--text-primary);">Month:</label>
+                    <input type="month" id="invoiceMonth">
+                    <button class="dash-btn primary" id="btnLoadMonth"><i class="fas fa-sync-alt"></i> Load Attendance</button>
+                </div>
+                <div id="invoicePreviewArea">
+                    <div class="fin-empty"><i class="fas fa-calendar-alt"></i><p>Select a month and click "Load Attendance" to see player invoices.</p></div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Invoice History -->
+            <div class="fin-view" id="fin-history">
+                <div class="fin-history-month-filter">
+                    <label><i class="fas fa-calendar" style="margin-right:5px;"></i>Month:</label>
+                    <input type="month" id="historyMonth">
+                    <label style="margin-left:12px;">Status:</label>
+                    <select id="historyStatusFilter" onchange="loadInvoiceHistoryFiltered()">
+                        <option value="all">All Statuses</option>
+                        <option value="draft">Draft</option>
+                        <option value="sent">Sent</option>
+                        <option value="paid">Paid</option>
+                        <option value="overdue">Overdue</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button class="dash-btn primary" onclick="loadInvoiceHistoryFiltered()" style="padding:8px 16px;font-size:0.82rem;"><i class="fas fa-search"></i> Load</button>
+                </div>
+                <div id="invoiceHistoryArea">
+                    <div class="fin-empty"><i class="fas fa-file-invoice"></i><p>Select a month and click Load to view invoices.</p></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Pricing Rule Modal -->
+    <div class="fin-modal" id="ruleModal">
+        <div class="fin-modal-box">
+            <h3 id="ruleModalTitle"><i class="fas fa-coins" style="margin-right:8px;color:var(--primary);"></i>Add Pricing Rule</h3>
+            <form id="ruleForm">
+                <input type="hidden" id="ruleId">
+                <div class="fin-form-group">
+                    <label>Type</label>
+                    <select id="ruleType" onchange="window._onRuleTypeChange()">
+                        <option value="tier">Pricing Tier</option>
+                        <option value="penalty">Penalty / Fine</option>
+                        <option value="discount">Discount</option>
+                        <option value="addon">Add-on / Equipment</option>
+                    </select>
+                </div>
+                <div class="fin-form-group">
+                    <label>Rule Name</label>
+                    <input type="text" id="ruleName" required placeholder="e.g. 1 Session per Week">
+                </div>
+                <div class="fin-form-group">
+                    <label id="ruleAmountLabel">Amount (R)</label>
+                    <input type="number" id="ruleAmount" required step="0.01" placeholder="e.g. 1000">
+                </div>
+                <div class="fin-form-group">
+                    <label>Description <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <textarea id="ruleDesc" rows="2" placeholder="e.g. Monthly fee for attending 1 session per week"></textarea>
+                </div>
+
+                <!-- Tier-specific options -->
+                <div id="tierOptions" class="fin-condition-group">
+                    <div class="fin-form-group">
+                        <label>Sessions per Week</label>
+                        <select id="condSessionsPerWeek">
+                            <option value="1">1 session/week</option>
+                            <option value="2">2 sessions/week</option>
+                            <option value="3">3 sessions/week</option>
+                            <option value="4">4+ sessions/week</option>
+                            <option value="0">Single session (drop-in)</option>
+                        </select>
+                    </div>
+                    <div class="fin-form-group">
+                        <label>Billing</label>
+                        <select id="condBilling">
+                            <option value="monthly">Monthly flat rate</option>
+                            <option value="per_session">Per session</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Discount-specific options -->
+                <div id="discountOptions" class="fin-condition-group" style="display:none;">
+                    <div class="fin-form-group">
+                        <label>Discount Type</label>
+                        <select id="condDiscountType">
+                            <option value="first_session">First session free (new clients)</option>
+                            <option value="sibling">Sibling discount</option>
+                            <option value="custom">Custom discount</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Penalty-specific options -->
+                <div id="penaltyOptions" class="fin-condition-group" style="display:none;">
+                    <div class="fin-form-group">
+                        <label>Penalty Type</label>
+                        <select id="condPenaltyType">
+                            <option value="late_cancel">Late cancellation (less than 48 hours)</option>
+                            <option value="no_show">No-show fee</option>
+                            <option value="custom">Custom penalty</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="fin-modal-actions">
+                    <button type="button" class="dash-btn" id="btnCancelRule">Cancel</button>
+                    <button type="submit" class="dash-btn primary"><i class="fas fa-save"></i> Save Rule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Line Item Add Modal -->
+    <div class="fin-modal" id="lineItemModal">
+        <div class="fin-modal-box" style="max-width:400px;">
+            <h3 id="liModalTitle" style="margin:0 0 16px;font-size:1rem;color:var(--text-primary);"><i class="fas fa-plus-circle" style="margin-right:8px;color:var(--primary);"></i>Add Item</h3>
+            <form id="liForm">
+                <input type="hidden" id="liPlayerIdx">
+                <input type="hidden" id="liType">
+                <div class="fin-form-group" id="liDateGroup">
+                    <label>Date</label>
+                    <input type="date" id="liDate">
+                </div>
+                <div class="fin-form-group">
+                    <label>Description</label>
+                    <input type="text" id="liDesc" required placeholder="e.g. Late cancellation fee">
+                </div>
+                <div class="fin-form-group">
+                    <label id="liAmountLabel">Amount (R)</label>
+                    <input type="number" id="liAmount" required step="0.01" min="0" placeholder="e.g. 350">
+                </div>
+                <div class="fin-modal-actions">
+                    <button type="button" class="dash-btn" onclick="document.getElementById('lineItemModal').classList.remove('open')">Cancel</button>
+                    <button type="submit" class="dash-btn primary"><i class="fas fa-plus"></i> Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dash-toast"></div>
+
+</body>
+</html>

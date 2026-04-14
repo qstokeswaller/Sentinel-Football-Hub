@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Plan | Sentinel Football Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* ── Stepper ──────────────────────────────────────────── */
+        .plan-stepper {
+            display: flex;
+            gap: 2px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            padding: 4px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        .plan-step {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .plan-step:hover {
+            color: #475569;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .plan-step.active {
+            background: white;
+            color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .plan-step.completed {
+            color: #10b981;
+        }
+
+        .plan-step .step-num {
+            display: block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        /* ── Step Panels ──────────────────────────────────────── */
+        .step-panel {
+            display: none;
+            animation: fadeInStep 0.3s ease;
+        }
+
+        .step-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeInStep {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Step Navigation ──────────────────────────────────── */
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .step-nav .dash-btn { min-width: 140px; }
+
+        /* ── Squad Selection ──────────────────────────────────── */
+        .squad-picker {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .squad-scroll {
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+            min-height: 120px;
+            border-radius: 10px;
+            transition: background 0.15s, border 0.15s;
+        }
+
+        .squad-scroll.drag-over {
+            background: #e6f9f4;
+            outline: 2px dashed #00C49A;
+            outline-offset: -2px;
+        }
+
+        /* Position group labels */
+        .pos-group { margin-bottom: 10px; }
+        .pos-group-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            padding: 4px 0 6px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 6px;
+        }
+
+        /* Drag styles */
+        .player-chip[draggable="true"] { cursor: grab; }
+        .player-chip.dragging { opacity: 0.4; }
+
+        .squad-col h4 {
+            margin: 0 0 12px;
+            font-size: 0.9rem;
+            color: var(--navy-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .squad-col h4 .count {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+
+        .player-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 0.9rem;
+        }
+
+        .player-chip:hover {
+            background: #e6f9f4;
+            border-color: #93c5fd;
+        }
+
+        .player-chip.selected {
+            background: #dbeafe;
+            border-color: #00C49A;
+        }
+
+        .player-chip .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--navy-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .player-chip .pos-badge {
+            margin-left: auto;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        /* ── Canvas Section (reused for all pitch steps) ──────── */
+        .plan-canvas-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .plan-canvas-wrap canvas {
+            display: block;
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            cursor: crosshair;
+        }
+
+        /* Full-width canvases for match plan steps */
+        .match-plan-canvas-full .plan-canvas-wrap canvas {
+            max-width: 100%;
+        }
+
+        .plan-canvas-wrap .mini-toolbar {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        /* Formation toggle button active state */
+        .formation-toggle-btn.active {
+            background: var(--primary) !important;
+            color: #fff !important;
+            border-color: var(--primary) !important;
+        }
+
+        /* ── Formation Picker ─────────────────────────────────── */
+        .formation-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .formation-btn {
+            padding: 6px 14px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.15s;
+        }
+
+        .formation-btn:hover { color: #1e293b; border-color: #94a3b8; }
+        .formation-btn.active {
+            background: #1e3a8a;
+            color: white !important;
+            border-color: #1e3a8a;
+        }
+
+        /* ── Sub-tabs for Offense/Defense zones ───────────────── */
+        .zone-tabs {
+            display: flex;
+            gap: 4px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            width: fit-content;
+        }
+
+        .zone-tab {
+            padding: 8px 18px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .zone-tab:hover { color: #1e293b; background: rgba(255, 255, 255, 0.5); }
+        .zone-tab.active {
+            background: white;
+            color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .zone-panel { display: none; }
+        .zone-panel.active { display: block; }
+
+        /* ── Substitution Plan ────────────────────────────────── */
+        .sub-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .sub-row select, .sub-row input {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            background: #f8fafc;
+        }
+
+        /* ── Set Pieces ───────────────────────────────────────── */
+        .sp-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* ── Export Checklist ──────────────────────────────────── */
+        .export-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .export-check:hover { background: #e6f9f4; }
+        .export-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--navy-primary); }
+
+        /* ── Notes textarea ────────────────────────────────────── */
+        .plan-notes {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-top: 12px;
+            background: #f8fafc;
+        }
+
+        .plan-notes:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: white;
+        }
+
+        /* ── Formation Dropdown ───────────────────────────────── */
+        .formation-dropdown {
+            padding: 5px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            background: #f0f4ff;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.15s;
+        }
+        .formation-dropdown:hover { border-color: #93c5fd; }
+        .formation-dropdown:focus { border-color: #1e3a8a; box-shadow: 0 0 0 2px rgba(30,58,138,0.1); }
+
+        /* ── Squad Pitch Preview ──────────────────────────────── */
+        .squad-pitch-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #1a4a2a;
+        }
+        #squadPitchCanvas {
+            display: block;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        /* ── Subs Bar ────────────────────────────────────────── */
+        .squad-subs-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            min-height: 40px;
+            align-items: center;
+        }
+        .sub-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px 4px 4px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 0.78rem;
+        }
+        .sub-chip-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--navy-primary, #1e3a8a);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .sub-chip-name { font-weight: 600; color: #1e293b; }
+        .sub-chip-pos { color: #94a3b8; font-size: 0.72rem; font-weight: 600; }
+
+        /* ── Responsive ───────────────────────────────────────── */
+        /* ── Opponent Intel Link Cards ────────────────────── */
+        .opp-link-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            transition: all 0.15s;
+        }
+        .opp-link-card:hover { background: #f1f5f9; }
+        .opp-link-card .link-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 0.8rem;
+        }
+        .opp-link-card .link-icon.video { background: #fef3c7; color: #d97706; }
+        .opp-link-card .link-icon.article { background: #dbeafe; color: #2563eb; }
+        .opp-link-card .link-info { flex: 1; min-width: 0; }
+        .opp-link-card .link-label { font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .opp-link-card .link-url { font-size: 0.75rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .opp-link-card .link-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+        @media (max-width: 768px) {
+            .plan-stepper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .plan-step { min-width: 80px; font-size: 0.65rem; padding: 8px 6px; }
+            /* Opponent Intel: stack columns on mobile */
+            #step-1 .dash-card > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+            .squad-picker { grid-template-columns: 1fr !important; }
+            .sp-grid { grid-template-columns: 1fr; }
+            .sub-row { grid-template-columns: 1fr; }
+            /* Portrait pitch on mobile — take up ~70% of viewport */
+            .squad-pitch-wrap { min-height: 70vh; }
+            #squadPitchCanvas { min-height: 70vh; }
+            .squad-subs-bar { gap: 6px; }
+            .sub-chip { font-size: 0.72rem; padding: 3px 8px 3px 3px; }
+            .sub-chip-avatar { width: 20px; height: 20px; font-size: 0.55rem; }
+            /* Balance padding with other pages */
+            .section-card { padding: 16px !important; margin: 0 !important; }
+            .page-header { padding: 0 !important; }
+        }
+        @media (max-width: 480px) {
+            .formation-dropdown { font-size: 0.72rem; padding: 4px 8px; }
+            .section-card { padding: 12px !important; }
+        }
+    </style>
+  <script type="module" crossorigin src="/assets/matchPlan-DdVQspor.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/supabase-CNU450ah.js">
+  <link rel="modulepreload" crossorigin href="/assets/auth-Cf7XUdJT.js">
+  <link rel="modulepreload" crossorigin href="/assets/squad-manager-D2hlnoPD.js">
+  <link rel="modulepreload" crossorigin href="/assets/drill-builder-eqRNyuXs.js">
+  <link rel="modulepreload" crossorigin href="/assets/preload-helper-BlTxHScW.js">
+  <link rel="modulepreload" crossorigin href="/assets/rbac-LN74jxRk.js">
+  <link rel="modulepreload" crossorigin href="/assets/page-init-BoM5fSij.js">
+  <link rel="modulepreload" crossorigin href="/assets/time-picker-UEjwMayT.js">
+  <link rel="stylesheet" crossorigin href="/assets/squad-manager-yQOeqsqp.css">
+  <link rel="stylesheet" crossorigin href="/assets/drill-builder-OyQfOrA-.css">
+  <link rel="stylesheet" crossorigin href="/assets/time-picker-CksuuEqD.css">
+
+<style>
+  .sidebar-shell {
+    position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+    background: #0D1B2A; z-index: 99;
+  }
+  /* Hide shell once real sidebar is loaded */
+  .sidebar ~ .sidebar-shell,
+  .sidebar-loaded .sidebar-shell { display: none; }
+  .sidebar-loaded::before { display: none !important; }
+  @media (max-width: 768px) { .sidebar-shell { display: none; } }
+</style>
+</head>
+
+<body>
+    <div class="app-container"><div class="sidebar-shell" aria-hidden="true"></div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-info" style="display: flex; align-items: center; gap: 16px;">
+                    <a href="javascript:void(0)" onclick="window.history.back()" class="dash-btn ghost" style="padding: 8px 14px; cursor: pointer;">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 id="planPageTitle">New Match Plan</h1>
+                        <p>Tactical planning and formation builder</p>
+                    </div>
+                </div>
+                <div class="header-actions" style="display: flex; gap: 10px;">
+                    <button class="dash-btn outline" onclick="savePlan()">
+                        <i class="fas fa-save"></i> Save
+                    </button>
+                </div>
+            </header>
+
+            <!-- Title Input -->
+            <div class="dash-card" style="padding: 16px 20px; margin-bottom: 16px;">
+                <div style="display: flex; gap: 16px; align-items: center;">
+                    <div style="flex: 1;">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; display: block;">Plan Title</label>
+                        <input type="text" id="planTitle" class="form-input" placeholder="e.g. League Match vs Sundowns U17" style="width: 100%; padding: 10px 14px; border-radius: 10px;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; display: block;">Team</label>
+                        <select id="planSquadId" class="form-select" onchange="onSquadChange()" style="padding: 10px 14px; border-radius: 10px; min-width: 180px;">
+                            <option value="">Select Team</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stepper -->
+            <div class="plan-stepper" id="planStepper">
+                <div class="plan-step active" data-step="0" onclick="goToStep(0)"><span class="step-num">Step 1</span>Match</div>
+                <div class="plan-step" data-step="1" onclick="goToStep(1)"><span class="step-num">Step 2</span>Opp Intel</div>
+                <div class="plan-step" data-step="2" onclick="goToStep(2)"><span class="step-num">Step 3</span>Squad</div>
+                <div class="plan-step" data-step="3" onclick="goToStep(3)"><span class="step-num">Step 4</span>Plan A</div>
+                <div class="plan-step" data-step="4" onclick="goToStep(4)"><span class="step-num">Step 5</span>Plan B</div>
+                <div class="plan-step" data-step="5" onclick="goToStep(5)"><span class="step-num">Step 6</span>Plan C</div>
+                <div class="plan-step" data-step="6" onclick="goToStep(6)"><span class="step-num">Step 7</span>Offense</div>
+                <div class="plan-step" data-step="7" onclick="goToStep(7)"><span class="step-num">Step 8</span>Defense</div>
+                <div class="plan-step" data-step="8" onclick="goToStep(8)"><span class="step-num">Step 9</span>Set Pieces</div>
+                <div class="plan-step" data-step="9" onclick="goToStep(9)"><span class="step-num">Step 10</span>Export</div>
+            </div>
+
+            <!-- ═══════════════ STEP 0: MATCH ═══════════════ -->
+            <div class="step-panel active" id="step-0">
+                <div class="dash-card" style="padding: 24px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);">Match Details</h3>
+                    <p style="margin: 0 0 20px; color: var(--text-medium); font-size: 0.85rem;">Link to an existing fixture or enter details manually</p>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Link to Fixture</label>
+                        <select id="planMatchId" class="form-select" onchange="onFixtureSelect()" style="width: 100%; padding: 12px 14px; border-radius: 10px;">
+                            <option value="">-- Select a fixture (optional) --</option>
+                        </select>
+                        <div style="margin-top: 10px;">
+                            <button class="dash-btn ghost sm" id="btnToggleQuickMatch" onclick="toggleQuickMatch()" type="button">
+                                <i class="fas fa-plus"></i> Create New Fixture
+                            </button>
+                            <div id="quickMatchForm" style="display: none; margin-top: 12px; padding: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div>
+                                        <label class="form-label" style="font-weight:700;font-size:0.8rem;margin-bottom:6px;display:block;">Opponent *</label>
+                                        <input type="text" id="qmOpponent" class="form-input" placeholder="Opponent name" style="width:100%;padding:10px 14px;border-radius:10px;">
+                                    </div>
+                                    <div>
+                                        <label class="form-label" style="font-weight:700;font-size:0.8rem;margin-bottom:6px;display:block;">Venue</label>
+                                        <input type="text" id="qmVenue" class="form-input" placeholder="Venue" style="width:100%;padding:10px 14px;border-radius:10px;">
+                                    </div>
+                                    <div>
+                                        <label class="form-label" style="font-weight:700;font-size:0.8rem;margin-bottom:6px;display:block;">Date *</label>
+                                        <input type="date" id="qmDate" class="form-input" style="width:100%;padding:10px 14px;border-radius:10px;">
+                                    </div>
+                                    <div>
+                                        <label class="form-label" style="font-weight:700;font-size:0.8rem;margin-bottom:6px;display:block;">Kickoff</label>
+                                        <input type="time" id="qmTime" class="form-input" style="width:100%;padding:10px 14px;border-radius:10px;">
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+                                    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.85rem;">
+                                        <input type="radio" name="qmSide" value="home" checked> Home
+                                    </label>
+                                    <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.85rem;">
+                                        <input type="radio" name="qmSide" value="away"> Away
+                                    </label>
+                                    <div style="flex:1"></div>
+                                    <button class="dash-btn primary sm" onclick="createQuickMatch()" type="button">
+                                        <i class="fas fa-check"></i> Create & Select
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fixture summary (shown when a fixture is selected) -->
+                    <div id="fixtureSummary" style="display:none;margin-bottom:16px;padding:14px 18px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;"></div>
+
+                    <!-- Manual fields (hidden when fixture is linked) -->
+                    <div id="manualMatchFields">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Opponent</label>
+                                <input type="text" id="planOpponent" class="form-input" placeholder="Opponent name" style="width: 100%; padding: 10px 14px; border-radius: 10px;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Venue</label>
+                                <input type="text" id="planVenue" class="form-input" placeholder="Venue" style="width: 100%; padding: 10px 14px; border-radius: 10px;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Date</label>
+                                <input type="date" id="planDate" class="form-input" style="width: 100%; padding: 10px 14px; border-radius: 10px;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Kickoff</label>
+                                <input type="time" id="planTime" class="form-input" style="width: 100%; padding: 10px 14px; border-radius: 10px;">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 16px;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Our Side</label>
+                            <div style="display: flex; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="radio" name="planSide" value="home" checked> Home
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="radio" name="planSide" value="away"> Away
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════ STEP 1: OPPONENT INTEL ═══════════════ -->
+            <div class="step-panel" id="step-1">
+                <div class="dash-card" style="padding: 24px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);"><i class="fas fa-binoculars" style="margin-right: 8px; color: #f59e0b;"></i>Opponent Intelligence</h3>
+                    <p style="margin: 0 0 20px; color: var(--text-medium); font-size: 0.85rem;">Research and notes on the opposition — their style, key players, and tendencies</p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Left Column: Analysis Notes -->
+                        <div>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">
+                                    <i class="fas fa-clipboard-list" style="margin-right: 6px; color: #64748b;"></i>Context & Overview
+                                </label>
+                                <textarea class="plan-notes" id="oppIntelContext" placeholder="General overview — opponent form, league position, recent results, expected formation..." style="min-height: 100px; margin-top: 0;"></textarea>
+                            </div>
+
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">
+                                    <i class="fas fa-users" style="margin-right: 6px; color: #64748b;"></i>Collective Aspects
+                                </label>
+                                <textarea class="plan-notes" id="oppIntelCollective" placeholder="How they play as a unit — pressing triggers, build-up patterns, defensive shape, transition speed..." style="min-height: 100px; margin-top: 0;"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">
+                                    <i class="fas fa-user-tag" style="margin-right: 6px; color: #64748b;"></i>Individual Key Players
+                                </label>
+                                <textarea class="plan-notes" id="oppIntelIndividual" placeholder="Key threats — #10 creative midfielder, #9 strong in the air, left-back overlaps frequently..." style="min-height: 100px; margin-top: 0;"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Media & Links -->
+                        <div>
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">
+                                    <i class="fas fa-chess-board" style="margin-right: 6px; color: #64748b;"></i>Expected Formation
+                                </label>
+                                <select id="oppIntelFormation" class="formation-dropdown" style="width: 100%; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem;">
+                                    <option value="">Unknown / Not Set</option>
+                                    <option value="4-3-3">4-3-3</option>
+                                    <option value="4-4-2">4-4-2</option>
+                                    <option value="4-2-3-1">4-2-3-1</option>
+                                    <option value="3-5-2">3-5-2</option>
+                                    <option value="3-4-3">3-4-3</option>
+                                    <option value="4-1-4-1">4-1-4-1</option>
+                                    <option value="4-5-1">4-5-1</option>
+                                    <option value="5-3-2">5-3-2</option>
+                                    <option value="5-4-1">5-4-1</option>
+                                    <option value="4-4-1-1">4-4-1-1</option>
+                                </select>
+                            </div>
+
+                            <!-- Video / External Links -->
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">
+                                    <i class="fas fa-video" style="margin-right: 6px; color: #64748b;"></i>Video & Reference Links
+                                </label>
+                                <div id="oppIntelLinks" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <!-- Link cards injected here -->
+                                </div>
+                                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                    <input type="text" id="oppIntelLinkUrl" class="form-input" placeholder="Paste URL (video, article, etc.)" style="flex: 1; padding: 10px 14px; border-radius: 10px;">
+                                    <input type="text" id="oppIntelLinkLabel" class="form-input" placeholder="Label (optional)" style="width: 160px; padding: 10px 14px; border-radius: 10px;">
+                                    <button class="dash-btn outline sm" onclick="addOppIntelLink()" type="button" style="white-space: nowrap;">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Weaknesses to Exploit -->
+                            <div style="margin-bottom: 20px;">
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">
+                                    <i class="fas fa-crosshairs" style="margin-right: 6px; color: #ef4444;"></i>Weaknesses to Exploit
+                                </label>
+                                <textarea class="plan-notes" id="oppIntelWeaknesses" placeholder="Vulnerable areas — slow centre-backs, weak in 1v1 defending, poor aerial ability from set pieces..." style="min-height: 80px; margin-top: 0;"></textarea>
+                            </div>
+
+                            <!-- Strengths to Negate -->
+                            <div>
+                                <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">
+                                    <i class="fas fa-shield-alt" style="margin-right: 6px; color: #10b981;"></i>Strengths to Negate
+                                </label>
+                                <textarea class="plan-notes" id="oppIntelStrengths" placeholder="What they do well — dangerous counter-attacks, strong set piece delivery, physical midfield..." style="min-height: 80px; margin-top: 0;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════ STEP 2: SQUAD ═══════════════ -->
+            <div class="step-panel" id="step-2">
+                <div class="dash-card" style="padding: 24px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);">Squad Selection</h3>
+                    <p style="margin: 0 0 20px; color: var(--text-medium); font-size: 0.85rem;">Select your starting XI and substitutes</p>
+                    <div class="squad-picker">
+                        <div class="squad-col">
+                            <h4><i class="fas fa-users"></i> Available <span class="count" id="availCount">0</span></h4>
+                            <div id="availablePlayers" class="squad-scroll"></div>
+                        </div>
+                        <div class="squad-col">
+                            <h4 style="justify-content: space-between;">
+                                <span><i class="fas fa-star"></i> Starting XI <span class="count" id="xiCount">0</span></span>
+                                <select id="formationDropdown-squad" class="formation-dropdown" onchange="onSquadFormationChange(this.value)">
+                                </select>
+                            </h4>
+                            <div id="startingXI" class="squad-scroll"></div>
+                        </div>
+                        <div class="squad-col">
+                            <h4><i class="fas fa-exchange-alt"></i> Substitutes <span class="count" id="subCount">0</span></h4>
+                            <div id="substitutes" class="squad-scroll"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formation & Pitch Preview -->
+                <div class="dash-card" style="padding: 24px; margin-top: 16px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <h3 style="margin: 0; color: var(--navy-dark);">Formation & Pitch Preview</h3>
+                        <select id="formationDropdown-pitch" class="formation-dropdown" onchange="onSquadFormationChange(this.value)">
+                        </select>
+                    </div>
+                    <p style="margin: 0 0 12px; color: var(--text-medium); font-size: 0.85rem;">Tap a player on the pitch to select, then tap another position to swap</p>
+                    <div id="squadPitchWrap" class="squad-pitch-wrap">
+                        <canvas id="squadPitchCanvas"></canvas>
+                    </div>
+                    <!-- Subs bar below pitch -->
+                    <div id="squadSubsBar" class="squad-subs-bar">
+                        <span style="color:#94a3b8;font-size:0.8rem;">No substitutes selected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════ STEP 3: PLAN A ═══════════════ -->
+            <div class="step-panel" id="step-3">
+                <div class="dash-card" style="padding: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <h3 style="margin: 0; color: var(--navy-dark);">Plan A — Starting Formation</h3>
+                        <select id="formationDropdown-planA" class="formation-dropdown" onchange="onPlanFormationChange('planA', this.value)"></select>
+                    </div>
+                    <p style="margin: 0 0 12px; color: var(--text-medium); font-size: 0.85rem;">Use the Move tool to reposition players. Draw arrows, lines &amp; annotations to explain movements.</p>
+                    <div id="canvasWrap-planA" class="match-plan-canvas-full"></div>
+                    <div id="planSubsBar-planA" class="squad-subs-bar" style="margin-top: 14px;">
+                        <span style="color:#94a3b8;font-size:0.8rem;">Tap a player on the pitch (Move tool), then tap a sub to swap them in</span>
+                    </div>
+                </div>
+                <textarea class="plan-notes" id="notes-planA" placeholder="Plan A notes — tactical instructions, key principles..." style="margin-top: 16px;"></textarea>
+                <div id="extraSections-planA" style="margin-top: 8px;"></div>
+                <button class="dash-btn outline sm" onclick="addExtraSection('planA')" style="margin-top: 8px;"><i class="fas fa-plus"></i> Add Section</button>
+            </div>
+
+            <!-- ═══════════════ STEP 4: PLAN B ═══════════════ -->
+            <div class="step-panel" id="step-4">
+                <div class="dash-card" style="padding: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <h3 style="margin: 0; color: var(--navy-dark);">Plan B — Alternative Formation</h3>
+                        <select id="formationDropdown-planB" class="formation-dropdown" onchange="onPlanFormationChange('planB', this.value)"></select>
+                    </div>
+                    <p style="margin: 0 0 12px; color: var(--text-medium); font-size: 0.85rem;">Swap players from subs, then draw movements &amp; annotations.</p>
+                    <div id="canvasWrap-planB" class="match-plan-canvas-full"></div>
+                    <div id="planSubsBar-planB" class="squad-subs-bar" style="margin-top: 14px;"></div>
+                </div>
+                <!-- Substitution Plan -->
+                <div class="dash-card" style="padding: 24px; margin-top: 16px;">
+                    <h4 style="margin: 0 0 10px; color: var(--navy-dark); font-size: 0.9rem;"><i class="fas fa-exchange-alt"></i> Substitution Plan</h4>
+                    <div id="subs-planB"></div>
+                    <button class="dash-btn outline sm" onclick="addSubRow('planB')" style="margin-top: 8px;"><i class="fas fa-plus"></i> Add Sub</button>
+                </div>
+                <textarea class="plan-notes" id="notes-planB" placeholder="Plan B notes..." style="margin-top: 16px;"></textarea>
+                <div id="extraSections-planB" style="margin-top: 8px;"></div>
+                <button class="dash-btn outline sm" onclick="addExtraSection('planB')" style="margin-top: 8px;"><i class="fas fa-plus"></i> Add Section</button>
+            </div>
+
+            <!-- ═══════════════ STEP 5: PLAN C ═══════════════ -->
+            <div class="step-panel" id="step-5">
+                <div class="dash-card" style="padding: 24px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                        <h3 style="margin: 0; color: var(--navy-dark);">Plan C — Trailing / Chasing the Game</h3>
+                        <select id="formationDropdown-planC" class="formation-dropdown" onchange="onPlanFormationChange('planC', this.value)"></select>
+                    </div>
+                    <p style="margin: 0 0 12px; color: var(--text-medium); font-size: 0.85rem;">Swap players from subs, then draw movements &amp; annotations.</p>
+                    <div id="canvasWrap-planC" class="match-plan-canvas-full"></div>
+                    <div id="planSubsBar-planC" class="squad-subs-bar" style="margin-top: 14px;"></div>
+                </div>
+                <!-- Substitution Plan -->
+                <div class="dash-card" style="padding: 24px; margin-top: 16px;">
+                    <h4 style="margin: 0 0 10px; color: var(--navy-dark); font-size: 0.9rem;"><i class="fas fa-exchange-alt"></i> Substitution Plan</h4>
+                    <div id="subs-planC"></div>
+                    <button class="dash-btn outline sm" onclick="addSubRow('planC')" style="margin-top: 8px;"><i class="fas fa-plus"></i> Add Sub</button>
+                </div>
+                <textarea class="plan-notes" id="notes-planC" placeholder="Plan C notes..." style="margin-top: 16px;"></textarea>
+                <div id="extraSections-planC" style="margin-top: 8px;"></div>
+                <button class="dash-btn outline sm" onclick="addExtraSection('planC')" style="margin-top: 8px;"><i class="fas fa-plus"></i> Add Section</button>
+            </div>
+
+            <!-- ═══════════════ STEP 6: OFFENSE ═══════════════ -->
+            <div class="step-panel" id="step-6">
+                <div class="dash-card" style="padding: 24px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);">Offensive Behaviour</h3>
+                    <p style="margin: 0 0 16px; color: var(--text-medium); font-size: 0.85rem;">Plan your attacking phases</p>
+                    <div class="zone-tabs">
+                        <button class="zone-tab active" onclick="switchZone('offense','buildup')">Build-up</button>
+                        <button class="zone-tab" onclick="switchZone('offense','transition')">Transition</button>
+                        <button class="zone-tab" onclick="switchZone('offense','attack')">Attack</button>
+                    </div>
+                    <div class="zone-panel active" id="zone-offense-buildup">
+                        <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('off-buildup')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                        <div id="canvasWrap-off-buildup" class="match-plan-canvas-full"></div>
+                        <textarea class="plan-notes" id="notes-off-buildup" placeholder="Build-up phase notes..."></textarea>
+                    </div>
+                    <div class="zone-panel" id="zone-offense-transition">
+                        <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('off-transition')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                        <div id="canvasWrap-off-transition" class="match-plan-canvas-full"></div>
+                        <textarea class="plan-notes" id="notes-off-transition" placeholder="Transition phase notes..."></textarea>
+                    </div>
+                    <div class="zone-panel" id="zone-offense-attack">
+                        <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('off-attack')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                        <div id="canvasWrap-off-attack" class="match-plan-canvas-full"></div>
+                        <textarea class="plan-notes" id="notes-off-attack" placeholder="Attacking phase notes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════ STEP 7: DEFENSE ═══════════════ -->
+            <div class="step-panel" id="step-7">
+                <div class="dash-card" style="padding: 24px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);">Defensive Behaviour</h3>
+                    <p style="margin: 0 0 16px; color: var(--text-medium); font-size: 0.85rem;">Plan your defensive structure</p>
+                    <div class="zone-tabs">
+                        <button class="zone-tab active" onclick="switchZone('defense','defBlock')">Defensive Block</button>
+                        <button class="zone-tab" onclick="switchZone('defense','midPress')">Midfield Press</button>
+                        <button class="zone-tab" onclick="switchZone('defense','highPress')">High Press</button>
+                    </div>
+                    <div class="zone-panel active" id="zone-defense-defBlock">
+                        <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('def-defBlock')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                        <div id="canvasWrap-def-defBlock" class="match-plan-canvas-full"></div>
+                        <textarea class="plan-notes" id="notes-def-defBlock" placeholder="Defensive block notes..."></textarea>
+                    </div>
+                    <div class="zone-panel" id="zone-defense-midPress">
+                        <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('def-midPress')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                        <div id="canvasWrap-def-midPress" class="match-plan-canvas-full"></div>
+                        <textarea class="plan-notes" id="notes-def-midPress" placeholder="Midfield press notes..."></textarea>
+                    </div>
+                    <div class="zone-panel" id="zone-defense-highPress">
+                        <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('def-highPress')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                        <div id="canvasWrap-def-highPress" class="match-plan-canvas-full"></div>
+                        <textarea class="plan-notes" id="notes-def-highPress" placeholder="High press notes..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════ STEP 8: SET PIECES ═══════════════ -->
+            <div class="step-panel" id="step-8">
+                <!-- Select Takers -->
+                <div class="dash-card" style="padding: 24px; margin-bottom: 16px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);">Select Takers</h3>
+                    <p style="margin: 0 0 20px; color: var(--text-medium); font-size: 0.85rem;">Who takes the set pieces?</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Free kick (near goal)</label>
+                            <select id="spFreeKickNear" class="form-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <option value="">-- select --</option>
+                            </select>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Free kick (far / deep)</label>
+                            <select id="spFreeKickFar" class="form-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <option value="">-- select --</option>
+                            </select>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Penalty</label>
+                            <select id="spPenaltyTaker" class="form-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <option value="">-- select --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Corner (left)</label>
+                            <select id="spCornerLeft" class="form-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <option value="">-- select --</option>
+                            </select>
+                        </div>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
+                            <label class="form-label" style="font-weight: 700; font-size: 0.85rem; margin-bottom: 8px; display: block;">Corner (right)</label>
+                            <select id="spCornerRight" class="form-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <option value="">-- select --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Corners For Us (full width) -->
+                <div class="dash-card" style="padding: 24px; margin-bottom: 16px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);"><i class="fas fa-flag" style="margin-right: 8px; color: #10b981;"></i>Corners — For Us</h3>
+                    <p style="margin: 0 0 16px; color: var(--text-medium); font-size: 0.85rem;">Plan your corner kick routines</p>
+                    <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('sp-cornersFor')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                    <div id="canvasWrap-sp-cornersFor" class="match-plan-canvas-full"></div>
+                    <textarea class="plan-notes" id="notes-sp-cornersFor" placeholder="Corner routines — short, near post, far post, variations..."></textarea>
+                </div>
+
+                <!-- Corners Against Us (full width) -->
+                <div class="dash-card" style="padding: 24px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);"><i class="fas fa-shield-alt" style="margin-right: 8px; color: #ef4444;"></i>Corners — Against Us</h3>
+                    <p style="margin: 0 0 16px; color: var(--text-medium); font-size: 0.85rem;">Defensive set-up for defending corners</p>
+                    <button class="dash-btn outline sm formation-toggle-btn" onclick="toggleFormationOverlay('sp-cornersAgainst')" style="margin-bottom: 10px;"><i class="fas fa-users"></i> <span>Show Formation</span></button>
+                    <div id="canvasWrap-sp-cornersAgainst" class="match-plan-canvas-full"></div>
+                    <textarea class="plan-notes" id="notes-sp-cornersAgainst" placeholder="Defending corners — zonal, man-marking, responsibilities..."></textarea>
+                </div>
+            </div>
+
+            <!-- ═══════════════ STEP 9: EXPORT ═══════════════ -->
+            <div class="step-panel" id="step-9">
+                <div class="dash-card" style="padding: 24px;">
+                    <h3 style="margin: 0 0 4px; color: var(--navy-dark);">Export Match Plan</h3>
+                    <p style="margin: 0 0 20px; color: var(--text-medium); font-size: 0.85rem;">Select which sections to include in your PDF dossier</p>
+
+                    <div id="exportChecklist">
+                        <label class="export-check"><input type="checkbox" value="squad" checked> Squad Selection</label>
+                        <label class="export-check"><input type="checkbox" value="match" checked> Match Details</label>
+                        <label class="export-check"><input type="checkbox" value="oppIntel" checked> Opponent Intelligence</label>
+                        <label class="export-check"><input type="checkbox" value="planA" checked> Plan A — Starting Formation</label>
+                        <label class="export-check"><input type="checkbox" value="planB" checked> Plan B — Alternative</label>
+                        <label class="export-check"><input type="checkbox" value="planC" checked> Plan C — Trailing</label>
+                        <label class="export-check"><input type="checkbox" value="offense" checked> Offensive Behaviour</label>
+                        <label class="export-check"><input type="checkbox" value="defense" checked> Defensive Behaviour</label>
+                        <label class="export-check"><input type="checkbox" value="setPieces" checked> Set Pieces</label>
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: center;">
+                        <button class="dash-btn primary" onclick="exportPlanPDF()" style="padding: 14px 40px; font-size: 1rem; border-radius: 12px;">
+                            <i class="fas fa-file-pdf"></i> Export PDF Dossier
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Navigation -->
+            <div class="step-nav">
+                <button class="dash-btn ghost" id="btnPrev" onclick="prevStep()" style="display: none;">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <div></div>
+                <button class="dash-btn primary" id="btnNext" onclick="nextStep()">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

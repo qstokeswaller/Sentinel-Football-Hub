@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Planner | Sentinel Football Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <script type="module" crossorigin src="/assets/planner-BbhE7cL4.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/supabase-CNU450ah.js">
+  <link rel="modulepreload" crossorigin href="/assets/auth-Cf7XUdJT.js">
+  <link rel="modulepreload" crossorigin href="/assets/squad-manager-D2hlnoPD.js">
+  <link rel="modulepreload" crossorigin href="/assets/drill-builder-eqRNyuXs.js">
+  <link rel="modulepreload" crossorigin href="/assets/preload-helper-BlTxHScW.js">
+  <link rel="modulepreload" crossorigin href="/assets/rbac-LN74jxRk.js">
+  <link rel="modulepreload" crossorigin href="/assets/page-init-BoM5fSij.js">
+  <link rel="modulepreload" crossorigin href="/assets/time-picker-UEjwMayT.js">
+  <link rel="stylesheet" crossorigin href="/assets/squad-manager-yQOeqsqp.css">
+  <link rel="stylesheet" crossorigin href="/assets/drill-builder-OyQfOrA-.css">
+  <link rel="stylesheet" crossorigin href="/assets/time-picker-CksuuEqD.css">
+
+<style>
+  .sidebar-shell {
+    position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+    background: #0D1B2A; z-index: 99;
+  }
+  /* Hide shell once real sidebar is loaded */
+  .sidebar ~ .sidebar-shell,
+  .sidebar-loaded .sidebar-shell { display: none; }
+  .sidebar-loaded::before { display: none !important; }
+  @media (max-width: 768px) { .sidebar-shell { display: none; } }
+</style>
+</head>
+
+<body>
+    <div class="app-container"><div class="sidebar-shell" aria-hidden="true"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-info">
+                    <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1>Session Planner</h1>
+                    <p>Build sessions, add drills, export to PDF</p>
+                </div>
+                <div class="header-actions">
+                    <button class="dash-btn outline" onclick="listSessions()">
+                        <i class="fas fa-folder-open"></i> Load
+                    </button>
+                    <button class="dash-btn outline" data-min-role="coach" onclick="saveAsTemplate()" id="btnSaveTemplate">
+                        <i class="fas fa-copy"></i> Save as Template
+                    </button>
+                    <button class="dash-btn primary" data-min-role="coach" onclick="saveSession()">
+                        <i class="fas fa-save"></i> Save Session
+                    </button>
+                    <button class="dash-btn outline" onclick="exportSessionPDF()">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="dash-btn outline" onclick="shareSession()">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                    <button class="dash-btn outline" data-min-role="coach" onclick="newSession()">
+                        <i class="fas fa-plus"></i> New
+                    </button>
+                </div>
+            </header>
+
+            <!-- SHARED SESSION TITLE -->
+            <div class="session-title-bar">
+                <input type="text" id="sessionTitle" class="session-title-input" placeholder="Session Title — e.g. Tactical Build-up Play">
+            </div>
+
+            <!-- TAB BAR -->
+            <div class="planner-tab-bar">
+                <button id="tab-btn-builder" class="planner-tab active" onclick="switchPlannerTab('builder')">
+                    <i class="fas fa-hammer"></i> Session Builder
+                </button>
+                <button id="tab-btn-details" class="planner-tab" onclick="switchPlannerTab('details')">
+                    <i class="fas fa-clipboard-list"></i> Session Details
+                </button>
+                <button id="tab-btn-animation" class="planner-tab" onclick="switchPlannerTab('animation')">
+                    <i class="fas fa-play-circle"></i> Animation Builder
+                </button>
+            </div>
+
+            <!-- ═══ TAB: SESSION BUILDER ═══ -->
+            <div id="tab-builder" class="planner-tab-pane">
+                <!-- Phase Tabs -->
+                <div class="phase-tab-bar" id="phaseTabBar">
+                    <!-- Phase tabs injected by JS -->
+                </div>
+                <!-- Phase Containers (one per phase, shown/hidden) -->
+                <div id="phasePanes">
+                    <!-- Phase panes injected by JS -->
+                </div>
+            </div>
+
+            <!-- ═══ TAB: SESSION DETAILS ═══ -->
+            <div id="tab-details" class="planner-tab-pane" style="display:none;">
+                <div class="session-meta-card">
+                    <div class="meta-header">
+                        <h2><i class="fas fa-clipboard-list"></i> Session Details</h2>
+                    </div>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label class="form-label">Date</label>
+                            <input type="date" id="sessionDate" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" id="sessionStartTime" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Duration</label>
+                            <input type="text" id="sessionDuration" class="form-input" placeholder="90 mins">
+                        </div>
+                    </div>
+                    <!-- Single-squad mode (academy) -->
+                    <div id="singleSquadMode">
+                        <div class="form-grid-3-even">
+                            <div class="form-group">
+                                <label class="form-label">Team / Group</label>
+                                <div style="position: relative;">
+                                    <select id="sessionTeam" class="form-input" style="appearance: none; padding-right: 35px;">
+                                        <option value="">Select Team</option>
+                                    </select>
+                                    <i class="fas fa-chevron-down"
+                                        style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); pointer-events: none;"></i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">No. of Players</label>
+                                <input type="number" id="sessionPlayers" class="form-input" placeholder="22">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ability / Level</label>
+                                <input type="text" id="sessionLevel" class="form-input" placeholder="Senior / Elite">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Multi-squad mode (private_coaching) -->
+                    <div id="multiSquadMode" style="display:none;">
+                        <div class="form-grid-3-even">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Squads / Groups</label>
+                                <div class="multi-squad-chips" id="multiSquadChips"></div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">No. of Players</label>
+                                <input type="number" id="sessionPlayersMulti" class="form-input" placeholder="0" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: 8px;">
+                            <div style="position:relative;">
+                                <i class="fas fa-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-light); pointer-events:none;"></i>
+                                <input type="text" id="playerSearchInput" class="form-input" placeholder="Search players by name..." style="padding-left:32px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Player Selection Checklist (shared by both modes) -->
+                    <div id="playerChecklistSection" class="player-checklist-section" style="display:none;">
+                        <div class="checklist-header">
+                            <label class="form-label"><i class="fas fa-users"></i> Select Players</label>
+                            <span class="player-count-summary" id="playerCountSummary">0 of 0 selected</span>
+                        </div>
+                        <div class="player-checklist" id="playerChecklist"></div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Equipment Needed</label>
+                            <input type="text" id="sessionEquipment" class="form-input"
+                                placeholder="Cones, Bibs, Balls, Mannequins">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Purpose / Objectives</label>
+                            <input type="text" id="sessionPurpose" class="form-input"
+                                placeholder="Improve transition from defence to attack">
+                        </div>
+                    </div>
+                    <div class="form-grid-2"
+                        style="margin-top:20px; padding-top:20px; border-top:1px solid var(--border-light);">
+                        <div class="form-group">
+                            <label class="form-label">Author / Coach</label>
+                            <input type="text" id="sessionAuthor" class="form-input" placeholder="e.g. Coach Ndlovu">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Venue</label>
+                            <input type="text" id="sessionVenue" class="form-input" placeholder="Tuks Stadium">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ TAB: ANIMATION BUILDER ═══ -->
+            <div id="tab-animation" class="planner-tab-pane" style="display:none;">
+                <div class="anim-builder-wrap" id="animBuilderWrap">
+                    <!-- Rotate device overlay (mobile only, shown in portrait) -->
+                    <div class="anim-rotate-overlay" id="animRotateOverlay">
+                        <i class="fas fa-mobile-alt"></i>
+                        <p>Rotate your device to <strong>landscape</strong> to use the Animation Builder</p>
+                    </div>
+                    <!-- Exit fullscreen button (mobile only) -->
+                    <button class="anim-mobile-fs-exit" id="animMobileFsExit" style="display:none;" onclick="window._exitAnimMobileFs()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <!-- Top Toolbar -->
+                    <div class="anim-toolbar">
+                        <div class="anim-toolbar-left">
+                            <label class="anim-toolbar-label">Pitch</label>
+                            <select id="animPitchType" class="anim-select">
+                                <option value="full">Full Pitch</option>
+                                <option value="half">Half Pitch</option>
+                                <option value="third">One Third</option>
+                                <option value="threequarter">Three Quarter</option>
+                                <option value="smallsided">Small Sided</option>
+                                <option value="outline">Outline</option>
+                                <option value="halves">+ Halves</option>
+                                <option value="thirds">+ Thirds</option>
+                                <option value="blank">Blank</option>
+                            </select>
+                            <div class="anim-toolbar-divider"></div>
+                            <label class="anim-toolbar-label">Title</label>
+                            <input type="text" id="animTitle" class="anim-title-input" placeholder="Drill name...">
+                            <div class="anim-toolbar-divider"></div>
+                            <label class="anim-toolbar-label">Category</label>
+                            <select id="animCategoryTag" class="anim-select">
+                                <option value="">-- None --</option>
+                                <optgroup label="Technical"><option value="Passing">Passing</option><option value="First Touch">First Touch</option><option value="Dribbling">Dribbling</option><option value="Shooting">Shooting</option><option value="Crossing">Crossing</option><option value="Heading">Heading</option><option value="Ball Mastery">Ball Mastery</option></optgroup>
+                                <optgroup label="Tactical"><option value="Attack">Attack</option><option value="Defence">Defence</option><option value="Transitions">Transitions</option><option value="Build-Up Play">Build-Up Play</option><option value="Possession">Possession</option><option value="Pressing">Pressing</option><option value="Counter-Attack">Counter-Attack</option><option value="Set Pieces">Set Pieces</option></optgroup>
+                                <optgroup label="Physical"><option value="Warm-Up">Warm-Up</option><option value="Cool Down">Cool Down</option><option value="Fitness">Fitness</option><option value="Agility">Agility</option><option value="Speed">Speed</option></optgroup>
+                                <optgroup label="Positional"><option value="Goalkeeper">Goalkeeper</option><option value="Defending Shape">Defending Shape</option><option value="Midfield Rotations">Midfield Rotations</option><option value="Wing Play">Wing Play</option><option value="Striker Movement">Striker Movement</option></optgroup>
+                                <optgroup label="Game-Based"><option value="Small-Sided Games">Small-Sided Games</option><option value="Rondos">Rondos</option><option value="Match Simulation">Match Simulation</option><option value="Conditioned Games">Conditioned Games</option></optgroup>
+                            </select>
+                        </div>
+                        <div class="anim-toolbar-right">
+                            <button id="animBtnUndo" class="anim-tool-btn" title="Undo"><i class="fas fa-undo"></i></button>
+                            <button id="animBtnRedo" class="anim-tool-btn" title="Redo"><i class="fas fa-redo"></i></button>
+                            <div class="anim-toolbar-divider"></div>
+                            <button id="animBtnVideo" class="anim-tool-btn" title="Attach Video"><i class="fas fa-video"></i></button>
+                            <button id="animBtnExportPng" class="anim-tool-btn" title="Export PNG"><i class="fas fa-image"></i></button>
+                            <button id="animBtnExportGif" class="anim-tool-btn" title="Export Video"><i class="fas fa-film"></i></button>
+                            <div class="anim-toolbar-divider"></div>
+                            <button id="animBtnNew" class="anim-tool-btn" title="New Animation"><i class="fas fa-plus"></i></button>
+                            <button id="animBtnLoad" class="anim-tool-btn" title="Load Animation"><i class="fas fa-folder-open"></i></button>
+                            <button id="animBtnSave" class="anim-tool-btn primary" title="Save Animation"><i class="fas fa-save"></i> Save</button>
+                            <button id="animBtnDoneForDrill" class="anim-tool-btn" title="Done - Back to Session" style="display:none;background:#00C49A;color:#fff;font-weight:700;"><i class="fas fa-check"></i> Done</button>
+                        </div>
+                    </div>
+
+                    <!-- Video Attachment Panel -->
+                    <div id="animVideoPanel" style="display:none;background:var(--bg-secondary,#0f172a);border:1px solid var(--border-light,#334155);border-radius:8px;padding:12px;margin-bottom:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-size:0.8rem;font-weight:600;color:var(--text-primary,#f1f5f9);"><i class="fas fa-video" style="color:var(--primary);margin-right:6px;"></i>Video Reference</span>
+                            <button id="animVideoRemove" style="font-size:0.65rem;color:#ef4444;background:none;border:1px solid #ef4444;border-radius:4px;padding:2px 8px;cursor:pointer;">Remove</button>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="text" id="animVideoUrl" placeholder="Paste a video link (YouTube, Vimeo, Drive, etc.)" style="flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border-light,#334155);background:var(--card-bg,#1e293b);color:var(--text-primary,#f1f5f9);font-size:0.78rem;">
+                            <span style="font-size:0.7rem;color:var(--text-secondary,#94a3b8);">or</span>
+                            <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:var(--primary,#3b82f6);color:#fff;border-radius:6px;font-size:0.72rem;cursor:pointer;white-space:nowrap;">
+                                <i class="fas fa-cloud-upload-alt"></i> Upload
+                                <input type="file" id="animVideoFile" accept="video/*" style="display:none;">
+                            </label>
+                        </div>
+                        <div id="animVideoProgress" style="display:none;align-items:center;gap:8px;margin-top:8px;">
+                            <div style="flex:1;height:4px;background:var(--border-light,#334155);border-radius:2px;overflow:hidden;">
+                                <div id="animVideoProgressFill" style="height:100%;background:var(--primary,#3b82f6);width:0%;transition:width 0.3s;"></div>
+                            </div>
+                            <span id="animVideoProgressText" style="font-size:0.65rem;color:var(--text-secondary,#94a3b8);">Uploading...</span>
+                        </div>
+                        <div id="animVideoPreview" style="margin-top:8px;"></div>
+                    </div>
+
+                    <!-- Frame Timeline (ABOVE pitch) -->
+                    <div class="anim-timeline">
+                        <div class="anim-timeline-controls">
+                            <button id="animBtnPlay" class="anim-tool-btn" title="Play"><i class="fas fa-play"></i></button>
+                            <button id="animBtnPause" class="anim-tool-btn" title="Pause" disabled style="opacity:0.4;"><i class="fas fa-pause"></i></button>
+                            <button id="animBtnStop" class="anim-tool-btn" title="Stop"><i class="fas fa-stop"></i></button>
+                            <div class="anim-toolbar-divider"></div>
+                            <button id="animBtnPrevFrame" class="anim-tool-btn" title="Previous Frame"><i class="fas fa-step-backward"></i></button>
+                            <button id="animBtnNextFrame" class="anim-tool-btn" title="Next Frame"><i class="fas fa-step-forward"></i></button>
+                            <div class="anim-toolbar-divider"></div>
+                            <button id="animBtnAddFrame" class="anim-tool-btn" title="Add Frame"><i class="fas fa-plus"></i> Frame</button>
+                            <button id="animBtnDupFrame" class="anim-tool-btn" title="Duplicate Frame"><i class="fas fa-clone"></i></button>
+                            <button id="animBtnDelFrame" class="anim-tool-btn" title="Delete Frame"><i class="fas fa-trash-alt"></i></button>
+                            <div class="anim-toolbar-divider"></div>
+                            <label class="anim-toolbar-label">Speed</label>
+                            <input type="range" id="animSpeedSlider" min="500" max="4000" value="1500" step="100" style="width:80px;">
+                            <span id="animSpeedLabel" style="font-size:0.72rem;color:#94a3b8;min-width:32px;">1.5s</span>
+                            <div class="anim-toolbar-divider"></div>
+                            <button id="animBtnOnion" class="anim-tool-btn" title="Onion Skin (ghost of previous frame)"><i class="fas fa-layer-group"></i></button>
+                            <button id="animBtnPaths" class="anim-tool-btn" title="Movement Paths (trace lines)"><i class="fas fa-route"></i></button>
+                        </div>
+                        <div class="anim-frame-strip" id="animFrameStrip">
+                            <!-- Frame thumbnails injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Canvas Area (full width, landscape) -->
+                    <div class="anim-canvas-area">
+                        <div id="animCanvasContainer" class="anim-canvas-container"></div>
+                    </div>
+
+                    <!-- Tools Palette (BELOW pitch, horizontal) -->
+                    <div class="anim-palette">
+                        <!-- Colour swatches — like drill-builder: pick colour then place player/equipment/draw -->
+                        <div class="anim-palette-section">
+                            <div class="anim-palette-heading">Colour</div>
+                            <div class="anim-color-row" id="animColorRow">
+                                <div class="anim-color-swatch active" data-color="#e53935" style="background:#e53935" title="Red"></div>
+                                <div class="anim-color-swatch" data-color="#1e88e5" style="background:#1e88e5" title="Blue"></div>
+                                <div class="anim-color-swatch" data-color="#43a047" style="background:#43a047" title="Green"></div>
+                                <div class="anim-color-swatch" data-color="#fdd835" style="background:#fdd835" title="Yellow"></div>
+                                <div class="anim-color-swatch" data-color="#f57c00" style="background:#f57c00" title="Orange"></div>
+                                <div class="anim-color-swatch" data-color="#8e24aa" style="background:#8e24aa" title="Purple"></div>
+                                <div class="anim-color-swatch" data-color="#ffffff" style="background:#fff;border:1px solid #94a3b8" title="White"></div>
+                                <div class="anim-color-swatch" data-color="#212121" style="background:#212121" title="Black"></div>
+                                <div class="anim-color-swatch" data-color="#e91e63" style="background:#e91e63" title="Pink"></div>
+                                <div class="anim-color-swatch" data-color="#94a3b8" style="background:#94a3b8" title="Grey"></div>
+                                <input type="color" id="animCustomColor" value="#ff6d00" style="width:22px;height:22px;border:1px solid #94a3b8;border-radius:50%;cursor:pointer;padding:0;" title="Custom Colour">
+                            </div>
+                        </div>
+
+                        <!-- Players -->
+                        <div class="anim-palette-section">
+                            <div class="anim-palette-heading">Players</div>
+                            <div class="anim-palette-grid">
+                                <div class="anim-palette-item" data-type="player" title="Player"><i class="fas fa-tshirt"></i></div>
+                                <div class="anim-palette-item" data-type="player" data-gk="true" title="Goalkeeper"><span style="font-size:0.65rem;font-weight:800;">GK</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Equipment -->
+                        <div class="anim-palette-section">
+                            <div class="anim-palette-heading">Equipment</div>
+                            <div class="anim-palette-grid">
+                                <div class="anim-palette-item" data-type="cone" title="Cone">▲</div>
+                                <div class="anim-palette-item" data-type="ball" title="Ball">⚽</div>
+                                <div class="anim-palette-item" data-type="goalpost" title="Goalpost">🥅</div>
+                                <div class="anim-palette-item" data-type="flag" title="Flag">⚑</div>
+                                <div class="anim-palette-item" data-type="number" title="Number">#</div>
+                                <div class="anim-palette-item" data-type="ladder" title="Ladder">☷</div>
+                                <div class="anim-palette-item" data-type="hurdle" title="Hurdle">⊓</div>
+                                <div class="anim-palette-item" data-type="mannequin" title="Mannequin">🧍</div>
+                                <div class="anim-palette-item" data-type="pole" title="Pole">|</div>
+                                <div class="anim-palette-item" data-type="minigoal" title="Mini Goal">⊏⊐</div>
+                                <div class="anim-palette-item" data-type="ring" title="Ring">◎</div>
+                                <div class="anim-palette-item" data-type="rebounder" title="Rebounder">▥</div>
+                            </div>
+                        </div>
+
+                        <!-- Draw tools -->
+                        <div class="anim-palette-section">
+                            <div class="anim-palette-heading">Draw</div>
+                            <div class="anim-palette-grid">
+                                <div class="anim-palette-item anim-draw-tool" data-tool="pencil" title="Pencil">✏</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="line" title="Line">/</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="arrow" title="Arrow">→</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="biarrow" title="Double Arrow">↔</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="dashed" title="Dashed Arrow">⤳</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="dashed-line" title="Dashed Line">┅</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="curved" title="Curved">↩</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="textbox" title="Text Box">T</div>
+                            </div>
+                        </div>
+
+                        <!-- Shapes -->
+                        <div class="anim-palette-section">
+                            <div class="anim-palette-heading">Shapes</div>
+                            <div class="anim-palette-grid">
+                                <div class="anim-palette-item anim-draw-tool" data-tool="rect" title="Rectangle">▭</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="circle" title="Circle">○</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="tri" title="Triangle">△</div>
+                                <div class="anim-palette-item anim-draw-tool" data-tool="polygon" title="Polygon (click points, click near first to close)">⬠</div>
+                                <div class="anim-palette-item anim-fill-toggle" id="animFillToggle" title="Toggle Fill">Fill</div>
+                            </div>
+                        </div>
+
+                        <!-- Size -->
+                        <div class="anim-palette-section">
+                            <div class="anim-palette-heading">Size</div>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <select id="animSizeSelect" class="anim-select" style="background:#3d4f63;color:#e2e8f0;border-color:#5a6f85;">
+                                    <option value="small">Small</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="large">Large</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="anim-palette-section">
+                            <div class="anim-palette-heading">Actions</div>
+                            <div class="anim-palette-grid">
+                                <button id="animBtnRemove2" class="anim-palette-item" title="Remove Selected" style="border-color:#ef4444;color:#ef4444;"><i class="fas fa-trash-alt" style="font-size:0.75rem;"></i></button>
+                                <button id="animBtnUndo2" class="anim-palette-item" title="Undo"><i class="fas fa-undo" style="font-size:0.75rem;"></i></button>
+                                <button id="animBtnClear" class="anim-palette-item" title="Clear All" style="border-color:#f59e0b;color:#f59e0b;"><i class="fas fa-broom" style="font-size:0.75rem;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <div id="planner-toast"></div>
+
+    <!-- LOAD SESSION / TEMPLATE MODAL -->
+    <div id="session-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fas fa-folder-open"></i> Load</h3>
+                <button class="modal-close" onclick="closeSessionModal()">×</button>
+            </div>
+            <div style="display:flex;gap:0;border-bottom:1px solid var(--border-color,#e5e7eb);padding:0 20px;">
+                <button id="tabSessions" class="session-tab active" onclick="switchSessionTab('sessions')" style="flex:1;padding:10px 0;background:none;border:none;border-bottom:2px solid var(--accent,#c8902e);font-weight:600;font-size:0.85rem;cursor:pointer;color:var(--accent,#c8902e);">
+                    <i class="fas fa-folder-open"></i> Sessions
+                </button>
+                <button id="tabTemplates" class="session-tab" onclick="switchSessionTab('templates')" style="flex:1;padding:10px 0;background:none;border:none;border-bottom:2px solid transparent;font-weight:600;font-size:0.85rem;cursor:pointer;color:var(--text-muted,#6b7280);">
+                    <i class="fas fa-file-import"></i> Templates
+                </button>
+            </div>
+            <div class="modal-body" id="session-list-body">
+                <div class="session-list-empty">Loading saved sessions...</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

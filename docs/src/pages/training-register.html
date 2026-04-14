@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Register | Sentinel Football Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+    <style>
+        /* ── Attendance Panel ── */
+        .attendance-panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .session-info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .session-info-bar .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        .session-info-bar .info-item i {
+            color: #00C49A;
+            width: 16px;
+            text-align: center;
+        }
+        .session-info-bar .info-item strong {
+            color: #0f172a;
+        }
+
+        /* ── Player Chips ── */
+        .register-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .reg-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 2px solid #d1fae5;
+            background: #ecfdf5;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #065f46;
+            user-select: none;
+        }
+        .reg-chip:hover { filter: brightness(0.96); }
+        .reg-chip .chip-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #a7f3d0;
+            color: #065f46;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+        .reg-chip .chip-pos {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6ee7b7;
+            letter-spacing: 0.3px;
+        }
+        .reg-chip .chip-status {
+            font-size: 0.75rem;
+            margin-left: auto;
+        }
+
+        /* Absent state */
+        .reg-chip.absent {
+            border-color: #fecaca;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        .reg-chip.absent .chip-avatar {
+            background: #fca5a5;
+            color: #991b1b;
+        }
+        .reg-chip.absent .chip-pos {
+            color: #fca5a5;
+        }
+        .reg-chip.absent .chip-name {
+            text-decoration: line-through;
+        }
+
+        /* ── Counter ── */
+        .attendance-counter {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px 16px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            margin-top: 16px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        .attendance-counter .present-count { color: #166534; }
+        .attendance-counter .absent-count { color: #dc2626; }
+        .attendance-counter .separator { color: #94a3b8; }
+
+        /* ── Completed badge on calendar bubbles ── */
+        .calendar-bubble .att-check {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 0.6rem;
+            color: #fff;
+            opacity: 0.85;
+        }
+        .mcal-detail-row .att-check {
+            color: #10b981; font-size: 0.85rem; flex-shrink: 0; margin-left: auto;
+        }
+
+        /* ── Squad selector row ── */
+        .squad-selector-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .squad-selector-row label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .squad-selector-row select {
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: white;
+            min-width: 180px;
+        }
+
+        /* ── Notes + Save row ── */
+        .save-row { margin-top: 20px; }
+        .save-row .notes-wrap label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .save-row .input-row {
+            display: flex;
+            align-items: stretch;
+            gap: 16px;
+        }
+        .save-row textarea {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+            font-size: 0.85rem;
+            resize: vertical;
+            min-height: 44px;
+            max-height: 100px;
+        }
+        .save-row button {
+            white-space: nowrap;
+            border-radius: 10px;
+            padding: 0 24px;
+            height: auto;
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* ── Add Player Search Results ── */
+        .add-player-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; cursor: pointer; border-radius: 8px;
+            font-size: 0.84rem; transition: background 0.1s;
+        }
+        .add-player-item:hover { background: #f0fdf4; }
+        .add-player-item .api-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #e2e8f0; color: #475569; font-size: 0.7rem;
+            font-weight: 700; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0;
+        }
+        .add-player-item .api-name { font-weight: 600; color: #0f172a; }
+        .add-player-item .api-meta { font-size: 0.75rem; color: #94a3b8; }
+
+        /* ── Saved status indicator ── */
+        .saved-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .session-info-bar { flex-direction: column; gap: 8px; }
+            .save-row .input-row { flex-direction: column; align-items: stretch; }
+            .squad-selector-row { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+  <script type="module" crossorigin src="/assets/trainingRegister-CG1W9L1S.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/supabase-CNU450ah.js">
+  <link rel="modulepreload" crossorigin href="/assets/auth-Cf7XUdJT.js">
+  <link rel="modulepreload" crossorigin href="/assets/squad-manager-D2hlnoPD.js">
+  <link rel="modulepreload" crossorigin href="/assets/preload-helper-BlTxHScW.js">
+  <link rel="modulepreload" crossorigin href="/assets/time-picker-UEjwMayT.js">
+  <link rel="modulepreload" crossorigin href="/assets/quick-session-DwUv7epT.js">
+  <link rel="stylesheet" crossorigin href="/assets/squad-manager-yQOeqsqp.css">
+  <link rel="stylesheet" crossorigin href="/assets/time-picker-CksuuEqD.css">
+
+<style>
+  .sidebar-shell {
+    position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+    background: #0D1B2A; z-index: 99;
+  }
+  /* Hide shell once real sidebar is loaded */
+  .sidebar ~ .sidebar-shell,
+  .sidebar-loaded .sidebar-shell { display: none; }
+  .sidebar-loaded::before { display: none !important; }
+  @media (max-width: 768px) { .sidebar-shell { display: none; } }
+</style>
+</head>
+<body>
+    <div class="app-container"><div class="sidebar-shell" aria-hidden="true"></div>
+        <!-- Sidebar injected by JS -->
+
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-info" style="display: flex; align-items: center; gap: 12px;">
+                    <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1><i class="fas fa-clipboard-check" style="color: var(--primary); margin-right: 10px;"></i>Training Register</h1>
+                        <p>Select a session from the calendar to mark attendance</p>
+                    </div>
+                </div>
+                <button class="dash-btn primary" id="btnQuickSession" onclick="window._openQuickSession()" style="border-radius:9999px;padding:8px 18px;font-size:0.85rem;display:flex;align-items:center;gap:6px;white-space:nowrap;">
+                    <i class="fas fa-bolt"></i> Quick Session
+                </button>
+            </header>
+
+            <!-- Training Calendar -->
+            <div class="activity-section" style="margin-top: 24px;">
+                <div class="activity-header">
+                    <h2>Training Calendar</h2>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="btn-ghost" onclick="window._changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <span id="calendar-month-year" style="font-weight: 700; min-width: 140px; text-align: center; display: inline-block;">Month Year</span>
+                        <button class="btn-ghost" onclick="window._changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div id="calendar-container" class="calendar-grid-container">
+                    <!-- Calendar injected by JS -->
+                </div>
+            </div>
+
+            <!-- Attendance Panel (hidden until session clicked) -->
+            <div id="attendancePanel" style="display: none;">
+                <div class="attendance-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a;">
+                            <i class="fas fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
+                            <span id="panelTitle">Mark Attendance</span>
+                        </h3>
+                        <span id="savedIndicator" style="display: none;" class="saved-indicator">
+                            <i class="fas fa-check-circle"></i> Saved
+                        </span>
+                    </div>
+
+                    <div id="sessionInfoBar" class="session-info-bar">
+                        <!-- Filled by JS -->
+                    </div>
+
+                    <div class="squad-selector-row">
+                        <label for="regSquadSelect"><i class="fas fa-users" style="margin-right: 4px;"></i> Squad</label>
+                        <select id="regSquadSelect" onchange="window._onSquadChange()">
+                            <option value="">-- Select Squad --</option>
+                        </select>
+                    </div>
+
+                    <p id="chipHintText" style="font-size: 0.78rem; color: #64748b; margin: 0 0 4px;">
+                        <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
+                        Click a player to mark them as <strong style="color: #dc2626;">absent</strong>. Click again to mark present.
+                    </p>
+
+                    <!-- Add Player Search (Orion only) -->
+                    <div id="addPlayerSearch" style="display: none; margin-bottom: 12px;">
+                        <div style="position: relative;">
+                            <input type="text" id="addPlayerInput" placeholder="Search player to add..." autocomplete="off"
+                                style="width: 100%; padding: 9px 14px 9px 36px; border: 1px dashed #10b981; border-radius: 10px;
+                                font-size: 0.85rem; font-family: 'Inter', sans-serif; background: #f0fdf4; box-sizing: border-box;">
+                            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #10b981; font-size: 0.8rem;"></i>
+                        </div>
+                        <div id="addPlayerResults" style="margin-top: 4px; max-height: 180px; overflow-y: auto; border-radius: 10px;"></div>
+                    </div>
+
+                    <div id="playerChips" class="register-chips">
+                        <!-- Player chips injected by JS -->
+                    </div>
+
+                    <div id="attendanceCounter" class="attendance-counter" style="display: none;">
+                        <span class="present-count"><i class="fas fa-user-check" style="margin-right: 4px;"></i> <span id="presentCount">0</span> Present</span>
+                        <span class="separator">·</span>
+                        <span class="absent-count"><i class="fas fa-user-times" style="margin-right: 4px;"></i> <span id="absentCount">0</span> Absent</span>
+                        <span class="separator">·</span>
+                        <span style="color: #64748b;"><span id="totalCount">0</span> Total</span>
+                    </div>
+
+                    <div class="save-row">
+                        <div class="notes-wrap">
+                            <label for="regNotes">Notes (optional)</label>
+                        </div>
+                        <div class="input-row">
+                            <textarea id="regNotes" placeholder="e.g. Pitch waterlogged, moved indoors..."></textarea>
+                            <button class="dash-btn primary" id="btnSaveAttendance" onclick="window._saveAttendance()">
+                                <i class="fas fa-save" style="margin-right: 6px;"></i> Save Attendance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+</body>
+</html>

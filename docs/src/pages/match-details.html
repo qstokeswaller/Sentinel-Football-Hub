@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Details | Sentinel Football Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        .match-header-hero {
+            background: var(--navy-dark);
+            color: white;
+            padding: 48px;
+            border-radius: 20px;
+            margin-bottom: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-competition {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+
+        .hero-teams {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            margin-bottom: 16px;
+        }
+
+        .hero-team {
+            font-size: 1.5rem;
+            font-weight: 700;
+            width: 250px;
+        }
+
+        .hero-team.home {
+            text-align: right;
+        }
+
+        .hero-team.away {
+            text-align: left;
+        }
+
+        .hero-score {
+            font-size: 4rem;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 30px;
+            border-radius: 16px;
+        }
+
+        .hero-meta {
+            font-size: 0.95rem;
+            opacity: 0.7;
+        }
+
+        .stats-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stat-row-comparison {
+            margin-bottom: 24px;
+        }
+
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-bar-bg {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: var(--navy-dark);
+            transition: width 0.5s ease;
+        }
+
+        /* Edit Mode Styles */
+        .edit-mode-container {
+            display: none;
+        }
+
+        .edit-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 0;
+            border: 1px solid var(--border-light);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .edit-split-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+            align-items: start;
+            max-width: 600px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .match-header-hero {
+                padding: 24px;
+            }
+
+            .hero-teams {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .hero-team {
+                width: 100%;
+                text-align: center !important;
+            }
+
+            .hero-score {
+                font-size: 3rem;
+            }
+
+            .stats-grid-edit {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .stats-grid-edit::after {
+                display: none;
+            }
+
+            .edit-row {
+                justify-content: flex-start !important;
+            }
+
+            #matchReportSection>div:last-child {
+                grid-template-columns: 1fr !important;
+            }
+
+            #matchReportSection .report-card {
+                grid-column: span 1 !important;
+            }
+        }
+
+        .edit-card h4 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: var(--navy-dark);
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 12px;
+        }
+
+        .stats-grid-edit {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            position: relative;
+        }
+
+        /* Vertical Divider Line */
+        .stats-grid-edit::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            bottom: 20px;
+            left: 50%;
+            width: 1px;
+            background: #e2e8f0;
+            transform: translateX(-50%);
+        }
+
+        /* Row Container */
+        .edit-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Home Column (First Div) Rows */
+        .stats-grid-edit>div:first-child .edit-row {
+            justify-content: flex-end;
+        }
+
+        /* Away Column (Second Div) Rows */
+        .stats-grid-edit>div:last-child .edit-row {
+            justify-content: flex-start;
+        }
+
+        .edit-row label {
+            background: #f8fafc;
+            padding: 5px 8px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin: 0;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-block;
+            max-width: calc(100% - 80px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .edit-row input {
+            width: 60px;
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--navy-dark);
+            background: white;
+            outline: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        /* Spacing for double bubbles */
+        .stats-grid-edit>div:first-child .edit-row label {
+            margin-right: 12px;
+        }
+
+        .stats-grid-edit>div:last-child .edit-row input {
+            margin-right: 12px;
+        }
+
+        .edit-row input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        }
+
+        /* Rich Text Components */
+        .rich-text-container {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .rich-text-container .toolbar {
+            display: flex;
+            gap: 5px;
+            padding: 8px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .rich-text-container .toolbar button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .rich-text-container .toolbar button:hover {
+            background: #e2e8f0;
+            color: var(--navy-dark);
+        }
+
+        .rich-text-container .editor {
+            min-height: 120px;
+            padding: 12px;
+            outline: none;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--navy-dark);
+        }
+
+        .rich-text-container .editor ul,
+        .rich-text-container .editor ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        /* Player Stats Table */
+        .player-stats-section { margin-top: 40px; padding-top: 30px; border-top: 1px solid #e2e8f0; }
+        .player-stats-section h3 { color: var(--navy-dark); margin: 0 0 4px 0; }
+        .player-stats-section .ps-subtitle { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px; }
+        .ps-table-wrap { overflow-x: auto; }
+        .ps-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .ps-table th { background: #f8fafc; padding: 10px 8px; text-align: center; font-weight: 700;
+            text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; color: var(--text-secondary);
+            border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        .ps-table th:first-child { text-align: left; }
+        .ps-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; color: var(--navy-dark); }
+        .ps-table td:first-child { text-align: left; font-weight: 600; }
+        .ps-table tr:hover { background: #f8fafc; }
+        .ps-table .ps-motm { color: #f59e0b; }
+        .ps-table .ps-totals td { font-weight: 700; background: #f1f5f9; border-top: 2px solid #e2e8f0; }
+        .ps-table .ps-not-appeared { color: #94a3b8; }
+        .ps-rating-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; }
+        .ps-rating-1 { background: #fee2e2; color: #dc2626; }
+        .ps-rating-2 { background: #ffedd5; color: #ea580c; }
+        .ps-rating-3 { background: #fef9c3; color: #ca8a04; }
+        .ps-rating-4 { background: #dcfce7; color: #16a34a; }
+        .ps-rating-5 { background: #ccf5ec; color: #00C49A; }
+        .ps-empty { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+        .ps-empty i { font-size: 1.5rem; margin-bottom: 8px; display: block; opacity: 0.4; }
+
+        /* Player Stats Edit */
+        .ps-edit-card { margin-top: 24px; }
+        .ps-edit-card h4 { margin-top: 0; }
+        .ps-motm-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .ps-motm-row label { font-weight: 700; font-size: 0.85rem; color: var(--navy-dark); white-space: nowrap; }
+        .ps-motm-row select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; min-width: 200px; }
+        .ps-edit-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .ps-edit-table th { background: #f8fafc; padding: 8px 6px; text-align: center; font-weight: 700;
+            text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.3px; color: var(--text-secondary);
+            border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        .ps-edit-table th:first-child { text-align: left; }
+        .ps-edit-table td { padding: 6px 4px; text-align: center; border-bottom: 1px solid #f1f5f9; }
+        .ps-edit-table td:first-child { text-align: left; font-weight: 600; color: var(--navy-dark); white-space: nowrap; }
+        .ps-edit-table input[type="number"] { width: 52px; padding: 6px; border: 1px solid #e2e8f0; border-radius: 6px;
+            text-align: center; font-size: 0.82rem; }
+        .ps-edit-table input[type="number"]:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(2,132,199,0.1); }
+        .ps-edit-table input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        .ps-edit-table select { padding: 6px 4px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem; min-width: 90px; }
+        .ps-edit-table input[type="text"] { width: 80px; padding: 6px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem; }
+        .ps-edit-table tr.ps-row-disabled td { opacity: 0.4; }
+        .ps-edit-table tr.ps-row-disabled td:first-child,
+        .ps-edit-table tr.ps-row-disabled td:nth-child(2) { opacity: 1; }
+        .ps-select-all-btn { background: none; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 6px;
+            font-size: 0.8rem; cursor: pointer; color: var(--text-secondary); }
+        .ps-select-all-btn:hover { background: #f1f5f9; color: var(--navy-dark); }
+        .ps-pos-badge { display: inline-block; font-size: 0.78rem;
+            font-weight: 600; color: #64748b; margin-left: 6px; }
+
+        @media (max-width: 768px) {
+            .ps-edit-table input[type="text"] { width: 60px; }
+            .ps-edit-table input[type="number"] { width: 44px; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script type="module" crossorigin src="/assets/matchDetails-DrHjso6m.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/supabase-CNU450ah.js">
+  <link rel="modulepreload" crossorigin href="/assets/auth-Cf7XUdJT.js">
+  <link rel="modulepreload" crossorigin href="/assets/squad-manager-D2hlnoPD.js">
+  <link rel="modulepreload" crossorigin href="/assets/preload-helper-BlTxHScW.js">
+  <link rel="modulepreload" crossorigin href="/assets/rbac-LN74jxRk.js">
+  <link rel="modulepreload" crossorigin href="/assets/page-init-BoM5fSij.js">
+  <link rel="stylesheet" crossorigin href="/assets/squad-manager-yQOeqsqp.css">
+
+<style>
+  .sidebar-shell {
+    position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
+    background: #0D1B2A; z-index: 99;
+  }
+  /* Hide shell once real sidebar is loaded */
+  .sidebar ~ .sidebar-shell,
+  .sidebar-loaded .sidebar-shell { display: none; }
+  .sidebar-loaded::before { display: none !important; }
+  @media (max-width: 768px) { .sidebar-shell { display: none; } }
+</style>
+</head>
+
+<body>
+    <div class="app-container"><div class="sidebar-shell" aria-hidden="true"></div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <div style="margin-bottom: 24px;">
+                <a href="javascript:void(0)" onclick="window.history.back()" style="text-decoration: none; color: var(--text-secondary); font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-arrow-left"></i> Back to Matches
+                </a>
+            </div>
+
+
+            <header class="page-header">
+                <div class="header-info">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h2>Match Statistics</h2>
+                    </div>
+                    <p>Performance analysis data</p>
+                </div>
+                <div class="header-actions" style="display: flex; align-items: flex-end; gap: 12px;">
+                    <button class="dash-btn primary" id="btnToggleEdit" data-min-role="coach"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="dash-btn primary" id="btnSaveStats" style="display: none;"><i
+                            class="fas fa-save"></i>
+                        Save Report</button>
+                </div>
+            </header>
+
+            <!-- Display Mode -->
+            <div id="displayMode" class="section-card stats-container">
+
+                <!-- Match Plan (read-only view) -->
+                <div id="matchPlanSection" style="display: none; margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--navy-dark); margin: 0;"><i class="fas fa-chess-board" style="margin-right: 8px; opacity: 0.7;"></i>Match Plan</h3>
+                        <span style="background: #f0fdf4; color: #166534; padding: 4px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;">VIEW ONLY</span>
+                    </div>
+                    <div id="matchPlanContent"></div>
+                </div>
+
+                <!-- Match Report Display (Moved to Top) -->
+                <div id="matchReportSection"
+                    style="margin-bottom: 40px; padding-bottom: 30px; border-bottom: 1px solid #e2e8f0;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="color: var(--navy-dark); margin: 0;">Match Report</h3>
+                        <div id="viewReportFile">
+                            <button onclick="downloadReportPDF()" class="dash-btn outline sm"
+                                style="font-size: 0.85rem; padding: 6px 12px; cursor: pointer;">
+                                <i class="fas fa-file-pdf" style="color: #ef4444; margin-right: 6px;"></i> Download PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tactical Phases Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                        <!-- Timeline -->
+                        <div class="report-card" style="grid-column: span 2;">
+                            <h4
+                                style="font-size: 0.85rem; text-transform: uppercase; color: var(--navy-dark); margin-bottom: 12px; font-weight: 700; border-bottom: 2px solid var(--navy-dark); display: inline-block; padding-bottom: 4px;">
+                                Timeline / Key Events</h4>
+                            <div id="viewPhaseTimeline"
+                                style="font-size: 0.95rem; line-height: 1.6; color: var(--navy-dark); white-space: pre-wrap;">
+                                <em style="color: var(--text-secondary);">No notes added.</em>
+                            </div>
+                        </div>
+
+                        <!-- In Possession -->
+                        <div class="report-card">
+                            <h4
+                                style="font-size: 0.85rem; text-transform: uppercase; color: #10b981; margin-bottom: 12px; font-weight: 700; border-bottom: 2px solid #10b981; display: inline-block; padding-bottom: 4px;">
+                                In Possession (Attacking)</h4>
+                            <div id="viewPhaseInPossession"
+                                style="font-size: 0.95rem; line-height: 1.6; color: var(--navy-dark); white-space: pre-wrap;">
+                                <em style="color: var(--text-secondary);">No notes added.</em>
+                            </div>
+                        </div>
+
+                        <!-- Out of Possession -->
+                        <div class="report-card">
+                            <h4
+                                style="font-size: 0.85rem; text-transform: uppercase; color: #ef4444; margin-bottom: 12px; font-weight: 700; border-bottom: 2px solid #ef4444; display: inline-block; padding-bottom: 4px;">
+                                Out of Possession (Defending)</h4>
+                            <div id="viewPhaseOutPossession"
+                                style="font-size: 0.95rem; line-height: 1.6; color: var(--navy-dark); white-space: pre-wrap;">
+                                <em style="color: var(--text-secondary);">No notes added.</em>
+                            </div>
+                        </div>
+
+                        <!-- Transitions -->
+                        <div class="report-card">
+                            <h4
+                                style="font-size: 0.85rem; text-transform: uppercase; color: #f59e0b; margin-bottom: 12px; font-weight: 700; border-bottom: 2px solid #f59e0b; display: inline-block; padding-bottom: 4px;">
+                                Transitions (A-D & D-A)</h4>
+                            <div id="viewPhaseTransitions"
+                                style="font-size: 0.95rem; line-height: 1.6; color: var(--navy-dark); white-space: pre-wrap;">
+                                <em style="color: var(--text-secondary);">No notes added.</em>
+                            </div>
+                        </div>
+
+                        <!-- Set Pieces -->
+                        <div class="report-card">
+                            <h4
+                                style="font-size: 0.85rem; text-transform: uppercase; color: #6366f1; margin-bottom: 12px; font-weight: 700; border-bottom: 2px solid #6366f1; display: inline-block; padding-bottom: 4px;">
+                                Set Pieces</h4>
+                            <div id="viewPhaseSetPieces"
+                                style="font-size: 0.95rem; line-height: 1.6; color: var(--navy-dark); white-space: pre-wrap;">
+                                <em style="color: var(--text-secondary);">No notes added.</em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="statsListView">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px; padding: 0 4px;">
+                        <span id="viewStatsHomeName"
+                            style="font-weight: 700; color: var(--navy-dark); font-size: 0.95rem;"></span>
+                        <span id="viewStatsAwayName"
+                            style="font-weight: 700; color: var(--text-secondary); font-size: 0.95rem;"></span>
+                    </div>
+                    <!-- Stats will be injected here -->
+                </div>
+
+                <!-- Player Performance Display -->
+                <div class="player-stats-section" id="playerStatsDisplaySection">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div>
+                            <h3><i class="fas fa-users" style="margin-right: 8px; color: var(--primary);"></i>Player Performance</h3>
+                            <p class="ps-subtitle" id="playerStatsCount"></p>
+                        </div>
+                    </div>
+                    <div class="ps-table-wrap">
+                        <table class="ps-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Pos</th>
+                                    <th>Status</th>
+                                    <th>Mins</th>
+                                    <th>Goals</th>
+                                    <th>Assists</th>
+                                    <th><span style="display:inline-block;width:10px;height:14px;background:#facc15;border-radius:2px;vertical-align:middle;"></span> YC</th>
+                                    <th><span style="display:inline-block;width:10px;height:14px;background:#ef4444;border-radius:2px;vertical-align:middle;"></span> RC</th>
+                                    <th>Rating</th>
+                                    <th>MOTM</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playerStatsTableBody">
+                                <tr><td colspan="10" class="ps-empty"><i class="fas fa-clipboard-list"></i>No player stats recorded yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Match Summary Display -->
+                <div class="player-stats-section" id="matchSummaryDisplaySection">
+                    <h3><i class="fas fa-clipboard" style="margin-right: 8px; color: var(--primary);"></i>Match Summary</h3>
+                    <div id="matchSummaryDisplay" style="font-size: 0.95rem; line-height: 1.7; color: var(--navy-dark); white-space: pre-wrap; padding: 16px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; min-height: 60px;">
+                        <em style="color: var(--text-secondary);">No match summary added yet.</em>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <div id="editMode" class="edit-mode-container">
+
+                <!-- Split View Container: Stats (Left) + Lineups (Right) -->
+                <div class="edit-split-container">
+
+                    <!-- Match Stats Input -->
+                    <div class="edit-card">
+                        <h4>Match Statistics</h4>
+                        <form id="matchStatsForm">
+                            <div class="stats-grid-edit">
+                                <!-- Home Stats Col -->
+                                <div>
+                                    <h4 style="text-align: center; color: var(--navy-dark); font-size: 0.9rem;"
+                                        id="editHomeName">UP - Tuks
+                                    </h4>
+                                    <div class="edit-row"><label>Goals</label><input type="number" name="home_goals">
+                                    </div>
+                                    <div class="edit-row"><label>Shots</label><input type="number" name="home_shots">
+                                    </div>
+                                    <div class="edit-row"><label>On Target</label><input type="number"
+                                            name="home_shotsOnTarget"></div>
+                                    <div class="edit-row"><label>Corners</label><input type="number"
+                                            name="home_corners">
+                                    </div>
+                                    <div class="edit-row"><label>Fouls</label><input type="number" name="home_fouls">
+                                    </div>
+                                    <div class="edit-row"><label>Yellow Cards</label><input type="number"
+                                            name="home_yellowCards"></div>
+                                    <div class="edit-row"><label>Red Cards</label><input type="number"
+                                            name="home_redCards">
+                                    </div>
+                                </div>
+
+                                <!-- Away Stats Col -->
+                                <div>
+                                    <h4 style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;"
+                                        id="editOpponentName">Opponent</h4>
+                                    <div class="edit-row"><input type="number" name="away_goals"><label>Goals</label>
+                                    </div>
+                                    <div class="edit-row"><input type="number" name="away_shots"><label>Shots</label>
+                                    </div>
+                                    <div class="edit-row"><input type="number" name="away_shotsOnTarget"><label>On
+                                            Target</label></div>
+                                    <div class="edit-row"><input type="number"
+                                            name="away_corners"><label>Corners</label>
+                                    </div>
+                                    <div class="edit-row"><input type="number" name="away_fouls"><label>Fouls</label>
+                                    </div>
+                                    <div class="edit-row"><input type="number" name="away_yellowCards"><label>Yellow
+                                            Cards</label></div>
+                                    <div class="edit-row"><input type="number" name="away_redCards"><label>Red
+                                            Cards</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+                <div class="edit-card">
+                    <h4>Timeline / Key Events</h4>
+                    <div class="rich-text-container">
+                        <div class="toolbar">
+                            <button data-cmd="bold"><i class="fas fa-bold"></i></button>
+                            <button data-cmd="italic"><i class="fas fa-italic"></i></button>
+                            <button data-cmd="underline"><i class="fas fa-underline"></i></button>
+                            <button data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                            <button data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                        </div>
+                        <div class="editor" contenteditable="true" id="editor_timeline"></div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="edit-card">
+                        <h4 style="color: var(--success);">In Possession</h4>
+                        <div class="rich-text-container">
+                            <div class="toolbar">
+                                <button data-cmd="bold"><i class="fas fa-bold"></i></button>
+                                <button data-cmd="italic"><i class="fas fa-italic"></i></button>
+                                <button data-cmd="underline"><i class="fas fa-underline"></i></button>
+                                <button data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                                <button data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                            </div>
+                            <div class="editor" contenteditable="true" id="editor_in_possession"></div>
+                        </div>
+                    </div>
+
+                    <div class="edit-card">
+                        <h4 style="color: var(--danger);">Out of Possession</h4>
+                        <div class="rich-text-container">
+                            <div class="toolbar">
+                                <button data-cmd="bold"><i class="fas fa-bold"></i></button>
+                                <button data-cmd="italic"><i class="fas fa-italic"></i></button>
+                                <button data-cmd="underline"><i class="fas fa-underline"></i></button>
+                                <button data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                                <button data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                            </div>
+                            <div class="editor" contenteditable="true" id="editor_out_possession"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div class="edit-card">
+                        <h4 style="color: var(--warning);">Transitions</h4>
+                        <div class="rich-text-container">
+                            <div class="toolbar">
+                                <button data-cmd="bold"><i class="fas fa-bold"></i></button>
+                                <button data-cmd="italic"><i class="fas fa-italic"></i></button>
+                                <button data-cmd="underline"><i class="fas fa-underline"></i></button>
+                                <button data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                                <button data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                            </div>
+                            <div class="editor" contenteditable="true" id="editor_transitions"></div>
+                        </div>
+                    </div>
+
+                    <div class="edit-card">
+                        <h4 style="color: var(--navy-dark);">Set Pieces</h4>
+                        <div class="rich-text-container">
+                            <div class="toolbar">
+                                <button data-cmd="bold"><i class="fas fa-bold"></i></button>
+                                <button data-cmd="italic"><i class="fas fa-italic"></i></button>
+                                <button data-cmd="underline"><i class="fas fa-underline"></i></button>
+                                <button data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                                <button data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                            </div>
+                            <div class="editor" contenteditable="true" id="editor_set_pieces"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Squad Source Banner -->
+                <div id="squadSourceBanner" class="edit-card" style="margin-bottom: 0; display: none;">
+                    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                        <div id="squadSourceIcon" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem;"></div>
+                        <div style="flex:1;min-width:200px;">
+                            <div id="squadSourceTitle" style="font-weight:700;font-size:0.9rem;color:var(--navy-dark);"></div>
+                            <div id="squadSourceSubtitle" style="font-size:0.8rem;color:var(--text-secondary);"></div>
+                        </div>
+                        <div id="squadQuickActions" style="display:flex;gap:8px;flex-wrap:wrap;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Player Performance Edit -->
+                <div class="edit-card ps-edit-card">
+                    <h4><i class="fas fa-users" style="margin-right: 8px; color: var(--primary);"></i>Player Performance</h4>
+                    <div class="ps-motm-row">
+                        <label><i class="fas fa-trophy" style="color: #f59e0b; margin-right: 4px;"></i> Man of the Match:</label>
+                        <select id="motmSelect">
+                            <option value="">-- None --</option>
+                        </select>
+                        <button type="button" class="ps-select-all-btn" id="btnSelectAllAppeared">
+                            <i class="fas fa-check-double"></i> Set All Started (90')
+                        </button>
+                    </div>
+                    <div class="ps-table-wrap">
+                        <table class="ps-edit-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Status</th>
+                                    <th>Mins</th>
+                                    <th>Goals</th>
+                                    <th>Assists</th>
+                                    <th>Cautions</th>
+                                    <th>Rating</th>
+                                    <th style="width:40px;"></th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playerStatsEditBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Match Summary Edit -->
+                <div class="edit-card" style="margin-top: 24px;">
+                    <h4><i class="fas fa-clipboard" style="margin-right: 8px; color: var(--primary);"></i>Match Summary</h4>
+                    <textarea id="matchSummaryEdit" style="width:100%;min-height:140px;padding:14px;border:1px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:0.9rem;resize:vertical;background:#f8fafc;" placeholder="Overall match summary — key observations, tactical takeaways, areas for improvement..."></textarea>
+                </div>
+
+            </div>
+    </div>
+    </main>
+    </div>
+
+
+</body>
+
+</html>
