@@ -1,0 +1,11 @@
+-- ============================================================
+-- Migration 008: Financials & Invoicing Module
+-- ALREADY RUN via Supabase MCP — this file is for reference only.
+-- ============================================================
+-- Tables: pricing_rules, invoices
+-- RLS: club-scoped read/write + platform admin cross-club read
+-- Indexes: club_id, month, player_id
+-- ============================================================
+
+-- See mcp__supabase__execute_sql call in conversation for the exact SQL that was run.
+-- Tables are live in the database.

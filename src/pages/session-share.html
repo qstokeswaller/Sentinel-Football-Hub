@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session Plan | Sentinel Football Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/session-share.css">
+</head>
+
+<body>
+    <div class="share-container">
+        <!-- Loading state -->
+        <div id="shareLoading" class="share-loading">
+            <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#3b82f6;"></i>
+            <p>Loading session...</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="shareError" class="share-error" style="display:none;">
+            <i class="fas fa-exclamation-circle" style="font-size:2.5rem;color:#ef4444;"></i>
+            <h2>Session Not Found</h2>
+            <p id="shareErrorMsg">This share link may have expired or been revoked.</p>
+        </div>
+
+        <!-- Session content -->
+        <div id="shareContent" style="display:none;">
+            <div class="share-header" id="shareHeader"></div>
+            <div class="share-body" id="shareBody"></div>
+        </div>
+
+        <div class="share-footer">
+            <p>Powered by <strong>Sentinel Football Hub</strong></p>
+        </div>
+    </div>
+
+    <script type="module" src="../js/session-share.js"></script>
+</body>
+
+</html>

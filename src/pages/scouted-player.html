@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scouted Player | Sentinel Football Hub</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ── Player header card (like FootballISM evaluation header) ── */
+        .sp-header {
+            display: flex; gap: 24px; align-items: flex-start;
+            background: var(--bg-card); border-radius: var(--radius-xl); padding: 24px;
+            border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);
+            margin-bottom: 20px; position: relative;
+        }
+        .sp-avatar {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #ccf5ec, #e6f9f4);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 1.8rem; color: var(--primary); flex-shrink: 0;
+            border: 3px solid #fff; box-shadow: 0 0 0 2px #80e8d3;
+        }
+        .sp-info { flex: 1; }
+        .sp-info h1 { font-size: 1.4rem; font-weight: 700; color: var(--text-dark); margin: 0 0 4px; }
+        .sp-info .sp-pos { font-size: 0.9rem; color: var(--text-medium); font-weight: 500; }
+        .sp-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px; font-size: 0.82rem; color: var(--text-medium); }
+        .sp-meta span { display: flex; align-items: center; gap: 5px; }
+
+        /* Global avg circle in header (like FootballISM top-right) */
+        .sp-global-avg {
+            position: absolute; top: 20px; right: 24px;
+            width: 56px; height: 56px; border-radius: 50%;
+            border: 3px solid; display: flex; align-items: center;
+            justify-content: center; font-weight: 800; font-size: 1.1rem;
+        }
+
+        /* ── Header action buttons ── */
+        .sp-header-actions {
+            position: absolute; bottom: 20px; right: 24px;
+            display: flex; gap: 8px;
+        }
+
+        /* ── Status bar ── */
+        .sp-status-bar {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            background: var(--bg-card); border-radius: var(--radius-lg); padding: 14px 20px;
+            border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+        }
+        .sp-status-bar .label { font-size: 0.82rem; font-weight: 600; color: #475569; }
+        .sp-status-btn {
+            padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border-light);
+            font-size: 0.82rem; font-weight: 600; cursor: pointer; background: #fff;
+            transition: all 0.15s;
+        }
+        .sp-status-btn.active { color: #fff; }
+        .sp-status-btn:hover { opacity: 0.85; }
+
+        /* ── Two-column content ── */
+        .sp-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .sp-radar-card, .sp-panel {
+            background: var(--bg-card); border-radius: var(--radius-xl); padding: 24px;
+            border: 1px solid var(--border-light); box-shadow: var(--shadow-sm);
+        }
+        .sp-radar-card h3, .sp-panel h3 {
+            font-size: 1rem; font-weight: 700; color: var(--text-dark); margin: 0 0 16px;
+        }
+        .radar-svg { width: 100%; max-width: 320px; margin: 0 auto; display: block; }
+
+        /* ── Tabs ── */
+        .sp-tabs {
+            display: inline-flex; background: #f1f5f9; border-radius: 10px;
+            padding: 3px; gap: 2px; margin-bottom: 16px;
+        }
+        .sp-tab {
+            padding: 7px 16px; border: none; border-radius: 8px;
+            background: transparent; color: var(--text-medium); font-size: 0.85rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .sp-tab:hover { color: #0f172a; }
+        .sp-tab.active {
+            background: white; color: #0f172a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* ── Report cards ── */
+        .report-card {
+            padding: 14px; border: 1px solid var(--border-light); border-radius: 12px;
+            margin-bottom: 10px; cursor: pointer; transition: all 0.15s;
+        }
+        .report-card:hover { background: #f8fafc; border-color: var(--primary-light); }
+        .report-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .report-type-badge {
+            padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase;
+        }
+        .report-type-badge.quick { background: rgba(96,165,250,0.12); color: #60a5fa; }
+        .report-type-badge.full { background: rgba(139,92,246,0.12); color: #8b5cf6; }
+        .report-card-date { font-size: 0.78rem; color: var(--text-light); }
+        .report-card-scout { font-size: 0.78rem; color: var(--text-medium); }
+        .report-card-avg { font-weight: 700; font-size: 0.9rem; }
+        .report-verdict-inline {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 0.7rem; font-weight: 600; margin-left: 6px;
+        }
+
+        /* Report detail expand */
+        .report-detail { display: none; padding: 14px; background: #f8fafc; border-radius: 10px; margin-bottom: 10px; }
+        .report-detail.open { display: block; }
+        .rd-section { margin-bottom: 10px; }
+        .rd-section-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 6px; }
+        .rd-row { display: flex; justify-content: space-between; font-size: 0.78rem; padding: 3px 0; }
+        .rd-row .val { font-weight: 600; }
+        .rd-feedback { margin-top: 10px; font-size: 0.82rem; color: #475569; }
+        .rd-feedback strong { display: block; font-size: 0.78rem; color: var(--text-light); margin-bottom: 2px; }
+
+        /* ── Videos section ── */
+        .video-card {
+            display: flex; align-items: center; gap: 12px; padding: 12px;
+            border: 1px solid var(--border-light); border-radius: 12px;
+            margin-bottom: 8px; transition: background 0.12s;
+        }
+        .video-card:hover { background: #f8fafc; }
+        .video-card-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: rgba(0,196,154,0.1); display: flex;
+            align-items: center; justify-content: center;
+            color: var(--primary); font-size: 1rem; flex-shrink: 0;
+        }
+        .video-card-info { flex: 1; }
+        .video-card-title { font-size: 0.88rem; font-weight: 600; color: var(--text-dark); }
+        .video-card-date { font-size: 0.72rem; color: var(--text-light); }
+
+        /* ── Notes ── */
+        .sp-notes textarea {
+            width: 100%; min-height: 120px;
+            background: #f8fafc; border: 2px solid #eef2f6; border-radius: 16px;
+            padding: 14px 18px; font-size: 1rem; color: var(--navy-dark);
+            font-family: inherit; resize: vertical; font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sp-notes textarea:focus {
+            background: #fff; border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0,196,154,0.1); outline: none;
+        }
+
+        .sp-actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+
+        /* ── Report modal rating rows ── */
+        .report-section-title {
+            font-size: 0.9rem; font-weight: 700; margin: 16px 0 8px; padding: 6px 0;
+            border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 8px;
+        }
+        .report-section-title i { font-size: 0.85rem; }
+        .rating-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 0; border-bottom: 1px solid #f8fafc;
+        }
+        .rating-row label { font-size: 0.82rem; color: #475569; flex: 1; margin: 0; }
+        .rating-stars { display: flex; gap: 4px; }
+        .rating-stars button {
+            width: 28px; height: 28px; border: 1px solid #e2e8f0; border-radius: 6px;
+            background: #fff; cursor: pointer; font-size: 0.72rem; font-weight: 600;
+            color: #94a3b8; transition: all 0.15s;
+        }
+        .rating-stars button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .rating-stars button:hover { border-color: var(--primary); }
+
+        @media (max-width: 768px) {
+            .sp-header { flex-direction: column; align-items: center; text-align: center; padding: 18px 16px; }
+            .sp-meta { justify-content: center; }
+            .sp-content { grid-template-columns: 1fr; }
+            .sp-global-avg { position: static; margin: 12px auto 0; }
+            .sp-header-actions { position: static; justify-content: center; margin-top: 12px; }
+            .sp-status-bar { justify-content: center; padding: 12px; gap: 6px; }
+            .sp-status-btn { padding: 5px 12px; font-size: 0.75rem; }
+            .sp-radar-card, .sp-panel { padding: 16px; }
+            .radar-svg { max-width: 100%; }
+            .report-detail .rd-section { font-size: 0.75rem; }
+            .report-detail > div:first-child { grid-template-columns: 1fr !important; }
+            .modal-container { margin: 8px; max-width: calc(100vw - 16px) !important; }
+            .bubble-grid-2 { grid-template-columns: 1fr !important; }
+            .rating-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <div class="content-area" style="max-width: 1000px; margin: 0 auto; padding: 24px;">
+                <a href="/src/pages/scouting.html" class="dash-btn outline sm" style="margin-bottom:16px; text-decoration:none;">
+                    <i class="fas fa-arrow-left" style="margin-right:4px;"></i> Back to Scouting
+                </a>
+
+                <div class="sp-header" id="spHeader">
+                    <div class="sp-avatar" id="spAvatar"></div>
+                    <div class="sp-info" id="spInfo"></div>
+                    <div class="sp-global-avg" id="spGlobalAvg" style="display:none;"></div>
+                    <div class="sp-header-actions" id="spHeaderActions"></div>
+                </div>
+
+                <div class="sp-status-bar" id="spStatusBar"></div>
+
+                <div class="sp-content">
+                    <div class="sp-radar-card">
+                        <h3><i class="fas fa-chart-pie" style="color:var(--primary);margin-right:6px;"></i>Performance Overview</h3>
+                        <svg class="radar-svg" id="radarChart" viewBox="0 0 440 320"></svg>
+                        <div id="radarLegend" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px;font-size:0.75rem;"></div>
+                    </div>
+
+                    <div class="sp-panel">
+                        <div class="sp-tabs">
+                            <button class="sp-tab active" data-tab="reports">Reports</button>
+                            <button class="sp-tab" data-tab="videos">Videos</button>
+                            <button class="sp-tab" data-tab="notes">Notes</button>
+                        </div>
+
+                        <!-- Reports Tab -->
+                        <div id="tabReports">
+                            <p style="font-size:0.75rem;color:#94a3b8;margin:0 0 8px;">Add a new scouting report:</p>
+                            <div style="display:flex;gap:8px;margin-bottom:16px;">
+                                <button class="dash-btn outline sm" id="btnAddQuickReport" style="border-color:#60a5fa;color:#3b82f6;"><i class="fas fa-bolt" style="margin-right:4px;"></i>+ Quick Report</button>
+                                <button class="dash-btn outline sm" id="btnAddFullReport" style="border-color:#a78bfa;color:#7c3aed;"><i class="fas fa-file-alt" style="margin-right:4px;"></i>+ Full Report</button>
+                            </div>
+                            <div id="reportsList"></div>
+                        </div>
+
+                        <!-- Videos Tab -->
+                        <div id="tabVideos" style="display:none;">
+                            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                                <button class="dash-btn primary sm" id="btnAddVideo"><i class="fas fa-video" style="margin-right:4px;"></i>Add Video</button>
+                            </div>
+                            <div id="videosList"></div>
+                        </div>
+
+                        <!-- Notes Tab -->
+                        <div id="tabNotes" style="display:none;">
+                            <div class="sp-notes">
+                                <textarea id="playerNotes" placeholder="Add notes about this player..."></textarea>
+                                <button class="dash-btn primary sm" id="btnSaveNotes" style="margin-top:8px;">Save Notes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sp-actions" id="spActions"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Promote Modal -->
+    <div class="modal-overlay" id="promoteModal">
+        <div class="modal-container modal-bubble" style="max-width: 420px;">
+            <div class="modal-header-bubble">
+                <h2>Promote to Squad</h2>
+                <button class="btn-close-modal" id="btnCancelPromote">&times;</button>
+            </div>
+            <div class="modal-body-bubble">
+                <p style="font-size:0.9rem;color:var(--text-medium);margin-bottom:16px;">Select a squad to add this player to your club roster.</p>
+                <div class="form-group-bubble">
+                    <label>Squad</label>
+                    <select id="promoteSquadSelect" class="form-control-bubble">
+                        <option value="">Select squad...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline btn-close-modal-cancel">Cancel</button>
+                <button class="dash-btn primary" id="btnConfirmPromote">Promote</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Video Modal -->
+    <div class="modal-overlay" id="videoModal">
+        <div class="modal-container modal-bubble" style="max-width: 480px;">
+            <div class="modal-header-bubble">
+                <h2>Add Video</h2>
+                <button class="btn-close-modal" id="btnCancelVideo">&times;</button>
+            </div>
+            <div class="modal-body-bubble">
+                <div class="form-group-bubble">
+                    <label>Video Title *</label>
+                    <input type="text" id="videoTitle" class="form-control-bubble" placeholder="e.g. U17 League Highlights vs Sundowns">
+                </div>
+                <div class="form-group-bubble">
+                    <label>Video URL *</label>
+                    <input type="url" id="videoUrl" class="form-control-bubble" placeholder="https://youtube.com/watch?v=...">
+                </div>
+            </div>
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline btn-close-modal-cancel">Cancel</button>
+                <button class="dash-btn primary" id="btnSaveVideo">Save Video</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Report Modal -->
+    <div class="modal-overlay" id="quickReportModal">
+        <div class="modal-container modal-bubble" style="max-width: 620px;">
+            <div class="modal-header-bubble">
+                <h2>Quick Scouting Report</h2>
+                <button class="btn-close-modal" id="btnCancelQR">&times;</button>
+            </div>
+            <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+                <input type="hidden" id="qrPlayerId">
+                <div class="bubble-grid-2">
+                    <div class="form-group-bubble">
+                        <label>Match / Context</label>
+                        <input type="text" id="qrMatchContext" class="form-control-bubble" placeholder="e.g. U17 League vs Sundowns">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Date</label>
+                        <input type="date" id="qrDate" class="form-control-bubble">
+                    </div>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Verdict (Final Evaluation)</label>
+                    <select id="qrVerdict" class="form-control-bubble">
+                        <option value="">Select verdict...</option>
+                        <option value="sign">Sign</option>
+                        <option value="trial">Trial</option>
+                        <option value="monitor">Monitor</option>
+                        <option value="shadow">Shadow-player</option>
+                        <option value="loan">Loan</option>
+                        <option value="reject">Reject</option>
+                    </select>
+                </div>
+                <div id="qrSections"></div>
+                <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 20px 0;">
+                <h3 style="font-size: 0.95rem; color: var(--navy-dark); margin: 0 0 12px 0;">Feedback</h3>
+                <div class="form-group-bubble">
+                    <label>Strengths</label>
+                    <textarea id="qrStrengths" class="form-control-bubble" rows="2"></textarea>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Weaknesses</label>
+                    <textarea id="qrWeaknesses" class="form-control-bubble" rows="2"></textarea>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Recommendation</label>
+                    <textarea id="qrRecommendation" class="form-control-bubble" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline btn-close-modal-cancel">Cancel</button>
+                <button class="dash-btn primary" id="btnSaveQR">Save Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Report Modal -->
+    <div class="modal-overlay" id="fullReportModal">
+        <div class="modal-container modal-bubble" style="max-width: 660px;">
+            <div class="modal-header-bubble">
+                <h2>Full Scouting Report</h2>
+                <button class="btn-close-modal" id="btnCancelFR">&times;</button>
+            </div>
+            <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+                <input type="hidden" id="frPlayerId">
+                <div class="bubble-grid-2">
+                    <div class="form-group-bubble">
+                        <label>Match / Context</label>
+                        <input type="text" id="frMatchContext" class="form-control-bubble" placeholder="e.g. Tournament Final">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Date</label>
+                        <input type="date" id="frDate" class="form-control-bubble">
+                    </div>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Verdict (Final Evaluation)</label>
+                    <select id="frVerdict" class="form-control-bubble">
+                        <option value="">Select verdict...</option>
+                        <option value="sign">Sign</option>
+                        <option value="trial">Trial</option>
+                        <option value="monitor">Monitor</option>
+                        <option value="shadow">Shadow-player</option>
+                        <option value="loan">Loan</option>
+                        <option value="reject">Reject</option>
+                    </select>
+                </div>
+                <div id="frSections"></div>
+                <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 20px 0;">
+                <h3 style="font-size: 0.95rem; color: var(--navy-dark); margin: 0 0 12px 0;">Feedback</h3>
+                <div class="form-group-bubble">
+                    <label>Strengths</label>
+                    <textarea id="frStrengths" class="form-control-bubble" rows="2"></textarea>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Weaknesses</label>
+                    <textarea id="frWeaknesses" class="form-control-bubble" rows="2"></textarea>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Recommendation</label>
+                    <textarea id="frRecommendation" class="form-control-bubble" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline btn-close-modal-cancel">Cancel</button>
+                <button class="dash-btn primary" id="btnSaveFR">Save Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Player Modal -->
+    <div class="modal-overlay" id="editPlayerModal">
+        <div class="modal-container modal-bubble" style="max-width: 580px;">
+            <div class="modal-header-bubble">
+                <h2>Edit Player Info</h2>
+                <button class="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+                <div class="bubble-grid-2">
+                    <div class="form-group-bubble">
+                        <label>Full Name *</label>
+                        <input type="text" id="epName" class="form-control-bubble" required>
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Date of Birth</label>
+                        <input type="date" id="epDob" class="form-control-bubble">
+                    </div>
+                </div>
+                <div class="bubble-grid-2">
+                    <div class="form-group-bubble">
+                        <label>Position</label>
+                        <select id="epPosition" class="form-control-bubble"><option value="">Select...</option></select>
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Preferred Foot</label>
+                        <select id="epFoot" class="form-control-bubble"><option value="">Select...</option></select>
+                    </div>
+                </div>
+                <hr style="border:0;border-top:1px solid var(--border-light);margin:24px 0;">
+                <h3 style="font-size:0.95rem;color:var(--navy-dark);margin:0 0 16px 0;">Physical Specs</h3>
+                <div class="bubble-grid-2">
+                    <div class="form-group-bubble">
+                        <label>Height (cm)</label>
+                        <input type="number" id="epHeight" class="form-control-bubble" placeholder="e.g. 178">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="epWeight" class="form-control-bubble" placeholder="e.g. 72">
+                    </div>
+                </div>
+                <hr style="border:0;border-top:1px solid var(--border-light);margin:24px 0;">
+                <h3 style="font-size:0.95rem;color:var(--navy-dark);margin:0 0 16px 0;">Club & Agent Info</h3>
+                <div class="bubble-grid-2">
+                    <div class="form-group-bubble">
+                        <label>Current Club</label>
+                        <input type="text" id="epCurrentClub" class="form-control-bubble">
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Current Team</label>
+                        <input type="text" id="epCurrentTeam" class="form-control-bubble">
+                    </div>
+                </div>
+                <div class="bubble-grid-2">
+                    <div class="form-group-bubble">
+                        <label>Target Squad</label>
+                        <select id="epTargetSquad" class="form-control-bubble"><option value="">Not assigned</option></select>
+                    </div>
+                    <div class="form-group-bubble">
+                        <label>Agent Name</label>
+                        <input type="text" id="epAgentName" class="form-control-bubble">
+                    </div>
+                </div>
+                <div class="form-group-bubble">
+                    <label>Agent Contact</label>
+                    <input type="text" id="epAgentContact" class="form-control-bubble" placeholder="Phone or email">
+                </div>
+            </div>
+            <div class="modal-footer-bubble">
+                <button class="dash-btn outline btn-close-modal-cancel">Cancel</button>
+                <button class="dash-btn primary" id="btnSaveEditPlayer">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initSidebar } from '../sidebar.js';
+        import { requireAuth, getProfile } from '../auth.js';
+        import { initScoutedPlayerUI } from '../js/scouted-player-ui.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initSidebar('scouting');
+            const user = await requireAuth();
+            if (!user) return;
+            const profile = await getProfile();
+            if (!profile) return;
+            initScoutedPlayerUI(profile);
+            const mc = document.querySelector('.main-content');
+            if (mc) mc.classList.add('page-ready');
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Sentinel Football Hub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+    <style>
+        /* ── Calendar Mode Tabs ── */
+        .cal-mode-tabs {
+            display: inline-flex;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .cal-mode-tab {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: #64748b;
+            background: transparent;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cal-mode-tab:hover { color: #0f172a; }
+        .cal-mode-tab.active {
+            background: white;
+            color: #0f172a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .cal-mode-tab[data-mode="attendance"].active {
+            background: var(--primary, #00C49A);
+            color: white;
+        }
+
+        /* ── Attendance Panel ── */
+        .attendance-panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+            animation: attFadeIn 0.25s ease;
+        }
+        @keyframes attFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .session-info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .session-info-bar .info-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.85rem; color: #475569;
+        }
+        .session-info-bar .info-item i { color: #00C49A; width: 16px; text-align: center; }
+        .session-info-bar .info-item strong { color: #0f172a; }
+
+        /* ── Player Chips ── */
+        .register-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+        .reg-chip {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px; border-radius: 10px;
+            border: 2px solid #d1fae5; background: #ecfdf5;
+            cursor: pointer; transition: all 0.15s ease;
+            font-size: 0.85rem; font-weight: 600; color: #065f46;
+            user-select: none;
+        }
+        .reg-chip:hover { filter: brightness(0.96); }
+        .reg-chip .chip-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #a7f3d0; color: #065f46;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800;
+        }
+        .reg-chip .chip-pos {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            color: #6ee7b7; letter-spacing: 0.3px;
+        }
+        .reg-chip .chip-status { font-size: 0.75rem; margin-left: auto; }
+
+        /* Absent state */
+        .reg-chip.absent { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+        .reg-chip.absent .chip-avatar { background: #fca5a5; color: #991b1b; }
+        .reg-chip.absent .chip-pos { color: #fca5a5; }
+        .reg-chip.absent .chip-name { text-decoration: line-through; }
+
+        /* ── Counter ── */
+        .attendance-counter {
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 16px; background: #f0fdf4;
+            border: 1px solid #bbf7d0; border-radius: 10px;
+            margin-top: 16px; font-weight: 700; font-size: 0.9rem;
+        }
+        .attendance-counter .present-count { color: #166534; }
+        .attendance-counter .absent-count { color: #dc2626; }
+        .attendance-counter .separator { color: #94a3b8; }
+
+        /* ── Completed badge on calendar bubbles ── */
+        .calendar-bubble .att-check {
+            display: inline-block; margin-left: 4px;
+            font-size: 0.6rem; color: #fff; opacity: 0.85;
+        }
+        .mcal-detail-row .att-check {
+            color: #10b981; font-size: 0.85rem; flex-shrink: 0; margin-left: auto;
+        }
+
+        /* ── Squad selector row ── */
+        .squad-selector-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+        }
+        .squad-selector-row label {
+            font-size: 0.8rem; font-weight: 700; color: #475569;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .squad-selector-row select {
+            padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0;
+            font-size: 0.85rem; font-weight: 600; background: white; min-width: 180px;
+        }
+
+        /* ── Notes + Save row ── */
+        .save-row { margin-top: 20px; }
+        .save-row .notes-wrap label {
+            font-size: 0.75rem; font-weight: 700; color: #64748b;
+            text-transform: uppercase; letter-spacing: 0.3px;
+            display: block; margin-bottom: 6px;
+        }
+        .save-row .input-row {
+            display: flex; align-items: stretch; gap: 16px;
+        }
+        .save-row textarea {
+            flex: 1; padding: 10px 14px; border-radius: 10px;
+            border: 1px solid #e2e8f0; font-family: 'Inter', sans-serif;
+            font-size: 0.85rem; resize: vertical; min-height: 44px; max-height: 100px;
+            box-sizing: border-box;
+        }
+        .save-row #btnSaveAttendance {
+            white-space: nowrap;
+            border-radius: 10px;
+            padding: 0 24px;
+            height: auto;
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* ── Add Player Search Results ── */
+        .add-player-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; cursor: pointer; border-radius: 8px;
+            font-size: 0.84rem; transition: background 0.1s;
+        }
+        .add-player-item:hover { background: #f0fdf4; }
+        .add-player-item .api-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #e2e8f0; color: #475569; font-size: 0.7rem;
+            font-weight: 700; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0;
+        }
+        .add-player-item .api-name { font-weight: 600; color: #0f172a; }
+        .add-player-item .api-meta { font-size: 0.75rem; color: #94a3b8; }
+
+        /* ── Saved status indicator ── */
+        .saved-indicator {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 700;
+            background: #dcfce7; color: #166534;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .session-info-bar { flex-direction: column; gap: 8px; }
+            .save-row .input-row { flex-direction: column; align-items: stretch; }
+            .squad-selector-row { flex-direction: column; align-items: flex-start; }
+            .cal-mode-tabs { width: 100%; }
+            .cal-mode-tab { flex: 1; justify-content: center; }
+        }
+        /* Calendar Add dropdown */
+        .cal-add-dropdown { display:none; position:absolute; top:100%; right:0; margin-top:6px; background:var(--bg-card); border:1px solid var(--border-light); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:100; min-width:180px; overflow:hidden; }
+        .cal-add-dropdown.show { display:block; }
+        .cal-add-dropdown button { display:flex; align-items:center; gap:10px; width:100%; padding:11px 16px; border:none; background:none; font-family:inherit; font-size:0.84rem; font-weight:500; color:var(--text-primary); cursor:pointer; transition:background 0.1s; }
+        .cal-add-dropdown button:hover { background:var(--bg-body); }
+        .cal-add-dropdown button i { width:16px; text-align:center; color:var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar injected by JS -->
+
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-info" style="display: flex; align-items: center; gap: 12px;">
+                    <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1>Command Center</h1>
+                        <p id="welcome-msg">Welcome back, Coach. Here's what's happening today.</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <span id="current-date" style="font-size:14px;font-weight:600;color:var(--text-medium);background:white;padding:8px 16px;border-radius:20px;box-shadow:var(--shadow-sm);">Loading date...</span>
+                </div>
+            </header>
+
+            <!-- Global Search -->
+            <div style="padding:0 24px 16px;position:relative;" id="dashSearchWrap">
+                <div style="position:relative;max-width:480px;">
+                    <i class="fas fa-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.8rem;pointer-events:none;"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Search players, matches, squads..." autocomplete="off"
+                        style="width:100%;padding:10px 14px 10px 38px;border:1px solid var(--border-light);border-radius:12px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);box-sizing:border-box;outline:none;transition:border-color 0.15s;"
+                        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor=''">
+                </div>
+                <div id="globalSearchResults" style="position:absolute;top:100%;left:24px;right:24px;max-width:480px;max-height:300px;overflow-y:auto;background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;display:none;"></div>
+            </div>
+
+            <div class="dash-grid">
+                <div class="dash-card">
+                    <div class="dash-card-icon blue"><i class="fas fa-plus"></i></div>
+                    <h3>Plan a Session</h3>
+                    <p>Create a new training session plan from scratch or based on a template.</p>
+                    <a href="/src/pages/planner.html" class="dash-btn primary">Start Planning <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-card-icon green"><i class="fas fa-pen-nib"></i></div>
+                    <h3>Reports</h3>
+                    <p>Write a reflection report for a completed session. Log attendance and notes.</p>
+                    <a href="/src/pages/reports.html?action=new" class="dash-btn primary">Create Report <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-card-icon orange"><i class="fas fa-book-open"></i></div>
+                    <h3>Browse Library</h3>
+                    <p>Access your database of saved sessions and drills.</p>
+                    <a href="/src/pages/library.html" class="dash-btn outline">Go to Library</a>
+                </div>
+                <div class="dash-card">
+                    <div class="dash-card-icon purple"><i class="fas fa-users"></i></div>
+                    <h3>Squad Management</h3>
+                    <p>Manage players, view availability status, and update profiles.</p>
+                    <a href="/src/pages/squad.html" class="dash-btn outline">View Squad</a>
+                </div>
+            </div>
+
+            <!-- Training Calendar -->
+            <div class="activity-section" style="margin-top: 24px;">
+                <div class="activity-header">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="cal-mode-tabs">
+                            <button class="cal-mode-tab active" data-mode="calendar" onclick="window._switchCalMode('calendar')">
+                                <i class="fas fa-calendar-alt"></i> Calendar
+                            </button>
+                            <button class="cal-mode-tab" data-mode="attendance" onclick="window._switchCalMode('attendance')">
+                                <i class="fas fa-clipboard-check"></i> Attendance
+                            </button>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button class="btn-ghost" onclick="window._changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <span id="calendar-month-year" style="font-weight: 700; min-width: 140px; text-align: center; display: inline-block;">Month Year</span>
+                        <button class="btn-ghost" onclick="window._changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                        <div data-min-role="coach" style="position:relative;margin-left:12px;" id="calAddDropdown">
+                            <button class="dash-btn primary" onclick="document.getElementById('calAddMenu').classList.toggle('show')" style="border-radius:9999px;padding:8px 18px;font-size:0.85rem;display:flex;align-items:center;gap:6px;">
+                                <i class="fas fa-plus"></i> Add <i class="fas fa-caret-down" style="font-size:0.7rem;margin-left:2px;"></i>
+                            </button>
+                            <div id="calAddMenu" class="cal-add-dropdown">
+                                <button onclick="window._openAddEvent(); document.getElementById('calAddMenu').classList.remove('show');">
+                                    <i class="fas fa-calendar-plus"></i> Add Event
+                                </button>
+                                <button onclick="window._openQuickSession(); document.getElementById('calAddMenu').classList.remove('show');">
+                                    <i class="fas fa-bolt"></i> Quick Session
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Attendance mode hint -->
+                <div id="attendanceModeHint" style="display:none; padding: 10px 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; margin-bottom: 12px; font-size: 0.82rem; color: #1e40af; display: none;">
+                    <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
+                    Click a <strong>session</strong> on the calendar to mark attendance. Sessions with <i class="fas fa-check-circle" style="color:#10b981;"></i> already have recorded attendance.
+                </div>
+                <div id="calendar-container" class="calendar-grid-container">
+                    <!-- Calendar injected by JS -->
+                </div>
+            </div>
+
+            <!-- Attendance Panel (hidden until session clicked in attendance mode) -->
+            <div id="attendancePanel" style="display: none;">
+                <div class="attendance-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800; color: #0f172a;">
+                            <i class="fas fa-user-check" style="color: var(--primary); margin-right: 8px;"></i>
+                            <span id="panelTitle">Mark Attendance</span>
+                        </h3>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span id="savedIndicator" style="display: none;" class="saved-indicator">
+                                <i class="fas fa-check-circle"></i> Saved
+                            </span>
+                            <button class="btn-ghost" onclick="window._closeAttendancePanel()" title="Close" style="font-size: 1.1rem; color: #94a3b8;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="sessionInfoBar" class="session-info-bar">
+                        <!-- Filled by JS -->
+                    </div>
+
+                    <div class="squad-selector-row">
+                        <label for="regSquadSelect"><i class="fas fa-users" style="margin-right: 4px;"></i> Squad</label>
+                        <select id="regSquadSelect" onchange="window._onSquadChange()">
+                            <option value="">-- Select Squad --</option>
+                        </select>
+                    </div>
+
+                    <p id="chipHintText" style="font-size: 0.78rem; color: #64748b; margin: 0 0 4px;">
+                        <i class="fas fa-info-circle" style="margin-right: 4px;"></i>
+                        Click a player to mark them as <strong style="color: #dc2626;">absent</strong>. Click again to mark present.
+                    </p>
+
+                    <!-- Add Player Search (Orion only) -->
+                    <div id="addPlayerSearch" style="display: none; margin-bottom: 12px;">
+                        <div style="position: relative;">
+                            <input type="text" id="addPlayerInput" placeholder="Search player to add..." autocomplete="off"
+                                style="width: 100%; padding: 9px 14px 9px 36px; border: 1px dashed #10b981; border-radius: 10px;
+                                font-size: 0.85rem; font-family: 'Inter', sans-serif; background: #f0fdf4; box-sizing: border-box;">
+                            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #10b981; font-size: 0.8rem;"></i>
+                        </div>
+                        <div id="addPlayerResults" style="margin-top: 4px; max-height: 180px; overflow-y: auto; border-radius: 10px;"></div>
+                    </div>
+
+                    <div id="playerChips" class="register-chips">
+                        <!-- Player chips injected by JS -->
+                    </div>
+
+                    <div id="attendanceCounter" class="attendance-counter" style="display: none;">
+                        <span class="present-count"><i class="fas fa-user-check" style="margin-right: 4px;"></i> <span id="presentCount">0</span> Present</span>
+                        <span class="separator">&middot;</span>
+                        <span class="absent-count"><i class="fas fa-user-times" style="margin-right: 4px;"></i> <span id="absentCount">0</span> Absent</span>
+                        <span class="separator">&middot;</span>
+                        <span style="color: #64748b;"><span id="totalCount">0</span> Total</span>
+                    </div>
+
+                    <div class="save-row">
+                        <div class="notes-wrap">
+                            <label for="regNotes">Notes (optional)</label>
+                        </div>
+                        <div class="input-row">
+                            <textarea id="regNotes" placeholder="e.g. Pitch waterlogged, moved indoors..."></textarea>
+                            <button class="dash-btn primary" id="btnSaveAttendance" onclick="window._saveAttendance()">
+                                <i class="fas fa-save" style="margin-right: 6px;"></i> Save Attendance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Event Modal -->
+            <div id="modalAddEvent" class="modal-overlay">
+                <div class="modal-container" style="max-width: 480px;">
+                    <div class="modal-header">
+                        <h2>Add Calendar Event</h2>
+                        <button class="btn-close-modal" onclick="window._closeEventModal()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                        <!-- Event Type -->
+                        <div class="form-group-bubble">
+                            <label>Event Type</label>
+                            <select id="eventTypeSelect" class="form-control-bubble" onchange="window._onEventTypeChange()">
+                                <option value="Staff Meeting">Staff Meeting</option>
+                                <option value="Video Analysis">Video Analysis</option>
+                                <option value="Tactical Briefing">Tactical Briefing</option>
+                                <option value="Fitness Testing">Fitness Testing</option>
+                                <option value="Medical Review">Medical Review</option>
+                                <option value="Scouting">Scouting</option>
+                                <option value="Team Bonding">Team Bonding</option>
+                                <option value="Parents Meeting">Parents Meeting</option>
+                                <option value="Tournament">Tournament</option>
+                                <option value="Friendly">Friendly</option>
+                                <option value="Custom">Custom...</option>
+                            </select>
+                        </div>
+                        <!-- Custom Title (shown when Custom selected) -->
+                        <div class="form-group-bubble" id="eventCustomTitleGroup" style="display: none;">
+                            <label>Custom Title</label>
+                            <input type="text" id="eventCustomTitle" class="form-control-bubble" placeholder="e.g. Sponsor Visit">
+                        </div>
+                        <!-- Date & Time Row -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                            <div class="form-group-bubble">
+                                <label>Date</label>
+                                <input type="date" id="eventDate" class="form-control-bubble" required>
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Start Time</label>
+                                <input type="time" id="eventStartTime" class="form-control-bubble">
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>End Time</label>
+                                <input type="time" id="eventEndTime" class="form-control-bubble">
+                            </div>
+                        </div>
+                        <!-- Location -->
+                        <div class="form-group-bubble">
+                            <label>Location</label>
+                            <input type="text" id="eventLocation" class="form-control-bubble" placeholder="e.g. Conference Room, Main Office">
+                        </div>
+                        <!-- Description -->
+                        <div class="form-group-bubble">
+                            <label>Description (optional)</label>
+                            <textarea id="eventDescription" class="form-control-bubble" rows="2" placeholder="Brief notes about this event..."></textarea>
+                        </div>
+                        <!-- Bubble Color -->
+                        <div class="form-group-bubble">
+                            <label>Bubble Color</label>
+                            <div id="eventColorPicker" style="display: flex; gap: 8px; flex-wrap: wrap; padding-top: 4px;">
+                                <button type="button" class="cal-color-swatch active" data-color="#00C49A" style="background:#00C49A;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#10b981" style="background:#10b981;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#8b5cf6" style="background:#8b5cf6;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#f59e0b" style="background:#f59e0b;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#ef4444" style="background:#ef4444;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#ec4899" style="background:#ec4899;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#14b8a6" style="background:#14b8a6;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#1e293b" style="background:#1e293b;" onclick="window._pickEventColor(this)"></button>
+                                <button type="button" class="cal-color-swatch" data-color="#64748b" style="background:#64748b;" onclick="window._pickEventColor(this)"></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="dash-btn outline" onclick="window._closeEventModal()">Cancel</button>
+                        <button class="dash-btn primary" data-min-role="coach" id="btnSaveEvent" onclick="window._saveEvent()">
+                            <i class="fas fa-check" style="margin-right: 6px;"></i> Save Event
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section" style="margin-top: 24px;">
+                <div class="activity-header">
+                    <h2>Recent Activity</h2>
+                    <a href="/src/pages/library.html" style="font-size:13px;color:var(--primary);text-decoration:none;font-weight:600;">View All Activity</a>
+                </div>
+                <div class="activity-list" id="recent-activity-list">
+                    <div class="activity-item" style="justify-content:center;color:var(--text-light);">
+                        <i class="fas fa-circle-notch fa-spin"></i> Loading...
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script type="module">
+        import { requireAuth, getProfile } from '../auth.js';
+        import { initSidebar } from '../sidebar.js';
+        import { showToast } from '../toast.js';
+        import supabase from '../supabase.js';
+        import { initCalendar, setSessionClickHandler, fetchCalendarSessions, reRenderCalendar, invalidateCalendarCache } from '../js/calendar-ui.js';
+        import { openQuickSession } from '../js/quick-session.js';
+        import squadManager from '../managers/squad-manager.js';
+        import { upgradeTimePickers } from '../time-picker.js';
+
+        // ── Attendance state ──
+        let _calMode = 'calendar'; // 'calendar' | 'attendance'
+        let _selectedSession = null;
+        let _selectedSquadId = null;
+        let _completedSessionIds = new Set();
+        let _existingRecord = null;
+        let _allSquadPlayers = []; // full pool for add-player search (Orion)
+
+        // ── Mode switching ──
+        window._switchCalMode = function(mode) {
+            _calMode = mode;
+            document.querySelectorAll('.cal-mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+
+            const hint = document.getElementById('attendanceModeHint');
+            const addBtn = document.getElementById('btnAddEvent');
+            const panel = document.getElementById('attendancePanel');
+
+            if (mode === 'attendance') {
+                setSessionClickHandler(onAttendanceSessionClick);
+                if (hint) hint.style.display = 'block';
+                if (addBtn) addBtn.style.display = 'none';
+                // Re-render to update click handlers on bubbles
+                reRenderCalendar();
+                setTimeout(badgeCompletedSessions, 300);
+            } else {
+                setSessionClickHandler(null);
+                if (hint) hint.style.display = 'none';
+                if (addBtn) addBtn.style.display = 'flex';
+                if (panel) panel.style.display = 'none';
+                reRenderCalendar();
+            }
+        };
+
+        // ── Attendance: session click ──
+        async function onAttendanceSessionClick(event, sessionId) {
+            if (event) event.stopPropagation();
+            const sessions = await fetchCalendarSessions();
+            const session = sessions.find(s => String(s.id) === String(sessionId));
+            if (!session) return;
+
+            _selectedSession = session;
+            const panel = document.getElementById('attendancePanel');
+            if (panel) panel.style.display = 'block';
+
+            // Fill info bar
+            const infoBar = document.getElementById('sessionInfoBar');
+            if (infoBar) {
+                const dateStr = session.date
+                    ? new Date(session.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                    : 'No date';
+                infoBar.innerHTML = `
+                    <div class="info-item"><i class="fas fa-clipboard-list"></i> <strong>${escH(session.title || 'Untitled')}</strong></div>
+                    <div class="info-item"><i class="fas fa-calendar"></i> ${dateStr}</div>
+                    ${session.startTime ? `<div class="info-item"><i class="fas fa-clock"></i> ${session.startTime}${session.duration ? ' (' + session.duration + ' min)' : ''}</div>` : ''}
+                    ${session.venue ? `<div class="info-item"><i class="fas fa-map-marker-alt"></i> ${escH(session.venue)}</div>` : ''}
+                    ${session.author ? `<div class="info-item"><i class="fas fa-user"></i> ${escH(session.author)}</div>` : ''}
+                `;
+            }
+
+            const titleEl = document.getElementById('panelTitle');
+            if (titleEl) titleEl.textContent = `Mark Attendance — ${session.title || 'Session'}`;
+
+            loadSessionPlayers(session);
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ── Close attendance panel ──
+        window._closeAttendancePanel = function() {
+            const panel = document.getElementById('attendancePanel');
+            if (panel) panel.style.display = 'none';
+            _selectedSession = null;
+        };
+
+        // ── Load players directly from session (no squad selector needed) ──
+        async function loadSessionPlayers(session) {
+            const selectorRow = document.querySelector('.squad-selector-row');
+            if (selectorRow) selectorRow.style.display = 'none'; // Always hide
+
+            const archetype = window._profile?.clubs?.settings?.archetype;
+            const isPrivateCoaching = archetype === 'private_coaching';
+            const sessionPlayerIds = (session.playerIds && session.playerIds.length > 0)
+                ? new Set(session.playerIds) : null;
+
+            // Resolve squad from session.team for saving attendance
+            const squads = squadManager.getSquads();
+            const teamNames = (session.team || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+            const matchedSquad = squads.find(s => teamNames.includes(s.name.trim().toLowerCase()));
+            _selectedSquadId = matchedSquad?.id || (squads[0]?.id || '');
+
+            // Get all players from matched squad(s) — also gather full pool for Orion search
+            let allPlayers = [];
+            if (matchedSquad) {
+                allPlayers = squadManager.getPlayers({ squadId: matchedSquad.id });
+            } else if (teamNames.length > 0) {
+                for (const sq of squads) {
+                    if (teamNames.includes(sq.name.trim().toLowerCase())) {
+                        allPlayers.push(...squadManager.getPlayers({ squadId: sq.id }));
+                        if (!_selectedSquadId) _selectedSquadId = sq.id;
+                    }
+                }
+            }
+
+            // For Orion: store the full player pool so add-player search can find anyone
+            if (isPrivateCoaching) {
+                // All players across all squads
+                _allSquadPlayers = squadManager.getPlayers({});
+            } else {
+                _allSquadPlayers = allPlayers;
+            }
+
+            // Check for existing attendance record
+            _existingRecord = null;
+            if (_selectedSquadId) {
+                try {
+                    const { data } = await supabase.from('training_attendance')
+                        .select('*').eq('session_id', session.id).eq('squad_id', _selectedSquadId).maybeSingle();
+                    _existingRecord = data;
+                } catch (e) { console.error('Failed to check existing attendance:', e); }
+            }
+
+            if (_existingRecord) {
+                renderPlayerChips(allPlayers);
+                const absentIds = Array.isArray(_existingRecord.absent_player_ids)
+                    ? _existingRecord.absent_player_ids
+                    : (typeof _existingRecord.absent_player_ids === 'string' ? JSON.parse(_existingRecord.absent_player_ids) : []);
+                absentIds.forEach(pid => {
+                    const chip = document.querySelector(`.reg-chip[data-player-id="${pid}"]`);
+                    if (chip) {
+                        chip.classList.add('absent');
+                        const icon = chip.querySelector('.chip-status i');
+                        if (icon) icon.className = 'fas fa-times';
+                    }
+                });
+                const notesEl = document.getElementById('regNotes');
+                if (notesEl) notesEl.value = _existingRecord.notes || '';
+                const indicator = document.getElementById('savedIndicator');
+                if (indicator) indicator.style.display = 'inline-flex';
+            } else if (isPrivateCoaching && sessionPlayerIds) {
+                const planned = allPlayers.filter(p => sessionPlayerIds.has(p.id));
+                renderPlayerChips(planned);
+                document.querySelectorAll('#playerChips .reg-chip').forEach(chip => {
+                    chip.classList.remove('absent');
+                    const icon = chip.querySelector('.chip-status i');
+                    if (icon) icon.className = 'fas fa-check';
+                });
+                resetNotesAndIndicator();
+            } else if (!isPrivateCoaching && sessionPlayerIds) {
+                renderPlayerChips(allPlayers);
+                allPlayers.forEach(p => {
+                    if (!sessionPlayerIds.has(p.id)) {
+                        const chip = document.querySelector(`.reg-chip[data-player-id="${p.id}"]`);
+                        if (chip) {
+                            chip.classList.add('absent');
+                            const icon = chip.querySelector('.chip-status i');
+                            if (icon) icon.className = 'fas fa-times';
+                        }
+                    }
+                });
+                resetNotesAndIndicator();
+            } else {
+                renderPlayerChips(allPlayers);
+                resetNotesAndIndicator();
+            }
+            updateCounter();
+
+            // Show/hide add-player search (Orion only)
+            const addSection = document.getElementById('addPlayerSearch');
+            if (addSection) {
+                addSection.style.display = isPrivateCoaching ? 'block' : 'none';
+                const input = document.getElementById('addPlayerInput');
+                if (input) { input.value = ''; }
+                const results = document.getElementById('addPlayerResults');
+                if (results) results.innerHTML = '';
+            }
+        }
+
+        function resetNotesAndIndicator() {
+            const indicator = document.getElementById('savedIndicator');
+            if (indicator) indicator.style.display = 'none';
+            const notesEl = document.getElementById('regNotes');
+            if (notesEl) notesEl.value = '';
+        }
+
+        // Legacy squad change handler (kept for manual fallback)
+        window._onSquadChange = async function() {
+            const select = document.getElementById('regSquadSelect');
+            _selectedSquadId = select?.value || '';
+            if (_selectedSquadId && _selectedSession) {
+                _selectedSession.playerIds = []; // Clear planner IDs for manual override
+                await loadSessionPlayers(_selectedSession);
+            }
+        };
+
+        async function onSquadChange() {
+            const select = document.getElementById('regSquadSelect');
+            const squadId = select ? select.value : '';
+            _selectedSquadId = squadId;
+            if (!squadId) { renderPlayerChips([]); return; }
+
+            const allSquadPlayers = squadManager.getPlayers({ squadId });
+            const archetype = window._profile?.clubs?.settings?.archetype;
+            const isPrivateCoaching = archetype === 'private_coaching';
+
+            // Session's pre-selected player IDs from the planner
+            const sessionPlayerIds = (_selectedSession?.playerIds && _selectedSession.playerIds.length > 0)
+                ? new Set(_selectedSession.playerIds)
+                : null;
+
+            // Check for existing attendance record (overrides planner selections)
+            _existingRecord = null;
+            if (_selectedSession) {
+                try {
+                    const { data } = await supabase.from('training_attendance')
+                        .select('*').eq('session_id', _selectedSession.id).eq('squad_id', squadId).maybeSingle();
+                    _existingRecord = data;
+                } catch (e) { console.error('Failed to check existing attendance:', e); }
+            }
+
+            if (_existingRecord) {
+                // Existing record — render all squad players and apply saved absent state
+                renderPlayerChips(allSquadPlayers);
+                const absentIds = Array.isArray(_existingRecord.absent_player_ids)
+                    ? _existingRecord.absent_player_ids
+                    : (typeof _existingRecord.absent_player_ids === 'string' ? JSON.parse(_existingRecord.absent_player_ids) : []);
+                absentIds.forEach(pid => {
+                    const chip = document.querySelector(`.reg-chip[data-player-id="${pid}"]`);
+                    if (chip) {
+                        chip.classList.add('absent');
+                        const icon = chip.querySelector('.chip-status i');
+                        if (icon) icon.className = 'fas fa-times';
+                    }
+                });
+                const notesEl = document.getElementById('regNotes');
+                if (notesEl && _existingRecord.notes) notesEl.value = _existingRecord.notes;
+                const indicator = document.getElementById('savedIndicator');
+                if (indicator) indicator.style.display = 'inline-flex';
+            } else if (isPrivateCoaching && sessionPlayerIds) {
+                // Orion: show ONLY the players selected in the planner, all checked
+                const selectedPlayers = allSquadPlayers.filter(p => sessionPlayerIds.has(p.id));
+                renderPlayerChips(selectedPlayers); // archetype default = unchecked, but these were planned
+                // Override: mark them all as present since they were specifically selected
+                document.querySelectorAll('#playerChips .reg-chip').forEach(chip => {
+                    chip.classList.remove('absent');
+                    const icon = chip.querySelector('.chip-status i');
+                    if (icon) icon.className = 'fas fa-check';
+                });
+                const indicator = document.getElementById('savedIndicator');
+                if (indicator) indicator.style.display = 'none';
+                const notesEl = document.getElementById('regNotes');
+                if (notesEl) notesEl.value = '';
+            } else if (!isPrivateCoaching && sessionPlayerIds) {
+                // Tuks: show ALL squad players, pre-mark those NOT in planner selection as absent
+                renderPlayerChips(allSquadPlayers); // archetype default = all checked
+                allSquadPlayers.forEach(p => {
+                    if (!sessionPlayerIds.has(p.id)) {
+                        const chip = document.querySelector(`.reg-chip[data-player-id="${p.id}"]`);
+                        if (chip) {
+                            chip.classList.add('absent');
+                            const icon = chip.querySelector('.chip-status i');
+                            if (icon) icon.className = 'fas fa-times';
+                        }
+                    }
+                });
+                const indicator = document.getElementById('savedIndicator');
+                if (indicator) indicator.style.display = 'none';
+                const notesEl = document.getElementById('regNotes');
+                if (notesEl) notesEl.value = '';
+            } else {
+                // No planner selection — use archetype defaults
+                renderPlayerChips(allSquadPlayers);
+                const indicator = document.getElementById('savedIndicator');
+                if (indicator) indicator.style.display = 'none';
+                const notesEl = document.getElementById('regNotes');
+                if (notesEl) notesEl.value = '';
+            }
+            updateCounter();
+        }
+        window._onSquadChange = onSquadChange;
+
+        // ── Player chips ──
+        const POS_ORDER = { GK:0, CB:1, LB:1, RB:1, LWB:1, RWB:1, CDM:2, CM:2, CAM:2, LM:2, RM:2, ST:3, LW:3, RW:3, CF:3, Winger:3 };
+        function getPositionOrder(pos) { if (!pos) return 99; return POS_ORDER[pos.split(',')[0].trim()] ?? 99; }
+
+        function renderPlayerChips(players) {
+            const container = document.getElementById('playerChips');
+            const counter = document.getElementById('attendanceCounter');
+            if (!container) return;
+            if (!players || players.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8; font-size: 0.85rem; padding: 16px 0;">Select a squad to see players.</p>';
+                if (counter) counter.style.display = 'none';
+                return;
+            }
+
+            // Orion (private_coaching): default UNCHECKED — coach checks who attended
+            // Tuks (academy): default CHECKED — coach unchecks absentees
+            const archetype = window._profile?.clubs?.settings?.archetype;
+            const defaultAbsent = archetype === 'private_coaching';
+
+            const sorted = [...players].sort((a, b) => {
+                const posOrder = getPositionOrder(a.position) - getPositionOrder(b.position);
+                return posOrder !== 0 ? posOrder : (a.name || '').localeCompare(b.name || '');
+            });
+            container.innerHTML = sorted.map(p => {
+                const initials = (p.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                const absentClass = defaultAbsent ? ' absent' : '';
+                const icon = defaultAbsent ? 'fa-times' : 'fa-check';
+                return `<div class="reg-chip${absentClass}" data-player-id="${p.id}" onclick="window._toggleAbsent(this)">
+                    <div class="chip-avatar">${initials}</div>
+                    <span class="chip-name">${escH(p.name)}</span>
+                    <span class="chip-pos">${p.position || '--'}</span>
+                    <span class="chip-status"><i class="fas ${icon}"></i></span>
+                </div>`;
+            }).join('');
+            // Update hint text based on archetype
+            const hintEl = document.getElementById('chipHintText');
+            if (hintEl) {
+                hintEl.innerHTML = defaultAbsent
+                    ? '<i class="fas fa-info-circle" style="margin-right: 4px;"></i> Click a player to mark them as <strong style="color: #10b981;">present</strong>. Click again to remove.'
+                    : '<i class="fas fa-info-circle" style="margin-right: 4px;"></i> Click a player to mark them as <strong style="color: #dc2626;">absent</strong>. Click again to mark present.';
+            }
+
+            if (counter) counter.style.display = 'flex';
+            updateCounter();
+        }
+
+        // ── Toggle absent ──
+        window._toggleAbsent = function(chipEl) {
+            chipEl.classList.toggle('absent');
+            const statusIcon = chipEl.querySelector('.chip-status i');
+            statusIcon.className = chipEl.classList.contains('absent') ? 'fas fa-times' : 'fas fa-check';
+            updateCounter();
+            const indicator = document.getElementById('savedIndicator');
+            if (indicator) indicator.style.display = 'none';
+        };
+
+        function updateCounter() {
+            const chips = document.querySelectorAll('#playerChips .reg-chip');
+            const absent = document.querySelectorAll('#playerChips .reg-chip.absent').length;
+            const total = chips.length;
+            const present = total - absent;
+            const pe = document.getElementById('presentCount');
+            const ae = document.getElementById('absentCount');
+            const te = document.getElementById('totalCount');
+            if (pe) pe.textContent = present;
+            if (ae) ae.textContent = absent;
+            if (te) te.textContent = total;
+        }
+
+        // ── Add Player Search (Orion) ──
+        function setupAddPlayerSearch() {
+            const input = document.getElementById('addPlayerInput');
+            if (!input) return;
+            input.addEventListener('input', () => {
+                const term = input.value.trim().toLowerCase();
+                const results = document.getElementById('addPlayerResults');
+                if (!results) return;
+                if (term.length < 2) { results.innerHTML = ''; return; }
+
+                // Players already shown as chips
+                const existingIds = new Set(
+                    Array.from(document.querySelectorAll('#playerChips .reg-chip')).map(c => c.dataset.playerId)
+                );
+
+                // Search all available players not already added
+                const matches = _allSquadPlayers
+                    .filter(p => !existingIds.has(p.id) && p.name.toLowerCase().includes(term))
+                    .slice(0, 8);
+
+                if (matches.length === 0) {
+                    results.innerHTML = '<div style="padding: 10px 12px; font-size: 0.82rem; color: #94a3b8;">No players found</div>';
+                    return;
+                }
+
+                const squads = squadManager.getSquads();
+                results.innerHTML = matches.map(p => {
+                    const initials = (p.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                    const squadName = squads.find(s => s.id === p.squadId)?.name || 'Unassigned';
+                    return `<div class="add-player-item" onclick="window._addPlayerToAttendance('${p.id}')">
+                        <div class="api-avatar">${initials}</div>
+                        <div>
+                            <div class="api-name">${escH(p.name)}</div>
+                            <div class="api-meta">${p.position || '--'} · ${escH(squadName)}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+            });
+        }
+
+        window._addPlayerToAttendance = function(playerId) {
+            const player = _allSquadPlayers.find(p => String(p.id) === String(playerId));
+            if (!player) return;
+
+            // Check if already added
+            if (document.querySelector(`#playerChips .reg-chip[data-player-id="${playerId}"]`)) return;
+
+            const container = document.getElementById('playerChips');
+            if (!container) return;
+
+            // Remove empty-state message if present
+            const emptyMsg = container.querySelector('p');
+            if (emptyMsg) emptyMsg.remove();
+
+            const initials = (player.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+            // Added players default to present (checked)
+            const chipHTML = `<div class="reg-chip" data-player-id="${player.id}" onclick="window._toggleAbsent(this)">
+                <div class="chip-avatar">${initials}</div>
+                <span class="chip-name">${escH(player.name)}</span>
+                <span class="chip-pos">${player.position || '--'}</span>
+                <span class="chip-status"><i class="fas fa-check"></i></span>
+            </div>`;
+            container.insertAdjacentHTML('beforeend', chipHTML);
+
+            // Clear search
+            const input = document.getElementById('addPlayerInput');
+            if (input) input.value = '';
+            const results = document.getElementById('addPlayerResults');
+            if (results) results.innerHTML = '';
+
+            // Show counter if hidden
+            const counter = document.getElementById('attendanceCounter');
+            if (counter) counter.style.display = 'flex';
+
+            updateCounter();
+            const indicator = document.getElementById('savedIndicator');
+            if (indicator) indicator.style.display = 'none';
+        };
+
+        // ── Save attendance ──
+        window._saveAttendance = async function() {
+            if (!_selectedSession) { showToast('No session selected', 'error'); return; }
+            if (!_selectedSquadId) { showToast('Please select a squad first', 'error'); return; }
+
+            const btn = document.getElementById('btnSaveAttendance');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Saving...'; }
+
+            try {
+                const absentChips = document.querySelectorAll('#playerChips .reg-chip.absent');
+                const allChips = document.querySelectorAll('#playerChips .reg-chip');
+                const absentPlayerIds = Array.from(absentChips).map(c => c.dataset.playerId);
+                const total = allChips.length;
+                const present = total - absentPlayerIds.length;
+                const notes = (document.getElementById('regNotes')?.value || '').trim();
+
+                const clubId = sessionStorage.getItem('impersonating_club_id') || window._profile?.club_id;
+                if (!clubId) { showToast('Could not resolve club', 'error'); return; }
+
+                const row = {
+                    club_id: clubId,
+                    session_id: _selectedSession.id,
+                    squad_id: _selectedSquadId,
+                    date: _selectedSession.date || new Date().toISOString().split('T')[0],
+                    absent_player_ids: absentPlayerIds,
+                    attendance_count: present,
+                    attendance_total: total,
+                    notes,
+                    updated_at: new Date().toISOString()
+                };
+
+                const { error } = await supabase.from('training_attendance').upsert(row, { onConflict: 'session_id,squad_id' });
+                if (error) throw error;
+
+                // Sync attendance data to session report (if report exists)
+                try {
+                    const { data: existingReport } = await supabase.from('reports')
+                        .select('id').eq('session_id', _selectedSession.id).maybeSingle();
+                    if (existingReport) {
+                        await supabase.from('reports').update({
+                            attendance_count: present,
+                            attendance_total: total,
+                            absent_player_ids: absentPlayerIds,
+                        }).eq('id', existingReport.id);
+                    }
+                } catch (syncErr) { console.warn('Report sync skipped:', syncErr); }
+
+                _completedSessionIds.add(_selectedSession.id);
+                _existingRecord = row;
+                badgeCompletedSessions();
+
+                const indicator = document.getElementById('savedIndicator');
+                if (indicator) indicator.style.display = 'inline-flex';
+
+                showToast(`Attendance saved — ${present}/${total} present`, 'success');
+            } catch (e) {
+                console.error('Failed to save attendance:', e);
+                showToast('Failed to save attendance', 'error');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save" style="margin-right:6px;"></i> Save Attendance'; }
+            }
+        };
+
+        // ── Completed session badges ──
+        async function loadCompletedSessions() {
+            try {
+                const { data } = await supabase.from('training_attendance').select('session_id');
+                _completedSessionIds = new Set((data || []).map(r => r.session_id));
+            } catch (e) { console.error('Failed to load completed sessions:', e); }
+        }
+
+        function badgeCompletedSessions() {
+            document.querySelectorAll('[data-session-id]').forEach(el => {
+                const sid = el.dataset.sessionId;
+                if (_completedSessionIds.has(sid) && !el.querySelector('.att-check')) {
+                    el.insertAdjacentHTML('beforeend', '<span class="att-check"><i class="fas fa-check-circle"></i></span>');
+                }
+            });
+        }
+
+        // ── Helpers ──
+        function escH(str) { return str ? str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+
+        // ── Hook month navigation to re-badge ──
+        function hookMonthNav() {
+            const orig = window._changeMonth;
+            if (orig && !orig._hooked) {
+                window._changeMonth = function(delta) {
+                    orig(delta);
+                    if (_calMode === 'attendance') setTimeout(badgeCompletedSessions, 300);
+                };
+                window._changeMonth._hooked = true;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initSidebar('dashboard');
+
+            const user = await requireAuth();
+            if (!user) return;
+            upgradeTimePickers();
+
+            // Parallelize network calls
+            const [, , profile] = await Promise.all([
+                squadManager.init(),
+                loadCompletedSessions(),
+                getProfile(),
+            ]);
+            initCalendar();
+            hookMonthNav();
+
+            // Set date
+            document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            if (profile) {
+                document.getElementById('welcome-msg').textContent =
+                    `Welcome back, ${profile.full_name}. Here's what's happening today.`;
+                window._profile = profile;
+            }
+
+            setupAddPlayerSearch();
+
+            // Quick Session — invalidate cache then refresh calendar after save
+            window._openQuickSession = () => openQuickSession(() => { invalidateCalendarCache(); reRenderCalendar(); });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const dd = document.getElementById('calAddDropdown');
+                if (dd && !dd.contains(e.target)) {
+                    document.getElementById('calAddMenu')?.classList.remove('show');
+                }
+            });
+
+            // Reveal content
+            const mc = document.querySelector('.main-content');
+            if (mc) mc.classList.add('page-ready');
+
+            // Global search on dashboard
+            const _searchInput = document.getElementById('globalSearchInput');
+            const _searchResults = document.getElementById('globalSearchResults');
+            let _searchTimer = null;
+            if (_searchInput && _searchResults) {
+                _searchInput.addEventListener('input', () => {
+                    clearTimeout(_searchTimer);
+                    const q = _searchInput.value.trim().toLowerCase();
+                    if (!q || q.length < 2) { _searchResults.style.display = 'none'; _searchResults.innerHTML = ''; return; }
+                    _searchTimer = setTimeout(() => {
+                        const results = [];
+                        (squadManager.getPlayers({}) || []).filter(p => p.name.toLowerCase().includes(q) || (p.position||'').toLowerCase().includes(q) || (p.jerseyNumber||'').includes(q))
+                            .slice(0, 5).forEach(p => results.push({ name: p.name, type: 'Player', icon: 'fa-user', href: `player-profile.html?id=${p.id}` }));
+                        (window.matchManager?.getMatches?.() || []).filter(m => (m.opponent||'').toLowerCase().includes(q) || (m.competition||'').toLowerCase().includes(q))
+                            .slice(0, 3).forEach(m => results.push({ name: `vs ${m.opponent||'TBD'}`, type: m.date||'Match', icon: 'fa-futbol', href: `match-details.html?id=${m.id}` }));
+                        (squadManager.getSquads() || []).filter(s => s.name.toLowerCase().includes(q))
+                            .slice(0, 3).forEach(s => results.push({ name: s.name, type: 'Squad', icon: 'fa-users', href: 'squad.html' }));
+
+                        if (!results.length) {
+                            _searchResults.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:0.82rem;">No results found</div>';
+                        } else {
+                            _searchResults.innerHTML = results.map(r =>
+                                `<a href="${r.href}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;text-decoration:none;color:var(--text-primary);transition:background 0.1s;border-bottom:1px solid var(--border-light);" onmouseenter="this.style.background='var(--bg-body)'" onmouseleave="this.style.background=''">
+                                    <i class="fas ${r.icon}" style="color:var(--primary);width:18px;text-align:center;"></i>
+                                    <span style="font-weight:600;font-size:0.85rem;">${r.name}</span>
+                                    <span style="margin-left:auto;font-size:0.7rem;color:var(--text-muted);">${r.type}</span>
+                                </a>`
+                            ).join('');
+                        }
+                        _searchResults.style.display = '';
+                    }, 200);
+                });
+                _searchInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { _searchInput.value = ''; _searchResults.style.display = 'none'; } });
+                document.addEventListener('click', (e) => { if (!document.getElementById('dashSearchWrap')?.contains(e.target)) _searchResults.style.display = 'none'; });
+            }
+
+            // Walkthrough
+            try {
+                const { autoWalkthrough, startWalkthrough } = await import('../js/walkthrough.js');
+                const _wp = new URLSearchParams(window.location.search);
+                if (_wp.get('walkthrough') === '1') { startWalkthrough('dashboard', true); window.history.replaceState({}, '', window.location.pathname); }
+                else autoWalkthrough('dashboard');
+            } catch (e) {}
+
+            // Load recent activity (scoped to current club)
+            try {
+                const _clubId = sessionStorage.getItem('impersonating_club_id') || window._profile?.club_id;
+                let _sq = supabase.from('sessions').select('id, title, author, created_at').order('created_at', { ascending: false }).limit(5);
+                let _rq = supabase.from('reports').select('id, date, notes, focus, created_at').order('created_at', { ascending: false }).limit(5);
+                if (_clubId) { _sq = _sq.eq('club_id', _clubId); _rq = _rq.eq('club_id', _clubId); }
+                const [sessionsRes, reportsRes] = await Promise.all([_sq, _rq]);
+
+                const sessions = (sessionsRes.data || []).map(s => ({
+                    ...s, type: 'session',
+                    sortDate: new Date(s.created_at || Date.now())
+                }));
+                const reports = (reportsRes.data || []).map(r => ({
+                    ...r, type: 'report', title: r.focus || 'Session Report',
+                    sortDate: new Date(r.created_at || Date.now())
+                }));
+
+                const combined = [...sessions, ...reports]
+                    .sort((a, b) => b.sortDate - a.sortDate)
+                    .slice(0, 5);
+
+                const list = document.getElementById('recent-activity-list');
+                if (combined.length === 0) {
+                    list.innerHTML = '<div class="activity-item" style="justify-content:center;">No recent activity found.</div>';
+                    return;
+                }
+
+                list.innerHTML = combined.map(item => {
+                    const typeLabel = item.type === 'session' ? 'Session Plan Created' : 'Session Report Filed';
+                    const icon = item.type === 'session' ? 'fa-clipboard-list' : 'fa-file-alt';
+                    const iconBg = item.type === 'session' ? 'var(--primary-light)' : '#dcfce7';
+                    const iconColor = item.type === 'session' ? 'var(--primary)' : '#166534';
+                    const dateStr = new Date(item.sortDate).toLocaleDateString();
+                    const link = item.type === 'session' ? '/src/pages/library.html' : '/src/pages/reports.html';
+
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-date">${dateStr}</div>
+                            <div style="width:36px;height:36px;border-radius:10px;background:${iconBg};color:${iconColor};display:flex;align-items:center;justify-content:center;">
+                                <i class="fas ${icon}" style="font-size:14px;"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-title">${item.title || 'Untitled'}</div>
+                                <div class="activity-meta">${typeLabel} • ${item.author || 'Coach'}</div>
+                            </div>
+                            <a href="${link}" style="color:var(--text-light);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:6px;">
+                                <i class="fas fa-chevron-right" style="font-size:12px;"></i>
+                            </a>
+                        </div>`;
+                }).join('');
+            } catch (e) {
+                console.error('Failed to load recent activity:', e);
+                document.getElementById('recent-activity-list').innerHTML = 'Error loading activity.';
+            }
+
+        });
+    </script>
+</body>
+</html>

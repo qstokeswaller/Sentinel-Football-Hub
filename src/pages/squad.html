@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squad & Players | Sentinel Football Hub</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Dynamic Coach Rows Styling */
+        .coach-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .coach-row input {
+            margin-bottom: 0 !important;
+        }
+
+        /* Alignment for Add Staff Member Button */
+        #btnAddCoachRow {
+            margin-top: 8px !important;
+            background: rgba(37, 99, 235, 0.05);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            color: var(--blue-accent);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 10px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        #btnAddCoachRow:hover {
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--navy-primary);
+        }
+
+        #modalPlayer .form-group,
+        #modalPlayerProfile .form-group {
+            margin-bottom: 12px;
+        }
+
+        #modalPlayer .form-group label,
+        #modalPlayerProfile .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        /* Player Profile Specifics */
+        .profile-badges {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0 24px 0;
+        }
+
+        .document-list {
+            margin-top: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .document-item:last-child {
+            border-bottom: none;
+        }
+
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        /* Player table styles */
+        .player-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: var(--navy-dark);
+        }
+
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--light-blue);
+            color: var(--blue-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* ── Tab Styles ── */
+        .cal-mode-tabs {
+            display: inline-flex;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .cal-mode-tab {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cal-mode-tab:hover { color: #0f172a; }
+        .cal-mode-tab.active {
+            background: white;
+            color: #0f172a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* Enriched squad card result colors */
+        .result-win { color: #16a34a; }
+        .result-draw { color: #d97706; }
+        .result-loss { color: #dc2626; }
+
+        /* Squad card — 2 columns: left info | enrichment */
+        .squad-card {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            padding: 20px !important;
+            cursor: pointer;
+        }
+
+        .squad-card-left {
+            display: flex;
+            flex-direction: column;
+            padding-right: 20px;
+        }
+
+        .squad-card-left h3 {
+            margin: 0 0 2px 0;
+            font-size: 1.05rem;
+            color: var(--navy-dark);
+        }
+
+        .squad-card-left .squad-meta {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .squad-card-left .squad-players-count {
+            font-size: 0.82rem;
+            color: var(--navy-dark);
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .squad-card-positions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .squad-card-left .squad-footer {
+            margin-top: auto;
+            padding-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .squad-card-enrichment {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 20px;
+            border-left: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .squad-card-enrichment .enrich-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .squad-card-enrichment i {
+            width: 14px;
+            text-align: center;
+            font-size: 0.72rem;
+            color: #94a3b8;
+            flex-shrink: 0;
+        }
+
+        /* Squad detail delete button */
+        .delete-squad-btn {
+            width: 34px;
+            height: 34px;
+            border: 1px solid #fca5a5;
+            background: #fee2e2;
+            color: #ef4444;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .delete-squad-btn:hover {
+            background: #fecaca;
+            border-color: #ef4444;
+        }
+
+        .pos-count-badge {
+            background: var(--light-blue);
+            color: var(--blue-accent);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .cal-mode-tabs { width: 100%; }
+            .cal-mode-tab { flex: 1; justify-content: center; }
+            .squad-card { grid-template-columns: 1fr !important; }
+            .squad-card-enrichment {
+                grid-column: 1 / -1;
+                border-left: none;
+                border-top: 1px solid var(--border);
+                padding: 10px 0 0 0;
+                margin-top: 10px;
+                white-space: normal;
+            }
+            /* Hide squad delete on overview cards — available in detail view only */
+            .squad-card-actions { display: none; }
+            /* Squad detail header — stack vertically on mobile */
+            #squadDetailView .sheet-header { padding: 16px !important; }
+            #squadDetailView .sheet-header h2 { font-size: 1.1rem !important; }
+            #squadDetailView .sheet-header .dash-btn { font-size: 0.8rem; padding: 8px 14px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-info" style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1>Squad & Players</h1>
+                    </div>
+                    <p>Manage squads, rosters and player profiles</p>
+                    <p id="playerCount" style="font-weight: 600; color: var(--primary); font-size: 0.75rem; margin: 2px 0 0;">0 registered players</p>
+                </div>
+
+                <!-- Squad Controls (visible on squads tab) -->
+                <div id="squadControls" class="header-actions" style="display: flex; align-items: center; gap: 16px;">
+                    <div class="search-bubble-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="squadSearch" placeholder="Search squads...">
+                    </div>
+
+                    <div class="filter-pill-container">
+                        <select id="filterLeague" class="filter-select-pill">
+                            <option value="all">All Leagues</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+
+                    <div class="filter-pill-container">
+                        <select id="filterAgeGroup" class="filter-select-pill">
+                            <option value="all">All Age Groups</option>
+                            <option value="Senior">Senior</option>
+                            <option value="U23">U23</option>
+                            <option value="U18">U18</option>
+                            <option value="U16">U16</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+
+                    <button id="btnAddSquad" class="dash-btn primary" data-min-role="admin"
+                        style="border-radius: 9999px; height: 44px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                        <i class="fas fa-layer-group"></i> Add Squad
+                    </button>
+                </div>
+
+                <!-- Player Controls (visible on players tab) -->
+                <div id="playerControls" class="header-actions" style="display: none; align-items: center; gap: 16px;">
+                    <div id="viewToggleGroup" class="view-toggle-group">
+                        <button class="view-toggle-btn" id="btnListView" title="List View"
+                            onclick="setPlayerView('list')">
+                            <i class="fas fa-list"></i>
+                        </button>
+                        <button class="view-toggle-btn active" id="btnGridView" title="Grid View"
+                            onclick="setPlayerView('grid')">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                    </div>
+
+                    <div class="search-bubble-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="playerSearch2" placeholder="Search by name, position...">
+                    </div>
+
+                    <div class="filter-pill-container">
+                        <select id="filterPositionGroup" class="filter-select-pill">
+                            <option value="all">All Positions</option>
+                            <option value="forward">Forwards</option>
+                            <option value="midfielder">Midfielders</option>
+                            <option value="defender">Defenders</option>
+                            <option value="goalkeeper">Goalkeepers</option>
+                        </select>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+
+                    <div id="filterPositionSpecificGroup" style="visibility: hidden;">
+                        <div class="filter-pill-container">
+                            <select id="filterPositionSpecific" class="filter-select-pill">
+                                <option value="all">All</option>
+                            </select>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <button id="btnAddPlayer" class="dash-btn primary" data-min-role="coach"
+                            style="border-radius: 9999px; height: 44px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                            <i class="fas fa-plus"></i> Add New Player
+                        </button>
+                        <button id="btnImportCSV" class="dash-btn" data-min-role="admin"
+                            style="border-radius: 9999px; height: 44px; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size:0.82rem;"
+                            onclick="document.getElementById('csvFileInput').click()">
+                            <i class="fas fa-file-csv"></i> Import CSV
+                        </button>
+                        <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none;">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tab Bar -->
+            <div class="squad-page-tabs cal-mode-tabs" style="margin-top: 16px;">
+                <button class="cal-mode-tab active" data-tab="squads">Squads</button>
+                <button class="cal-mode-tab" data-tab="players">All Players</button>
+            </div>
+
+            <!-- Squad Grid -->
+            <div id="squadGrid" class="player-grid" style="display: none; margin-top: 24px;">
+                <!-- Squads will be rendered here -->
+            </div>
+
+            <!-- Squad Detail Sheet View -->
+            <div id="squadDetailView" class="section-card"
+                style="display: none; margin-top: 24px; padding: 0; overflow: hidden;">
+                <div class="sheet-header"
+                    style="padding: 20px 24px; border-bottom: 1px solid var(--border); background: #f8fafc;">
+                    <!-- Top row: Back + Toggle -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <button class="dash-btn outline sm" id="btnBackToSquads"
+                            style="flex: 0 0 auto; width: auto; padding-right: 16px;">
+                            <i class="fas fa-arrow-left"></i> Back to Squads
+                        </button>
+                        <!-- Toggle injected here by JS -->
+                    </div>
+                    <!-- Centre row: Squad name + actions -->
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
+                        <div style="text-align: center;">
+                            <h2 id="detailSquadName" style="margin: 0; color: var(--navy-dark); font-size: 1.4rem;">Squad Name</h2>
+                            <span id="detailSquadMeta" style="color: var(--text-secondary); font-size: 0.9rem;">Meta Info</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="dash-btn outline" id="btnAssignPlayerModal" data-min-role="coach" style="border-radius: 9999px;">
+                                <i class="fas fa-user-plus" style="margin-right: 6px;"></i> Assign Player
+                            </button>
+                            <button class="dash-btn primary" id="btnAssessSquad" data-min-role="coach"
+                                style="border-radius: 9999px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                                <i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> Assess Squad
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Table View -->
+                <div id="squadDetailTableWrapper" style="overflow-x: auto; display: none;">
+                    <table class="table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Position</th>
+                                <th>Age</th>
+                                <th>Height</th>
+                                <th>Weight</th>
+                                <th>Foot</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="squadDetailTableBody">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Grid View (default) -->
+                <div id="squadDetailGridWrapper">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- All Players Tab Content (hidden by default) -->
+            <div id="playerTabContent" style="display: none; margin-top: 24px;">
+                <!-- Table View -->
+                <div id="playerTableWrapper" class="section-card"
+                    style="padding: 0; overflow: hidden; border-radius: 20px; border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); display: none;">
+                    <div style="overflow-x: auto;">
+                        <table class="table" style="width: 100%; border-collapse: collapse; margin: 0;">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Pos</th>
+                                    <th>Age</th>
+                                    <th>Squad</th>
+                                    <th>Height</th>
+                                    <th>Weight</th>
+                                    <th>Foot</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playerTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Grid View -->
+                <div id="playerGridWrapper">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+                <!-- Modals -->
+                <div class="modal-overlay" id="modalSquad">
+                    <div class="modal-container modal-bubble" style="max-width: 550px;">
+                        <div class="modal-header-bubble">
+                            <h2>New Squad</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body-bubble">
+                            <div class="form-group-bubble">
+                                <label>Squad Name</label>
+                                <input type="text" id="squadNameInput" class="form-control-bubble"
+                                    placeholder="e.g. First Team">
+                            </div>
+
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Age Group</label>
+                                    <input type="text" id="squadAgeGroupInput" class="form-control-bubble"
+                                        placeholder="e.g. Senior">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>League</label>
+                                    <input type="text" id="squadLeagueInput" class="form-control-bubble"
+                                        placeholder="e.g. Premier">
+                                </div>
+                            </div>
+
+                            <div class="bubble-section-title">Coaching Staff</div>
+                            <div id="coachesContainer">
+                                <!-- Dynamic Rows -->
+                            </div>
+
+                            <button type="button" id="btnAddCoachRow">
+                                <i class="fas fa-plus-circle"></i> Add Coach
+                            </button>
+
+                            <div style="margin-top: 32px; display: flex; justify-content: flex-end; gap: 12px;">
+                                <button class="dash-btn ghost btn-close-modal">Cancel</button>
+                                <button class="dash-btn primary" id="btnSaveSquad"
+                                    style="border-radius: 12px; padding: 10px 24px;">Create Squad</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Squad Assessment Modal -->
+                <div class="modal-overlay" id="modalSquadAssessment">
+                    <div class="modal-container modal-bubble" style="max-width: 800px;">
+                        <div class="modal-header-bubble">
+                            <h2>Comprehensive Squad Assessment</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body-bubble" style="max-height: 70vh; overflow-y: auto;">
+                            <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                                <div class="form-group-bubble">
+                                    <label>Assessment Date</label>
+                                    <input type="date" id="squadAssessDate" class="form-control-bubble">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Context</label>
+                                    <select id="squadAssessContext" class="form-control-bubble">
+                                        <option value="Match">Match Performance</option>
+                                        <option value="Training">Training Block</option>
+                                        <option value="General">General Review</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Group Ratings
+                                (1-10)</h3>
+                            <div class="bubble-grid-2" style="margin-bottom: 24px;">
+                                <div class="form-group-bubble">
+                                    <label>Tactical Execution</label>
+                                    <input type="number" id="squadAssessTactical" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 7">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Physical Condition</label>
+                                    <input type="number" id="squadAssessPhysical" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 8">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Squad Cohesion &amp; Mentality</label>
+                                    <input type="number" id="squadAssessMentality" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 9">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Overall Rating</label>
+                                    <input type="number" id="squadAssessOverall" class="form-control-bubble" min="1"
+                                        max="10" placeholder="e.g. 8">
+                                </div>
+                            </div>
+
+                            <h3 style="margin: 0 0 16px 0; color: var(--navy-dark); font-size: 1.1rem;">Qualitative
+                                Feedback</h3>
+                            <div class="form-group-bubble">
+                                <label>Key Strengths</label>
+                                <textarea id="squadAssessStrengths" class="form-control-bubble" rows="3"
+                                    placeholder="What did the squad do well?"></textarea>
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Areas for Improvement</label>
+                                <textarea id="squadAssessImprovements" class="form-control-bubble" rows="3"
+                                    placeholder="Where does the squad need work?"></textarea>
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Additional Notes</label>
+                                <textarea id="squadAssessNotes" class="form-control-bubble" rows="3"
+                                    placeholder="Any other observations..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer-bubble">
+                            <button class="dash-btn outline btn-close-modal">Cancel</button>
+                            <button class="dash-btn primary" id="btnSaveSquadAssessment">Save Assessment</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assign Player Modal -->
+                <div class="modal-overlay" id="modalAssignPlayer">
+                    <div class="modal-container modal-bubble" style="max-width: 450px;">
+                        <div class="modal-header-bubble">
+                            <h2>Assign Player</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body-bubble">
+                            <div class="form-group-bubble">
+                                <label>Select Existing Player to Assign</label>
+                                <select id="assignExistingPlayerSelect" class="form-control-bubble">
+                                    <!-- Populated by JS -->
+                                </select>
+                                <button id="btnAssignExistingPlayer" class="dash-btn primary"
+                                    style="width: 100%; margin-top: 12px;">Assign to Squad</button>
+                            </div>
+
+                            <div
+                                style="text-align: center; margin: 24px 0; color: #94a3b8; font-size: 0.85rem; font-weight: 600;">
+                                OR CREATE NEW</div>
+
+                            <div class="form-group-bubble">
+                                <label>Player Name</label>
+                                <input type="text" id="newPlayerNameAssign" class="form-control-bubble"
+                                    placeholder="e.g. John Doe">
+                            </div>
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Year of Birth</label>
+                                    <input type="text" id="newPlayerAgeAssign" class="form-control-bubble"
+                                        placeholder="Select Year" readonly>
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Position</label>
+                                    <select id="newPlayerPositionAssign" class="form-control-bubble">
+                                        <option value="GK">Goalkeeper</option>
+                                        <option value="DEF">Defender</option>
+                                        <option value="MID">Midfielder</option>
+                                        <option value="FWD">Forward</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button id="btnCreateAndAssignPlayer" class="dash-btn outline"
+                                style="width: 100%; margin-top: 8px;">Create &amp; Assign</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Move Player Modal -->
+                <div class="modal-overlay" id="modalMovePlayer">
+                    <div class="modal-container modal-bubble" style="max-width: 400px;">
+                        <div class="modal-header-bubble">
+                            <h2>Move Player</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
+                        <div class="modal-body-bubble">
+                            <p style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-medium);">
+                                Move <strong id="movePlayerNameDisplay" style="color: var(--navy-dark);"></strong> to
+                                another squad:
+                            </p>
+                            <input type="hidden" id="movePlayerIdInput">
+                            <div class="form-group-bubble">
+                                <label>Destination Squad</label>
+                                <select id="movePlayerSquadSelect" class="form-control-bubble">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer-bubble">
+                            <button class="dash-btn outline btn-close-modal">Cancel</button>
+                            <button class="dash-btn primary" id="btnConfirmMovePlayer">Move Player</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add/Edit Player Modal -->
+                <div class="modal-overlay" id="modalPlayer">
+                    <div class="modal-container modal-bubble" style="max-width: 550px;">
+                        <div class="modal-header-bubble">
+                            <h2>New Player</h2>
+                            <button class="btn-close-modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body-bubble">
+                            <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                                <div id="addPlayerPhotoPreview" style="width:56px;height:56px;border-radius:50%;background:var(--bg-body);border:2px dashed var(--border-light);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('addPlayerPhotoInput').click()" title="Upload photo">
+                                    <i class="fas fa-camera" style="font-size:1.2rem;color:var(--text-muted);"></i>
+                                </div>
+                                <div style="flex:1;">
+                                    <div class="form-group-bubble" style="margin-bottom:0;">
+                                        <label>Player Name</label>
+                                        <input type="text" id="playerNameInput" class="form-control-bubble" placeholder="e.g. John Doe">
+                                    </div>
+                                </div>
+                                <input type="file" id="addPlayerPhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                            </div>
+
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Date of Birth <span id="playerAgeBadge" style="font-weight:700;color:var(--primary);font-size:0.82rem;"></span></label>
+                                    <input type="date" id="playerDobInput" class="form-control-bubble">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Squad</label>
+                                    <select id="playerSquadInput" class="form-control-bubble">
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Position(s)</label>
+                                    <div class="multi-select-dropdown" id="playerPositionDropdown">
+                                        <div class="multi-select-trigger form-control-bubble" id="playerPositionTrigger">
+                                            Select position(s)...
+                                        </div>
+                                        <div class="multi-select-options" id="playerPositionOptions" style="display:none;">
+                                            <!-- Populated by JS -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Preferred Foot</label>
+                                    <select id="playerFootInput" class="form-control-bubble">
+                                        <option value="Right">Right</option>
+                                        <option value="Left">Left</option>
+                                        <option value="Both">Both</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <hr style="border: 0; border-top: 1px solid var(--border); margin: 24px 0;">
+                            <h3 style="font-size: 0.95rem; color: var(--navy-dark); margin: 0 0 16px 0;">Physical Specs (Optional)</h3>
+
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Height (cm)</label>
+                                    <input type="number" id="playerHeightInput" class="form-control-bubble" placeholder="e.g. 180">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Weight (kg)</label>
+                                    <input type="number" id="playerWeightInput" class="form-control-bubble" placeholder="e.g. 75">
+                                </div>
+                            </div>
+
+                            <div class="form-group-bubble">
+                                <label>Previous Clubs</label>
+                                <div id="playerClubsContainer">
+                                    <div class="club-entry" style="display:flex; gap:8px; margin-bottom:6px;">
+                                        <input type="text" class="form-control-bubble club-input" placeholder="e.g. SuperSport Academy">
+                                        <button type="button" class="dash-btn outline sm btn-remove-club" style="flex-shrink:0; padding:6px 10px;" title="Remove">&times;</button>
+                                    </div>
+                                </div>
+                                <button type="button" id="btnAddClubEntry" class="dash-btn outline sm" style="margin-top:4px; font-size:0.8rem;">
+                                    <i class="fas fa-plus"></i> Add Club
+                                </button>
+                            </div>
+
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Jersey Number</label>
+                                    <input type="text" id="playerJerseyInput" class="form-control-bubble" placeholder="e.g. 10">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Nationality</label>
+                                    <input type="text" id="playerNationalityInput" class="form-control-bubble" placeholder="e.g. South African">
+                                </div>
+                            </div>
+
+                            <hr style="border: 0; border-top: 1px solid var(--border); margin: 24px 0;">
+                            <h3 style="font-size: 0.95rem; color: var(--navy-dark); margin: 0 0 16px 0;"><i class="fas fa-user-friends" style="margin-right:6px;color:var(--primary);"></i>Parent / Guardian</h3>
+
+                            <div class="form-group-bubble">
+                                <label>Parent/Guardian Name</label>
+                                <input type="text" id="playerParentNameInput" class="form-control-bubble" placeholder="e.g. Jane Doe">
+                            </div>
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Parent Phone</label>
+                                    <input type="tel" id="playerParentPhoneInput" class="form-control-bubble" placeholder="e.g. 082 123 4567">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Parent Email</label>
+                                    <input type="email" id="playerParentEmailInput" class="form-control-bubble" placeholder="e.g. parent@email.com">
+                                </div>
+                            </div>
+
+                            <hr style="border: 0; border-top: 1px solid var(--border); margin: 24px 0;">
+                            <h3 style="font-size: 0.95rem; color: var(--navy-dark); margin: 0 0 16px 0;"><i class="fas fa-first-aid" style="margin-right:6px;color:#ef4444;"></i>Emergency & Medical</h3>
+
+                            <div class="bubble-grid-2">
+                                <div class="form-group-bubble">
+                                    <label>Emergency Contact Name</label>
+                                    <input type="text" id="playerEmergencyNameInput" class="form-control-bubble" placeholder="e.g. John Doe Sr.">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Emergency Contact Phone</label>
+                                    <input type="tel" id="playerEmergencyPhoneInput" class="form-control-bubble" placeholder="e.g. 082 987 6543">
+                                </div>
+                            </div>
+                            <div class="form-group-bubble">
+                                <label>Medical Info <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(allergies, conditions, medications)</span></label>
+                                <textarea id="playerMedicalInput" class="form-control-bubble" rows="2" placeholder="e.g. Asthmatic — uses inhaler before exercise"></textarea>
+                            </div>
+
+                            <!-- Tuks-specific fields -->
+                            <div class="bubble-grid-2" id="tuksFieldsGroup">
+                                <div class="form-group-bubble">
+                                    <label>School</label>
+                                    <select id="playerSchoolInput" class="form-control-bubble">
+                                        <option value="">Not Specified</option>
+                                        <option value="TSHS">TSHS</option>
+                                        <option value="External">External</option>
+                                    </select>
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>New to Tuks?</label>
+                                    <select id="playerNewToClubInput" class="form-control-bubble">
+                                        <option value="false">No</option>
+                                        <option value="true">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- Orion / private coaching fields -->
+                            <div class="bubble-grid-2" id="orionFieldsGroup" style="display:none;">
+                                <div class="form-group-bubble">
+                                    <label>School</label>
+                                    <input type="text" id="playerSchoolInputText" class="form-control-bubble" placeholder="e.g. Pretoria Boys High">
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Current Club</label>
+                                    <input type="text" id="playerCurrentClubInput" class="form-control-bubble" placeholder="e.g. SuperSport United">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer-bubble"
+                            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 12px; padding: 20px 24px;">
+                            <button class="dash-btn outline" id="btnSavePlayerAnother"
+                                style="white-space: nowrap; flex-shrink: 0;">Save &amp; Add Another</button>
+                            <div style="display: flex; justify-content: flex-end; gap: 12px; flex-wrap: nowrap; width: 100%;">
+                                <button class="dash-btn outline btn-close-modal" style="flex-shrink: 0;">Cancel</button>
+                                <button class="dash-btn primary" id="btnSavePlayer"
+                                    style="white-space: nowrap; flex-shrink: 0;">Save Player</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+    <script type="module">
+        import { initPage } from '../page-init.js';
+        import { initSquadPlayersUI } from '../js/squad-players-ui.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await initPage('squad', { match: true });
+            if (!user) return;
+            initSquadPlayersUI();
+        });
+    </script>
+</body>
+
+</html>

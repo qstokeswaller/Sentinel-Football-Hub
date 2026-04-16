@@ -1,0 +1,202 @@
+/* Session Share Page — Public read-only view */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0D1B2A;
+    color: #e2e8f0;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+.share-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+}
+
+/* Loading */
+.share-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 80px 0;
+    color: #94a3b8;
+}
+
+/* Error */
+.share-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 80px 0;
+    text-align: center;
+}
+.share-error h2 { color: #f1f5f9; font-size: 1.4rem; }
+.share-error p { color: #94a3b8; font-size: 0.9rem; max-width: 400px; }
+
+/* Header */
+.share-header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #1e293b;
+}
+.share-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    margin-bottom: 12px;
+}
+.share-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.share-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+.share-meta-item i { color: #00C49A; font-size: 0.8rem; }
+
+.share-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+    padding: 16px;
+    background: #1e293b;
+    border-radius: 10px;
+    border: 1px solid #334155;
+}
+.share-detail { display: flex; flex-direction: column; gap: 2px; }
+.share-detail.full { grid-column: 1 / -1; }
+.share-detail label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+.share-detail span { font-size: 0.85rem; color: #cbd5e1; }
+
+/* Drill Blocks */
+.share-drill-block {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+.share-drill-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #334155;
+}
+.share-drill-num {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+.share-drill-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: 4px;
+}
+.share-drill-badge.static { background: #164e63; color: #67e8f9; }
+.share-drill-badge.animated { background: #3b0764; color: #c084fc; }
+.share-drill-badge.section { background: #1e3a5f; color: #7dd3fc; }
+.share-drill-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+/* Drill image */
+.share-drill-img {
+    width: 100%;
+    display: block;
+}
+
+/* Drill video/media */
+.share-drill-media {
+    width: 100%;
+    padding: 0;
+}
+.share-video-embed {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: none;
+    display: block;
+}
+.share-video-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px;
+    color: #3b82f6;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.share-video-link:hover { color: #60a5fa; }
+
+/* Drill sections (overview, setup, etc.) */
+.share-section {
+    padding: 16px 20px;
+    border-top: 1px solid #334155;
+}
+.share-section h4 {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #00C49A;
+    margin-bottom: 6px;
+}
+.share-section-content {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    line-height: 1.7;
+}
+.share-section-content ul,
+.share-section-content ol {
+    padding-left: 20px;
+    margin: 4px 0;
+}
+.share-section-content p { margin-bottom: 4px; }
+
+/* Footer */
+.share-footer {
+    text-align: center;
+    padding: 32px 0 16px;
+    color: #475569;
+    font-size: 0.75rem;
+}
+.share-footer strong { color: #00C49A; }
+
+/* Responsive */
+@media (max-width: 640px) {
+    .share-container { padding: 16px 12px 40px; }
+    .share-header h1 { font-size: 1.3rem; }
+    .share-meta { gap: 10px; }
+    .share-details { grid-template-columns: 1fr 1fr; }
+    .share-drill-header { padding: 12px 14px; }
+    .share-section { padding: 12px 14px; }
+}

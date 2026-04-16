@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Sentinel Football Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #00a882 0%, #00C49A 50%, #00a882 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e2e8f0;
+        }
+        .login-container {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-logo img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            margin-bottom: 12px;
+        }
+        .login-logo i {
+            font-size: 48px;
+            color: #00C49A;
+            margin-bottom: 12px;
+        }
+        .login-logo h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+        .login-logo p {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .invite-banner {
+            background: #065f4633;
+            border: 1px solid #047857;
+            color: #6ee7b7;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        .invite-banner.show { display: block; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #00C49A;
+        }
+        .name-row {
+            display: flex;
+            gap: 12px;
+        }
+        .name-row .form-group {
+            flex: 1;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            background: #00C49A;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 8px;
+        }
+        .btn-login:hover { background: #00a882; }
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .toggle-mode {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+        .toggle-mode a {
+            color: #00C49A;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .toggle-mode a:hover { text-decoration: underline; }
+        .error-msg {
+            background: #7f1d1d33;
+            border: 1px solid #991b1b;
+            color: #fca5a5;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .signup-fields { display: none; }
+        .signup-fields.show { display: block; }
+
+        /* ── MOBILE ── */
+        @media (max-width: 480px) {
+            body {
+                min-height: 100dvh;
+                padding: 16px;
+                align-items: flex-start;
+                padding-top: 40px;
+            }
+            .login-container {
+                padding: 32px 24px;
+                border-radius: 12px;
+                max-width: 100%;
+            }
+            .login-logo {
+                margin-bottom: 24px;
+            }
+            .login-logo img {
+                width: 48px;
+                height: 48px;
+            }
+            .login-logo h1 {
+                font-size: 18px;
+            }
+            .login-logo p {
+                font-size: 12px;
+            }
+            .form-group {
+                margin-bottom: 16px;
+            }
+            .form-group input {
+                padding: 12px;
+                font-size: 16px; /* prevent iOS zoom */
+            }
+            .name-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .btn-login {
+                padding: 14px;
+                font-size: 15px;
+                min-height: 48px;
+            }
+            .toggle-mode {
+                margin-top: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-logo">
+            <i class="fas fa-shield-alt" style="font-size:48px; color:#00C49A; display:block; margin-bottom:12px;"></i>
+            <h1>Sentinel Football Hub</h1>
+            <p id="loginSubtitle">Sign in to your coaching dashboard</p>
+        </div>
+
+        <div class="invite-banner" id="inviteBanner">
+            <i class="fas fa-envelope-open-text"></i>&nbsp; You've been invited! Create your account below.
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <form id="authForm">
+            <div class="signup-fields" id="signupFields">
+                <div class="name-row">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="firstName" placeholder="First name">
+                    </div>
+                    <div class="form-group">
+                        <label>Surname</label>
+                        <input type="text" id="surname" placeholder="Surname">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email" placeholder="coach@club.com" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Your password" required minlength="6">
+            </div>
+
+            <div class="signup-fields" id="confirmPasswordGroup">
+                <div class="form-group">
+                    <label>Confirm Password *</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm your password" minlength="6">
+                </div>
+            </div>
+
+            <input type="hidden" id="inviteToken">
+
+            <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
+        </form>
+
+        <div class="toggle-mode" id="toggleMode">
+            <span id="toggleText">Don't have an account?</span>
+            <a id="toggleLink">Sign Up</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import supabase from '../supabase.js';
+
+        let isSignup = false;
+        let isInviteMode = false;
+        let inviteInfo = null; // { club_id, club_name, role, email } from RPC
+        const roleLabels = { admin: 'Admin', coach: 'Coach', viewer: 'Viewer' };
+        const form = document.getElementById('authForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleLink = document.getElementById('toggleLink');
+        const toggleText = document.getElementById('toggleText');
+        const toggleMode = document.getElementById('toggleMode');
+        const signupFields = document.getElementById('signupFields');
+        const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+        const inviteBanner = document.getElementById('inviteBanner');
+        const loginSubtitle = document.getElementById('loginSubtitle');
+
+        function setSignupMode(on) {
+            isSignup = on;
+            signupFields.classList.toggle('show', on);
+            confirmPasswordGroup.classList.toggle('show', on);
+            submitBtn.textContent = on ? 'Create Account' : 'Sign In';
+            if (!isInviteMode) {
+                toggleText.textContent = on ? 'Already have an account?' : "Don't have an account?";
+                toggleLink.textContent = on ? 'Sign In' : 'Sign Up';
+            }
+            if (!isInviteMode) {
+                loginSubtitle.textContent = on ? 'Create your account' : 'Sign in to your coaching dashboard';
+            }
+            errorMsg.style.display = 'none';
+        }
+
+        // ── Magic link / invite email callback handling ──
+        // When a user clicks a Supabase invite email or magic link, they're redirected
+        // here with auth tokens in the URL hash (#access_token=...&type=invite).
+        // Supabase JS auto-exchanges these for a session.
+        let _magicLinkHandled = false;
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const hashType = hashParams.get('type');
+        if (hashType === 'invite' || hashType === 'magiclink' || hashType === 'signup' || hashType === 'recovery') {
+            _magicLinkHandled = true;
+            // Supabase is processing the token — wait for it
+            form.style.display = 'none';
+            toggleMode.style.display = 'none';
+            loginSubtitle.textContent = 'Setting up your account...';
+            errorMsg.style.display = 'block';
+            errorMsg.style.background = '#065f4633';
+            errorMsg.style.borderColor = '#047857';
+            errorMsg.style.color = '#6ee7b7';
+            errorMsg.style.textAlign = 'center';
+            errorMsg.style.padding = '20px 16px';
+            errorMsg.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:24px;display:block;margin-bottom:10px;"></i>Verifying your account...';
+
+            // Listen for the auth state change (Supabase auto-exchanges the hash tokens)
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    const u = session.user;
+                    // Check if profile exists, if not create from user metadata
+                    const { data: existingProfile } = await supabase
+                        .from('profiles')
+                        .select('id, role, club_id, clubs(name, settings)')
+                        .eq('id', u.id)
+                        .single();
+
+                    if (!existingProfile && u.user_metadata) {
+                        // Profile was pre-created by the Edge Function, but if it wasn't, create it now
+                        await supabase.from('profiles').upsert({
+                            id: u.id,
+                            full_name: u.user_metadata.full_name || u.email?.split('@')[0] || 'User',
+                            club_id: u.user_metadata.club_id || null,
+                            role: u.user_metadata.role || 'coach',
+                            email: u.email,
+                        }, { onConflict: 'id' });
+                    }
+
+                    const prof = existingProfile || { role: u.user_metadata?.role, club_id: u.user_metadata?.club_id };
+
+                    // Pre-cache sidebar branding
+                    if (existingProfile?.clubs?.settings?.branding) {
+                        const b = existingProfile.clubs.settings.branding;
+                        localStorage.setItem('sidebar-branding', JSON.stringify({
+                            logo_url: b.logo_url || null,
+                            display_name: b.club_display_name || existingProfile.clubs.name || 'Football Hub',
+                        }));
+                    }
+
+                    errorMsg.innerHTML = `
+                        <i class="fas fa-check-circle" style="font-size:28px;display:block;margin-bottom:10px;color:#00C49A;"></i>
+                        <strong>Welcome!</strong> Your account is ready.<br>Redirecting to your dashboard...
+                    `;
+
+                    // Clean hash from URL
+                    window.history.replaceState({}, '', window.location.pathname);
+
+                    setTimeout(() => {
+                        if (prof?.role === 'super_admin' && !prof?.club_id) {
+                            window.location.href = '/src/pages/platform-admin.html';
+                        } else {
+                            window.location.href = '/src/pages/dashboard.html';
+                        }
+                    }, 1500);
+                }
+            });
+        }
+
+        // Skip normal login page init if magic link is being processed
+        if (_magicLinkHandled) { /* waiting for onAuthStateChange callback above */ }
+        else {
+
+        // Check if already logged in — redirect platform admins to platform admin page
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: prof } = await supabase.from('profiles').select('role, club_id, clubs(name, settings)').eq('id', user.id).single();
+            // Pre-cache sidebar branding
+            if (prof?.clubs?.settings?.branding) {
+                const b = prof.clubs.settings.branding;
+                localStorage.setItem('sidebar-branding', JSON.stringify({
+                    logo_url: b.logo_url || null,
+                    display_name: b.club_display_name || prof.clubs.name || 'Football Hub',
+                }));
+            }
+            if (prof?.role === 'super_admin' && !prof?.club_id) {
+                window.location.href = '/src/pages/platform-admin.html';
+            } else {
+                window.location.href = '/src/pages/dashboard.html';
+            }
+        }
+
+        // Check for invite token from URL (?invite= or ?token= for backwards compat)
+        const params = new URLSearchParams(window.location.search);
+        const tokenValue = params.get('invite') || params.get('token');
+        const modeParam = params.get('mode');
+
+        if (tokenValue) {
+            document.getElementById('inviteToken').value = tokenValue;
+            isInviteMode = true;
+            toggleMode.style.display = 'none';
+            setSignupMode(true);
+
+            // Validate invite via RPC and show club context
+            const { data: inv } = await supabase.rpc('validate_invite', { invite_token: tokenValue });
+            if (inv) {
+                inviteInfo = inv;
+                const roleName = roleLabels[inv.role] || inv.role;
+                loginSubtitle.textContent = `Create your profile for ${inv.club_name}`;
+                inviteBanner.innerHTML = `<i class="fas fa-shield-alt"></i>&nbsp; You've been invited to join <strong>${inv.club_name}</strong> as <strong>${roleName}</strong>. Create your account below.`;
+                if (inv.email) {
+                    document.getElementById('email').value = inv.email;
+                    document.getElementById('email').readOnly = true;
+                    document.getElementById('email').style.opacity = '0.7';
+                }
+            } else {
+                inviteBanner.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#fca5a5;"></i>&nbsp; <span style="color:#fca5a5;">This invite link is invalid or has expired. Please contact your administrator for a new invite.</span>`;
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.4';
+            }
+            inviteBanner.classList.add('show');
+        } else if (modeParam === 'signup') {
+            setSignupMode(true);
+        }
+
+        toggleLink.addEventListener('click', () => {
+            if (isInviteMode) return;
+            setSignupMode(!isSignup);
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = isSignup ? 'Creating Account...' : 'Signing In...';
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                if (isSignup) {
+                    const firstName = document.getElementById('firstName').value.trim();
+                    const surname = document.getElementById('surname').value.trim();
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    const inviteToken = document.getElementById('inviteToken').value.trim();
+
+                    if (!firstName) throw new Error('First name is required');
+                    if (password !== confirmPassword) throw new Error('Passwords do not match');
+
+                    const fullName = surname ? `${firstName} ${surname}` : firstName;
+
+                    // Validate invite via RPC (bypasses RLS)
+                    let clubId = null;
+                    let role = 'coach';
+                    let clubName = '';
+                    if (inviteToken) {
+                        const { data: inv } = await supabase.rpc('validate_invite', { invite_token: inviteToken });
+                        if (!inv) throw new Error('Invalid or expired invite link. Please contact your administrator for a new invite.');
+                        clubId = inv.club_id;
+                        role = inv.role;
+                        clubName = inv.club_name;
+                    }
+
+                    const { data, error } = await supabase.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: {
+                                full_name: fullName,
+                                club_id: clubId,
+                                role: role
+                            }
+                        }
+                    });
+
+                    if (error) throw error;
+
+                    // Mark invite as used via RPC (bypasses RLS)
+                    if (inviteToken) {
+                        await supabase.rpc('use_invite', { invite_token: inviteToken });
+                    }
+
+                    // Build success message
+                    const roleName = roleLabels[role] || role;
+                    const clubMsg = clubName ? ` You've been added to <strong>${clubName}</strong> as <strong>${roleName}</strong>.` : '';
+
+                    // Hide the form and show success
+                    form.style.display = 'none';
+                    inviteBanner.style.display = 'none';
+                    toggleMode.style.display = 'none';
+                    loginSubtitle.textContent = '';
+
+                    errorMsg.style.display = 'block';
+                    errorMsg.style.background = '#065f4633';
+                    errorMsg.style.borderColor = '#047857';
+                    errorMsg.style.color = '#6ee7b7';
+                    errorMsg.style.textAlign = 'center';
+                    errorMsg.style.padding = '20px 16px';
+                    errorMsg.style.fontSize = '14px';
+                    errorMsg.style.lineHeight = '1.6';
+
+                    if (data.user && !data.session) {
+                        // Email confirmation required
+                        errorMsg.innerHTML = `
+                            <i class="fas fa-check-circle" style="font-size:28px;display:block;margin-bottom:10px;color:#00C49A;"></i>
+                            <strong>Account created!</strong>${clubMsg}<br><br>
+                            Check your email to confirm your account, then come back and sign in with your email and password.
+                        `;
+                    } else {
+                        // Auto-confirmed — pre-cache branding then redirect
+                        if (clubId) {
+                            try {
+                                const { data: club } = await supabase.from('clubs').select('name, settings').eq('id', clubId).single();
+                                const b = club?.settings?.branding;
+                                if (b) {
+                                    localStorage.setItem('sidebar-branding', JSON.stringify({
+                                        logo_url: b.logo_url || null,
+                                        display_name: b.club_display_name || club.name || 'Football Hub',
+                                    }));
+                                }
+                            } catch (e) { /* proceed without cache */ }
+                        }
+                        errorMsg.innerHTML = `
+                            <i class="fas fa-check-circle" style="font-size:28px;display:block;margin-bottom:10px;color:#00C49A;"></i>
+                            <strong>Welcome to ${clubName || 'Sentinel Football Hub'}!</strong>${clubMsg}<br><br>
+                            Redirecting to your dashboard...
+                        `;
+                        setTimeout(() => { window.location.href = '/src/pages/dashboard.html'; }, 2000);
+                    }
+                } else {
+                    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    const { data: prof } = await supabase.from('profiles').select('role, club_id, clubs(name, settings)').eq('id', signInData.user.id).single();
+
+                    // Pre-cache sidebar branding so first page load has zero flicker
+                    if (prof?.clubs?.settings?.branding) {
+                        const b = prof.clubs.settings.branding;
+                        localStorage.setItem('sidebar-branding', JSON.stringify({
+                            logo_url: b.logo_url || null,
+                            display_name: b.club_display_name || prof.clubs.name || 'Football Hub',
+                        }));
+                    }
+
+                    if (prof?.role === 'super_admin' && !prof?.club_id) {
+                        window.location.href = '/src/pages/platform-admin.html';
+                    } else {
+                        window.location.href = '/src/pages/dashboard.html';
+                    }
+                }
+            } catch (err) {
+                errorMsg.textContent = err.message;
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = isSignup ? 'Create Account' : 'Sign In';
+            }
+        });
+
+        } // end else (_magicLinkHandled)
+    </script>
+</body>
+</html>

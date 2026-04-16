@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | Sentinel Football Hub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/theme-preload.js"></script>
+    <script src="/sidebar-preload.js"></script>
+    <style>
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 32px;
+            max-width: 1100px;
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .settings-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .settings-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-medium);
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .settings-nav-item:hover {
+            background: var(--bg-body);
+            color: var(--navy-dark);
+        }
+
+        .settings-nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .settings-nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .settings-panel {
+            display: none;
+        }
+
+        .settings-panel.active {
+            display: block;
+        }
+
+        .settings-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .settings-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--navy-dark);
+            margin: 0 0 6px 0;
+        }
+
+        .settings-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 20px 0;
+        }
+
+        .settings-form-group {
+            margin-bottom: 20px;
+        }
+
+        .settings-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--navy-dark);
+            margin-bottom: 6px;
+        }
+
+        .settings-form-group input,
+        .settings-form-group select,
+        .settings-form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            background: white;
+            box-sizing: border-box;
+        }
+
+        .settings-form-group input:focus,
+        .settings-form-group select:focus,
+        .settings-form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .settings-form-group input:disabled {
+            background: var(--bg-body);
+            color: var(--text-secondary);
+        }
+
+        .settings-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .settings-avatar-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .settings-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .settings-avatar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .settings-avatar-actions .name {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--navy-dark);
+        }
+
+        .settings-avatar-actions .email {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-light);
+            margin-top: 8px;
+        }
+
+        .settings-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .settings-badge.super_admin {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .settings-badge.admin {
+            background: #dbeafe;
+            color: #00a882;
+        }
+
+        .settings-badge.coach {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .settings-badge.viewer {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .danger-zone {
+            border-color: #fca5a5;
+        }
+
+        .danger-zone h3 {
+            color: #dc2626;
+        }
+
+        /* Team member card */
+        .team-member-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--bg-body);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            gap: 12px;
+        }
+        .team-member-card .member-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+        .team-member-card .member-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--primary); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px; flex-shrink: 0;
+        }
+        .team-member-card .member-details {
+            min-width: 0;
+        }
+        .team-member-card .member-name {
+            font-weight: 600; font-size: 14px; color: var(--navy-dark);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .team-member-card .member-squads {
+            font-size: 12px; color: var(--text-secondary); margin-top: 2px;
+        }
+        .team-member-card .member-actions {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        .team-member-card .member-actions select {
+            padding: 6px 10px; border: 1px solid var(--border-light);
+            border-radius: 6px; font-size: 13px; font-family: inherit;
+            background: white; cursor: pointer;
+        }
+        .team-member-card .member-actions select:focus {
+            outline: none; border-color: var(--primary);
+        }
+        .team-member-card .btn-icon {
+            width: 32px; height: 32px; border-radius: 6px; border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 13px; transition: all 0.2s;
+        }
+        .btn-icon.squad-assign {
+            background: #e6f9f4; color: var(--primary);
+        }
+        .btn-icon.squad-assign:hover { background: #ccf5ec; }
+        .btn-icon.remove-member {
+            background: #fef2f2; color: #dc2626;
+        }
+        .btn-icon.remove-member:hover { background: #fca5a5; color: white; }
+
+        /* Invite / Squad-assign modal overlay */
+        .settings-modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .settings-modal-overlay.active { display: flex; }
+        .settings-modal {
+            background: white; border-radius: 16px; padding: 32px;
+            width: 100%; max-width: 480px; box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .settings-modal h3 {
+            font-size: 18px; font-weight: 700; color: var(--navy-dark); margin: 0 0 6px 0;
+        }
+        .settings-modal p {
+            font-size: 13px; color: var(--text-secondary); margin: 0 0 24px 0;
+        }
+        .settings-modal .modal-actions {
+            display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;
+        }
+        .settings-modal .btn-cancel {
+            padding: 10px 18px; border: 1px solid var(--border-light);
+            border-radius: 8px; background: white; font-size: 14px;
+            font-family: inherit; cursor: pointer; color: var(--text-medium);
+        }
+        .settings-modal .btn-cancel:hover { background: var(--bg-body); }
+        .squad-checklist {
+            max-height: 200px; overflow-y: auto; border: 1px solid var(--border-light);
+            border-radius: 8px; padding: 8px;
+        }
+        .squad-checklist label {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; border-radius: 6px; cursor: pointer;
+            font-size: 14px; color: var(--navy-dark); transition: background 0.15s;
+        }
+        .squad-checklist label:hover { background: var(--bg-body); }
+        .squad-checklist input[type="checkbox"] {
+            accent-color: var(--primary); width: 16px; height: 16px;
+        }
+
+        .theme-toggle-btn.active {
+            border-color: var(--primary) !important;
+            background: rgba(0, 196, 154, 0.1) !important;
+            color: var(--primary) !important;
+        }
+
+        @media (max-width: 480px) {
+            .settings-card {
+                padding: 20px 16px;
+            }
+            .settings-form-row {
+                grid-template-columns: 1fr;
+            }
+            .settings-form-group input,
+            .settings-form-group select,
+            .settings-form-group textarea {
+                font-size: 16px; /* prevent iOS zoom */
+            }
+            .settings-avatar-section {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
+            }
+            .settings-nav {
+                flex-direction: row;
+                overflow-x: auto;
+                gap: 4px;
+                padding-bottom: 8px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .settings-nav-item {
+                white-space: nowrap;
+                min-height: 44px;
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <header class="page-header">
+                <button id="mobileMenuToggle" class="mobile-nav-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="header-info">
+                    <h1>Settings</h1>
+                    <p>Manage your profile, preferences, and account settings.</p>
+                </div>
+            </header>
+
+            <div class="settings-grid">
+                <div class="settings-nav" id="settingsNav">
+                    <button class="settings-nav-item active" data-panel="account">
+                        <i class="fas fa-user-lock"></i> Account & Security
+                    </button>
+                    <button class="settings-nav-item" data-panel="club">
+                        <i class="fas fa-shield-alt"></i> Club Settings
+                    </button>
+                    <button class="settings-nav-item" data-panel="appearance">
+                        <i class="fas fa-palette"></i> Appearance
+                    </button>
+                    <button class="settings-nav-item" data-panel="notifications">
+                        <i class="fas fa-bell"></i> Notifications
+                    </button>
+                    <button class="settings-nav-item" data-panel="deleted">
+                        <i class="fas fa-trash-restore"></i> Recently Deleted
+                    </button>
+                    <button class="settings-nav-item" data-panel="walkthrough">
+                        <i class="fas fa-graduation-cap"></i> Walkthrough
+                    </button>
+                </div>
+
+                <div class="settings-content">
+                    <!-- Profile Panel -->
+                    <!-- Account & Security Panel (includes Profile) -->
+                    <div class="settings-panel active" id="panel-account">
+                        <div class="settings-card">
+                            <div class="settings-avatar-section">
+                                <div class="settings-avatar" id="profileAvatar">??</div>
+                                <div class="settings-avatar-actions">
+                                    <span class="name" id="profileDisplayName">Loading...</span>
+                                    <span class="email" id="profileEmail">...</span>
+                                    <span class="settings-badge coach" id="profileRoleBadge">coach</span>
+                                </div>
+                            </div>
+                            <h3>Personal Information</h3>
+                            <p>Update your name and contact details.</p>
+                            <div class="settings-form-row">
+                                <div class="settings-form-group">
+                                    <label>Full Name</label>
+                                    <input type="text" id="settingsFullName" placeholder="Your full name">
+                                </div>
+                                <div class="settings-form-group">
+                                    <label>Display Role</label>
+                                    <input type="text" id="settingsRole" disabled>
+                                </div>
+                            </div>
+                            <div class="settings-form-group">
+                                <label>Email</label>
+                                <input type="email" id="settingsEmail" disabled>
+                            </div>
+                            <div class="settings-actions">
+                                <button class="dash-btn primary" id="btnSaveProfile">
+                                    <i class="fas fa-save"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <h3>Change Password</h3>
+                            <p>Update your account password. You'll need your current password to confirm.</p>
+                            <div class="settings-form-group">
+                                <label>New Password</label>
+                                <input type="password" id="settingsNewPassword" placeholder="Enter new password">
+                            </div>
+                            <div class="settings-form-group">
+                                <label>Confirm New Password</label>
+                                <input type="password" id="settingsConfirmPassword" placeholder="Confirm new password">
+                            </div>
+                            <div class="settings-actions">
+                                <button class="dash-btn primary" id="btnChangePassword">
+                                    <i class="fas fa-key"></i> Update Password
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <h3>Sign Out</h3>
+                            <p>Sign out of your account on this device.</p>
+                            <button class="dash-btn outline" id="btnSignOut" style="color:#dc2626;border-color:#fca5a5;">
+                                <i class="fas fa-sign-out-alt"></i> Sign Out
+                            </button>
+                        </div>
+
+                        <div class="settings-card danger-zone">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+                            <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
+                            <button class="dash-btn outline" style="color:#dc2626;border-color:#fca5a5;" id="btnDeleteAccount">
+                                <i class="fas fa-trash-alt"></i> Delete Account
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Club Settings Panel (admin only) -->
+                    <div class="settings-panel" id="panel-club">
+                        <div class="settings-card">
+                            <h3>Club Information</h3>
+                            <p>Manage your club's details and branding.</p>
+                            <div class="settings-form-group">
+                                <label>Club Name</label>
+                                <input type="text" id="settingsClubName" placeholder="Club name">
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div class="settings-form-group">
+                                    <label>Club Email</label>
+                                    <input type="email" id="settingsClubEmail" placeholder="e.g. info@club.com">
+                                </div>
+                                <div class="settings-form-group">
+                                    <label>Club Phone</label>
+                                    <input type="tel" id="settingsClubPhone" placeholder="e.g. 012 345 6789">
+                                </div>
+                            </div>
+                            <div class="settings-form-group">
+                                <label>Club Address</label>
+                                <input type="text" id="settingsClubAddress" placeholder="e.g. 123 Main St, Pretoria">
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div class="settings-form-group">
+                                    <label>Current Season</label>
+                                    <input type="text" id="settingsCurrentSeason" placeholder="e.g. 2026">
+                                </div>
+                                <div class="settings-form-group">
+                                    <label>Default Venue</label>
+                                    <input type="text" id="settingsDefaultVenue" placeholder="e.g. Main Pitch">
+                                </div>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div class="settings-form-group">
+                                    <label>Default Session Time</label>
+                                    <input type="time" id="settingsDefaultTime">
+                                </div>
+                                <div class="settings-form-group">
+                                    <label>Default Session Duration</label>
+                                    <input type="text" id="settingsDefaultDuration" placeholder="e.g. 90 min">
+                                </div>
+                            </div>
+                            <div class="settings-form-group">
+                                <label>Club Logo</label>
+                                <div style="display:flex;align-items:center;gap:16px;margin-top:4px;">
+                                    <div id="clubLogoPreview" style="width:64px;height:64px;border-radius:12px;background:var(--bg-card);border:2px dashed var(--border-light);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                                        <i class="fas fa-image" style="font-size:1.4rem;color:var(--text-muted);"></i>
+                                    </div>
+                                    <div style="display:flex;flex-direction:column;gap:6px;">
+                                        <input type="file" id="clubLogoInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display:none;">
+                                        <button type="button" class="dash-btn" id="btnUploadLogo" style="font-size:0.8rem;padding:6px 14px;">
+                                            <i class="fas fa-upload"></i> Upload Logo
+                                        </button>
+                                        <button type="button" class="dash-btn" id="btnRemoveLogo" style="font-size:0.75rem;padding:4px 10px;color:#ef4444;display:none;">
+                                            <i class="fas fa-times"></i> Remove
+                                        </button>
+                                        <span style="font-size:0.72rem;color:var(--text-muted);">JPEG, PNG, WebP, or SVG. Max 2 MB.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-actions">
+                                <button class="dash-btn primary" id="btnSaveClub">
+                                    <i class="fas fa-save"></i> Save Club Settings
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <h3>Team Members <span id="teamMemberCount" style="font-size:13px;font-weight:500;color:var(--text-secondary);"></span></h3>
+                            <p>Manage coaches, viewers, and staff with access to this club. Assign roles and squad access.</p>
+                            <div id="teamMembersList" style="margin-bottom: 16px;">
+                                <div style="text-align:center;padding:20px;color:var(--text-secondary);">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading members...
+                                </div>
+                            </div>
+                            <button class="dash-btn primary" id="btnInviteMember">
+                                <i class="fas fa-user-plus"></i> Invite Member
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Appearance Panel -->
+                    <div class="settings-panel" id="panel-appearance">
+                        <div class="settings-card">
+                            <h3><i class="fas fa-palette" style="margin-right:8px;color:var(--primary);"></i>Theme</h3>
+                            <p>Choose your interface colour mode. The sidebar stays dark in both themes.</p>
+                            <div style="display:flex;gap:8px;margin-top:4px;">
+                                <button class="theme-toggle-btn" data-theme-value="light" id="btnThemeLight"
+                                    style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;border:2px solid var(--border-light);background:var(--bg-body);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-medium);transition:all 0.2s;">
+                                    <i class="fas fa-sun"></i> Light
+                                </button>
+                                <button class="theme-toggle-btn" data-theme-value="dark" id="btnThemeDark"
+                                    style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;border:2px solid var(--border-light);background:var(--bg-body);cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:var(--text-medium);transition:all 0.2s;">
+                                    <i class="fas fa-moon"></i> Dark
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Panel -->
+                    <div class="settings-panel" id="panel-notifications">
+                        <div class="settings-card">
+                            <h3>Notification Preferences</h3>
+                            <p>Choose what you'd like to be notified about.</p>
+                            <div style="padding:40px;text-align:center;color:var(--text-secondary);">
+                                <i class="fas fa-bell-slash" style="font-size:32px;margin-bottom:12px;opacity:0.3;display:block;"></i>
+                                <p>Notification settings coming soon.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Walkthrough Panel -->
+                    <div class="settings-panel" id="panel-walkthrough">
+                        <div class="settings-card">
+                            <h3><i class="fas fa-graduation-cap" style="margin-right:8px;color:var(--primary);"></i>Page Walkthroughs</h3>
+                            <p>Guided tours that show you how to use each part of the platform. Click any page below to start its walkthrough.</p>
+                            <div id="walkthroughList" style="margin-top:16px;"></div>
+                            <div style="margin-top:16px;display:flex;gap:8px;">
+                                <button class="dash-btn" id="btnResetWalkthroughs" style="font-size:0.8rem;">
+                                    <i class="fas fa-redo"></i> Reset All (show walkthroughs again)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recently Deleted Panel -->
+                    <div class="settings-panel" id="panel-deleted">
+                        <div class="settings-card">
+                            <h3><i class="fas fa-trash-restore" style="margin-right:8px;color:var(--primary);"></i>Recently Deleted</h3>
+                            <p>Items deleted in the last 7 days can be recovered here. After 7 days they are permanently removed.</p>
+                            <div id="deletedItemsList" style="margin-top:16px;">
+                                <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="dash-toast"></div>
+
+    <!-- Invite Member Modal -->
+    <div class="settings-modal-overlay" id="inviteModal">
+        <div class="settings-modal">
+            <h3><i class="fas fa-user-plus" style="color:var(--primary);margin-right:8px;"></i>Invite Team Member</h3>
+            <p>Send an invite link to add a new member to your club.</p>
+            <div class="settings-form-group">
+                <label>Email Address</label>
+                <input type="email" id="inviteEmail" placeholder="coach@example.com">
+            </div>
+            <div class="settings-form-group">
+                <label>Role</label>
+                <select id="inviteRole">
+                    <option value="coach">Coach</option>
+                    <option value="viewer">Viewer</option>
+                </select>
+            </div>
+            <div class="settings-form-group" id="inviteSquadGroup" style="display:none;">
+                <label>Assign to Squads <span style="font-weight:400;color:var(--text-secondary);">(optional)</span></label>
+                <div class="squad-checklist" id="inviteSquadList">
+                    Loading squads...
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="inviteCancelBtn">Cancel</button>
+                <button class="dash-btn primary" id="inviteSendBtn">
+                    <i class="fas fa-paper-plane"></i> Send Invite
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Squad Assignment Modal -->
+    <div class="settings-modal-overlay" id="squadAssignModal">
+        <div class="settings-modal">
+            <h3><i class="fas fa-users" style="color:var(--primary);margin-right:8px;"></i>Assign Squads</h3>
+            <p id="squadAssignSubtitle">Select squads this member can access.</p>
+            <input type="hidden" id="squadAssignUserId">
+            <div class="squad-checklist" id="squadAssignList">
+                Loading squads...
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="squadAssignCancelBtn">Cancel</button>
+                <button class="dash-btn primary" id="squadAssignSaveBtn">
+                    <i class="fas fa-save"></i> Save Assignments
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initPage, supabase, getProfile } from '../page-init.js';
+        import { showToast } from '../toast.js';
+        import { logout } from '../auth.js';
+        import { getAvailableWalkthroughs, startWalkthrough, resetWalkthroughs } from '../js/walkthrough.js';
+        import { assignableRoles, roleLabel, canManage, isSuperAdmin } from '../rbac.js';
+
+        let currentProfile = null;
+        let allSquads = [];
+        let allSquadCoaches = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = await initPage('settings', { squad: false });
+            if (!user) return;
+
+            currentProfile = await getProfile();
+            const profile = currentProfile;
+
+            // Populate profile fields
+            const fullName = profile?.full_name || '';
+            const email = user.email || '';
+            const role = profile?.role || 'coach';
+            const initials = fullName
+                ? fullName.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2)
+                : '?';
+
+            document.getElementById('profileAvatar').textContent = initials;
+            document.getElementById('profileDisplayName').textContent = fullName || email;
+            document.getElementById('profileEmail').textContent = email;
+            document.getElementById('profileRoleBadge').textContent = roleLabel(role);
+            document.getElementById('profileRoleBadge').className = `settings-badge ${role}`;
+
+            document.getElementById('settingsFullName').value = fullName;
+            document.getElementById('settingsRole').value = roleLabel(role);
+            document.getElementById('settingsEmail').value = email;
+
+            // Club settings (admin/super_admin only)
+            let _pendingLogoFile = null;
+            let _pendingLogoRemove = false;
+            if (canManage(profile) && profile?.clubs) {
+                document.getElementById('settingsClubName').value = profile.clubs.name || '';
+                // Populate club operational settings
+                const clubSettings = profile.clubs.settings || {};
+                document.getElementById('settingsClubEmail').value = clubSettings.contact_email || '';
+                document.getElementById('settingsClubPhone').value = clubSettings.contact_phone || '';
+                document.getElementById('settingsClubAddress').value = clubSettings.contact_address || '';
+                document.getElementById('settingsCurrentSeason').value = clubSettings.current_season || new Date().getFullYear().toString();
+                document.getElementById('settingsDefaultVenue').value = clubSettings.default_venue || '';
+                document.getElementById('settingsDefaultTime').value = clubSettings.default_time || '';
+                document.getElementById('settingsDefaultDuration').value = clubSettings.default_duration || '';
+
+                // Init logo preview
+                const existingLogo = profile.clubs.settings?.branding?.logo_url;
+                const logoPreview = document.getElementById('clubLogoPreview');
+                const removeBtn = document.getElementById('btnRemoveLogo');
+                if (existingLogo) {
+                    logoPreview.innerHTML = `<img src="${existingLogo}" alt="Logo" style="width:100%;height:100%;object-fit:contain;">`;
+                    removeBtn.style.display = '';
+                }
+                document.getElementById('btnUploadLogo').addEventListener('click', () => {
+                    document.getElementById('clubLogoInput').click();
+                });
+                document.getElementById('clubLogoInput').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    if (file.size > 2 * 1024 * 1024) { showToast('Logo must be under 2 MB', 'error'); return; }
+                    _pendingLogoFile = file;
+                    _pendingLogoRemove = false;
+                    const url = URL.createObjectURL(file);
+                    logoPreview.innerHTML = `<img src="${url}" alt="Logo" style="width:100%;height:100%;object-fit:contain;">`;
+                    removeBtn.style.display = '';
+                });
+                removeBtn.addEventListener('click', () => {
+                    _pendingLogoFile = null;
+                    _pendingLogoRemove = true;
+                    logoPreview.innerHTML = '<i class="fas fa-image" style="font-size:1.4rem;color:var(--text-muted);"></i>';
+                    removeBtn.style.display = 'none';
+                    document.getElementById('clubLogoInput').value = '';
+                });
+
+                await loadSquadsAndCoaches(profile.club_id);
+                await loadTeamMembers(profile.club_id);
+            } else {
+                const clubNav = document.querySelector('[data-panel="club"]');
+                if (clubNav) clubNav.style.display = 'none';
+            }
+
+            // Populate invite role dropdown based on permissions
+            const inviteRoleSelect = document.getElementById('inviteRole');
+            inviteRoleSelect.innerHTML = assignableRoles(profile)
+                .map(r => `<option value="${r}">${roleLabel(r)}</option>`)
+                .join('');
+
+            // Show/hide squad checklist based on selected invite role
+            inviteRoleSelect.addEventListener('change', () => {
+                const showSquads = inviteRoleSelect.value === 'coach';
+                document.getElementById('inviteSquadGroup').style.display = showSquads ? 'block' : 'none';
+            });
+
+            // Settings nav switching
+            document.querySelectorAll('.settings-nav-item').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById(`panel-${btn.dataset.panel}`).classList.add('active');
+                    // Load deleted items when tab is shown
+                    if (btn.dataset.panel === 'deleted') loadDeletedItems();
+                    // Populate walkthrough list
+                    if (btn.dataset.panel === 'walkthrough') {
+                        const list = document.getElementById('walkthroughList');
+                        const pages = getAvailableWalkthroughs();
+                        list.innerHTML = pages.map(p => `
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--border-light);border-radius:10px;margin-bottom:8px;">
+                                <div>
+                                    <div style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">${p.label}</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">${p.steps} steps &middot; ${p.completed ? '<i class="fas fa-check-circle" style="color:#10b981;margin-right:4px;"></i>Completed' : 'Not started'}</div>
+                                </div>
+                                <a href="/src/pages/${p.id}.html?walkthrough=1" class="dash-btn sm primary" style="flex-shrink:0;">
+                                    <i class="fas fa-play"></i> Start
+                                </a>
+                            </div>
+                        `).join('');
+                    }
+                });
+            });
+
+            // ── Recently Deleted ──
+            async function loadDeletedItems() {
+                const container = document.getElementById('deletedItemsList');
+                const clubId = sessionStorage.getItem('impersonating_club_id') || profile?.club_id;
+                if (!clubId) { container.innerHTML = '<p style="color:var(--text-muted);">No club context</p>'; return; }
+
+                const { data, error } = await supabase.from('deleted_items')
+                    .select('*').eq('club_id', clubId)
+                    .gte('expires_at', new Date().toISOString())
+                    .order('deleted_at', { ascending: false }).limit(50);
+
+                if (error) { container.innerHTML = '<p style="color:#ef4444;">Failed to load</p>'; return; }
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);"><i class="fas fa-check-circle" style="font-size:1.5rem;margin-bottom:8px;display:block;opacity:0.3;"></i>No recently deleted items</div>';
+                    return;
+                }
+
+                const icons = { player: 'fa-user', session: 'fa-clipboard-list', drill: 'fa-pencil-ruler', match: 'fa-futbol', squad: 'fa-users' };
+                container.innerHTML = data.map(item => {
+                    const name = item.item_data?.name || item.item_data?.title || 'Unknown';
+                    const icon = icons[item.item_type] || 'fa-file';
+                    const daysLeft = Math.max(0, Math.ceil((new Date(item.expires_at) - Date.now()) / 86400000));
+                    const deletedDate = new Date(item.deleted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                    return `<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border-light);border-radius:10px;margin-bottom:8px;">
+                        <i class="fas ${icon}" style="color:var(--primary);width:20px;text-align:center;"></i>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;color:var(--text-primary);">${name}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">${item.item_type} &middot; deleted ${deletedDate} &middot; ${daysLeft} days left</div>
+                        </div>
+                        <button class="dash-btn sm primary" onclick="restoreDeletedItem('${item.id}', '${item.item_type}')" style="flex-shrink:0;">
+                            <i class="fas fa-undo"></i> Restore
+                        </button>
+                    </div>`;
+                }).join('');
+            }
+
+            window.restoreDeletedItem = async function(deletedId, itemType) {
+                try {
+                    const { data: item } = await supabase.from('deleted_items').select('*').eq('id', deletedId).single();
+                    if (!item) { showToast('Item not found', 'error'); return; }
+
+                    // Re-insert the original data (nullify orphaned FK references to prevent constraint violations)
+                    const tableName = { player: 'players', session: 'sessions', drill: 'drills', match: 'matches', squad: 'squads' }[itemType];
+                    if (!tableName) { showToast('Unknown item type', 'error'); return; }
+
+                    const row = { ...item.item_data };
+                    // Nullify FK refs that might no longer exist
+                    if (row.squad_id) {
+                        const { data: sq } = await supabase.from('squads').select('id').eq('id', row.squad_id).maybeSingle();
+                        if (!sq) row.squad_id = null;
+                    }
+                    if (row.session_id) {
+                        const { data: se } = await supabase.from('sessions').select('id').eq('id', row.session_id).maybeSingle();
+                        if (!se) row.session_id = null;
+                    }
+                    if (row.created_by) {
+                        const { data: pr } = await supabase.from('profiles').select('id').eq('id', row.created_by).maybeSingle();
+                        if (!pr) row.created_by = null;
+                    }
+
+                    const { error: restoreErr } = await supabase.from(tableName).insert(row);
+                    if (restoreErr) throw restoreErr;
+
+                    // Remove from deleted_items
+                    await supabase.from('deleted_items').delete().eq('id', deletedId);
+                    showToast(`${itemType} restored!`, 'success');
+                    loadDeletedItems();
+                } catch (e) {
+                    console.error('Restore error:', e);
+                    showToast('Failed to restore: ' + (e.message || ''), 'error');
+                }
+            };
+
+            // Save profile
+            document.getElementById('btnSaveProfile').addEventListener('click', async () => {
+                const newName = document.getElementById('settingsFullName').value.trim();
+                if (!newName) { showToast('Name is required', 'error'); return; }
+
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ full_name: newName })
+                    .eq('id', user.id);
+
+                if (error) {
+                    showToast('Failed to update profile', 'error');
+                } else {
+                    showToast('Profile updated', 'success');
+                    document.getElementById('profileDisplayName').textContent = newName;
+                    const ni = newName.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                    document.getElementById('profileAvatar').textContent = ni;
+                }
+            });
+
+            // Change password
+            document.getElementById('btnChangePassword').addEventListener('click', async () => {
+                const newPw = document.getElementById('settingsNewPassword').value;
+                const confirmPw = document.getElementById('settingsConfirmPassword').value;
+                if (!newPw || newPw.length < 6) { showToast('Password must be at least 6 characters', 'error'); return; }
+                if (newPw !== confirmPw) { showToast('Passwords do not match', 'error'); return; }
+
+                const { error } = await supabase.auth.updateUser({ password: newPw });
+                if (error) {
+                    showToast('Failed to update password: ' + error.message, 'error');
+                } else {
+                    showToast('Password updated', 'success');
+                    document.getElementById('settingsNewPassword').value = '';
+                    document.getElementById('settingsConfirmPassword').value = '';
+                }
+            });
+
+            // Save club settings (name + logo)
+            document.getElementById('btnSaveClub')?.addEventListener('click', async () => {
+                const clubName = document.getElementById('settingsClubName').value.trim();
+                if (!clubName) { showToast('Club name is required', 'error'); return; }
+
+                const btn = document.getElementById('btnSaveClub');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+                try {
+                    // Build updated settings with branding + operational fields
+                    const currentSettings = profile.clubs?.settings || {};
+                    const branding = { ...(currentSettings.branding || {}), club_display_name: clubName };
+
+                    // Save operational settings
+                    currentSettings.contact_email = document.getElementById('settingsClubEmail').value.trim() || null;
+                    currentSettings.contact_phone = document.getElementById('settingsClubPhone').value.trim() || null;
+                    currentSettings.contact_address = document.getElementById('settingsClubAddress').value.trim() || null;
+                    currentSettings.current_season = document.getElementById('settingsCurrentSeason').value.trim() || null;
+                    currentSettings.default_venue = document.getElementById('settingsDefaultVenue').value.trim() || null;
+                    currentSettings.default_time = document.getElementById('settingsDefaultTime').value || null;
+                    currentSettings.default_duration = document.getElementById('settingsDefaultDuration').value.trim() || null;
+
+                    // Upload logo file if selected
+                    if (_pendingLogoFile) {
+                        const ext = _pendingLogoFile.name.split('.').pop().toLowerCase();
+                        const filePath = `clubs/${profile.club_id}/logo_${Date.now()}.${ext}`;
+                        const { data: uploadData, error: uploadError } = await supabase.storage
+                            .from('avatars')
+                            .upload(filePath, _pendingLogoFile, { cacheControl: '3600', upsert: true, contentType: _pendingLogoFile.type });
+                        if (uploadError) throw uploadError;
+                        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(uploadData.path);
+                        branding.logo_url = publicUrl;
+                        _pendingLogoFile = null;
+                    } else if (_pendingLogoRemove) {
+                        branding.logo_url = null;
+                        _pendingLogoRemove = false;
+                    }
+
+                    const updatedSettings = { ...currentSettings, branding };
+                    const { error } = await supabase.from('clubs')
+                        .update({ name: clubName, settings: updatedSettings })
+                        .eq('id', profile.club_id);
+
+                    if (error) throw error;
+
+                    // Update cached profile so sidebar refreshes
+                    profile.clubs.name = clubName;
+                    profile.clubs.settings = updatedSettings;
+
+                    // Update sidebar branding cache
+                    const store = sessionStorage.getItem('impersonating_club_id') ? sessionStorage : localStorage;
+                    store.setItem('sidebar-branding', JSON.stringify({
+                        logo_url: branding.logo_url || null,
+                        display_name: branding.club_display_name || clubName,
+                    }));
+
+                    showToast('Club settings saved', 'success');
+                } catch (err) {
+                    console.error('Save club error:', err);
+                    showToast('Failed to save: ' + (err.message || 'unknown error'), 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save Club Settings';
+                }
+            });
+
+            // ──── Invite Modal ────
+            document.getElementById('btnInviteMember')?.addEventListener('click', () => {
+                document.getElementById('inviteEmail').value = '';
+                document.getElementById('inviteRole').value = 'coach';
+                document.getElementById('inviteSquadGroup').style.display = 'block';
+                renderSquadChecklist('inviteSquadList', []);
+                document.getElementById('inviteModal').classList.add('active');
+            });
+
+            document.getElementById('inviteCancelBtn').addEventListener('click', () => {
+                document.getElementById('inviteModal').classList.remove('active');
+            });
+
+            document.getElementById('inviteSendBtn').addEventListener('click', async () => {
+                const invEmail = document.getElementById('inviteEmail').value.trim();
+                const invRole = document.getElementById('inviteRole').value;
+                if (!invEmail) { showToast('Email is required', 'error'); return; }
+
+                // Gather selected squads
+                const selectedSquads = [];
+                document.querySelectorAll('#inviteSquadList input[type="checkbox"]:checked').forEach(cb => {
+                    selectedSquads.push(cb.value);
+                });
+
+                try {
+                    // Generate secure token client-side
+                    const tokenBytes = new Uint8Array(32);
+                    crypto.getRandomValues(tokenBytes);
+                    const token = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+                    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+                    const { error: insertError } = await supabase
+                        .from('club_invites')
+                        .insert({
+                            club_id: profile.club_id,
+                            created_by: profile.id,
+                            email: invEmail || null,
+                            role: invRole,
+                            token,
+                            expires_at: expiresAt,
+                        });
+
+                    if (insertError) throw new Error(insertError.message);
+
+                    // Always use production URL for invite links (never localhost)
+                    const prodUrl = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/+$/, '');
+                    const isProd = !prodUrl.includes('localhost') && !prodUrl.includes('127.0.0.1');
+                    const loginPath = isProd ? '/login.html' : '/src/pages/login.html';
+                    const inviteUrl = `${prodUrl}${loginPath}?invite=${token}&mode=signup`;
+
+                    navigator.clipboard?.writeText(inviteUrl);
+
+                    // Open email client with pre-filled invite
+                    const subject = encodeURIComponent('You\'ve been invited to Sentinel Football Hub');
+                    const body = encodeURIComponent(
+                        `Hi,\n\nYou've been invited to join Sentinel Football Hub as a ${invRole}.\n\nClick the link below to create your account:\n${inviteUrl}\n\nThis link expires in 7 days.\n\nRegards,\n${profile.full_name || 'The Admin'}`
+                    );
+                    window.open(`mailto:${invEmail}?subject=${subject}&body=${body}`, '_blank');
+
+                    showToast('Invite created! Link copied & email opened.', 'success');
+                    document.getElementById('inviteEmail').value = '';
+                    document.getElementById('inviteModal').classList.remove('active');
+                    await loadTeamMembers(profile.club_id);
+                } catch (e) {
+                    showToast('Failed: ' + e.message, 'error');
+                }
+            });
+
+            // ──── Squad Assignment Modal ────
+            document.getElementById('squadAssignCancelBtn').addEventListener('click', () => {
+                document.getElementById('squadAssignModal').classList.remove('active');
+            });
+
+            document.getElementById('squadAssignSaveBtn').addEventListener('click', async () => {
+                const userId = document.getElementById('squadAssignUserId').value;
+                if (!userId) return;
+
+                const selectedSquads = [];
+                document.querySelectorAll('#squadAssignList input[type="checkbox"]:checked').forEach(cb => {
+                    selectedSquads.push(cb.value);
+                });
+
+                // Get current assignments for this user
+                const currentAssignments = allSquadCoaches.filter(sc => sc.coach_id === userId).map(sc => sc.squad_id);
+                const toAdd = selectedSquads.filter(id => !currentAssignments.includes(id));
+                const toRemove = currentAssignments.filter(id => !selectedSquads.includes(id));
+
+                try {
+                    // Remove unselected assignments
+                    if (toRemove.length > 0) {
+                        const { error } = await supabase
+                            .from('squad_coaches')
+                            .delete()
+                            .eq('coach_id', userId)
+                            .in('squad_id', toRemove);
+                        if (error) throw error;
+                    }
+                    // Add new assignments
+                    if (toAdd.length > 0) {
+                        const rows = toAdd.map(sqId => ({ coach_id: userId, squad_id: sqId }));
+                        const { error } = await supabase.from('squad_coaches').insert(rows);
+                        if (error) throw error;
+                    }
+
+                    showToast('Squad assignments updated', 'success');
+                    document.getElementById('squadAssignModal').classList.remove('active');
+                    await loadSquadsAndCoaches(profile.club_id);
+                    await loadTeamMembers(profile.club_id);
+                } catch (e) {
+                    showToast('Failed to update assignments: ' + e.message, 'error');
+                }
+            });
+
+            // Close modals on overlay click
+            document.querySelectorAll('.settings-modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) overlay.classList.remove('active');
+                });
+            });
+
+            // Sign out
+            document.getElementById('btnSignOut')?.addEventListener('click', () => logout());
+            document.getElementById('btnResetWalkthroughs')?.addEventListener('click', () => {
+                resetWalkthroughs();
+                showToast('Walkthroughs reset — they will show again on each page', 'success');
+            });
+
+            // Delete account
+            document.getElementById('btnDeleteAccount')?.addEventListener('click', () => {
+                showToast('Contact an administrator to delete your account.', 'warning');
+            });
+
+            // ──── Theme Toggle ────
+            const currentTheme = localStorage.getItem('sentinel-theme') || 'light';
+            function setThemeUI(theme) {
+                document.querySelectorAll('.theme-toggle-btn').forEach(b => b.classList.remove('active'));
+                const activeBtn = document.getElementById(theme === 'dark' ? 'btnThemeDark' : 'btnThemeLight');
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+            setThemeUI(currentTheme);
+
+            document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const theme = btn.dataset.themeValue;
+                    localStorage.setItem('sentinel-theme', theme);
+                    if (theme === 'dark') {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                    }
+                    setThemeUI(theme);
+                    showToast(`Theme set to ${theme} mode`, 'success');
+                });
+            });
+        });
+
+        // ──── Data Loading ────
+
+        async function loadSquadsAndCoaches(clubId) {
+            const [squadsRes, coachesRes] = await Promise.all([
+                supabase.from('squads').select('id, name, age_group').eq('club_id', clubId).order('name'),
+                supabase.from('squad_coaches').select('squad_id, coach_id'),
+            ]);
+            allSquads = squadsRes.data || [];
+            allSquadCoaches = coachesRes.data || [];
+        }
+
+        function renderSquadChecklist(containerId, selectedSquadIds) {
+            const container = document.getElementById(containerId);
+            if (!allSquads.length) {
+                container.innerHTML = '<p style="padding:12px;color:var(--text-secondary);font-size:13px;">No squads created yet.</p>';
+                return;
+            }
+            container.innerHTML = allSquads.map(s => `
+                <label>
+                    <input type="checkbox" value="${s.id}" ${selectedSquadIds.includes(s.id) ? 'checked' : ''}>
+                    <span>${s.name}</span>
+                    <span style="color:var(--text-secondary);font-size:12px;margin-left:auto;">${s.age_group || ''}</span>
+                </label>
+            `).join('');
+        }
+
+        // ──── Team Members List ────
+
+        async function loadTeamMembers(clubId) {
+            const container = document.getElementById('teamMembersList');
+            const { data: members, error } = await supabase
+                .from('profiles')
+                .select('id, full_name, role')
+                .eq('club_id', clubId)
+                .order('role');
+
+            if (error || !members) {
+                container.innerHTML = '<p style="color:var(--text-secondary);">Could not load members.</p>';
+                return;
+            }
+
+            // Update member count
+            const countEl = document.getElementById('teamMemberCount');
+            if (countEl) countEl.textContent = `(${members.length})`;
+
+
+            const profile = currentProfile;
+            const myAssignableRoles = assignableRoles(profile);
+
+            container.innerHTML = members.map(m => {
+                const initials = (m.full_name || '?').trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                const memberSquads = allSquadCoaches.filter(sc => sc.coach_id === m.id);
+                const squadNames = memberSquads.map(sc => {
+                    const sq = allSquads.find(s => s.id === sc.squad_id);
+                    return sq ? sq.name : '';
+                }).filter(Boolean);
+                const isPrivateCoaching = profile?.clubs?.settings?.archetype === 'private_coaching';
+                const squadText = isPrivateCoaching ? '' : (squadNames.length ? squadNames.join(', ') : (m.role === 'coach' ? 'No squads assigned' : ''));
+
+                const isSelf = m.id === profile.id;
+                const canChangeRole = !isSelf && myAssignableRoles.length > 0 && myAssignableRoles.includes(m.role);
+                const canChangeToHigher = isSuperAdmin(profile);
+                const showSquadBtn = !isPrivateCoaching && m.role !== 'super_admin' && !isSelf;
+
+                // Build role options — only roles the current user can assign
+                let roleOptions = '';
+                if (canChangeRole || (canChangeToHigher && m.role !== 'super_admin')) {
+                    const opts = isSuperAdmin(profile)
+                        ? ['admin', 'coach', 'viewer']
+                        : myAssignableRoles;
+                    roleOptions = opts.map(r =>
+                        `<option value="${r}" ${m.role === r ? 'selected' : ''}>${roleLabel(r)}</option>`
+                    ).join('');
+                }
+
+                return `
+                <div class="team-member-card">
+                    <div class="member-info">
+                        <div class="member-avatar">${initials}</div>
+                        <div class="member-details">
+                            <div class="member-name">${m.full_name || 'Unnamed'}${isSelf ? ' <span style="color:var(--text-secondary);font-weight:400;">(you)</span>' : ''}</div>
+                            ${squadText ? `<div class="member-squads"><i class="fas fa-futbol" style="margin-right:4px;"></i>${squadText}</div>` : ''}
+                            ${!roleOptions ? `<span class="settings-badge ${m.role}" style="margin-top:4px;">${roleLabel(m.role)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="member-actions">
+                        ${roleOptions ? `
+                            <select data-member-id="${m.id}" data-member-name="${m.full_name || 'this user'}" data-old-role="${m.role}" class="role-select" title="Change role">
+                                ${roleOptions}
+                            </select>
+                        ` : ''}
+                        ${showSquadBtn ? `
+                            <button class="btn-icon squad-assign" data-member-id="${m.id}" data-member-name="${m.full_name || 'Unnamed'}" title="Assign squads">
+                                <i class="fas fa-users"></i>
+                            </button>
+                        ` : ''}
+                        ${!isSelf && m.role !== 'super_admin' ? `
+                            <button class="btn-icon remove-member" data-member-id="${m.id}" data-member-name="${m.full_name || 'Unnamed'}" title="Remove member">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+
+            // ── Role change handlers ──
+            container.querySelectorAll('.role-select').forEach(select => {
+                select.addEventListener('change', async (e) => {
+                    const memberId = e.target.dataset.memberId;
+                    const memberName = e.target.dataset.memberName;
+                    const oldRole = e.target.dataset.oldRole;
+                    const newRole = e.target.value;
+
+                    const confirmed = confirm(`Change ${memberName}'s role from ${roleLabel(oldRole)} to ${roleLabel(newRole)}?`);
+                    if (!confirmed) {
+                        e.target.value = oldRole; // revert selection
+                        return;
+                    }
+
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({ role: newRole })
+                        .eq('id', memberId);
+                    if (error) {
+                        showToast('Failed to update role: ' + error.message, 'error');
+                        await loadTeamMembers(clubId);
+                    } else {
+                        showToast(`${memberName}'s role updated to ${roleLabel(newRole)}`, 'success');
+                        await loadTeamMembers(clubId);
+                    }
+                });
+            });
+
+            // ── Squad assign button handlers ──
+            container.querySelectorAll('.squad-assign').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const memberId = btn.dataset.memberId;
+                    const memberName = btn.dataset.memberName;
+                    document.getElementById('squadAssignUserId').value = memberId;
+                    document.getElementById('squadAssignSubtitle').textContent = `Select squads ${memberName} can access.`;
+                    const currentSquads = allSquadCoaches.filter(sc => sc.coach_id === memberId).map(sc => sc.squad_id);
+                    renderSquadChecklist('squadAssignList', currentSquads);
+                    document.getElementById('squadAssignModal').classList.add('active');
+                });
+            });
+
+            // ── Remove member handlers ──
+            container.querySelectorAll('.remove-member').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const memberId = btn.dataset.memberId;
+                    const memberName = btn.dataset.memberName;
+                    if (!confirm(`Remove ${memberName} from this club? They will lose all access.`)) return;
+
+                    try {
+                        // Remove squad assignments first
+                        await supabase.from('squad_coaches').delete().eq('coach_id', memberId);
+                        // Remove profile (this doesn't delete the auth user, just club access)
+                        const { error } = await supabase.from('profiles').delete().eq('id', memberId);
+                        if (error) throw error;
+                        showToast(`${memberName} removed from club`, 'success');
+                        await loadTeamMembers(clubId);
+                    } catch (e) {
+                        showToast('Failed to remove member: ' + e.message, 'error');
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

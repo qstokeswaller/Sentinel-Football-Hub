@@ -1,0 +1,21 @@
+# ============================================================
+# Football Performance Hub — Environment Variables
+# Copy this to .env in the project root
+# ============================================================
+
+# ── Supabase ─────────────────────────────────────────────────
+VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# Service role key (server-side only, NEVER expose to client)
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# ── Cloudflare R2 ────────────────────────────────────────────
+R2_ACCOUNT_ID=86d8c07af51fed7425e0950a731c6f51
+R2_ACCESS_KEY_ID=your_r2_access_key_id
+R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
+R2_BUCKET_NAME=vault-football-hub
+R2_PUBLIC_DOMAIN=your-r2-custom-domain.example.com
+
+# ── App ──────────────────────────────────────────────────────
+APP_URL=http://localhost:5173

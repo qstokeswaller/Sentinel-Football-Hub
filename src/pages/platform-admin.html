@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel Platform | Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --plat-bg: #0B0F1A;
+            --plat-surface: #141824;
+            --plat-surface-hover: #1C2235;
+            --plat-border: rgba(255,255,255,0.06);
+            --plat-border-hover: rgba(0,196,154,0.3);
+            --plat-text: #ffffff;
+            --plat-text-dim: rgba(255,255,255,0.5);
+            --plat-text-mid: rgba(255,255,255,0.7);
+            --plat-accent: #00C49A;
+            --plat-accent-glow: rgba(0,196,154,0.15);
+            --plat-gold: #c8902e;
+            --plat-blue: #60a5fa;
+            --plat-red: #ef4444;
+            --plat-radius: 14px;
+            --plat-radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--plat-bg);
+            color: var(--plat-text);
+            min-height: 100vh;
+        }
+
+        /* ── Top Bar ── */
+        .plat-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 32px;
+            border-bottom: 1px solid var(--plat-border);
+            background: var(--plat-surface);
+        }
+        .plat-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .plat-brand-logo {
+            width: 34px; height: 34px;
+            object-fit: contain;
+        }
+        .plat-brand h1 {
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+        .plat-brand h1 span {
+            color: var(--plat-accent);
+            font-weight: 600;
+        }
+        .plat-brand-sub {
+            font-size: 0.68rem;
+            color: var(--plat-text-dim);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin: -1px 0 0;
+        }
+        .plat-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .plat-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.82rem;
+            color: var(--plat-text-mid);
+        }
+        .plat-user-avatar {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--plat-accent), #00a67e);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700;
+            font-size: 0.72rem;
+            flex-shrink: 0;
+        }
+        .plat-user-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.3;
+        }
+        .plat-user-name {
+            font-weight: 600;
+            color: var(--plat-text);
+            font-size: 0.82rem;
+        }
+        .plat-user-role {
+            font-size: 0.7rem;
+            color: var(--plat-text-dim);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .plat-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            background: rgba(200,144,46,0.15);
+            color: var(--plat-gold);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .btn-logout {
+            background: none;
+            border: 1px solid var(--plat-border);
+            color: var(--plat-text-dim);
+            padding: 6px 14px;
+            border-radius: var(--plat-radius-sm);
+            font-size: 0.78rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover {
+            border-color: var(--plat-red);
+            color: var(--plat-red);
+        }
+
+        /* ── Main Layout ── */
+        .plat-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 36px 32px;
+        }
+
+        /* ── Stats Row ── */
+        .plat-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 36px;
+        }
+        .plat-stat {
+            background: var(--plat-surface);
+            border: 1px solid var(--plat-border);
+            border-radius: var(--plat-radius);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .plat-stat-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 15px;
+        }
+        .plat-stat-icon.clubs { background: var(--plat-accent-glow); color: var(--plat-accent); }
+        .plat-stat-icon.users { background: rgba(96,165,250,0.12); color: var(--plat-blue); }
+        .plat-stat-icon.coaches { background: rgba(200,144,46,0.12); color: var(--plat-gold); }
+        .plat-stat-icon.players { background: rgba(16,185,129,0.12); color: #10b981; }
+        .plat-stat-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .plat-stat-label {
+            font-size: 0.7rem;
+            color: var(--plat-text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 2px;
+        }
+
+        /* ── Section Header ── */
+        .plat-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .plat-section-header h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+        .plat-section-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .plat-search {
+            position: relative;
+        }
+        .plat-search i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--plat-text-dim);
+            font-size: 0.78rem;
+        }
+        .plat-search input {
+            padding: 8px 14px 8px 34px;
+            background: var(--plat-surface);
+            border: 1px solid var(--plat-border);
+            border-radius: var(--plat-radius-sm);
+            color: var(--plat-text);
+            font-size: 0.82rem;
+            font-family: inherit;
+            width: 220px;
+            transition: border-color 0.2s;
+        }
+        .plat-search input:focus {
+            outline: none;
+            border-color: var(--plat-accent);
+            box-shadow: 0 0 0 3px var(--plat-accent-glow);
+        }
+        .plat-search input::placeholder { color: var(--plat-text-dim); }
+        .btn-create {
+            padding: 8px 18px;
+            background: var(--plat-accent);
+            color: #0B0F1A;
+            border: none;
+            border-radius: var(--plat-radius-sm);
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-create:hover {
+            background: #00d4a6;
+            box-shadow: 0 4px 16px var(--plat-accent-glow);
+        }
+
+        /* ── Club Cards Grid ── */
+        .clubs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        .club-card {
+            background: var(--plat-surface);
+            border: 1px solid var(--plat-border);
+            border-radius: var(--plat-radius);
+            padding: 22px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .club-card:hover {
+            border-color: var(--plat-border-hover);
+            background: var(--plat-surface-hover);
+            box-shadow: 0 8px 32px rgba(0,196,154,0.08);
+            transform: translateY(-2px);
+        }
+        .club-card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .club-card-avatar {
+            width: 46px; height: 46px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--plat-accent), #00a67e);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+            letter-spacing: -0.5px;
+        }
+        .club-card-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        .club-card-archetype {
+            font-size: 0.72rem;
+            color: var(--plat-text-dim);
+            margin-top: 2px;
+            text-transform: capitalize;
+        }
+        .club-card-metrics {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--plat-border);
+        }
+        .club-metric {
+            font-size: 0.78rem;
+            color: var(--plat-text-dim);
+        }
+        .club-metric strong {
+            color: var(--plat-text);
+            font-weight: 700;
+            margin-right: 3px;
+        }
+        .club-card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .club-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .club-status .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .club-status.active .dot { background: #10b981; }
+        .club-status.active { color: #10b981; }
+        .club-status.trial .dot { background: #f59e0b; }
+        .club-status.trial { color: #f59e0b; }
+        .club-status.suspended .dot { background: var(--plat-red); }
+        .club-status.suspended { color: var(--plat-red); }
+        .club-plan-tag {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .club-plan-tag.pro { background: var(--plat-accent-glow); color: var(--plat-accent); }
+        .club-plan-tag.trial { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .club-plan-tag.free { background: rgba(255,255,255,0.05); color: var(--plat-text-dim); }
+        .club-card-enter {
+            font-size: 0.72rem;
+            color: var(--plat-text-dim);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .club-card:hover .club-card-enter {
+            opacity: 1;
+            color: var(--plat-accent);
+        }
+
+        /* ── Club Detail (inline) ── */
+        .club-detail {
+            background: var(--plat-surface);
+            border: 1px solid var(--plat-border);
+            border-radius: var(--plat-radius);
+            overflow: hidden;
+        }
+        .club-detail-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--plat-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .club-detail-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .club-detail-avatar {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--plat-accent), #00a67e);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+        .club-detail-meta h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 0 0 2px;
+        }
+        .club-detail-meta p {
+            font-size: 0.8rem;
+            color: var(--plat-text-dim);
+            margin: 0;
+        }
+        .club-detail-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-back, .btn-impersonate {
+            padding: 8px 16px;
+            border-radius: var(--plat-radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-back {
+            background: rgba(255,255,255,0.06);
+            color: var(--plat-text-mid);
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.1); }
+        .btn-impersonate {
+            background: var(--plat-accent);
+            color: #0B0F1A;
+            font-weight: 700;
+        }
+        .btn-impersonate:hover {
+            box-shadow: 0 4px 16px var(--plat-accent-glow);
+        }
+        .club-detail-body {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .detail-block {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--plat-border);
+            border-radius: 12px;
+            padding: 20px;
+            min-width: 0; /* prevent grid blowout */
+            overflow: hidden;
+        }
+        .detail-block h3 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .detail-block h3 i { color: var(--plat-accent); font-size: 0.85rem; }
+        .member-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: var(--plat-radius-sm);
+            margin-bottom: 6px;
+            font-size: 0.82rem;
+        }
+        .member-item .name { font-weight: 600; }
+        .member-item .email { color: var(--plat-text-dim); font-size: 0.75rem; }
+        .member-item .role-tag {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .role-tag.admin { background: var(--plat-accent-glow); color: var(--plat-accent); }
+        .role-tag.coach { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .role-tag.viewer { background: rgba(255,255,255,0.05); color: var(--plat-text-dim); }
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 0;
+            font-size: 0.82rem;
+            color: var(--plat-text-mid);
+        }
+        .feature-row i.on { color: var(--plat-accent); }
+        .feature-row i.off { color: rgba(255,255,255,0.15); }
+        .settings-json {
+            background: rgba(0,0,0,0.3);
+            border-radius: var(--plat-radius-sm);
+            padding: 14px;
+            font-size: 0.72rem;
+            overflow-x: auto;
+            max-height: 260px;
+            color: var(--plat-text-mid);
+            font-family: 'Fira Code', 'Consolas', monospace;
+            border: 1px solid var(--plat-border);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        /* ── Metrics Grid ── */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .metric-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--plat-border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .metric-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        .metric-label {
+            font-size: 0.7rem;
+            color: var(--plat-text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
+        .metric-breakdown {
+            font-size: 0.68rem;
+            color: var(--plat-text-dim);
+            margin-top: 4px;
+        }
+
+        /* ── User Activity Panel ── */
+        .user-activity-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .user-activity-header h3 { margin: 0; }
+        .btn-close-activity {
+            background: rgba(255,255,255,0.06);
+            border: none;
+            color: var(--plat-text-dim);
+            padding: 6px 10px;
+            border-radius: var(--plat-radius-sm);
+            cursor: pointer;
+            font-size: 0.82rem;
+        }
+        .btn-close-activity:hover { color: var(--plat-red); }
+        .user-activity-stats {
+            display: flex;
+            gap: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--plat-border);
+            margin-bottom: 14px;
+        }
+        .ua-stat {
+            font-size: 0.8rem;
+            color: var(--plat-text-mid);
+        }
+        .ua-stat strong {
+            color: var(--plat-text);
+            font-weight: 700;
+            margin-right: 3px;
+        }
+        .user-activity-lists {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .ua-list h4 {
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin: 0 0 8px;
+            color: var(--plat-text-mid);
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            margin-bottom: 4px;
+            font-size: 0.78rem;
+        }
+        .activity-title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 60%;
+        }
+        .activity-meta {
+            color: var(--plat-text-dim);
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+        .member-clickable:hover {
+            background: rgba(0,196,154,0.06) !important;
+        }
+
+        /* ── Empty & Loading ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--plat-text-dim);
+        }
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 14px;
+        }
+        .access-denied {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+            color: var(--plat-text-dim);
+        }
+        .access-denied i { font-size: 3rem; color: var(--plat-red); margin-bottom: 16px; }
+        .access-denied h2 { color: var(--plat-text); margin-bottom: 8px; }
+        .btn-back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: var(--plat-accent);
+            color: #0B0F1A;
+            border-radius: var(--plat-radius-sm);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        /* ── Create Club Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--plat-surface);
+            border: 1px solid var(--plat-border);
+            border-radius: var(--plat-radius);
+            padding: 32px;
+            width: 100%;
+            max-width: 480px;
+        }
+        .modal h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0 0 24px;
+        }
+        .modal .form-group { margin-bottom: 16px; }
+        .modal .form-group label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--plat-text-mid);
+            margin-bottom: 6px;
+        }
+        .modal .form-group input,
+        .modal .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--plat-border);
+            border-radius: var(--plat-radius-sm);
+            color: var(--plat-text);
+            font-size: 0.88rem;
+            font-family: inherit;
+        }
+        .modal .form-group input:focus,
+        .modal .form-group select:focus {
+            outline: none;
+            border-color: var(--plat-accent);
+            box-shadow: 0 0 0 3px var(--plat-accent-glow);
+        }
+        .modal .form-group input::placeholder { color: var(--plat-text-dim); }
+        .modal .form-group select option { background: var(--plat-surface); color: var(--plat-text); }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        .btn-modal-cancel {
+            padding: 8px 18px;
+            background: rgba(255,255,255,0.06);
+            color: var(--plat-text-mid);
+            border: none;
+            border-radius: var(--plat-radius-sm);
+            font-size: 0.82rem;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .plat-topbar { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+            .plat-topbar-right { gap: 10px; }
+            .plat-main { padding: 20px 12px; }
+            .plat-stats { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .clubs-grid { grid-template-columns: 1fr; }
+            .club-detail-body { grid-template-columns: 1fr; padding: 16px 12px; }
+            .club-detail-header { padding: 16px 12px; flex-direction: column; align-items: flex-start; }
+            .club-detail-actions { width: 100%; }
+            .club-detail-actions .btn-back,
+            .club-detail-actions .btn-impersonate { flex: 1; justify-content: center; }
+            .detail-block { padding: 14px; overflow-x: auto; }
+            .plat-section-header { flex-direction: column; align-items: flex-start; }
+            .plat-brand h1 { font-size: 1rem; }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .user-activity-lists { grid-template-columns: 1fr; }
+            .user-activity-stats { flex-wrap: wrap; gap: 10px; }
+            .btn-logout span { display: none; }
+        }
+        @media (max-width: 480px) {
+            .plat-stats { grid-template-columns: 1fr 1fr; }
+            .club-detail-body { padding: 12px 8px; gap: 12px; }
+            .detail-block { padding: 12px 10px; }
+            .metrics-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="plat-topbar">
+        <div class="plat-brand">
+            <i class="fas fa-shield-alt" style="font-size:1.3rem;color:var(--plat-accent);"></i>
+            <div>
+                <h1>Sentinel Football Hub</h1>
+                <p class="plat-brand-sub">Developer Platform</p>
+            </div>
+        </div>
+        <div class="plat-topbar-right">
+            <div class="plat-user">
+                <div class="plat-user-avatar" id="platUserAvatar">?</div>
+                <div class="plat-user-info">
+                    <span class="plat-user-name" id="platUserName">Loading...</span>
+                    <span class="plat-user-role" id="platUserRole">Super Admin <span class="plat-badge">DEV</span></span>
+                </div>
+            </div>
+            <button class="btn-logout" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="plat-main">
+        <!-- Stats -->
+        <div class="plat-stats">
+            <div class="plat-stat">
+                <div class="plat-stat-icon clubs"><i class="fas fa-shield-alt"></i></div>
+                <div>
+                    <div class="plat-stat-value" id="statClubs">-</div>
+                    <div class="plat-stat-label">Clubs</div>
+                </div>
+            </div>
+            <div class="plat-stat">
+                <div class="plat-stat-icon users"><i class="fas fa-users"></i></div>
+                <div>
+                    <div class="plat-stat-value" id="statUsers">-</div>
+                    <div class="plat-stat-label">Users</div>
+                </div>
+            </div>
+            <div class="plat-stat">
+                <div class="plat-stat-icon coaches"><i class="fas fa-chalkboard-teacher"></i></div>
+                <div>
+                    <div class="plat-stat-value" id="statCoaches">-</div>
+                    <div class="plat-stat-label">Coaches</div>
+                </div>
+            </div>
+            <div class="plat-stat">
+                <div class="plat-stat-icon players"><i class="fas fa-running"></i></div>
+                <div>
+                    <div class="plat-stat-value" id="statPlayers">-</div>
+                    <div class="plat-stat-label">Players</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Header -->
+        <div class="plat-section-header">
+            <h2>Your Clubs</h2>
+            <div class="plat-section-actions">
+                <div class="plat-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="clubSearch" placeholder="Search clubs...">
+                </div>
+                <button class="btn-create" id="btnCreateClub">
+                    <i class="fas fa-plus"></i> New Club
+                </button>
+            </div>
+        </div>
+
+        <!-- Clubs Container -->
+        <div id="clubsContainer">
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin" style="color:var(--plat-accent);"></i>
+                <p>Loading clubs...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Club Modal -->
+    <div class="modal-overlay" id="createClubModal">
+        <div class="modal">
+            <h2><i class="fas fa-plus-circle" style="color:var(--plat-accent);margin-right:8px;"></i>Create New Club</h2>
+            <form id="createClubForm">
+                <div class="form-group">
+                    <label>Club Name</label>
+                    <input type="text" id="newClubName" required placeholder="e.g. UP Tuks FC">
+                </div>
+                <div class="form-group">
+                    <label>Admin Email</label>
+                    <input type="email" id="newClubAdminEmail" required placeholder="admin@club.com">
+                </div>
+                <div class="form-group">
+                    <label>Admin Full Name</label>
+                    <input type="text" id="newClubAdminName" required placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label>Archetype</label>
+                    <select id="newClubArchetype">
+                        <option value="academy">Academy (squads, matches, assessments)</option>
+                        <option value="private_coaching">Private Coaching (clients, sessions, invoicing)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Club Logo <span style="font-weight:400;color:var(--plat-muted);font-size:0.8rem;">(optional — admin can update later in Settings)</span></label>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+                        <div id="newClubLogoPreview" style="width:48px;height:48px;border-radius:10px;background:var(--plat-card);border:2px dashed var(--plat-border);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                            <i class="fas fa-image" style="font-size:1.1rem;color:var(--plat-muted);"></i>
+                        </div>
+                        <input type="file" id="newClubLogoFile" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display:none;">
+                        <button type="button" class="btn-modal-cancel" onclick="document.getElementById('newClubLogoFile').click()" style="font-size:0.8rem;padding:6px 14px;">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                        <span style="font-size:0.72rem;color:var(--plat-muted);">Max 2 MB</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal-cancel" id="btnCancelCreate">Cancel</button>
+                    <button type="submit" class="btn-create" id="btnSubmitCreate">
+                        <i class="fas fa-plus"></i> Create Club
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import supabase from '../supabase.js';
+        import { requireAuth, getProfile, logout } from '../auth.js';
+        import { isPlatformAdmin } from '../rbac.js';
+        import { initPlatformAdmin } from '../js/platform-admin-ui.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Auth guard — no sidebar, no initPage
+            const user = await requireAuth();
+            if (!user) return;
+
+            const profile = await getProfile();
+
+            // Access guard
+            if (!isPlatformAdmin(profile)) {
+                document.querySelector('.plat-main').innerHTML = `
+                    <div class="access-denied">
+                        <i class="fas fa-lock"></i>
+                        <h2>Access Denied</h2>
+                        <p>This page is restricted to platform administrators.</p>
+                        <a href="/src/pages/dashboard.html" class="btn-back-home">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Fill top bar user info
+            const name = profile.full_name || profile.email || '';
+            const initials = name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+            document.getElementById('platUserAvatar').textContent = initials;
+            document.getElementById('platUserName').textContent = name;
+
+            // Logout
+            document.getElementById('btnLogout').addEventListener('click', logout);
+
+            // Init platform admin UI
+            initPlatformAdmin(profile);
+        });
+    </script>
+</body>
+</html>
