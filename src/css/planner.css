@@ -190,15 +190,14 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 24px;
-    border-radius: 9999px;
+    padding: 10px 20px;
+    border-radius: var(--radius-lg);
     border: none;
     font-family: 'Inter', sans-serif;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: var(--shadow-sm);
+    transition: background-color 0.15s, color 0.15s;
 }
 
 .btn-add-drill {
@@ -998,18 +997,16 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    border-radius: 9999px;
-    /* Pill shape */
+    padding: 5px 10px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-light);
     background: #fff;
     color: var(--text-medium);
     font-family: 'Inter', sans-serif;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .mt-btn:hover {
