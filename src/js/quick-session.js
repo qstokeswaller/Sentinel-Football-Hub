@@ -477,9 +477,9 @@ window._saveQuickSession = async function() {
             }
 
             if (attRows.length > 0) {
-                await supabase.from('training_attendance')
-                    .upsert(attRows, { onConflict: 'session_id,squad_id' })
-                    .catch(e => console.warn('Attendance batch:', e));
+                const { error: attErr } = await supabase.from('training_attendance')
+                    .upsert(attRows, { onConflict: 'session_id,squad_id' });
+                if (attErr) console.warn('Attendance batch:', attErr);
             }
         }
 
