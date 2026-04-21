@@ -272,8 +272,9 @@ export function initSidebar(activePage = '') {
 
     if (!sidebar || !mainContent) return;
 
-    // Desktop: restore collapsed state
-    if (window.innerWidth > 768) {
+    // Desktop only (>1024px): restore collapsed state from localStorage
+    // At 769–1024px the CSS handles icon-only mode automatically — no JS needed
+    if (window.innerWidth > 1024) {
         const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
         if (isCollapsed) {
             sidebar.classList.add('collapsed');
@@ -281,10 +282,10 @@ export function initSidebar(activePage = '') {
         }
     }
 
-    // Desktop toggle
+    // Desktop toggle (>1024px only — tablet uses CSS auto-collapse)
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
-            if (window.innerWidth > 768) {
+            if (window.innerWidth > 1024) {
                 const nowCollapsed = sidebar.classList.toggle('collapsed');
                 mainContent.classList.toggle('sidebar-collapsed', nowCollapsed);
                 localStorage.setItem('sidebar-collapsed', nowCollapsed);
@@ -317,5 +318,26 @@ export function initSidebar(activePage = '') {
             sidebar.classList.remove('mobile-active');
             overlay.classList.remove('active');
         }
+        // Remove JS-driven collapsed class at tablet — CSS handles it
+        if (window.innerWidth <= 1024 && window.innerWidth > 768) {
+            sidebar.classList.remove('collapsed');
+            mainContent.classList.remove('sidebar-collapsed');
+        }
+    });
+
+    // Page-exit fade: intercept nav link clicks to fade content out before navigation.
+    // Skip modifier keys (Ctrl/Cmd/Shift = open in new tab) and same-page links.
+    document.querySelectorAll('.sidebar-nav a').forEach(a => {
+        a.addEventListener('click', e => {
+            if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+            const href = a.getAttribute('href');
+            if (!href || href.startsWith('#')) return;
+            const mc = document.querySelector('.main-content');
+            if (mc && mc.classList.contains('page-ready')) {
+                e.preventDefault();
+                mc.classList.add('page-exit');
+                setTimeout(() => { window.location.href = href; }, 150);
+            }
+        });
     });
 }

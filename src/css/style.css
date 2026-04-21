@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Inter is loaded via <link> in each page's <head> with preconnect — no @import needed */
 
 :root {
   /* Color Palette - Tuks/UP Teal & Off-White Theme */
@@ -866,12 +866,20 @@ body {
   margin-left: var(--sidebar-width);
   padding: 28px 32px;
   width: calc(100% - var(--sidebar-width));
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Only transition layout properties — never `all`, which causes jank on load */
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
+  will-change: opacity;
 }
 .main-content.page-ready {
   opacity: 1;
-  transition: opacity 0.4s ease-out;
+  transition: opacity 0.22s ease-out, margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Page-exit: fired by sidebar.js on nav click — fades out before navigation */
+.main-content.page-exit {
+  opacity: 0 !important;
+  transition: opacity 0.15s ease-in !important;
+  pointer-events: none;
 }
 
 .main-content.sidebar-collapsed {
@@ -2804,14 +2812,95 @@ select.form-input option {
    RESPONSIVE MEDIA QUERIES
    ========================================================================== */
 
-/* TABLETS & SMALL DESKTOPS */
-@media screen and (max-width: 1100px) {
+/* SMALL DESKTOPS (1025px–1100px) */
+@media screen and (max-width: 1100px) and (min-width: 1025px) {
   .dash-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
   .form-row {
     gap: 16px;
+  }
+}
+
+/* TABLET (769px–1024px) — icon-only sidebar, 2-col content */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  /* Force sidebar into icon-only rail — purely CSS, no JS class needed */
+  .sidebar {
+    width: var(--sidebar-collapsed-width) !important;
+    overflow: hidden;
+  }
+
+  .sidebar .brand-text,
+  .sidebar .sidebar-nav span,
+  .sidebar .sidebar-user-details,
+  .sidebar .sidebar-user-cog,
+  .sidebar .btn-toggle-sidebar {
+    display: none !important;
+  }
+
+  .sidebar .sidebar-nav a {
+    justify-content: center;
+    padding: 12px 0;
+  }
+
+  .sidebar .sidebar-nav i {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  .sidebar .sidebar-logo {
+    margin: 0 auto;
+    font-size: 16px;
+    width: 36px;
+    height: 36px;
+  }
+
+  .sidebar .sidebar-brand {
+    padding: 20px 0;
+    justify-content: center;
+  }
+
+  .sidebar .sidebar-footer {
+    text-align: center;
+  }
+
+  .sidebar .sidebar-user-info {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  /* Main content offset to match icon rail */
+  .main-content,
+  .main-content.sidebar-collapsed {
+    margin-left: var(--sidebar-collapsed-width) !important;
+    width: calc(100% - var(--sidebar-collapsed-width)) !important;
+    padding: 24px;
+  }
+
+  /* No mobile top bar at tablet — sidebar is always visible */
+  .mobile-top-bar {
+    display: none !important;
+  }
+
+  /* 2-col grids */
+  .dash-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .form-row {
+    gap: 16px;
+  }
+
+  /* Page header stays horizontal */
+  .page-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  /* Modal slightly wider on tablet */
+  .modal-container {
+    width: 85% !important;
   }
 }
 
