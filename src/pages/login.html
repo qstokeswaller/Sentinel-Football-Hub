@@ -247,6 +247,7 @@
 
     <script type="module">
         import supabase from '../supabase.js';
+        import '../analytics.js';
 
         let isSignup = false;
         let isInviteMode = false;
@@ -391,7 +392,9 @@
                 inviteInfo = inv;
                 const roleName = roleLabels[inv.role] || inv.role;
                 loginSubtitle.textContent = `Create your profile for ${inv.club_name}`;
-                inviteBanner.innerHTML = `<i class="fas fa-shield-alt"></i>&nbsp; You've been invited to join <strong>${inv.club_name}</strong> as <strong>${roleName}</strong>. Create your account below.`;
+                inviteBanner.innerHTML = `<i class="fas fa-shield-alt"></i>&nbsp; You've been invited to join <strong></strong> as <strong></strong>. Create your account below.`;
+                inviteBanner.querySelectorAll('strong')[0].textContent = inv.club_name;
+                inviteBanner.querySelectorAll('strong')[1].textContent = roleName;
                 if (inv.email) {
                     document.getElementById('email').value = inv.email;
                     document.getElementById('email').readOnly = true;

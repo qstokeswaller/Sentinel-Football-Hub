@@ -1192,6 +1192,46 @@
     color: #00C49A;
 }
 
+/* TABLET (769px–1024px) — wrap header actions, prevent tab overflow */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .header-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .header-actions .dash-btn {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
+
+    .planner-tab-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .planner-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .phase-tab-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .session-meta-card .form-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
 
