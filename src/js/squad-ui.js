@@ -281,6 +281,7 @@ function saveSquad() {
     const name = document.getElementById('squadNameInput').value;
     const ageGroup = document.getElementById('squadAgeGroupInput').value;
     const leaguesRaw = document.getElementById('squadLeagueInput').value;
+    const leagueTableUrl = document.getElementById('squadLeagueTableUrl')?.value.trim() || null;
 
     // Gather Coaches
     const coachRows = document.querySelectorAll('.coach-row');
@@ -296,11 +297,12 @@ function saveSquad() {
     if (name) {
         const leagues = leaguesRaw ? leaguesRaw.split(',').map(s => s.trim()) : [];
 
-        squadManager.addSquad({ name, ageGroup, leagues, coaches }).then(res => {
+        squadManager.addSquad({ name, ageGroup, leagues, coaches, leagueTableUrl }).then(res => {
             // Reset
             document.getElementById('squadNameInput').value = '';
             document.getElementById('squadAgeGroupInput').value = '';
             document.getElementById('squadLeagueInput').value = '';
+            if (document.getElementById('squadLeagueTableUrl')) document.getElementById('squadLeagueTableUrl').value = '';
             document.getElementById('coachesContainer').innerHTML = ''; // Clear rows
             addCoachRow(); // Add one back
             closeAllModals();
@@ -391,6 +393,21 @@ function viewSquadDetails(squadId) {
     document.getElementById('detailSquadMeta').textContent = isUnassigned
         ? `${players.length} Players`
         : `${squad.ageGroup || ''} \u2022 ${players.length} Players`;
+
+    // League table URL
+    const ltUrlWrapper = document.getElementById('detailLeagueTableUrl');
+    const ltUrlLink = document.getElementById('detailLeagueTableLink');
+    if (ltUrlWrapper && ltUrlLink) {
+        if (!isUnassigned && squad.leagueTableUrl) {
+            ltUrlLink.href = squad.leagueTableUrl;
+            ltUrlWrapper.style.display = '';
+        } else {
+            ltUrlWrapper.style.display = 'none';
+        }
+    }
+
+    // Staff strip \u2014 coaches + managers assigned to this squad
+    renderSquadStaffStrip(squadId);
 
     // Hide assess/assign buttons for unassigned view
     const btnAssess = document.getElementById('btnAssessSquad');
@@ -838,3 +855,42 @@ async function removePlayerFromSquad(playerId) {
     viewSquadDetails(currentSquadId);
 }
 window.removePlayerFromSquad = removePlayerFromSquad;
+
+async function renderSquadStaffStrip(squadId) {
+    const strip = document.getElementById('squadStaffStrip');
+    if (!strip || !squadId) return;
+    strip.style.display = 'none';
+
+    try {
+        const { data, error } = await supabase
+            .from('staff')
+            .select('id, first_name, last_name, role, squad_ids')
+            .in('role', ['coach', 'manager'])
+            .eq('status', 'active');
+
+        if (error || !data) return;
+
+        const assigned = data.filter(m =>
+            !m.squad_ids?.length || m.squad_ids.includes(squadId)
+        );
+        if (!assigned.length) return;
+
+        const ROLE_LABELS = { coach: 'Coach', manager: 'Manager' };
+        strip.innerHTML =
+            '<span class="squad-staff-strip-label">Staff</span>' +
+            assigned.map(m => {
+                const initials = ((m.first_name?.[0] || '') + (m.last_name?.[0] || '')).toUpperCase();
+                const name = `${m.first_name || ''} ${m.last_name || ''}`.trim();
+                return `<div class="squad-staff-chip" onclick="openStaffViewFromSquad('${m.id}')">
+                    <div class="chip-avatar">${initials}</div>
+                    <span>${name}</span>
+                    <span class="chip-role">${ROLE_LABELS[m.role] || m.role}</span>
+                </div>`;
+            }).join('');
+        strip.style.display = 'flex';
+    } catch (_) {}
+}
+
+window.openStaffViewFromSquad = function(id) {
+    window.location.href = `/src/pages/settings.html?panel=staff&view=${id}`;
+};

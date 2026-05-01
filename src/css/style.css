@@ -965,6 +965,9 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  padding: 0 10px;
 }
 
 .mobile-top-bar .mtb-logo {
@@ -1698,12 +1701,11 @@ select.form-input option {
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.2s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  height: 100%;
   position: relative;
 }
 
@@ -1713,8 +1715,6 @@ select.form-input option {
 }
 
 .card-top-section {
-  height: 88px;
-  /* Fixed height for alignment */
   flex-shrink: 0;
   padding: 16px 16px 12px 16px;
   display: flex;
@@ -1771,10 +1771,20 @@ select.form-input option {
   font-size: 12px;
   color: #64748b;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
-  margin-top: auto;
-  /* Push to bottom of top section */
+  margin-top: 6px;
+  flex-wrap: wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.card-author span {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  flex: 1;
 }
 
 .card-thumb {
@@ -1798,6 +1808,7 @@ select.form-input option {
   color: #cbd5e1;
   border-top: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
+  overflow: hidden;
 }
 
 .card-body {
@@ -2184,10 +2195,23 @@ select.form-input option {
   border: 2px solid #eef2f6;
   border-radius: 16px;
   padding: 14px 18px;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  font-family: inherit;
   color: var(--navy-dark);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
+  box-sizing: border-box;
+}
+
+.form-control-bubble::placeholder {
+  color: #b0bec5;
+  font-weight: 400;
+  opacity: 1;
+}
+
+textarea.form-control-bubble {
+  resize: vertical;
+  line-height: 1.6;
 }
 
 .modal-content-bubble {
@@ -2924,6 +2948,17 @@ select.form-input option {
     position: fixed;
     background-color: var(--bg-sidebar, #0D1B2A) !important;
     z-index: 110 !important;
+    padding-top: 0;
+  }
+
+  /* Hide club logo/name in sidebar — mobile top bar already shows these */
+  .sidebar .sidebar-brand {
+    display: none !important;
+  }
+
+  /* Offset nav so it starts just below the fixed top bar */
+  .sidebar .sidebar-nav {
+    padding-top: 72px;
   }
 
   .sidebar.mobile-active {
@@ -2990,9 +3025,9 @@ select.form-input option {
     justify-content: flex-start;
   }
 
-  /* Dashboard Cards */
+  /* Dashboard shortcut cards — unnecessary on mobile, keep calendar + search only */
   .dash-grid {
-    grid-template-columns: 1fr;
+    display: none !important;
   }
 
   /* Form Layouts */
@@ -3308,7 +3343,119 @@ select.form-input option {
   input, select, textarea {
     font-size: 16px !important;
   }
+
+  /* Tab bars — horizontally scrollable so they never stack or overflow */
+  .modal-tabs, .profile-tabs, .sp-tabs, .matches-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-tabs::-webkit-scrollbar,
+  .profile-tabs::-webkit-scrollbar,
+  .sp-tabs::-webkit-scrollbar,
+  .matches-tabs::-webkit-scrollbar { display: none; }
+
+  /* Tier-locked feature upgrade prompts — full width on mobile */
+  .tier-upgrade-prompt {
+    width: 100%;
+    text-align: center;
+  }
 }
+
+/* Tier-locked UI — consistent treatment across all pages */
+/* Note: no pointer-events:none so click handler can fire the upgrade toast */
+.tab-btn.tier-locked,
+.dash-btn.tier-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tab-tier-badge {
+  font-size: 0.6rem;
+  background: #e0f2fe;
+  color: #0284c7;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+/* Tier upgrade prompt card — used inside locked tab content */
+.tier-upgrade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px 32px;
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  border-radius: 16px;
+  text-align: center;
+  margin: 24px 0;
+}
+.tier-upgrade-card .upgrade-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+.tier-upgrade-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.tier-upgrade-card p {
+  font-size: 0.85rem;
+  color: #64748b;
+  max-width: 320px;
+  line-height: 1.6;
+  margin: 0;
+}
+.tier-upgrade-card .upgrade-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0284c7;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+@media (max-width: 480px) {
+  .tier-upgrade-card { padding: 32px 20px; }
+  .tier-upgrade-card h3 { font-size: 0.95rem; }
+  .tier-upgrade-card p { font-size: 0.82rem; }
+}
+
+/* Sidebar tier plan badge */
+.tier-badge-sidebar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.1);
+  margin: 0 12px 8px;
+  width: calc(100% - 24px);
+  box-sizing: border-box;
+}
+.tier-badge-sidebar.pro   { background: rgba(0,196,154,0.12); color: #00C49A; border-color: rgba(0,196,154,0.28); }
+.tier-badge-sidebar.elite { background: rgba(245,158,11,0.12); color: #f59e0b; border-color: rgba(245,158,11,0.28); }
+.sidebar.collapsed .tier-badge-sidebar { display: none; }
 
 /* Touch-friendly interactive elements */
 @media (pointer: coarse) {
@@ -3441,3 +3588,156 @@ img, video, iframe, embed {
     padding: 2px 8px;
     border-radius: 10px;
 }
+
+/* ── Sidebar Season Chip ── */
+.sidebar-season-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(0, 196, 154, 0.08);
+  border: 1px solid rgba(0, 196, 154, 0.18);
+  border-radius: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+.sidebar-season-chip i { color: #00C49A; font-size: 10px; flex-shrink: 0; }
+.sidebar-season-chip span { overflow: hidden; text-overflow: ellipsis; }
+.sidebar.collapsed .sidebar-season-chip { display: none; }
+
+/* ── Staff Management Styles ── */
+.staff-role-group { margin-bottom: 22px; }
+.staff-role-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+.staff-role-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+.staff-role-count {
+  font-size: 0.7rem;
+  background: var(--bg-body);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+.staff-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  margin-bottom: 7px;
+  background: var(--bg-card);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.staff-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(37,99,235,0.06); }
+.staff-card.inactive { opacity: 0.5; }
+.staff-avatar {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; flex-shrink: 0;
+}
+.staff-card-info { flex: 1; min-width: 0; }
+.staff-card-name { font-weight: 600; font-size: 0.87rem; color: var(--text-primary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.staff-card-meta { font-size: 0.71rem; color: var(--text-muted); display: block; margin-top: 1px; }
+.staff-card-squads { font-size: 0.69rem; color: var(--primary); font-weight: 500; display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.staff-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.staff-status-dot.active { background: #10b981; }
+.staff-status-dot.inactive { background: #d1d5db; }
+.staff-card-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.staff-empty { text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.8rem; }
+
+/* ── Access Toggle Buttons (staff & season scope) ── */
+.staff-access-btn {
+  padding: 7px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: var(--bg-body);
+  font-family: inherit;
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 5px;
+}
+.staff-access-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+.staff-access-btn:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+
+
+/* ── Season Cards ── */
+.seasons-list { display: flex; flex-direction: column; gap: 10px; }
+.season-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  background: var(--bg-card);
+  transition: all 0.2s;
+}
+.season-card.current { border-color: var(--primary); background: rgba(37,99,235,0.03); }
+.season-card-main { flex: 1; min-width: 0; }
+.season-card-name { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
+.season-card-meta { font-size: 0.71rem; color: var(--text-muted); margin-top: 2px; }
+.season-status-pill {
+  font-size: 0.63rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0;
+}
+.season-status-pill.current { background: rgba(37,99,235,0.1); color: var(--primary); }
+.season-status-pill.archived { background: rgba(0,0,0,0.05); color: var(--text-muted); }
+.season-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── Squad Staff Strip ── */
+.squad-staff-strip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  background: rgba(37,99,235,0.04);
+  border-radius: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.squad-staff-strip-label {
+  font-size: 0.68rem; font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.squad-staff-chip {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: white; border: 1px solid var(--border-light);
+  border-radius: 20px;
+  font-size: 0.74rem; font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer; transition: all 0.2s;
+}
+.squad-staff-chip:hover { border-color: var(--primary); color: var(--primary); }
+.squad-staff-chip .chip-avatar {
+  width: 20px; height: 20px; border-radius: 5px;
+  background: var(--primary); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; flex-shrink: 0;
+}
+.squad-staff-chip .chip-role { font-size: 0.64rem; color: var(--text-muted); font-weight: 500; }
+[data-theme="dark"] .squad-staff-chip { background: var(--bg-card); }

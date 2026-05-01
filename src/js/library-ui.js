@@ -68,7 +68,8 @@ async function loadAll() {
             let sq = supabase
                 .from('sessions')
                 .select('*, drills(*)')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .not('purpose', 'in', '("Quick Session","Recurring Session")');
             if (clubId) sq = sq.eq('club_id', clubId);
             const { data, error } = await sq;
             if (error) throw error;
@@ -201,7 +202,7 @@ function buildCard(item) {
     }
 
     const authorLine = (item.author || item.team)
-        ? `<div class="card-author"><i class="fas fa-user-tie"></i>${esc([item.author, item.team].filter(Boolean).join(' \u00b7 '))}</div>`
+        ? `<div class="card-author"><i class="fas fa-user-tie"></i><span>${esc([item.author, item.team].filter(Boolean).join(' \u00b7 '))}</span></div>`
         : '';
 
     const categoryBadge = item.category_tag
@@ -426,7 +427,7 @@ function formatDescription(desc) {
                     <div style="font-size:0.85rem;color:var(--text-primary,#1e293b);line-height:1.65;">${esc(String(value))}</div>
                 </div>`;
             }
-            return html || esc(desc);
+            return html; // empty sections → return '' so the block stays hidden
         }
     } catch (e) { /* not JSON, render as-is */ }
     // Raw HTML from rich text editor — strip dangerous tags but keep formatting

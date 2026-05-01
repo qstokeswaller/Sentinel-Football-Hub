@@ -1,0 +1,8 @@
+.env
+.env.local
+.env.*
+.supabase-admin.json
+node_modules/
+dist/
+data/*.db
+data/uploads/

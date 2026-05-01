@@ -128,15 +128,67 @@ let _stepIdx = 0;
 let _overlayEl = null;
 let _styleEl = null;
 let _clickListener = null;
+let _userId = null;
+let _sb = null; // Supabase client for cross-device sync
+
+function _localKey() { return `sentinel_walkthroughs_${_userId || 'anon'}`; }
 
 function getCompleted() {
-    try { return JSON.parse(localStorage.getItem('sentinel_walkthroughs') || '{}'); } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem(_localKey()) || '{}'); } catch { return {}; }
 }
 function markComplete(id) {
     const c = getCompleted(); c[id] = Date.now();
-    localStorage.setItem('sentinel_walkthroughs', JSON.stringify(c));
+    localStorage.setItem(_localKey(), JSON.stringify(c));
+    // Persist to Supabase user metadata so it follows the user cross-device
+    const sb = _sb || window.supabase;
+    if (sb) sb.auth.updateUser({ data: { walkthroughs: c } }).catch(() => {});
 }
 function isCompleted(id) { return !!getCompleted()[id]; }
+
+/**
+ * Call this once after auth resolves. Syncs completed walkthroughs from
+ * Supabase user metadata into localStorage so cross-device state is respected.
+ * Also migrates any data from the old unscoped key so existing users aren't reset.
+ */
+/**
+ * @param {string|null} userId
+ * @param {object} supabaseClient
+ * @param {object|null} userObj - pass the already-fetched user to skip an extra getUser() call
+ */
+export async function initWalkthroughs(userId, supabaseClient, userObj = null) {
+    _userId = userId || null;
+    _sb = supabaseClient || window.supabase || null;
+
+    // Migrate from old unscoped key (one-time — removes old key after merging)
+    const OLD_KEY = 'sentinel_walkthroughs';
+    try {
+        const oldRaw = localStorage.getItem(OLD_KEY);
+        if (oldRaw) {
+            const oldData = JSON.parse(oldRaw);
+            if (Object.keys(oldData).length > 0) {
+                const merged = { ...oldData, ...getCompleted() };
+                localStorage.setItem(_localKey(), JSON.stringify(merged));
+            }
+            localStorage.removeItem(OLD_KEY);
+        }
+    } catch {}
+
+    // Sync from Supabase (remote wins — cross-device completion is authoritative).
+    // Use the already-fetched userObj if available to skip an extra getUser() roundtrip.
+    try {
+        if (!_sb) return;
+        let user = userObj;
+        if (!user) {
+            const { data } = await _sb.auth.getUser();
+            user = data?.user ?? null;
+        }
+        const remote = user?.user_metadata?.walkthroughs || {};
+        if (Object.keys(remote).length === 0) return;
+        const local = getCompleted();
+        const merged = { ...local, ...remote };
+        localStorage.setItem(_localKey(), JSON.stringify(merged));
+    } catch {}
+}
 
 function createOverlay() {
     if (_overlayEl) return;
@@ -358,6 +410,12 @@ export function startWalkthrough(pageId, force = false) {
 
 export function autoWalkthrough(pageId) {
     if (isCompleted(pageId)) return;
+    // Only auto-show one walkthrough per browser session so new users aren't
+    // hit with a popup on every page they navigate to after signing in.
+    // Subsequent pages can be manually triggered from Settings → Walkthroughs.
+    const SESSION_KEY = 'sfh_wt_shown';
+    if (sessionStorage.getItem(SESSION_KEY)) return;
+    sessionStorage.setItem(SESSION_KEY, '1');
     setTimeout(() => startWalkthrough(pageId), 1500);
 }
 
@@ -379,5 +437,7 @@ export function getAvailableWalkthroughs() {
 }
 
 export function resetWalkthroughs() {
-    localStorage.removeItem('sentinel_walkthroughs');
+    localStorage.removeItem(_localKey());
+    const sb = _sb || window.supabase;
+    if (sb) sb.auth.updateUser({ data: { walkthroughs: {} } }).catch(() => {});
 }

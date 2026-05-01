@@ -153,7 +153,11 @@ function ensureModal() {
         .qs-checklist-player { display:flex; align-items:center; gap:8px; padding:5px 4px; border-radius:6px; cursor:pointer; font-size:0.83rem; transition:background 0.1s; }
         .qs-checklist-player:hover { background:#f1f5f9; }
         .qs-checklist-player input[type="checkbox"] { width:15px; height:15px; cursor:pointer; accent-color:var(--primary); flex-shrink:0; }
-        @media (max-width: 480px) { .qs-form-row { flex-direction:column; } }
+        @media (max-width: 600px) {
+            #quickSessionModal .modal-container { margin:0 !important; max-height:100vh !important; border-radius:0; }
+            .qs-form-row { flex-direction:column; gap:8px; }
+            .qs-field { width:100% !important; }
+        }
     </style>`;
 
     document.body.insertAdjacentHTML('beforeend', html);

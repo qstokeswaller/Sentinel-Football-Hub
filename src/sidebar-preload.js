@@ -48,6 +48,8 @@
     try {
         cachedUser = JSON.parse(store.getItem('sidebar-user'));
     } catch (e) {}
+    var cachedSeason = null;
+    try { cachedSeason = JSON.parse(store.getItem('sidebar-season')); } catch (e) {}
     var logo = cached && cached.logo_url;
     var name = (cached && cached.display_name) || 'Football Hub';
     var collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -112,6 +114,9 @@
             '</div>' +
             '<nav class="sidebar-nav"><ul>' + navHTML + '</ul></nav>' +
             '<div class="sidebar-footer">' +
+                (cachedSeason && cachedSeason.name
+                    ? '<div class="sidebar-season-chip" id="sidebarSeasonChip"><i class="fas fa-calendar-alt"></i><span>' + cachedSeason.name + '</span></div>'
+                    : '<div class="sidebar-season-chip" id="sidebarSeasonChip" style="display:none;"><i class="fas fa-calendar-alt"></i><span></span></div>') +
                 '<a href="/src/pages/settings.html" class="sidebar-user-info" title="Settings">' +
                     '<div class="sidebar-user-avatar" id="sidebarUserAvatar">' + userInitials + '</div>' +
                     '<div class="sidebar-user-details">' +

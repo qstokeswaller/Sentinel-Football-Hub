@@ -230,7 +230,7 @@ function calculateAndRenderAnalytics() {
             bubble.style.cssText = `width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:${color};background:${bg};border:1px solid ${color}30;cursor:pointer;`;
             bubble.innerText = res;
             bubble.title = `vs ${oppName} (${m.homeScore}-${m.awayScore})`;
-            bubble.onclick = () => window.location.href = `match-analysis.html?id=${m.id}`;
+            bubble.onclick = () => window.location.href = `match-details.html?id=${m.id}`;
             formContainer.appendChild(bubble);
         });
         document.getElementById('formWinRate').innerText = `Win Rate: ${Math.round((wins / chronologicalForm.length) * 100)}%`;
@@ -256,8 +256,8 @@ function calculateAndRenderAnalytics() {
             <td style="text-align:center;"><span class="badge ${badgeClass}" style="min-width:28px;">${res}</span></td>
             <td style="text-align:center;font-weight:800;color:#0f172a;font-size:1.1rem;">${m.homeScore} - ${m.awayScore}</td>
             <td style="padding:16px 24px;text-align:right;">
-                <a href="match-analysis.html?id=${m.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:6px 14px;border-radius:8px;">
-                    <i class="fas fa-chart-pie"></i> View Analysis
+                <a href="match-details.html?id=${m.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:6px 14px;border-radius:8px;">
+                    <i class="fas fa-file-alt"></i> Match Details
                 </a>
             </td>
         `;
@@ -459,6 +459,18 @@ async function loadSquadFilter() {
     } catch (e) {
         console.warn('Could not load squads for filter:', e);
     }
+    // Apply ?squad= deep-link param after squads are populated
+    const _urlSquad = new URLSearchParams(window.location.search).get('squad');
+    if (_urlSquad) {
+        const sel = document.getElementById('filterSquad');
+        if (sel && [...sel.options].some(o => o.value === _urlSquad)) {
+            sel.value = _urlSquad;
+            await loadPlayerFilter(_urlSquad);
+            refreshPlayerAll();
+            refreshSquadStats();
+            return;
+        }
+    }
     await loadPlayerFilter('all');
     refreshPlayerAll();
 }
@@ -601,6 +613,8 @@ async function refreshPerformanceMatrix() {
             const assists = pms.reduce((s, m) => s + (m.assists || 0), 0);
             const yellowCards = pms.reduce((s, m) => s + (m.yellow_cards || 0), 0);
             const redCards = pms.reduce((s, m) => s + (m.red_cards || 0), 0);
+            const cleanSheets = pms.filter(m => m.clean_sheet).length;
+            const saves = pms.reduce((s, m) => s + (m.saves || 0), 0);
 
             // Global average: combine pillar-based assessment averages + simple match report ratings
             // Each pillar assessment produces one average per assessment (mean of all 4 pillar means)
@@ -627,7 +641,7 @@ async function refreshPerformanceMatrix() {
                 tactical: tacticalAvg, technical: technicalAvg, physical: physicalAvg, psychological: psychologicalAvg,
                 globalAvg,
                 assessmentCount: count + pms.filter(m => m.rating != null && m.rating > 0).length,
-                apps, goals, assists, yellowCards, redCards
+                apps, goals, assists, yellowCards, redCards, cleanSheets, saves
             };
         });
 
@@ -952,12 +966,13 @@ async function refreshSquadStats() {
             const squadMinutes = matchesInSquad * 90;
             const pctOfSquadMinutes = squadMinutes > 0 ? +(totalMinutes / squadMinutes * 100).toFixed(1) : 0;
 
+            const saves = stats.reduce((sum, s) => sum + (s.saves || 0), 0);
             return {
                 id: p.id, name: p.name, position: p.position || '-',
                 apps, starts, totalMinutes, avgMinutes,
                 goals, assists, contributions,
                 yellowCards, redCards, avgRating, motmCount,
-                per90Goals, per90Assists, cleanSheets,
+                per90Goals, per90Assists, cleanSheets, saves,
                 seasonMinutes: filteredSeasonMinutes,
                 pctOfSeason, squadMinutes, pctOfSquadMinutes
             };

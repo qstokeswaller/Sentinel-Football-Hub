@@ -295,6 +295,23 @@
             #squadDetailView .sheet-header { padding: 16px !important; }
             #squadDetailView .sheet-header h2 { font-size: 1.1rem !important; }
             #squadDetailView .sheet-header .dash-btn { font-size: 0.8rem; padding: 8px 14px; }
+            /* Make filter pills full-width in the stacked header */
+            #squadControls, #playerControls { gap: 8px; }
+            .filter-pill-container { width: 100%; }
+            .filter-select-pill { width: 100% !important; }
+            /* View toggle stays compact, doesn't stretch */
+            #viewToggleGroup { width: auto; }
+        }
+
+        @media (max-width: 480px) {
+            .squad-card { padding: 14px !important; }
+            .squad-card-left h3 { font-size: 0.95rem; }
+            .squad-card-enrichment { gap: 6px; font-size: 0.75rem; }
+            .squad-card-enrichment .enrich-item { gap: 5px; }
+            .squad-card-left .squad-footer { flex-wrap: wrap; gap: 6px; }
+            .pos-count-badge { font-size: 0.68rem; padding: 2px 6px; }
+            /* Squad detail sheet buttons stack on very small screens */
+            #squadDetailView .sheet-header { flex-direction: column; align-items: flex-start; gap: 10px; }
         }
     </style>
 </head>
@@ -410,60 +427,8 @@
                 <!-- Squads will be rendered here -->
             </div>
 
-            <!-- Squad Detail Sheet View -->
-            <div id="squadDetailView" class="section-card"
-                style="display: none; margin-top: 24px; padding: 0; overflow: hidden;">
-                <div class="sheet-header"
-                    style="padding: 20px 24px; border-bottom: 1px solid var(--border); background: #f8fafc;">
-                    <!-- Top row: Back + Toggle -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <button class="dash-btn outline sm" id="btnBackToSquads"
-                            style="flex: 0 0 auto; width: auto; padding-right: 16px;">
-                            <i class="fas fa-arrow-left"></i> Back to Squads
-                        </button>
-                        <!-- Toggle injected here by JS -->
-                    </div>
-                    <!-- Centre row: Squad name + actions -->
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap;">
-                        <div style="text-align: center;">
-                            <h2 id="detailSquadName" style="margin: 0; color: var(--navy-dark); font-size: 1.4rem;">Squad Name</h2>
-                            <span id="detailSquadMeta" style="color: var(--text-secondary); font-size: 0.9rem;">Meta Info</span>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="dash-btn outline" id="btnAssignPlayerModal" data-min-role="coach" style="border-radius: 0.75rem;">
-                                <i class="fas fa-user-plus" style="margin-right: 6px;"></i> Assign Player
-                            </button>
-                            <button class="dash-btn primary" id="btnAssessSquad" data-min-role="coach"
-                                style="border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
-                                <i class="fas fa-clipboard-check" style="margin-right: 6px;"></i> Assess Squad
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <!-- Table View -->
-                <div id="squadDetailTableWrapper" style="overflow-x: auto; display: none;">
-                    <table class="table" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Position</th>
-                                <th>Age</th>
-                                <th>Height</th>
-                                <th>Weight</th>
-                                <th>Foot</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="squadDetailTableBody">
-                            <!-- Rows -->
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Grid View (default) -->
-                <div id="squadDetailGridWrapper">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
+            <!-- Squad Detail View — content fully built by viewSquadDetails() in JS -->
+            <div id="squadDetailView" style="display: none; margin-top: 16px;"></div>
 
             <!-- All Players Tab Content (hidden by default) -->
             <div id="playerTabContent" style="display: none; margin-top: 24px;">
@@ -481,7 +446,7 @@
                                     <th>Height</th>
                                     <th>Weight</th>
                                     <th>Foot</th>
-                                    <th>Actions</th>
+                                    <th style="width:100px;text-align:center;">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="playerTableBody">
@@ -527,6 +492,12 @@
                                     <input type="text" id="squadLeagueInput" class="form-control-bubble"
                                         placeholder="e.g. Premier">
                                 </div>
+                            </div>
+
+                            <div class="form-group-bubble">
+                                <label>League Table URL <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted);">(optional)</span></label>
+                                <input type="url" id="squadLeagueTableUrl" class="form-control-bubble"
+                                    placeholder="https://...">
                             </div>
 
                             <div class="bubble-section-title">Coaching Staff</div>
@@ -735,15 +706,10 @@
 
                             <div class="bubble-grid-2">
                                 <div class="form-group-bubble">
-                                    <label>Position(s)</label>
-                                    <div class="multi-select-dropdown" id="playerPositionDropdown">
-                                        <div class="multi-select-trigger form-control-bubble" id="playerPositionTrigger">
-                                            Select position(s)...
-                                        </div>
-                                        <div class="multi-select-options" id="playerPositionOptions" style="display:none;">
-                                            <!-- Populated by JS -->
-                                        </div>
-                                    </div>
+                                    <label>Primary Position</label>
+                                    <select id="playerPositionPrimary" class="form-control-bubble">
+                                        <!-- Populated by JS -->
+                                    </select>
                                 </div>
                                 <div class="form-group-bubble">
                                     <label>Preferred Foot</label>
@@ -751,6 +717,18 @@
                                         <option value="Right">Right</option>
                                         <option value="Left">Left</option>
                                         <option value="Both">Both</option>
+                                    </select>
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Secondary Position <span style="font-weight:400;color:#94a3b8;font-size:0.7rem;">(optional)</span></label>
+                                    <select id="playerPositionSecondary" class="form-control-bubble">
+                                        <!-- Populated by JS -->
+                                    </select>
+                                </div>
+                                <div class="form-group-bubble">
+                                    <label>Third Position <span style="font-weight:400;color:#94a3b8;font-size:0.7rem;">(optional)</span></label>
+                                    <select id="playerPositionThird" class="form-control-bubble">
+                                        <!-- Populated by JS -->
                                     </select>
                                 </div>
                             </div>
@@ -872,6 +850,52 @@
                         </div>
                     </div>
                 </div>
+
+    <!-- Squad Share Modal -->
+    <div class="modal-overlay" id="modalSquadShare" style="display:none;">
+        <div class="modal-container modal-bubble" style="max-width:480px;">
+            <div class="modal-header-bubble">
+                <h2><i class="fas fa-share-nodes" style="color:var(--primary);margin-right:8px;"></i>Share Squad Dossier</h2>
+                <button class="btn-close-modal" onclick="document.getElementById('modalSquadShare').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body-bubble">
+                <!-- Generating state -->
+                <div id="squadShareGenerating" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:32px 0;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:1.8rem;color:var(--primary);"></i>
+                    <p style="color:var(--text-secondary);font-size:0.88rem;">Generating share link…</p>
+                </div>
+                <!-- Ready state -->
+                <div id="squadShareReady" style="display:none;">
+                    <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;">
+                        Anyone with this link can view all player profiles in the squad without logging in. You can revoke access at any time.
+                    </p>
+                    <div style="display:flex;gap:8px;margin-bottom:16px;">
+                        <input type="text" id="squadShareLinkInput" class="form-control-bubble" readonly
+                            style="flex:1;font-size:0.8rem;background:#f8fafc;cursor:default;"
+                            onclick="this.select()">
+                        <button class="dash-btn primary" onclick="copySquadDossierLink()" style="flex-shrink:0;white-space:nowrap;">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="dash-btn outline" onclick="openSquadDossierTab()" style="flex:1;min-width:120px;">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                        <a id="squadShareWhatsApp" href="#"
+                            onclick="event.preventDefault();var l=document.getElementById('squadShareLinkInput').value;window.open('https://wa.me/?text='+encodeURIComponent('View our squad dossier: '+l),'_blank');"
+                            class="dash-btn outline" style="flex:1;min-width:120px;background:#f0fdf4;border-color:#bbf7d0;color:#16a34a;text-decoration:none;justify-content:center;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
+                    </div>
+                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light);">
+                        <button onclick="revokeSquadDossierLink()" style="background:none;border:none;color:#ef4444;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;font-weight:600;padding:0;">
+                            <i class="fas fa-link-slash"></i> Revoke Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import { initPage } from '../page-init.js';

@@ -856,9 +856,15 @@
     <script type="module">
         import { initPage } from '../page-init.js';
         import { initAnalyticsUI } from '../js/analytics-ui.js';
+        import { hasFeature, renderUpgradeCard } from '../tier.js';
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await initPage('analytics', { match: true });
             if (!user) return;
+            if (!hasFeature('analytics')) {
+                const mc = document.querySelector('.main-content');
+                if (mc) renderUpgradeCard(mc, { label: 'Analytics', description: 'Team and player analytics, radar charts, and performance trends. Available on Pro and Elite plans.', requiredTier: 'pro' });
+                return;
+            }
             initAnalyticsUI();
 
             // Restore tab from URL param

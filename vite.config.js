@@ -65,7 +65,7 @@ function sidebarPlugin() {
         name: 'inject-sidebar-shell',
         transformIndexHtml(html, ctx) {
             // Don't inject on login, root redirect, or platform admin (standalone shell)
-            if (ctx.path?.includes('login.html') || ctx.path?.includes('platform-admin.html') || ctx.path?.includes('session-share.html') || ctx.path === '/index.html' || ctx.path === '/') {
+            if (ctx.path?.includes('login.html') || ctx.path?.includes('platform-admin.html') || ctx.path?.includes('session-share.html') || ctx.path?.includes('player-dossier.html') || ctx.path?.includes('squad-dossier.html') || ctx.path === '/index.html' || ctx.path === '/') {
                 return html;
             }
             // Detect active page from the file path
@@ -108,12 +108,14 @@ export default defineConfig({
                 scoutedPlayer: resolve(__dirname, 'src/pages/scouted-player.html'),
                 sessionShare: resolve(__dirname, 'src/pages/session-share.html'),
                 financials: resolve(__dirname, 'src/pages/financials.html'),
+                playerDossier: resolve(__dirname, 'src/pages/player-dossier.html'),
+                squadDossier: resolve(__dirname, 'src/pages/squad-dossier.html'),
             }
         }
     },
     server: {
         port: 3001,
-        open: '/src/pages/login.html'
+        open: '/'
     },
     preview: {
         port: 3001

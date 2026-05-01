@@ -55,8 +55,13 @@ class MatchManager {
             opponent: m.opponent,
             competition: m.competition,
             isPast: m.is_past,
+            status: m.status || (m.is_past ? 'result' : 'fixture'),
+            matchFormat: m.match_format || '11-a-side',
+            formation: m.formation || '',
             homeScore: m.home_score,
             awayScore: m.away_score,
+            halfTimeHomeScore: m.half_time_home_score ?? null,
+            halfTimeAwayScore: m.half_time_away_score ?? null,
             homeTeam: m.home_team,
             awayTeam: m.away_team,
             ourSide: m.our_side || 'home',
@@ -67,6 +72,18 @@ class MatchManager {
             links: m.links || [],
             matchType: m.match_type || 'team',
             watchedPlayerId: m.watched_player_id || null,
+            seasonId: m.season_id || null,
+            lineup: m.lineup || { starters: [], subs: [] },
+            matchEvents: m.match_events || [],
+            reportTitle: m.report_title || '',
+            reportGeneral: m.report_general || '',
+            reportAttacking: m.report_attacking || '',
+            reportDefending: m.report_defending || '',
+            reportIndividual: m.report_individual || '',
+            reportImprovements: m.report_improvements || '',
+            reportVisibility: m.report_visibility || 'private',
+            matchPhotos: m.match_photos || [],
+            playerRatings: m.player_ratings || {},
             createdAt: m.created_at
         };
     }
@@ -133,6 +150,8 @@ class MatchManager {
         if (info.isPast !== undefined) row.is_past = info.isPast;
         if (info.homeScore !== undefined) row.home_score = info.homeScore;
         if (info.awayScore !== undefined) row.away_score = info.awayScore;
+        if (info.halfTimeHomeScore !== undefined) row.half_time_home_score = info.halfTimeHomeScore;
+        if (info.halfTimeAwayScore !== undefined) row.half_time_away_score = info.halfTimeAwayScore;
         if (info.homeTeam !== undefined) row.home_team = info.homeTeam;
         if (info.awayTeam !== undefined) row.away_team = info.awayTeam;
         if (info.ourSide !== undefined) row.our_side = info.ourSide;
@@ -143,6 +162,21 @@ class MatchManager {
         if (info.links !== undefined) row.links = info.links;
         if (info.matchType !== undefined) row.match_type = info.matchType;
         if (info.watchedPlayerId !== undefined) row.watched_player_id = info.watchedPlayerId;
+        if (info.status !== undefined) row.status = info.status;
+        if (info.matchFormat !== undefined) row.match_format = info.matchFormat;
+        if (info.formation !== undefined) row.formation = info.formation;
+        if (info.lineup !== undefined) row.lineup = info.lineup;
+        if (info.matchEvents !== undefined) row.match_events = info.matchEvents;
+        if (info.reportTitle !== undefined) row.report_title = info.reportTitle;
+        if (info.reportGeneral !== undefined) row.report_general = info.reportGeneral;
+        if (info.reportAttacking !== undefined) row.report_attacking = info.reportAttacking;
+        if (info.reportDefending !== undefined) row.report_defending = info.reportDefending;
+        if (info.reportIndividual !== undefined) row.report_individual = info.reportIndividual;
+        if (info.reportImprovements !== undefined) row.report_improvements = info.reportImprovements;
+        if (info.reportVisibility !== undefined) row.report_visibility = info.reportVisibility;
+        if (info.matchPhotos !== undefined) row.match_photos = info.matchPhotos;
+        if (info.playerRatings !== undefined) row.player_ratings = info.playerRatings;
+        if (info.seasonId !== undefined) row.season_id = info.seasonId;
 
         const { error } = await supabase
             .from('matches')
@@ -158,6 +192,7 @@ class MatchManager {
     }
 
     async createMatch(matchData) {
+        const isResult = matchData.status === 'result';
         const row = {
             club_id: this.clubId,
             squad_id: matchData.squadId,
@@ -166,19 +201,30 @@ class MatchManager {
             venue: matchData.venue,
             opponent: matchData.opponent,
             competition: matchData.competition,
-            is_past: matchData.isPast || false,
-            home_score: matchData.homeScore,
-            away_score: matchData.awayScore,
+            is_past: isResult,
+            status: matchData.status || 'fixture',
+            match_format: matchData.matchFormat || '11-a-side',
+            formation: matchData.formation || null,
+            home_score: isResult ? (matchData.homeScore ?? null) : null,
+            away_score: isResult ? (matchData.awayScore ?? null) : null,
             home_team: matchData.homeTeam,
             away_team: matchData.awayTeam,
             our_side: matchData.ourSide || 'home',
-            result: matchData.result,
-            notes: matchData.notes,
+            result: matchData.result || null,
+            notes: matchData.notes || null,
             stats: this.getDefaultStats(),
-            videos: [],
-            links: [],
+            videos: matchData.videos || [],
+            links: matchData.links || [],
             match_type: matchData.matchType || 'team',
-            watched_player_id: matchData.watchedPlayerId || null
+            watched_player_id: matchData.watchedPlayerId || null,
+            season_id: matchData.seasonId || null,
+            lineup: matchData.lineup || { starters: [], subs: [] },
+            match_events: matchData.matchEvents || [],
+            report_title: matchData.reportTitle || null,
+            report_general: matchData.reportGeneral || null,
+            report_visibility: 'private',
+            match_photos: [],
+            player_ratings: {}
         };
 
         const { data: inserted, error } = await supabase
@@ -224,6 +270,8 @@ class MatchManager {
             motm: row.motm,
             rating: row.rating,
             notes: row.notes,
+            saves: row.saves || 0,
+            cleanSheet: row.clean_sheet || false,
             createdAt: row.created_at
         };
     }
@@ -255,7 +303,9 @@ class MatchManager {
             red_cards: ps.redCards || 0,
             motm: ps.motm || false,
             rating: ps.rating || null,
-            notes: ps.notes || ''
+            notes: ps.notes || '',
+            saves: ps.saves || 0,
+            clean_sheet: ps.cleanSheet || false
         }));
 
         const { error } = await supabase
@@ -298,6 +348,124 @@ class MatchManager {
             return [];
         }
         return (data || []).map(r => this._mapPlayerStat(r));
+    }
+
+    // --- Season helpers ---
+
+    async getSeasons() {
+        if (!this.clubId) return [];
+        const { data, error } = await supabase
+            .from('seasons')
+            .select('id, name, status, is_current, match_format, start_date, end_date')
+            .eq('club_id', this.clubId)
+            .order('created_at', { ascending: false })
+            .limit(50);
+        if (error) { console.error('Error fetching seasons:', error); return []; }
+        return data || [];
+    }
+
+    async getOrCreateActiveSeason() {
+        const seasons = await this.getSeasons();
+        const active = seasons.find(s => s.is_current || s.status === 'active');
+        if (active) return active;
+
+        const year = new Date().getFullYear();
+        const { data, error } = await supabase
+            .from('seasons')
+            .insert({
+                club_id: this.clubId,
+                name: `${year} Season`,
+                status: 'active',
+                is_current: true,
+                win_points: 3,
+                draw_points: 1,
+                loss_points: 0,
+                match_format: '11-a-side'
+            })
+            .select()
+            .single();
+        if (error) { console.error('Error creating default season:', error); return null; }
+        return data;
+    }
+
+    async upsertMatchPlayerStat(matchId, playerId, updates) {
+        const row = {
+            club_id: this.clubId,
+            match_id: matchId,
+            player_id: playerId,
+            ...updates
+        };
+        const { error } = await supabase
+            .from('match_player_stats')
+            .upsert(row, { onConflict: 'match_id,player_id' });
+        if (error) { console.error('Error upserting match player stat:', error); return false; }
+        return true;
+    }
+
+    async recalcPlayerSeasonStats(playerId, seasonId) {
+        if (!seasonId) return;
+
+        // Get team match IDs for this season only — exclude player_watch observations
+        const { data: seasonMatches } = await supabase
+            .from('matches')
+            .select('id, match_type')
+            .eq('club_id', this.clubId)
+            .eq('season_id', seasonId);
+
+        const teamMatchIds = (seasonMatches || [])
+            .filter(m => m.match_type !== 'player_watch')
+            .map(m => m.id);
+
+        // No team matches in this season — zero out stats
+        if (teamMatchIds.length === 0) {
+            await supabase.from('player_season_stats').upsert({
+                player_id: playerId, season_id: seasonId, club_id: this.clubId,
+                appearances: 0, sub_appearances: 0, goals: 0, assists: 0,
+                yellow_cards: 0, red_cards: 0, saves: 0, clean_sheets: 0,
+                average_rating: null, updated_at: new Date().toISOString()
+            }, { onConflict: 'player_id,season_id' });
+            return;
+        }
+
+        const { data: rows, error } = await supabase
+            .from('match_player_stats')
+            .select('appeared, started, goals, assists, yellow_cards, red_cards, rating, saves, clean_sheet')
+            .eq('player_id', playerId)
+            .in('match_id', teamMatchIds);
+        if (error || !rows) return;
+
+        const totals = rows.reduce((acc, r) => {
+            if (r.appeared) {
+                if (r.started) acc.appearances += 1;
+                else acc.sub_appearances += 1;
+            }
+            acc.goals += r.goals || 0;
+            acc.assists += r.assists || 0;
+            acc.yellow_cards += r.yellow_cards || 0;
+            acc.red_cards += r.red_cards || 0;
+            acc.saves += r.saves || 0;
+            if (r.clean_sheet) acc.clean_sheets += 1;
+            if (r.rating) { acc._ratingSum += r.rating; acc._ratingCount += 1; }
+            return acc;
+        }, { appearances: 0, sub_appearances: 0, goals: 0, assists: 0, yellow_cards: 0, red_cards: 0, saves: 0, clean_sheets: 0, _ratingSum: 0, _ratingCount: 0 });
+
+        const avgRating = totals._ratingCount > 0 ? (totals._ratingSum / totals._ratingCount).toFixed(2) : null;
+
+        await supabase.from('player_season_stats').upsert({
+            player_id: playerId,
+            season_id: seasonId,
+            club_id: this.clubId,
+            appearances: totals.appearances,
+            sub_appearances: totals.sub_appearances,
+            goals: totals.goals,
+            assists: totals.assists,
+            yellow_cards: totals.yellow_cards,
+            red_cards: totals.red_cards,
+            saves: totals.saves,
+            clean_sheets: totals.clean_sheets,
+            average_rating: avgRating,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'player_id,season_id' });
     }
 }
 

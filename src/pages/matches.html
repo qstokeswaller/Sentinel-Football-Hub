@@ -95,6 +95,36 @@
                 grid-template-columns: 1fr !important;
                 gap: 20px !important;
             }
+
+            /* Matches page tabs — scrollable strip so all tabs stay on one row */
+            .matches-tabs {
+                width: 100%;
+                overflow-x: auto;
+                padding-bottom: 4px;
+                scrollbar-width: none;
+                border-radius: 14px;
+            }
+            .matches-tabs::-webkit-scrollbar { display: none; }
+            .matches-tab-btn {
+                flex-shrink: 0;
+                white-space: nowrap;
+                padding: 10px 18px;
+                font-size: 0.85rem;
+            }
+
+            /* Add match modal inner tabs */
+            #amResultTabs {
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+            #amResultTabs::-webkit-scrollbar { display: none; }
+            .am-tab-btn { flex-shrink: 0; }
+        }
+
+        @media screen and (max-width: 480px) {
+            .matches-tab-btn { padding: 8px 12px; font-size: 0.78rem; }
+            /* Match modal — full width on tiny phones */
+            .modal-container { width: 100% !important; margin: 0 !important; border-radius: 16px 16px 0 0 !important; position: fixed !important; bottom: 0 !important; max-height: 90vh !important; }
         }
 
         @keyframes fadeIn {
@@ -158,6 +188,78 @@
         .plan-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Add Match Modal — inner tab buttons */
+        #amResultTabs {
+            display: flex;
+            gap: 2px;
+            padding-bottom: 0;
+        }
+
+        .am-tab-btn {
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .am-tab-btn:hover {
+            color: #1e293b;
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .am-tab-btn.active {
+            color: var(--navy-primary, #1e293b);
+            background: white;
+            border-bottom: 2px solid var(--primary, #00c49a);
+        }
+
+        /* Event type grid buttons */
+        .event-type-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .event-type-btn:hover {
+            border-color: var(--primary, #00c49a);
+            background: rgba(0, 196, 154, 0.06);
+            color: var(--primary, #00c49a);
+        }
+
+        .event-type-btn.active {
+            border-color: var(--primary, #00c49a);
+            background: rgba(0, 196, 154, 0.12);
+            color: var(--primary, #00c49a);
+        }
+
+        .event-type-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* am-tab-content hidden by default */
+        .am-tab-content {
+            animation: fadeIn 0.2s ease;
         }
     </style>
 </head>
@@ -258,370 +360,262 @@
     </div>
 
     <!-- Add Match Modal -->
-    <div id="createMatchModal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 2147483647; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
-        <div class="modal-container"
-            style="max-width: 700px; background: white; padding: 0; border-radius: 12px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative;">
-            <div class="modal-header"
-                style="padding: 24px 30px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: white; z-index: 20; border-top-left-radius: 12px; border-top-right-radius: 12px;">
-                <h2 style="margin: 0; font-size: 20px; font-weight: 700;">Add New Match</h2>
+    <div id="createMatchModal" class="modal-overlay" style="display:none;">
+        <div class="modal-container" style="max-width:780px; width:94%; max-height:92vh; overflow:hidden; display:flex; flex-direction:column;">
+
+            <!-- Modal Header -->
+            <div class="modal-header" style="flex-shrink:0;">
+                <h2 id="addMatchModalTitle" style="margin:0; font-size:1.1rem; font-weight:700;">Add Match</h2>
                 <button class="btn-close-modal" onclick="closeAddMatchModal()">&times;</button>
             </div>
 
-            <!-- Tabs Navigation -->
-            <div class="modal-tabs"
-                style="display: flex; gap: 10px; margin: 0 30px 20px; border-bottom: 1px solid #eee; padding: 20px 0 10px; position: sticky; top: 76px; background: white; z-index: 15;">
-                <button type="button" id="tab-btn-details" class="tab-btn active" onclick="switchTab('details')">Match
-                    Details</button>
-                <button type="button" id="tab-btn-report" class="tab-btn" onclick="switchTab('report')">Stats
-                    Report</button>
-                <button type="button" id="tab-btn-analysis" class="tab-btn" onclick="switchTab('analysis')">Analysis
-                    Links</button>
-            </div>
-
-            <!-- Tab Content: Details -->
-            <div id="tab-details" class="tab-content active" style="padding: 0 30px;">
-                <form id="matchForm">
-                    <div class="form-section-title" style="margin-top: 10px; margin-bottom: 24px;">General Information
-                    </div>
-
-                    <!-- Match Type Selector -->
-                    <div class="form-group" style="margin-bottom: 24px;">
-                        <label class="form-label"
-                            style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Match Type</label>
-                        <div style="display: flex; gap: 10px;">
-                            <label style="display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:2px solid #e2e8f0;cursor:pointer;font-weight:600;font-size:0.9rem;transition:all 0.2s;background:#f8fafc;" id="matchTypeTeamLabel">
-                                <input type="radio" name="matchType" value="team" checked style="display:none;" onchange="onMatchTypeChange()">
-                                <i class="fas fa-users" style="color:#94a3b8;"></i> Team Match
-                            </label>
-                            <label style="display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:2px solid #e2e8f0;cursor:pointer;font-weight:600;font-size:0.9rem;transition:all 0.2s;background:#f8fafc;" id="matchTypeWatchLabel">
-                                <input type="radio" name="matchType" value="player_watch" style="display:none;" onchange="onMatchTypeChange()">
-                                <i class="fas fa-eye" style="color:#94a3b8;"></i> Player Watch
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Watched Player (shown only for player_watch) -->
-                    <div class="form-group" id="watchedPlayerGroup" style="margin-bottom: 24px; display: none;">
-                        <label class="form-label"
-                            style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Player to Watch</label>
-                        <div style="position: relative;">
-                            <i class="fas fa-user"
-                                style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                            <select id="matchWatchedPlayer" class="form-select"
-                                style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; appearance: none;">
-                                <option value="">Select Player</option>
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 24px;">
-                        <label class="form-label"
-                            style="display: block; margin-bottom: 10px; font-weight: 700; color: var(--navy-dark); font-size: 0.9rem;">Competition</label>
-                        <div style="position: relative;">
-                            <i class="fas fa-trophy"
-                                style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                            <select id="matchCompetition" class="form-select" required
-                                style="width: 100%; padding: 14px 14px 14px 45px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.95rem; appearance: none;">
-                                <option value="">Select Competition / League</option>
-                                <!-- Populated by JS -->
-                            </select>
-                            <i class="fas fa-chevron-down"
-                                style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
-                        </div>
-                    </div>
-
-                    <div class="form-grid-2" style="gap: 20px; margin-bottom: 24px;">
-                        <div class="form-group">
-                            <label class="form-label"
-                                style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Home
-                                Team</label>
-                            <div style="position: relative;" id="homeTeamWrapper">
-                                <i class="fas fa-home"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; z-index: 10;"></i>
-                                <select id="matchHomeTeam" class="form-select" onchange="onTeamSelectChange('home')"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; appearance: none;">
-                                    <option value="">Select Your Squad</option>
-                                    <!-- Populated by JS -->
-                                    <option value="__other__">Other (type in)</option>
-                                </select>
-                                <i class="fas fa-chevron-down"
-                                    style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
-                            </div>
-                            <!-- Hidden text input for manual entry -->
-                            <div style="position: relative; display: none;" id="homeTeamTextWrapper">
-                                <i class="fas fa-home"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                                <input type="text" id="matchHomeTeamText" class="form-input"
-                                    placeholder="Type team name"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"
-                                style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Away
-                                Team</label>
-                            <div style="position: relative;" id="awayTeamWrapper">
-                                <i class="fas fa-shield-alt"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; z-index: 10;"></i>
-                                <select id="matchAwayTeam" class="form-select" onchange="onTeamSelectChange('away')"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; appearance: none;">
-                                    <option value="">Select Your Squad</option>
-                                    <!-- Populated by JS -->
-                                    <option value="__other__">Other (type in)</option>
-                                </select>
-                                <i class="fas fa-chevron-down"
-                                    style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
-                            </div>
-                            <!-- Hidden text input for manual entry -->
-                            <div style="position: relative; display: none;" id="awayTeamTextWrapper">
-                                <i class="fas fa-shield-alt"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                                <input type="text" id="matchAwayTeamText" class="form-input"
-                                    placeholder="Type team name"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-grid-2" style="gap: 20px; margin-bottom: 24px;">
-                        <div class="form-group">
-                            <label class="form-label"
-                                style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Date</label>
-                            <div style="position: relative;">
-                                <i class="far fa-calendar-alt"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                                <input type="date" id="matchDate" class="form-input" required
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"
-                                style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Time</label>
-                            <div style="position: relative;">
-                                <i class="far fa-clock"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                                <input type="time" id="matchTime" class="form-input"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 24px;">
-                        <label class="form-label"
-                            style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Venue</label>
-                        <div style="position: relative;">
-                            <i class="fas fa-map-marker-alt"
-                                style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                            <input type="text" id="matchVenue" class="form-input" placeholder="e.g. Tuks Stadium"
-                                style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;">
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 24px;">
-                        <div class="form-group">
-                            <label class="form-label"
-                                style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Match
-                                Status</label>
-                            <div style="position: relative;">
-                                <i class="fas fa-info-circle"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem; z-index: 10;"></i>
-                                <select id="matchStatus" class="form-select"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; appearance: none;">
-                                    <option value="upcoming">Upcoming</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="live">Live</option>
-                                </select>
-                                <i class="fas fa-chevron-down"
-                                    style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none;"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section-title" style="margin-top: 10px; margin-bottom: 24px;">Post-Match Result
-                        (Optional)</div>
-
-                    <div class="form-grid-2" style="gap: 20px; margin-bottom: 32px;">
-                        <div class="form-group">
-                            <label class="form-label"
-                                style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Home
-                                Score</label>
-                            <div style="position: relative;">
-                                <i class="fas fa-dot-circle"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                                <input type="number" id="matchHomeScore" class="form-input" placeholder="0" min="0"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"
-                                style="display: block; margin-bottom: 8px; font-weight: 700; color: var(--navy-dark); font-size: 0.85rem;">Away
-                                Score</label>
-                            <div style="position: relative;">
-                                <i class="fas fa-dot-circle"
-                                    style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
-                                <input type="number" id="matchAwayScore" class="form-input" placeholder="0" min="0"
-                                    style="width: 100%; padding: 12px 12px 12px 42px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="dash-btn ghost" onclick="closeAddMatchModal()">Cancel</button>
-                        <button type="submit" class="dash-btn primary">Add Match</button>
-                    </div>
-                </form>
-            </div><!-- End Details Tab -->
-
-            <!-- Tab Content: Report -->
-            <div id="tab-report" class="tab-content" style="padding: 0 30px;">
-                <div class="form-section-title">Match Stats</div>
-                <div class="stats-grid"
-                    class="form-grid-3-even" style="gap: 10px; align-items: center; margin-bottom: 20px;">
-                    <div style="font-weight: bold; text-align: center; color: var(--navy-primary);">Home</div>
-                    <div style="font-weight: bold; text-align: center; font-size: 0.85rem; text-transform: uppercase;">
-                        Stat
-                    </div>
-                    <div style="font-weight: bold; text-align: center; color: #64748b;">Away</div>
-
-                    <!-- Possession -->
-                    <input type="number" name="home_possession" class="form-input" placeholder="50"
-                        style="text-align: center;">
-                    <div style="text-align: center; font-size: 0.9rem;">Possession %</div>
-                    <input type="number" name="away_possession" class="form-input" placeholder="50"
-                        style="text-align: center;">
-
-                    <!-- Shots -->
-                    <input type="number" name="home_shots" class="form-input" placeholder="0"
-                        style="text-align: center;">
-                    <div style="text-align: center; font-size: 0.9rem;">Shots</div>
-                    <input type="number" name="away_shots" class="form-input" placeholder="0"
-                        style="text-align: center;">
-
-                    <!-- Shots on Target -->
-                    <input type="number" name="home_shotsOnTarget" class="form-input" placeholder="0"
-                        style="text-align: center;">
-                    <div style="text-align: center; font-size: 0.9rem;">On Target</div>
-                    <input type="number" name="away_shotsOnTarget" class="form-input" placeholder="0"
-                        style="text-align: center;">
-
-                    <!-- xG -->
-                    <input type="number" step="0.01" name="home_xG" class="form-input" placeholder="0.00"
-                        style="text-align: center;">
-                    <div style="text-align: center; font-size: 0.9rem;">xG</div>
-                    <input type="number" step="0.01" name="away_xG" class="form-input" placeholder="0.00"
-                        style="text-align: center;">
-
-                    <!-- Corners -->
-                    <input type="number" name="home_corners" class="form-input" placeholder="0"
-                        style="text-align: center;">
-                    <div style="text-align: center; font-size: 0.9rem;">Corners</div>
-                    <input type="number" name="away_corners" class="form-input" placeholder="0"
-                        style="text-align: center;">
-
-                    <!-- Fouls -->
-                    <input type="number" name="home_fouls" class="form-input" placeholder="0"
-                        style="text-align: center;">
-                    <div style="text-align: center; font-size: 0.9rem;">Fouls</div>
-                    <input type="number" name="away_fouls" class="form-input" placeholder="0"
-                        style="text-align: center;">
-
-                    <!-- Cards -->
-                    <div style="display: flex; gap: 5px; justify-content: center;">
-                        <input type="number" name="home_yellowCards" class="form-input" placeholder="Y"
-                            style="border-color: #fbbf24; text-align: center; padding: 5px;">
-                        <input type="number" name="home_redCards" class="form-input" placeholder="R"
-                            style="border-color: #f87171; text-align: center; padding: 5px;">
-                    </div>
-                    <div style="text-align: center; font-size: 0.9rem;">Cards</div>
-                    <div style="display: flex; gap: 5px; justify-content: center;">
-                        <input type="number" name="away_yellowCards" class="form-input" placeholder="Y"
-                            style="border-color: #fbbf24; text-align: center; padding: 5px;">
-                        <input type="number" name="away_redCards" class="form-input" placeholder="R"
-                            style="border-color: #f87171; text-align: center; padding: 5px;">
-                    </div>
+            <!-- Status toggle (Fixture / Result) -->
+            <div style="padding:16px 24px 0; flex-shrink:0; border-bottom:1px solid #f1f5f9;">
+                <div style="display:flex; gap:10px; margin-bottom:16px;">
+                    <button id="amToggleFixture" onclick="setAddMatchMode('fixture')" class="am-mode-btn active" style="flex:1; padding:12px; border-radius:10px; border:2px solid var(--blue-accent); background:rgba(37,99,235,0.07); font-weight:700; font-size:0.9rem; color:var(--blue-accent); cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i class="far fa-calendar-alt"></i> Fixture
+                    </button>
+                    <button id="amToggleResult" onclick="setAddMatchMode('result')" class="am-mode-btn" style="flex:1; padding:12px; border-radius:10px; border:2px solid #e2e8f0; background:#f8fafc; font-weight:700; font-size:0.9rem; color:#64748b; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i class="fas fa-trophy"></i> Result
+                    </button>
                 </div>
 
-                <div class="form-section-title">Post-Match Report</div>
-                <div class="form-group">
-                    <label class="form-label">Match Report File</label>
-                    <div class="file-dropzone-simple" id="matchReportDropzone"
-                        style="border: 2px dashed #cbd5e1; padding: 24px; text-align: center; border-radius: 12px; cursor: pointer; background: #f8fafc; transition: all 0.2s;"
-                        onmouseover="this.style.borderColor='var(--primary)'; this.style.background='#e6f2f0';"
-                        onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
-                        onclick="document.getElementById('matchReportFile').click()">
-                        <div
-                            style="width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; box-shadow: var(--shadow-sm);">
-                            <i class="fas fa-file-alt" style="font-size: 18px; color: var(--primary);"></i>
-                        </div>
-                        <p style="margin: 0; color: var(--text-dark); font-weight: 600; font-size: 0.9rem;">Click to
-                            upload PDF or Doc</p>
-                        <input type="file" id="matchReportFile" accept=".pdf,.doc,.docx" style="display: none;"
-                            onchange="this.parentElement.querySelector('p').textContent = this.files[0].name; this.parentElement.style.borderColor='var(--success)'; this.parentElement.style.background='#ecfdf5';">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Report Link (URL)</label>
-                    <input type="url" id="matchReportLink" class="form-input"
-                        placeholder="https://docs.google.com/..." />
-                </div>
-                <div class="form-section-title">Match Insights</div>
-                <div class="form-group">
-                    <label class="form-label" style="display: flex; justify-content: space-between;">
-                        Key Takeaways
-                        <span style="font-weight: 400; font-size: 0.75rem; color: var(--text-light);">Summary of match
-                            performance</span>
-                    </label>
-                    <textarea id="matchTakeaways" class="form-textarea"
-                        placeholder="Enter key tactical insights or performance notes..."
-                        style="width: 100%; min-height: 120px; padding: 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
+                <!-- Result-mode tab bar -->
+                <div id="amResultTabs" style="display:none; gap:4px; overflow-x:auto; scrollbar-width:none;">
+                    <button class="am-tab-btn active" data-tab="am-details" onclick="switchAmTab('am-details')"><i class="fas fa-id-card"></i> Details</button>
+                    <button class="am-tab-btn" data-tab="am-lineup" onclick="switchAmTab('am-lineup')"><i class="fas fa-users"></i> Lineup</button>
+                    <button class="am-tab-btn" data-tab="am-stats" onclick="switchAmTab('am-stats')"><i class="fas fa-chart-bar"></i> Stats</button>
+                    <button class="am-tab-btn" data-tab="am-report" onclick="switchAmTab('am-report')"><i class="fas fa-file-alt"></i> Report</button>
                 </div>
             </div>
 
-            <!-- Tab Content: Analysis -->
-            <div id="tab-analysis" class="tab-content" style="padding: 0 30px;">
-                <div class="form-group">
-                    <label class="form-label">Upload Match Video</label>
-                    <div class="file-dropzone-simple" id="matchVideoDropzone"
-                        style="border: 2px dashed #cbd5e1; padding: 32px; text-align: center; border-radius: 12px; cursor: pointer; background: #f8fafc; transition: all 0.2s;"
-                        onmouseover="this.style.borderColor='var(--primary)'; this.style.background='#e6f2f0';"
-                        onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
-                        onclick="document.getElementById('matchVideoFile').click()">
-                        <div
-                            style="width: 48px; height: 48px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; box-shadow: var(--shadow-sm);">
-                            <i class="fas fa-video" style="font-size: 20px; color: var(--primary);"></i>
+            <!-- Scrollable body -->
+            <div style="flex:1; overflow-y:auto; padding:20px 24px;">
+
+                <!-- ── DETAILS (shared Fixture + Result) ── -->
+                <div id="am-details" class="am-tab-content" style="display:block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="stat-box">
+                            <span class="label">Squad (Your Team)</span>
+                            <select id="amSquadId" class="form-control-bubble" style="height:auto; padding:8px 10px;" onchange="_updateAmCompetitionList && _updateAmCompetitionList()"></select>
                         </div>
-                        <p style="margin: 0; color: var(--text-dark); font-weight: 600; font-size: 0.95rem;">Click to
-                            upload Video File (MP4, MOV)</p>
-                        <p style="margin: 4px 0 0 0; color: var(--text-light); font-size: 0.8rem;">Maximum file size:
-                            500MB</p>
-                        <input type="file" id="matchVideoFile" accept="video/*" style="display: none;"
-                            onchange="this.parentElement.querySelector('p').textContent = this.files[0].name; this.parentElement.style.borderColor='var(--success)'; this.parentElement.style.background='#ecfdf5';">
+                        <div class="stat-box">
+                            <span class="label">Match Format</span>
+                            <select id="amFormat" class="form-control-bubble" style="height:auto; padding:8px 10px;">
+                                <option value="11-a-side">11-a-side</option>
+                                <option value="9-a-side">9-a-side</option>
+                                <option value="7-a-side">7-a-side</option>
+                                <option value="6-a-side">6-a-side</option>
+                                <option value="5-a-side">5-a-side</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="stat-box">
+                            <span class="label">Home / Away</span>
+                            <select id="amOurSide" class="form-control-bubble" style="height:auto; padding:8px 10px;">
+                                <option value="home">Home</option>
+                                <option value="away">Away</option>
+                            </select>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Opponent</span>
+                            <input type="text" id="amOpponent" class="form-control-bubble" placeholder="e.g. Mamelodi All Stars" style="padding:8px 10px;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="stat-box">
+                            <span class="label">Date</span>
+                            <input type="date" id="amDate" class="form-control-bubble" style="padding:8px 10px;">
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Kickoff Time</span>
+                            <input type="time" id="amTime" class="form-control-bubble" style="padding:8px 10px;">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="stat-box">
+                            <span class="label">Venue</span>
+                            <input type="text" id="amVenue" class="form-control-bubble" placeholder="e.g. Tuks Stadium" style="padding:8px 10px;">
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Competition</span>
+                            <input type="text" id="amCompetition" class="form-control-bubble" list="amCompetitionList" placeholder="Select or type..." style="padding:8px 10px;" autocomplete="off">
+                            <datalist id="amCompetitionList"></datalist>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="stat-box">
+                            <span class="label">Season</span>
+                            <select id="amSeasonId" class="form-control-bubble" style="height:auto; padding:8px 10px;"><option value="">Loading...</option></select>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Match Type</span>
+                            <select id="amMatchType" class="form-control-bubble" style="height:auto; padding:8px 10px;">
+                                <option value="team">Team Match</option>
+                                <option value="player_watch">Player Watch</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Score (Result mode only) -->
+                    <div id="amScoreRow" style="display:none; margin-bottom:16px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px;">
+                            <p style="margin:0 0 12px 0; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b;">Final Score</p>
+                            <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+                                <div class="stat-box" style="flex:1; min-width:80px;">
+                                    <span class="label" id="amHomeLabel">Home (Us)</span>
+                                    <input type="number" id="amHomeScore" class="form-control-bubble" value="0" min="0" style="padding:8px 10px; text-align:center; font-size:1.2rem; font-weight:700;">
+                                </div>
+                                <span style="font-size:1.5rem; font-weight:800; color:#94a3b8; margin-top:16px;">—</span>
+                                <div class="stat-box" style="flex:1; min-width:80px;">
+                                    <span class="label" id="amAwayLabel">Away (Them)</span>
+                                    <input type="number" id="amAwayScore" class="form-control-bubble" value="0" min="0" style="padding:8px 10px; text-align:center; font-size:1.2rem; font-weight:700;">
+                                </div>
+                                <div id="amResultPreview" style="margin-top:16px; padding:6px 14px; border-radius:8px; font-weight:700; font-size:0.85rem; background:#f1f5f9; color:#64748b;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-grid-2" style="gap: 16px;">
-                    <div class="form-group">
-                        <label class="form-label">Or Paste Video Link</label>
-                        <div style="position: relative;">
-                            <i class="fab fa-youtube"
-                                style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #ef4444;"></i>
-                            <input type="url" id="matchVideoLink" class="form-input" style="padding-left: 38px;"
-                                placeholder="https://youtube.com/..." />
+                <!-- ── LINEUP ── -->
+                <div id="am-lineup" class="am-tab-content" style="display:none;">
+                    <p style="font-size:0.82rem; color:#64748b; margin:0 0 16px 0;">Select starters and substitutes from your squad. The coach decides how many to include — no fixed count.</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div class="stat-box">
+                            <span class="label">Formation (optional)</span>
+                            <select id="amFormation" class="form-control-bubble" style="height:auto; padding:8px 10px;">
+                                <option value="">No Formation</option>
+                                <optgroup label="11-a-side">
+                                    <option value="4-4-2">4-4-2</option>
+                                    <option value="4-3-3">4-3-3</option>
+                                    <option value="4-2-3-1">4-2-3-1</option>
+                                    <option value="3-5-2">3-5-2</option>
+                                    <option value="5-3-2">5-3-2</option>
+                                    <option value="4-5-1">4-5-1</option>
+                                    <option value="3-4-3">3-4-3</option>
+                                </optgroup>
+                                <optgroup label="9-a-side">
+                                    <option value="3-3-2">3-3-2</option>
+                                    <option value="3-2-3">3-2-3</option>
+                                    <option value="2-4-2">2-4-2</option>
+                                </optgroup>
+                                <optgroup label="7-a-side">
+                                    <option value="2-3-1">2-3-1</option>
+                                    <option value="3-2-1">3-2-1</option>
+                                    <option value="2-1-2-1">2-1-2-1</option>
+                                </optgroup>
+                                <optgroup label="6-a-side">
+                                    <option value="1-2-2">1-2-2</option>
+                                    <option value="2-2-1">2-2-1</option>
+                                </optgroup>
+                                <optgroup label="5-a-side">
+                                    <option value="1-2-1">1-2-1</option>
+                                    <option value="2-1-1">2-1-1</option>
+                                </optgroup>
+                            </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Highlights (URL)</label>
-                        <div style="position: relative;">
-                            <i class="fas fa-star"
-                                style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--warning);"></i>
-                            <input type="url" id="matchHighlightsLink" class="form-input" style="padding-left: 38px;"
-                                placeholder="https://..." />
+                    <!-- Starters -->
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#475569;">Starting XI</span>
+                            <button type="button" onclick="addLineupRow('am-starters-list','starter')" class="dash-btn outline sm" style="font-size:0.75rem; padding:4px 10px;"><i class="fas fa-plus"></i> Add Player</button>
+                        </div>
+                        <div id="am-starters-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    </div>
+                    <!-- Subs -->
+                    <div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#475569;">Substitutes</span>
+                            <button type="button" onclick="addLineupRow('am-subs-list','sub')" class="dash-btn outline sm" style="font-size:0.75rem; padding:4px 10px;"><i class="fas fa-plus"></i> Add Sub</button>
+                        </div>
+                        <div id="am-subs-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    </div>
+                </div>
+
+                <!-- ── STATS ── -->
+                <div id="am-stats" class="am-tab-content" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <div>
+                            <p style="margin:0; font-size:0.82rem; color:#64748b;">Log key match events. These will track to player stats.</p>
+                        </div>
+                        <button type="button" onclick="openAddEventModal()" class="dash-btn primary sm"><i class="fas fa-plus"></i> Add Event</button>
+                    </div>
+                    <!-- Live score display -->
+                    <div id="amLiveScore" style="text-align:center; font-size:2rem; font-weight:800; color:var(--navy-dark); margin-bottom:16px; display:none;"></div>
+                    <!-- Events feed -->
+                    <div id="amEventsFeed" style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="text-align:center; padding:32px; color:#94a3b8; font-size:0.85rem;">
+                            <i class="fas fa-bolt" style="font-size:1.5rem; display:block; margin-bottom:8px; opacity:0.4;"></i>
+                            No events yet — click Add Event to log goals, cards, subs
                         </div>
                     </div>
+                </div>
+
+                <!-- ── REPORT ── -->
+                <div id="am-report" class="am-tab-content" style="display:none;">
+                    <p style="font-size:0.82rem; color:#64748b; margin:0 0 16px 0;">Quick summary — these fields pre-fill the full match report.</p>
+                    <div class="stat-box" style="margin-bottom:14px;">
+                        <span class="label">Report Title</span>
+                        <input type="text" id="amReportTitle" class="form-control-bubble" placeholder="e.g. Win vs Mamelodi — strong defensive display" style="padding:8px 10px;">
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">General Comments</span>
+                        <textarea id="amReportGeneral" class="form-control-bubble" rows="5" placeholder="Overall match notes, key moments, areas to improve..." style="padding:8px 10px; resize:vertical; min-height:120px;"></textarea>
+                    </div>
+                </div>
+
+            </div><!-- end scrollable body -->
+
+            <!-- Modal Footer -->
+            <div class="modal-footer" style="flex-shrink:0; padding:16px 24px; border-top:1px solid #f1f5f9;">
+                <button type="button" class="dash-btn outline" onclick="closeAddMatchModal()">Cancel</button>
+                <button type="button" id="amSaveBtn" class="dash-btn primary" onclick="handleSaveMatch()"><i class="fas fa-save"></i> Save Match</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Event Modal (What Happened?) -->
+    <div id="addEventModal" class="modal-overlay" style="display:none;">
+        <div class="modal-container" style="max-width:460px;">
+            <div class="modal-header">
+                <h2 style="font-size:1rem; font-weight:700; margin:0;">What Happened?</h2>
+                <button class="btn-close-modal" onclick="closeAddEventModal()">&times;</button>
+            </div>
+            <div style="padding:20px 24px;">
+                <!-- Event type grid -->
+                <div id="eventTypeGrid" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;">
+                    <button class="event-type-btn" data-type="goal" onclick="selectEventType('goal')"><i class="fas fa-futbol"></i><span>Goal</span></button>
+                    <button class="event-type-btn" data-type="own_goal" onclick="selectEventType('own_goal')"><i class="fas fa-futbol" style="opacity:0.5;"></i><span>Own Goal</span></button>
+                    <button class="event-type-btn" data-type="yellow_card" onclick="selectEventType('yellow_card')"><i class="fas fa-square" style="color:#fbbf24;"></i><span>Yellow Card</span></button>
+                    <button class="event-type-btn" data-type="red_card" onclick="selectEventType('red_card')"><i class="fas fa-square" style="color:#ef4444;"></i><span>Red Card</span></button>
+                    <button class="event-type-btn" data-type="substitution" onclick="selectEventType('substitution')"><i class="fas fa-exchange-alt"></i><span>Substitution</span></button>
+                    <button class="event-type-btn" data-type="penalty_saved" onclick="selectEventType('penalty_saved')"><i class="fas fa-hand-paper"></i><span>Pen Saved</span></button>
+                    <button class="event-type-btn" data-type="missed_penalty" onclick="selectEventType('missed_penalty')"><i class="fas fa-times-circle"></i><span>Missed Pen</span></button>
+                    <button class="event-type-btn" data-type="injury" onclick="selectEventType('injury')"><i class="fas fa-user-injured"></i><span>Injury</span></button>
+                </div>
+                <!-- Event detail form (shown after type selected) -->
+                <div id="eventDetailForm" style="display:none;">
+                    <hr style="border:none; border-top:1px solid #f1f5f9; margin:0 0 16px 0;">
+                    <div style="display:grid; grid-template-columns:1fr 80px; gap:12px; margin-bottom:12px;">
+                        <div class="stat-box">
+                            <span class="label" id="eventPlayerLabel">Player</span>
+                            <select id="eventPlayer" class="form-control-bubble" style="height:auto; padding:8px 10px;"></select>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Minute</span>
+                            <input type="number" id="eventMinute" class="form-control-bubble" min="1" max="120" placeholder="45" style="padding:8px 10px;">
+                        </div>
+                    </div>
+                    <div class="stat-box" id="eventAssistRow" style="display:none; margin-bottom:12px;">
+                        <span class="label">Assist (optional)</span>
+                        <select id="eventAssist" class="form-control-bubble" style="height:auto; padding:8px 10px;"><option value="">No assist</option></select>
+                    </div>
+                    <div class="stat-box" id="eventSubOffRow" style="display:none; margin-bottom:12px;">
+                        <span class="label">Player Off</span>
+                        <select id="eventSubOff" class="form-control-bubble" style="height:auto; padding:8px 10px;"></select>
+                    </div>
+                    <button type="button" class="dash-btn primary" style="width:100%;" onclick="confirmAddEvent()"><i class="fas fa-check"></i> Add Event</button>
                 </div>
             </div>
         </div>
@@ -631,16 +625,23 @@
         import { initPage } from '../page-init.js';
         import { initMatchUI } from '../js/match-ui.js';
         import { upgradeTimePickers } from '../time-picker.js';
+        import { hasFeature, showUpgradeToast } from '../tier.js';
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await initPage('matches', { match: true });
             if (!user) return;
             upgradeTimePickers();
 
-            // Show Match Planning tab only for clubs with match_planning enabled
-            const features = window._profile?.clubs?.settings?.features;
-            if (features?.match_planning !== false) {
-                const planTab = document.querySelector('.matches-tab-btn[data-tab="planning"]');
-                if (planTab) planTab.style.display = '';
+            // Show Match Planning tab only for clubs on Pro+
+            const planTab = document.querySelector('.matches-tab-btn[data-tab="planning"]');
+            if (planTab) {
+                if (hasFeature('match_planning')) {
+                    planTab.style.display = '';
+                } else {
+                    planTab.style.display = '';
+                    planTab.style.opacity = '0.5';
+                    planTab.title = 'Pro feature — upgrade to unlock';
+                    planTab.addEventListener('click', e => { e.stopPropagation(); e.preventDefault(); showUpgradeToast('pro', 'Match Planning'); }, { capture: true });
+                }
             }
 
             initMatchUI();

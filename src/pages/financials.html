@@ -299,10 +299,16 @@
     <script type="module">
         import { initPage, squadManager } from '../page-init.js';
         import { initFinancialsUI } from '../js/financials-ui.js';
+        import { hasFeature, renderUpgradeCard } from '../tier.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await initPage('financials', { squad: false, match: false });
             if (!user) return;
+            if (!hasFeature('financials')) {
+                const mc = document.querySelector('.main-content');
+                if (mc) renderUpgradeCard(mc, { label: 'Financials', description: 'Invoice management, payment tracking, and financial reporting for your club. Available on Elite plan.', requiredTier: 'elite' });
+                return;
+            }
 
             // Guard: admin + private_coaching only
             const profile = window._profile;

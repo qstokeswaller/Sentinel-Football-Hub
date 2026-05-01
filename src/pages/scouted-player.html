@@ -186,7 +186,7 @@
             .sp-content { grid-template-columns: 1fr; }
             .sp-global-avg { position: static; margin: 12px auto 0; }
             .sp-header-actions { position: static; justify-content: center; margin-top: 12px; }
-            .sp-status-bar { justify-content: center; padding: 12px; gap: 6px; }
+            .sp-status-bar { justify-content: center; padding: 12px; gap: 6px; flex-wrap: wrap; }
             .sp-status-btn { padding: 5px 12px; font-size: 0.75rem; }
             .sp-radar-card, .sp-panel { padding: 16px; }
             .radar-svg { max-width: 100%; }
@@ -195,6 +195,21 @@
             .modal-container { margin: 8px; max-width: calc(100vw - 16px) !important; }
             .bubble-grid-2 { grid-template-columns: 1fr !important; }
             .rating-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+            /* Tabs scrollable so they never wrap or overflow */
+            .sp-tabs { overflow-x: auto; display: flex; padding-bottom: 3px; scrollbar-width: none; width: 100%; }
+            .sp-tabs::-webkit-scrollbar { display: none; }
+            .sp-tab { flex-shrink: 0; }
+        }
+
+        @media (max-width: 480px) {
+            .sp-info h1 { font-size: 1.1rem; }
+            .sp-avatar { width: 64px; height: 64px; font-size: 1.4rem; }
+            .sp-global-avg { width: 46px; height: 46px; font-size: 0.95rem; border-width: 2px; }
+            .sp-status-btn { padding: 5px 10px; font-size: 0.72rem; }
+            .sp-tab { padding: 6px 12px; font-size: 0.78rem; }
+            .report-card-top { flex-direction: column; gap: 4px; }
+            .sp-actions { gap: 8px; }
+            .sp-actions .dash-btn { flex: 1; justify-content: center; min-width: 0; font-size: 0.8rem; }
         }
     </style>
 </head>
@@ -495,6 +510,7 @@
     <script type="module">
         import { initSidebar } from '../sidebar.js';
         import { requireAuth, getProfile } from '../auth.js';
+        import '../analytics.js';
         import { initScoutedPlayerUI } from '../js/scouted-player-ui.js';
 
         document.addEventListener('DOMContentLoaded', async () => {

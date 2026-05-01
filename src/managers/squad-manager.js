@@ -46,6 +46,11 @@ class SquadManager {
                 ageGroup: s.age_group,
                 leagues: s.leagues || [],
                 coaches: s.coaches || [],
+                currentSeasonId: s.current_season_id || null,
+                leagueTableUrl: s.league_table_url || null,
+                notes: s.notes || '',
+                media: s.media || [],
+                share_token: s.share_token || null,
                 createdAt: s.created_at
             }));
 
@@ -79,6 +84,9 @@ class SquadManager {
             newToClub: p.new_to_club || false,
             nationality: p.nationality || '',
             joinDate: p.join_date || '',
+            yearJoined: p.year_joined || '',
+            phone: p.phone || '',
+            email: p.email || '',
             emergencyContactName: p.emergency_contact_name || '',
             emergencyContactPhone: p.emergency_contact_phone || '',
             parentName: p.parent_name || '',
@@ -89,7 +97,9 @@ class SquadManager {
             documents: p.documents || [],
             highlights: p.highlights || [],
             analysisVideos: p.analysis_videos || [],
+            galleryPhotos: p.gallery_photos || [],
             profileImageUrl: p.profile_image_url || '',
+            playerStatus: p.player_status || 'active',
             createdAt: p.created_at
         };
     }
@@ -100,7 +110,8 @@ class SquadManager {
             name: data.name,
             age_group: data.ageGroup || 'General',
             leagues: data.leagues || [],
-            coaches: data.coaches || []
+            coaches: data.coaches || [],
+            league_table_url: data.leagueTableUrl || null,
         };
 
         const { data: inserted, error } = await supabase
@@ -117,10 +128,33 @@ class SquadManager {
             ageGroup: inserted.age_group,
             leagues: inserted.leagues || [],
             coaches: inserted.coaches || [],
+            currentSeasonId: inserted.current_season_id || null,
+            leagueTableUrl: inserted.league_table_url || null,
+            notes: inserted.notes || '',
+            media: inserted.media || [],
+            share_token: inserted.share_token || null,
             createdAt: inserted.created_at
         };
         this.squads.push(mapped);
         return inserted.id;
+    }
+
+    async updateSquad(id, data) {
+        const row = {};
+        if (data.name !== undefined) row.name = data.name;
+        if (data.ageGroup !== undefined) row.age_group = data.ageGroup;
+        if (data.leagues !== undefined) row.leagues = data.leagues;
+        if (data.coaches !== undefined) row.coaches = data.coaches;
+        if (data.leagueTableUrl !== undefined) row.league_table_url = data.leagueTableUrl || null;
+        if (data.notes !== undefined) row.notes = data.notes || null;
+        if (data.media !== undefined) row.media = data.media;
+
+        const { error } = await supabase.from('squads').update(row).eq('id', id);
+        if (error) throw error;
+
+        const index = this.squads.findIndex(s => s.id === id);
+        if (index !== -1) this.squads[index] = { ...this.squads[index], ...data };
+        return true;
     }
 
     async addPlayer(data) {
@@ -141,6 +175,8 @@ class SquadManager {
             new_to_club: data.newToClub || false,
             nationality: data.nationality || null,
             join_date: data.joinDate || null,
+            phone: data.phone || null,
+            email: data.email || null,
             emergency_contact_name: data.emergencyContactName || null,
             emergency_contact_phone: data.emergencyContactPhone || null,
             parent_name: data.parentName || null,
@@ -218,11 +254,15 @@ class SquadManager {
         if (data.documents !== undefined) row.documents = data.documents;
         if (data.highlights !== undefined) row.highlights = data.highlights;
         if (data.analysisVideos !== undefined) row.analysis_videos = data.analysisVideos;
+        if (data.galleryPhotos !== undefined) row.gallery_photos = data.galleryPhotos;
         if (data.profileImageUrl !== undefined) row.profile_image_url = data.profileImageUrl;
         if (data.dateOfBirth !== undefined) row.date_of_birth = data.dateOfBirth || null;
         if (data.jerseyNumber !== undefined) row.jersey_number = data.jerseyNumber;
         if (data.nationality !== undefined) row.nationality = data.nationality;
         if (data.joinDate !== undefined) row.join_date = data.joinDate || null;
+        if (data.yearJoined !== undefined) row.year_joined = data.yearJoined || null;
+        if (data.phone !== undefined) row.phone = data.phone;
+        if (data.email !== undefined) row.email = data.email;
         if (data.emergencyContactName !== undefined) row.emergency_contact_name = data.emergencyContactName;
         if (data.emergencyContactPhone !== undefined) row.emergency_contact_phone = data.emergencyContactPhone;
         if (data.parentName !== undefined) row.parent_name = data.parentName;
@@ -247,8 +287,18 @@ class SquadManager {
         return true;
     }
 
+    async updatePlayerStatus(playerId, status) {
+        const { error } = await supabase
+            .from('players')
+            .update({ player_status: status })
+            .eq('id', playerId);
+        if (error) { console.error('Error updating player status:', error); return false; }
+        const player = this.players.find(p => String(p.id) === String(playerId));
+        if (player) player.playerStatus = status;
+        return true;
+    }
+
     async deletePlayer(id) {
-        if (!confirm('Are you sure you want to delete this player? You can recover it from Settings > Recently Deleted within 7 days.')) return false;
 
         // Save snapshot for recovery before deleting
         const player = this.players.find(p => String(p.id) === String(id));
@@ -274,7 +324,6 @@ class SquadManager {
     }
 
     async deleteSquad(id) {
-        if (!confirm('Are you sure you want to delete this squad? You can recover it from Settings > Recently Deleted within 7 days.')) return false;
 
         // Save snapshot for recovery before deleting
         const squad = this.squads.find(s => s.id === id);

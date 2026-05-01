@@ -5,10 +5,12 @@
 import { requireAuth, getProfile, logout, getImpersonatingClubId, stopImpersonation } from './auth.js';
 import { initSidebar } from './sidebar.js';
 import './toast.js';
+import './analytics.js';
 import supabase from './supabase.js';
 import squadManager from './managers/squad-manager.js';
 import matchManager from './managers/match-manager.js';
 import { applyPermissionGuards, canEdit, canManage, isSuperAdmin, isViewer, isPlatformAdmin } from './rbac.js';
+import { applyTierGates } from './tier.js';
 
 // Expose globally for UI scripts
 window.supabase = supabase;
@@ -43,6 +45,8 @@ export async function initPage(pageName, opts = {}) {
         window._isSuperAdmin = isSuperAdmin(profile);
         window._isPlatformAdmin = isPlatformAdmin(profile);
         window._isViewer = isViewer(profile);
+        // Apply tier feature gates (locks tabs/sections for lower tiers)
+        applyTierGates();
     }
 
     // Now run managers + coach squad query ALL in parallel
@@ -72,7 +76,9 @@ export async function initPage(pageName, opts = {}) {
 
     // Auto-trigger walkthrough on first visit or if ?walkthrough=1 in URL
     try {
-        const { autoWalkthrough, startWalkthrough } = await import('./js/walkthrough.js');
+        const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('./js/walkthrough.js');
+        // Pass user object so initWalkthroughs skips a redundant getUser() network call
+        await initWalkthroughs(user?.id, supabase, user);
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('walkthrough') === '1') {
             startWalkthrough(pageName, true);

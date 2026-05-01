@@ -1,15 +1,1695 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sentinel Football Hub</title>
-    <script type="module">
-        // Root redirect — send to login (auth guard will forward to dashboard if logged in)
-        window.location.href = '/src/pages/login.html';
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel Football Hub — Club Management & Player Analysis</title>
+  <meta name="description" content="Sentinel Football Hub: purpose-built club management software for football clubs, and professional player analysis services for individual players. Built in South Africa.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ── Tokens ─────────────────────────────────────────────── */
+    :root {
+      --bg:          #080B0F;
+      --surface:     #0f172a;
+      --surface-2:   #1e293b;
+      --border:      rgba(255,255,255,0.07);
+      --border-2:    rgba(255,255,255,0.12);
+      --accent:      #00C49A;
+      --accent-dim:  rgba(0,196,154,0.12);
+      --accent-glow: rgba(0,196,154,0.25);
+      --amber:       #f59e0b;
+      --amber-dim:   rgba(245,158,11,0.12);
+      --text:        #f8fafc;
+      --text-2:      #94a3b8;
+      --text-3:      #475569;
+      --radius:      14px;
+      --radius-sm:   8px;
+      --max-w:       1160px;
+    }
+
+    /* ── Reset ──────────────────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+    img { display: block; max-width: 100%; }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    section { padding: 96px 0; scroll-margin-top: 64px; }
+
+    .section-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(0,196,154,0.2);
+      padding: 5px 12px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+    .section-label.amber {
+      color: var(--amber);
+      background: var(--amber-dim);
+      border-color: rgba(245,158,11,0.2);
+    }
+    .section-heading {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 17px;
+      color: var(--text-2);
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    /* ── Scroll reveal ──────────────────────────────────────── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    .stagger-1 { transition-delay: 0ms; }
+    .stagger-2 { transition-delay: 70ms; }
+    .stagger-3 { transition-delay: 140ms; }
+    .stagger-4 { transition-delay: 210ms; }
+    .stagger-5 { transition-delay: 280ms; }
+    .stagger-6 { transition-delay: 350ms; }
+    .stagger-7 { transition-delay: 420ms; }
+    .stagger-8 { transition-delay: 490ms; }
+
+    /* ── Nav ────────────────────────────────────────────────── */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(8,11,15,0.8);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s ease;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .nav-logo-icon {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #000;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-2);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links .divider {
+      width: 1px; height: 16px;
+      background: var(--border-2);
+    }
+    .nav-cta { display: flex; align-items: center; gap: 12px; }
+    .btn-ghost {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-2);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2);
+      background: transparent;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--text-2); }
+    .btn-primary {
+      font-size: 14px; font-weight: 600;
+      color: #000; background: var(--accent);
+      padding: 9px 20px;
+      border-radius: var(--radius-sm);
+      border: none; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: inline-flex; align-items: center; gap: 7px;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .nav-hamburger {
+      display: none;
+      background: none; border: none;
+      color: var(--text-2); font-size: 20px; cursor: pointer;
+    }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    .hero {
+      min-height: 100dvh;
+      display: flex; align-items: center;
+      position: relative; overflow: hidden;
+      padding-top: 64px;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(-45deg, #080B0F, #0a1628, #001f18, #060d1a, #001a14);
+      background-size: 400% 400%;
+      animation: meshShift 18s ease infinite;
+      z-index: 0;
+    }
+    @keyframes meshShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .hero-glow {
+      position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 420px;
+      background: radial-gradient(ellipse, rgba(0,196,154,0.10) 0%, transparent 70%);
+      z-index: 1; pointer-events: none;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 64px 64px;
+      z-index: 1;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 100%);
+    }
+    .hero .container {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center;
+      padding-top: 48px; padding-bottom: 80px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 500;
+      color: var(--accent);
+      background: rgba(0,196,154,0.08);
+      border: 1px solid rgba(0,196,154,0.18);
+      padding: 6px 14px; border-radius: 100px;
+      margin-bottom: 32px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: dotPulse 2s ease infinite;
+    }
+    @keyframes dotPulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: clamp(38px, 6vw, 72px);
+      font-weight: 900; line-height: 1.08;
+      letter-spacing: -0.03em;
+      max-width: 900px; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .hero h1 .accent { color: var(--accent); }
+    .hero-sub {
+      font-size: clamp(20px, 3vw, 38px);
+      font-weight: 700; line-height: 1.2;
+      letter-spacing: -0.02em;
+      color: var(--text-2); margin-bottom: 28px;
+    }
+    .hero-body {
+      font-size: 18px; color: var(--text-2);
+      max-width: 620px; line-height: 1.75;
+      margin-bottom: 44px;
+    }
+    .hero-actions {
+      display: flex; align-items: center; gap: 14px;
+      flex-wrap: wrap; justify-content: center;
+      margin-bottom: 56px;
+    }
+    .btn-hero-primary {
+      font-size: 15px; font-weight: 600;
+      color: #000; background: var(--accent);
+      padding: 14px 28px; border-radius: var(--radius-sm);
+      border: none; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-hero-primary:hover {
+      opacity: 0.9; transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+    .btn-hero-secondary {
+      font-size: 15px; font-weight: 500;
+      color: var(--text-2); background: transparent;
+      padding: 14px 24px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border-2); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: color 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .btn-hero-secondary:hover { color: var(--text); border-color: var(--text-2); transform: translateY(-2px); }
+
+    /* Hero dual offering cards */
+    .hero-offerings {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 16px; width: 100%; max-width: 760px;
+    }
+    .hero-offering {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: left;
+      transition: border-color 0.2s;
+    }
+    .hero-offering:hover { border-color: rgba(0,196,154,0.3); }
+    .hero-offering-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 14px;
+    }
+    .hero-offering-icon.green { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,196,154,0.2); }
+    .hero-offering-icon.amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+    .hero-offering h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .hero-offering p { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 12px; }
+    .hero-offering-link {
+      font-size: 12px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .hero-offering-link.green { color: var(--accent); }
+    .hero-offering-link.amber { color: var(--amber); }
+
+    /* ── Section divider ────────────────────────────────────── */
+    .section-divider {
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-2) 30%, var(--border-2) 70%, transparent);
+    }
+
+    /* ── Problem ────────────────────────────────────────────── */
+    .problem { background: var(--bg); }
+    .problem-intro { margin-bottom: 56px; }
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    }
+    .problem-card { background: var(--surface); padding: 36px 28px; transition: background 0.2s; }
+    .problem-card:hover { background: var(--surface-2); }
+    .problem-icon {
+      width: 44px; height: 44px; border-radius: var(--radius-sm);
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      display: flex; align-items: center; justify-content: center;
+      color: #f87171; font-size: 18px; margin-bottom: 20px;
+    }
+    .problem-card h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+    .problem-card p { font-size: 14px; color: var(--text-2); line-height: 1.65; }
+
+    /* ── Features ───────────────────────────────────────────── */
+    .features { background: var(--surface); }
+    .features-header {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: end; margin-bottom: 56px;
+    }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { border-color: rgba(0,196,154,0.3); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+    .feature-card.wide { grid-column: span 2; }
+    .feature-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      background: var(--accent-dim); border: 1px solid rgba(0,196,154,0.18);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); font-size: 16px; margin-bottom: 18px;
+    }
+    .feature-card h3 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .feature-card p { font-size: 13px; color: var(--text-2); line-height: 1.65; }
+    .feature-tag {
+      display: inline-block; margin-top: 14px;
+      font-size: 11px; font-weight: 500; color: var(--accent);
+      background: var(--accent-dim); padding: 3px 10px; border-radius: 100px;
+    }
+
+    /* ── Club Pricing ───────────────────────────────────────── */
+    .club-pricing { background: var(--bg); }
+    .club-pricing-header { margin-bottom: 56px; }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    }
+    .tier-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      position: relative;
+      display: flex; flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .tier-card:hover { border-color: var(--border-2); transform: translateY(-2px); }
+    .tier-card.featured {
+      border-color: rgba(0,196,154,0.35);
+      background: linear-gradient(160deg, rgba(0,196,154,0.04) 0%, var(--surface) 60%);
+    }
+    .tier-card.featured::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .tier-popular {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #000;
+      background: var(--accent); padding: 3px 12px; border-radius: 100px;
+      white-space: nowrap;
+    }
+    .tier-name {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-3); margin-bottom: 16px;
+    }
+    .tier-price {
+      display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px;
+    }
+    .tier-currency { font-size: 18px; font-weight: 600; color: var(--text-2); }
+    .tier-amount {
+      font-size: 40px; font-weight: 800; letter-spacing: -0.03em;
+      color: var(--text); font-variant-numeric: tabular-nums; line-height: 1;
+    }
+    .tier-period { font-size: 13px; color: var(--text-3); margin-bottom: 12px; }
+    .tier-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .tier-features { list-style: none; display: flex; flex-direction: column; gap: 10px; flex: 1; margin-bottom: 28px; }
+    .tier-features li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; color: var(--text-2); line-height: 1.5;
+    }
+    .tier-features li i { color: var(--accent); font-size: 11px; margin-top: 3px; flex-shrink: 0; }
+    .tier-features li.locked { color: var(--text-3); }
+    .tier-features li.locked i { color: var(--text-3); }
+    .tier-limits {
+      background: var(--bg); border-radius: var(--radius-sm);
+      padding: 12px 14px; margin-bottom: 24px;
+      font-size: 11px; color: var(--text-3); line-height: 1.8;
+    }
+    .tier-limits strong { color: var(--text-2); }
+    .btn-tier {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px;
+      font-size: 14px; font-weight: 600;
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-tier.primary { background: var(--accent); color: #000; border: none; }
+    .btn-tier.primary:hover { opacity: 0.88; box-shadow: 0 6px 24px var(--accent-glow); }
+    .btn-tier.outline { background: transparent; color: var(--text-2); border: 1px solid var(--border-2); }
+    .btn-tier.outline:hover { color: var(--text); border-color: var(--text-2); }
+
+    /* ── Roles ──────────────────────────────────────────────── */
+    .roles { background: var(--surface); }
+    .roles-header { margin-bottom: 56px; }
+    .roles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .role-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px;
+      transition: border-color 0.2s;
+    }
+    .role-card:hover { border-color: var(--border-2); }
+    .role-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .role-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--surface-2); border: 1px solid var(--border-2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); font-size: 17px; flex-shrink: 0;
+    }
+    .role-title { font-size: 15px; font-weight: 600; color: var(--text); }
+    .role-sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .role-items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .role-items li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-2); line-height: 1.5; }
+    .role-items li i { color: var(--accent); font-size: 11px; margin-top: 4px; flex-shrink: 0; }
+
+    /* ── Player Analysis ────────────────────────────────────── */
+    .player-analysis { background: var(--bg); }
+    .pa-header { margin-bottom: 20px; }
+    .pa-intro { margin-bottom: 56px; }
+    .pa-body { font-size: 17px; color: var(--text-2); max-width: 620px; line-height: 1.75; }
+
+    .pa-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .pa-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      display: flex; flex-direction: column;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .pa-card:hover { border-color: rgba(245,158,11,0.3); transform: translateY(-2px); }
+    .pa-card.featured-pa {
+      border-color: rgba(245,158,11,0.35);
+      background: linear-gradient(160deg, rgba(245,158,11,0.04) 0%, var(--surface) 60%);
+    }
+    .pa-card.featured-pa::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--amber), transparent);
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .pa-popular {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #000;
+      background: var(--amber); padding: 3px 12px; border-radius: 100px;
+      white-space: nowrap;
+    }
+    .pa-tier-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--amber);
+      background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.2);
+      padding: 3px 10px; border-radius: 100px;
+      display: inline-block; margin-bottom: 14px;
+      width: fit-content;
+    }
+    .pa-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .pa-price {
+      display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px;
+    }
+    .pa-currency { font-size: 16px; font-weight: 600; color: var(--text-2); }
+    .pa-amount { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; color: var(--text); line-height: 1; }
+    .pa-period { font-size: 12px; color: var(--text-3); margin-bottom: 14px; }
+    .pa-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); flex-grow: 0; }
+    .pa-features { list-style: none; display: flex; flex-direction: column; gap: 9px; flex: 1; margin-bottom: 24px; }
+    .pa-features li { display: flex; align-items: flex-start; gap: 9px; font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+    .pa-features li i { color: var(--amber); font-size: 10px; margin-top: 4px; flex-shrink: 0; }
+    .btn-pa {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 12px;
+      font-size: 14px; font-weight: 600;
+      border-radius: var(--radius-sm); cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      background: var(--amber); color: #000; border: none;
+    }
+    .btn-pa:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-pa.outline { background: transparent; color: var(--text-2); border: 1px solid var(--border-2); }
+    .btn-pa.outline:hover { color: var(--text); border-color: rgba(245,158,11,0.4); }
+    .pa-note {
+      text-align: center; margin-top: 24px;
+      font-size: 13px; color: var(--text-3);
+    }
+    .pa-note strong { color: var(--text-2); }
+
+    /* ── Mission/Vision ─────────────────────────────────────── */
+    .mission { background: var(--surface); }
+    .mission-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+    }
+    .mission-block { }
+    .mission-block h3 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin-bottom: 16px; }
+    .mission-block p { font-size: 16px; color: var(--text-2); line-height: 1.8; }
+    .mission-divider { width: 40px; height: 3px; background: var(--accent); border-radius: 2px; margin-bottom: 20px; }
+
+    /* ── Comparison ─────────────────────────────────────────── */
+    .comparison { background: var(--bg); }
+    .comparison-header { margin-bottom: 48px; }
+    .comparison-table-wrap {
+      border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: var(--surface-2); border-bottom: 1px solid var(--border); }
+    th { padding: 16px 20px; text-align: left; font-size: 13px; font-weight: 600; color: var(--text-2); }
+    th.hl { color: var(--accent); background: rgba(0,196,154,0.06); }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    td { padding: 14px 20px; font-size: 13px; color: var(--text-2); }
+    td:first-child { color: var(--text); font-weight: 500; }
+    td.hl { background: rgba(0,196,154,0.04); }
+    .check { color: var(--accent); }
+    .cross { color: var(--text-3); }
+    .partial { color: var(--amber); font-size: 11px; font-weight: 500; }
+    .comparison-note { margin-top: 14px; font-size: 12px; color: var(--text-3); }
+    .comparison-scroll-hint { display: none; text-align: center; font-size: 12px; color: var(--text-3); margin-top: 10px; }
+    @media (max-width: 640px) { .comparison-scroll-hint { display: block; } }
+
+    /* ── CTA ────────────────────────────────────────────────── */
+    .cta-section {
+      background: var(--surface);
+      padding: 112px 0; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cta-glow {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(0,196,154,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 {
+      font-size: clamp(32px, 5vw, 54px); font-weight: 800;
+      line-height: 1.1; letter-spacing: -0.03em;
+      margin-bottom: 16px; position: relative; z-index: 1;
+    }
+    .cta-section h2 .accent { color: var(--accent); }
+    .cta-section > .container > p {
+      font-size: 17px; color: var(--text-2);
+      max-width: 500px; margin: 0 auto 40px;
+      line-height: 1.7; position: relative; z-index: 1;
+    }
+    .cta-actions {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; flex-wrap: wrap; position: relative; z-index: 1;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer { background: var(--bg); border-top: 1px solid var(--border); padding: 48px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
+    .footer-logo { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-2); }
+    .footer-logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #000; }
+    .footer-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .footer-links a { font-size: 13px; color: var(--text-3); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text-2); }
+    .footer-copy { font-size: 12px; color: var(--text-3); }
+
+    /* ── Mobile menu ────────────────────────────────────────── */
+    .mobile-menu {
+      display: none; position: fixed;
+      top: 64px; left: 0; right: 0;
+      background: rgba(8,11,15,0.97);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 24px; flex-direction: column; gap: 4px;
+      z-index: 99;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { font-size: 16px; font-weight: 500; color: var(--text-2); padding: 12px 0; border-bottom: 1px solid var(--border); transition: color 0.2s; }
+    .mobile-menu a:last-child { border-bottom: none; }
+    .mobile-menu a:hover { color: var(--text); }
+
+    /* ── Flip Cards ─────────────────────────────────────────── */
+    .module-cards { background: var(--bg); }
+    .module-cards-header { margin-bottom: 56px; }
+    .flip-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .flip-card {
+      perspective: 1400px;
+      cursor: pointer;
+      height: 300px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .flip-card:hover:not(.flipped) .flip-card-inner {
+      transform: rotateY(-22deg);
+    }
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-card-front,
+    .flip-card-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: var(--radius);
+      padding: 26px 24px;
+      display: flex; flex-direction: column;
+    }
+    .flip-card-front {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s;
+    }
+    .flip-card:hover .flip-card-front {
+      border-color: rgba(0,196,154,0.25);
+    }
+    .flip-card-back {
+      background: linear-gradient(145deg, rgba(0,196,154,0.07) 0%, var(--surface) 55%);
+      border: 1px solid rgba(0,196,154,0.3);
+      transform: rotateY(180deg);
+      justify-content: space-between;
+    }
+    .flip-front-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      background: var(--accent-dim); border: 1px solid rgba(0,196,154,0.18);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent); font-size: 16px; margin-bottom: 18px;
+      flex-shrink: 0;
+    }
+    .flip-front-title {
+      font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px;
+    }
+    .flip-front-summary {
+      font-size: 13px; color: var(--text-2); line-height: 1.65; flex: 1;
+    }
+    .flip-front-hint {
+      margin-top: 18px;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: var(--text-3);
+      letter-spacing: 0.04em;
+    }
+    .flip-front-hint i { font-size: 10px; }
+    .flip-back-tier {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--accent);
+      background: var(--accent-dim); border: 1px solid rgba(0,196,154,0.2);
+      padding: 3px 10px; border-radius: 100px;
+      display: inline-block; margin-bottom: 12px; width: fit-content;
+    }
+    .flip-back-title {
+      font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px;
+    }
+    .flip-back-body {
+      font-size: 12.5px; color: var(--text-2); line-height: 1.65; margin-bottom: 12px; flex: 1;
+    }
+    .flip-back-uses {
+      list-style: none; display: flex; flex-direction: column; gap: 6px;
+    }
+    .flip-back-uses li {
+      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 11.5px; color: var(--text-2); line-height: 1.5;
+    }
+    .flip-back-uses li i { color: var(--accent); font-size: 9px; margin-top: 4px; flex-shrink: 0; }
+    .flip-back-hint {
+      margin-top: 14px;
+      font-size: 10px; color: var(--text-3);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .flip-back-hint i { font-size: 9px; }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .nav-links { display: none; }
+      .nav-cta .btn-ghost { display: none; }
+      .nav-hamburger { display: flex; align-items: center; }
+      .problem-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-header { grid-template-columns: 1fr; gap: 24px; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .feature-card.wide { grid-column: span 1; }
+      .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+      .pa-grid { grid-template-columns: repeat(2, 1fr); }
+      .mission-inner { grid-template-columns: 1fr; gap: 32px; }
+      .flip-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      section { padding: 72px 0; }
+      .problem-grid { grid-template-columns: 1fr; gap: 0; }
+      .features-grid { grid-template-columns: 1fr; }
+      .roles-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .pa-grid { grid-template-columns: 1fr; }
+      .flip-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-offerings { grid-template-columns: 1fr; }
+      .comparison-table-wrap { overflow-x: auto; }
+      table { min-width: 600px; }
+      .footer-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+      .footer-links { flex-wrap: wrap; gap: 16px; }
+    }
+    @media (max-width: 480px) {
+      .flip-grid { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 34px; }
+      .hero-sub { font-size: 20px; }
+      .hero-body { font-size: 16px; }
+      .tier-amount { font-size: 34px; }
+      .pa-amount { font-size: 30px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fade-up { transition: none; opacity: 1; transform: none; }
+      .hero-bg { animation: none; }
+      .hero-badge-dot { animation: none; }
+    }
+  </style>
 </head>
 <body>
-    <p>Redirecting...</p>
+
+  <!-- Nav -->
+  <nav class="nav" id="nav">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-icon"><i class="fas fa-futbol"></i></div>
+      Sentinel <span>&nbsp;Football Hub</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="clubs.html">For Clubs</a></li>
+      <li class="divider" aria-hidden="true"></li>
+      <li><a href="players.html">For Players</a></li>
+      <li class="divider" aria-hidden="true"></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="/src/pages/login.html" class="btn-ghost">Sign in</a>
+      <a href="clubs.html" class="btn-primary"><i class="fas fa-arrow-right"></i> Get Started</a>
+      <button class="nav-hamburger" id="hamburgerBtn" aria-label="Open navigation menu">
+        <i class="fas fa-bars" id="hamburgerIcon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div class="mobile-menu" id="mobileMenu" role="navigation" aria-label="Mobile navigation">
+    <a href="clubs.html">For Clubs</a>
+    <a href="players.html">For Players</a>
+    <a href="#contact">Contact</a>
+    <a href="/src/pages/login.html">Sign in</a>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero" id="home">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="container">
+      <div class="hero-badge fade-up stagger-1" aria-hidden="true">
+        <span class="hero-badge-dot"></span>
+        Built for football in South Africa
+      </div>
+      <h1 class="fade-up stagger-2">Your club. Your game.<br>Your <span class="accent">edge.</span></h1>
+      <p class="hero-sub fade-up stagger-3">One platform. Two ways to win.</p>
+      <p class="hero-body fade-up stagger-4">
+        Sentinel Football Hub gives clubs everything they need to run a professional football operation —
+        and offers individual players access to the same level of analysis that professional clubs use.
+      </p>
+      <div class="hero-offerings fade-up stagger-5">
+        <a href="#clubs" class="hero-offering">
+          <div class="hero-offering-icon green"><i class="fas fa-shield-halved"></i></div>
+          <h3>Club Management Platform</h3>
+          <p>Squad management, match reporting, session planning, player development, attendance tracking and analytics — all in one place.</p>
+          <span class="hero-offering-link green">Explore the platform <i class="fas fa-arrow-right"></i></span>
+        </a>
+        <a href="#players" class="hero-offering">
+          <div class="hero-offering-icon amber"><i class="fas fa-user-check"></i></div>
+          <h3>Personal Player Analysis</h3>
+          <p>Submit your game footage and get a professional, unbiased analysis report — the same standard academies use to evaluate players.</p>
+          <span class="hero-offering-link amber">View packages <i class="fas fa-arrow-right"></i></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem -->
+  <section class="problem" id="problem">
+    <div class="container">
+      <div class="problem-intro fade-up">
+        <div class="section-label"><i class="fas fa-triangle-exclamation"></i> The Problem</div>
+        <h2 class="section-heading">Clubs run on WhatsApp groups<br>and outdated spreadsheets.</h2>
+        <p class="section-sub">No single source of truth. Player data is scattered, match preparation takes hours, and insight is left to guesswork. We built the fix.</p>
+      </div>
+      <div class="problem-grid">
+        <div class="problem-card fade-up stagger-1">
+          <div class="problem-icon" aria-hidden="true"><i class="fas fa-database"></i></div>
+          <h3>Fragmented Player Data</h3>
+          <p>Profiles scattered across notebooks, files and apps — no unified view of who's injured, in form, or developing.</p>
+        </div>
+        <div class="problem-card fade-up stagger-2">
+          <div class="problem-icon" aria-hidden="true"><i class="fas fa-clock"></i></div>
+          <h3>Wasted Preparation Time</h3>
+          <p>Coaches spend hours manually building session plans, match reports, and lineups instead of spending that time on the pitch.</p>
+        </div>
+        <div class="problem-card fade-up stagger-3">
+          <div class="problem-icon" aria-hidden="true"><i class="fas fa-link-slash"></i></div>
+          <h3>Disconnected Staff</h3>
+          <p>Coaching, fitness, and medical staff rarely share a live data feed — everyone is working from different information.</p>
+        </div>
+        <div class="problem-card fade-up stagger-4">
+          <div class="problem-icon" aria-hidden="true"><i class="fas fa-chart-line"></i></div>
+          <h3>No Real Insight</h3>
+          <p>Without structured tracking, identifying player trends or development gaps remains guesswork rather than data-driven coaching.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- For Clubs: Features -->
+  <section class="features" id="clubs">
+    <div class="container">
+      <div class="features-header">
+        <div class="fade-up">
+          <div class="section-label"><i class="fas fa-shield-halved"></i> Club Management Platform</div>
+          <h2 class="section-heading">Everything a modern club needs.<br>Nothing it doesn't.</h2>
+        </div>
+        <p class="section-sub fade-up">Eight fully integrated modules — purpose-built for the daily demands of a football operation across all levels, from grassroots to semi-professional.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-up stagger-1">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-users"></i></div>
+          <h3>Squad &amp; Player Management</h3>
+          <p>Digital profiles for every player — biographical data, physical attributes, status tracking, media, and development records all in one place.</p>
+          <span class="feature-tag">All Tiers</span>
+        </div>
+        <div class="feature-card fade-up stagger-2">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-trophy"></i></div>
+          <h3>Match Hub &amp; Reporting</h3>
+          <p>Full match lifecycle — fixtures, lineups, live stats, match reports, video analysis, and 4-pillar player assessments per game.</p>
+          <span class="feature-tag">Basic+</span>
+        </div>
+        <div class="feature-card fade-up stagger-3">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-diagram-project"></i></div>
+          <h3>Session Planner &amp; Library</h3>
+          <p>Build and store complete training session plans with an integrated drill library. The animated builder lets you design drills with moving players on a virtual pitch.</p>
+          <span class="feature-tag">Basic+ / Elite builder</span>
+        </div>
+        <div class="feature-card wide fade-up stagger-4">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-chart-bar"></i></div>
+          <h3>Player Assessments &amp; Development Tracking</h3>
+          <p>4-pillar match assessments (Tactical, Technical, Physical, Psychological) logged per game and tracked over time. Every assessment feeds into player profiles — giving technical directors a squad-wide development view that grows with every match played.</p>
+          <span class="feature-tag">Pro+</span>
+        </div>
+        <div class="feature-card fade-up stagger-5">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-calendar-check"></i></div>
+          <h3>Attendance &amp; Training Register</h3>
+          <p>Session attendance tracked per player. Percentage breakdowns and missed session totals feed directly into individual player profiles automatically.</p>
+          <span class="feature-tag">Basic+</span>
+        </div>
+        <div class="feature-card fade-up stagger-6">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-chart-line"></i></div>
+          <h3>Analytics &amp; Performance Data</h3>
+          <p>Goals, assists, form, and development trends per player. Team results, win/loss patterns, and radar charts across full seasons.</p>
+          <span class="feature-tag">Pro+</span>
+        </div>
+        <div class="feature-card fade-up stagger-7">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-magnifying-glass"></i></div>
+          <h3>Scouting Module</h3>
+          <p>Log and manage scouted players with profile cards, notes, reports, and potential ratings. Build your recruitment pipeline directly inside the platform.</p>
+          <span class="feature-tag">Basic+</span>
+        </div>
+        <div class="feature-card fade-up stagger-8">
+          <div class="feature-icon" aria-hidden="true"><i class="fas fa-coins"></i></div>
+          <h3>Financials</h3>
+          <p>Club income and expense tracking, invoice management, and financial reporting — all integrated within the club's operational hub.</p>
+          <span class="feature-tag">Elite</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who It's For -->
+  <section class="roles" id="roles">
+    <div class="container">
+      <div class="roles-header fade-up">
+        <div class="section-label"><i class="fas fa-user-group"></i> Built For Your Staff</div>
+        <h2 class="section-heading">Less admin. More coaching.</h2>
+        <p class="section-sub">Every staff role gets exactly what they need — nothing they don't. Role-based access means the right people see the right information.</p>
+      </div>
+      <div class="roles-grid">
+        <div class="role-card fade-up stagger-1">
+          <div class="role-header">
+            <div class="role-avatar" aria-hidden="true"><i class="fas fa-whistle"></i></div>
+            <div>
+              <div class="role-title">Head Coach</div>
+              <div class="role-sub">Full squad &amp; session access</div>
+            </div>
+          </div>
+          <ul class="role-items">
+            <li><i class="fas fa-check" aria-hidden="true"></i> Plan every session in minutes with the drag-and-drop builder</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Run full match reporting with lineup, stats, and written analysis</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Assess players match-by-match across 4 development pillars</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> View squad form, attendance, and individual trends at a glance</li>
+          </ul>
+        </div>
+        <div class="role-card fade-up stagger-2">
+          <div class="role-header">
+            <div class="role-avatar" aria-hidden="true"><i class="fas fa-person-running"></i></div>
+            <div>
+              <div class="role-title">Assistant Coach</div>
+              <div class="role-sub">Team-level access</div>
+            </div>
+          </div>
+          <ul class="role-items">
+            <li><i class="fas fa-check" aria-hidden="true"></i> Access and run drills directly from the shared library</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Contribute to match planning and session preparation</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Track attendance and log session notes in real time</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> View player status and availability before every session</li>
+          </ul>
+        </div>
+        <div class="role-card fade-up stagger-3">
+          <div class="role-header">
+            <div class="role-avatar" aria-hidden="true"><i class="fas fa-folder-open"></i></div>
+            <div>
+              <div class="role-title">Club Administrator</div>
+              <div class="role-sub">Full administrative access</div>
+            </div>
+          </div>
+          <ul class="role-items">
+            <li><i class="fas fa-check" aria-hidden="true"></i> Manage all player profiles and documents centrally</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Log and organise fixtures, results, and match records</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Control staff access and permissions across the club</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Track financials and pull operational reports on demand</li>
+          </ul>
+        </div>
+        <div class="role-card fade-up stagger-4">
+          <div class="role-header">
+            <div class="role-avatar" aria-hidden="true"><i class="fas fa-magnifying-glass-chart"></i></div>
+            <div>
+              <div class="role-title">Technical Director</div>
+              <div class="role-sub">Club-wide oversight</div>
+            </div>
+          </div>
+          <ul class="role-items">
+            <li><i class="fas fa-check" aria-hidden="true"></i> Monitor player development across every squad in the club</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Review assessment history and development structures per player</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Access full analytics, radar charts, and performance trends</li>
+            <li><i class="fas fa-check" aria-hidden="true"></i> Make recruitment and selection decisions backed by real data</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Club Pricing -->
+  <section class="club-pricing" id="club-pricing">
+    <div class="container">
+      <div class="club-pricing-header fade-up">
+        <div class="section-label"><i class="fas fa-tag"></i> Club Pricing</div>
+        <h2 class="section-heading">Start free. Grow with your club.</h2>
+        <p class="section-sub">Every tier is a complete product — not a crippled demo. Upgrade when your club needs more, not before.</p>
+      </div>
+      <div class="pricing-grid">
+
+        <!-- Free -->
+        <div class="tier-card fade-up stagger-1">
+          <div class="tier-name">Free</div>
+          <div class="tier-price">
+            <span class="tier-currency">R</span>
+            <span class="tier-amount">0</span>
+          </div>
+          <div class="tier-period">forever</div>
+          <p class="tier-desc">A focused, complete-feeling experience for grassroots coaches trying the platform. No card required.</p>
+          <ul class="tier-features">
+            <li><i class="fas fa-check"></i> Up to 5 squads</li>
+            <li><i class="fas fa-check"></i> Player profiles with photos</li>
+            <li><i class="fas fa-check"></i> Fixture &amp; results tracking</li>
+            <li><i class="fas fa-check"></i> Match calendar on dashboard</li>
+            <li><i class="fas fa-check"></i> Goals, assists &amp; clean sheet tracking</li>
+            <li><i class="fas fa-check"></i> Club logo &amp; basic settings</li>
+            <li class="locked"><i class="fas fa-lock"></i> Training Register</li>
+            <li class="locked"><i class="fas fa-lock"></i> Match reports &amp; assessments</li>
+            <li class="locked"><i class="fas fa-lock"></i> Analytics</li>
+          </ul>
+          <div class="tier-limits">
+            <strong>Limits:</strong> 5 squads · 1 league/squad · 40 total games · 2 admins · 20 staff · 1 season
+          </div>
+          <a href="/src/pages/login.html" class="btn-tier outline">Get Started Free</a>
+        </div>
+
+        <!-- Basic -->
+        <div class="tier-card fade-up stagger-2">
+          <div class="tier-name">Basic</div>
+          <div class="tier-price">
+            <span class="tier-currency">R</span>
+            <span class="tier-amount">599</span>
+          </div>
+          <div class="tier-period">per month</div>
+          <p class="tier-desc">For active club coaches who need full match management and training tools without analytics or assessments.</p>
+          <ul class="tier-features">
+            <li><i class="fas fa-check"></i> Everything in Free</li>
+            <li><i class="fas fa-check"></i> Full match stats &amp; team reports</li>
+            <li><i class="fas fa-check"></i> Training Register &amp; Library</li>
+            <li><i class="fas fa-check"></i> Scouting module</li>
+            <li><i class="fas fa-check"></i> Financial tracking</li>
+            <li><i class="fas fa-check"></i> Player Reports (1 stored per player)</li>
+            <li><i class="fas fa-check"></i> Recently Deleted recovery</li>
+            <li class="locked"><i class="fas fa-lock"></i> Player assessments</li>
+            <li class="locked"><i class="fas fa-lock"></i> Analytics page</li>
+          </ul>
+          <div class="tier-limits">
+            <strong>Limits:</strong> 5 squads · 3 leagues/squad · unlimited games · 2 admins · 20 staff · 1 season
+          </div>
+          <a href="#contact" class="btn-tier outline">Get Basic</a>
+        </div>
+
+        <!-- Pro -->
+        <div class="tier-card featured fade-up stagger-3">
+          <div class="tier-popular">Most Popular</div>
+          <div class="tier-name">Pro</div>
+          <div class="tier-price">
+            <span class="tier-currency">R</span>
+            <span class="tier-amount">2 499</span>
+          </div>
+          <div class="tier-period">per month</div>
+          <p class="tier-desc">For academies and semi-professional clubs running a complete football operation with full data and assessment pipelines.</p>
+          <ul class="tier-features">
+            <li><i class="fas fa-check"></i> Everything in Basic</li>
+            <li><i class="fas fa-check"></i> 4-pillar match player assessments</li>
+            <li><i class="fas fa-check"></i> Full Analytics page &amp; radar charts</li>
+            <li><i class="fas fa-check"></i> Match planning &amp; Player Watch</li>
+            <li><i class="fas fa-check"></i> Media tabs (player, squad, staff)</li>
+            <li><i class="fas fa-check"></i> Attendance tracking &amp; dashboard</li>
+            <li><i class="fas fa-check"></i> Player status tracking</li>
+            <li><i class="fas fa-check"></i> Video analysis uploads per match</li>
+            <li><i class="fas fa-check"></i> Notifications &amp; advanced settings</li>
+          </ul>
+          <div class="tier-limits">
+            <strong>Limits:</strong> 10 squads · 5 leagues/squad · 5 admins · 40 staff · 2 seasons
+          </div>
+          <a href="#contact" class="btn-tier primary"><i class="fas fa-arrow-right"></i> Get Pro</a>
+        </div>
+
+        <!-- Elite -->
+        <div class="tier-card fade-up stagger-4">
+          <div class="tier-name">Elite</div>
+          <div class="tier-price">
+            <span class="tier-currency">R</span>
+            <span class="tier-amount">4 999</span>
+          </div>
+          <div class="tier-period">per month</div>
+          <p class="tier-desc">For academy directors and multi-squad organisations that need the full platform without limits. Built for the serious operation.</p>
+          <ul class="tier-features">
+            <li><i class="fas fa-check"></i> Everything in Pro</li>
+            <li><i class="fas fa-check"></i> Unlimited squads &amp; staff</li>
+            <li><i class="fas fa-check"></i> Unlimited seasons &amp; history</li>
+            <li><i class="fas fa-check"></i> Unlimited assessment history</li>
+            <li><i class="fas fa-check"></i> Unlimited analysis video uploads</li>
+            <li><i class="fas fa-check"></i> Animated session drill builder</li>
+            <li><i class="fas fa-check"></i> Financials module</li>
+            <li><i class="fas fa-check"></i> Up to 10 admins</li>
+            <li><i class="fas fa-check"></i> Priority support</li>
+          </ul>
+          <div class="tier-limits">
+            <strong>Limits:</strong> Unlimited squads &amp; leagues · unlimited games · 10 admins · unlimited staff &amp; seasons
+          </div>
+          <a href="#contact" class="btn-tier outline">Get Elite</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Module flip cards -->
+  <section class="module-cards" id="modules">
+    <div class="container">
+      <div class="module-cards-header fade-up">
+        <div class="section-label"><i class="fas fa-layer-group"></i> Platform Modules</div>
+        <h2 class="section-heading">Every module. Explored.</h2>
+        <p class="section-sub">Hover to peek. Click to explore each module in depth — what it does, who uses it, and why it matters.</p>
+      </div>
+      <div class="flip-grid">
+
+        <!-- Squad & Player Management -->
+        <div class="flip-card fade-up stagger-1" role="button" aria-label="Explore Squad and Player Management module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-users"></i></div>
+              <div class="flip-front-title">Squad &amp; Player Management</div>
+              <p class="flip-front-summary">The central hub for every player in your club. Digital profiles, status tracking, photos, and full development records — all in one place.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">All Tiers</div>
+                <div class="flip-back-title">Your squad. Fully organised.</div>
+                <p class="flip-back-body">Replace scattered notebooks and spreadsheets with rich, live player profiles. Track injuries, suspensions, form, stats, and development history per player — all updated as data flows in from matches and sessions.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Check player availability before every session</li>
+                <li><i class="fas fa-circle"></i> Review a player's full season history in seconds</li>
+                <li><i class="fas fa-circle"></i> Technical directors get a squad-wide development view</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Match Hub & Reporting -->
+        <div class="flip-card fade-up stagger-2" role="button" aria-label="Explore Match Hub module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-trophy"></i></div>
+              <div class="flip-front-title">Match Hub &amp; Reporting</div>
+              <p class="flip-front-summary">End-to-end match management. Lineups, live stats, team reports, video analysis, and player assessments — all from one match record.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">Basic+</div>
+                <div class="flip-back-title">Every match. Fully documented.</div>
+                <p class="flip-back-body">From fixture creation to full post-match analysis. Log lineups, substitutions, goals, cards, and ratings. Write structured team reports across 5 sections. Attach video analysis. Every data point feeds automatically into player profiles and team analytics.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Coaches write structured post-match reports in minutes</li>
+                <li><i class="fas fa-circle"></i> Match stats build player profiles automatically over time</li>
+                <li><i class="fas fa-circle"></i> Watch footage and assess players match-by-match (Pro+)</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Session Planner -->
+        <div class="flip-card fade-up stagger-3" role="button" aria-label="Explore Session Planner module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-diagram-project"></i></div>
+              <div class="flip-front-title">Session Planner &amp; Library</div>
+              <p class="flip-front-summary">Build complete training session plans with a shared drill library. The animated builder lets you design drills with moving players on a virtual pitch.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">Basic+ · Animated builder Elite</div>
+                <div class="flip-back-title">Sessions planned. Time saved.</div>
+                <p class="flip-back-body">Cut session prep from hours to minutes. Build structured sessions with drill blocks and time allocations. Save drills to a shared library that your whole coaching staff can access and reuse. Elite unlocks the animated canvas builder — draw drills with player movements on a live virtual pitch.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Head coach plans, assistant coach runs the session</li>
+                <li><i class="fas fa-circle"></i> Build a drill once, reuse it all season across teams</li>
+                <li><i class="fas fa-circle"></i> Visualise set pieces and patterns of play (Elite)</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Player Assessments -->
+        <div class="flip-card fade-up stagger-4" role="button" aria-label="Explore Player Assessments module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-chart-bar"></i></div>
+              <div class="flip-front-title">Player Assessments &amp; Development</div>
+              <p class="flip-front-summary">4-pillar match assessments per player — Tactical, Technical, Physical, Psychological. Tracked across every game, building a structured development record over time.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">Pro+</div>
+                <div class="flip-back-title">Data replaces gut feeling.</div>
+                <p class="flip-back-body">Assess each player across 4 structured pillars after every match with attribute ratings and per-pillar coach comments. Assessment history builds automatically per player. Radar charts visualise the full profile. Pro stores 10 rolling assessments; Elite stores unlimited history across seasons.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Coaches assess players immediately post-match in the app</li>
+                <li><i class="fas fa-circle"></i> Technical directors track development across the full squad</li>
+                <li><i class="fas fa-circle"></i> Radar charts reveal positional strengths and gaps visually</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance -->
+        <div class="flip-card fade-up stagger-5" role="button" aria-label="Explore Attendance module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-calendar-check"></i></div>
+              <div class="flip-front-title">Attendance &amp; Training Register</div>
+              <p class="flip-front-summary">Session attendance tracked per player and surfaced automatically in individual profiles — percentage attended, sessions missed, and availability over the season.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">Basic+ · Dashboard Pro+</div>
+                <div class="flip-back-title">Know who shows up. Know what it means.</div>
+                <p class="flip-back-body">Mark attendance per session in seconds. Each player's profile automatically shows sessions attended vs available, with colour-coded attendance percentages. The Pro dashboard surfaces all sessions alongside matches, with a quick session creation button for unplanned training.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Spot players missing sessions before form drops</li>
+                <li><i class="fas fa-circle"></i> Cross-reference attendance with match performance trends</li>
+                <li><i class="fas fa-circle"></i> Quick sessions logged from the dashboard in one tap</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="flip-card fade-up stagger-6" role="button" aria-label="Explore Analytics module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-chart-line"></i></div>
+              <div class="flip-front-title">Analytics &amp; Performance Data</div>
+              <p class="flip-front-summary">Season-long performance data per player and team. Form charts, radar charts, and squad-wide trends drawn directly from match and assessment data.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">Pro+</div>
+                <div class="flip-back-title">Raw data becomes real insight.</div>
+                <p class="flip-back-body">The analytics page aggregates everything — goals, assists, ratings, form trends, and assessment pillars — into visual dashboards. Radar charts show each player's 4-pillar profile at a glance. Links from squad tables take you directly to individual player analytics. All data updates automatically as matches are logged.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Identify players whose ratings are consistently declining</li>
+                <li><i class="fas fa-circle"></i> Compare squad output across a full season at a glance</li>
+                <li><i class="fas fa-circle"></i> Back selection decisions with structured performance data</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scouting -->
+        <div class="flip-card fade-up stagger-7" role="button" aria-label="Explore Scouting module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-magnifying-glass"></i></div>
+              <div class="flip-front-title">Scouting Module</div>
+              <p class="flip-front-summary">Build and manage your full recruitment pipeline inside the platform. Log scouted players, write reports, and build position-specific shortlists for the technical director.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">Basic+</div>
+                <div class="flip-back-title">Your recruitment pipeline. Organised.</div>
+                <p class="flip-back-body">Replace the scouting notebook with a searchable database. Log a prospect after watching a match — add ratings, notes, potential scores, and a full written report. Build shortlists per position. Share records with the technical director. Scouted players can be converted to squad players when signed.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Scouts log prospects immediately after watching a game</li>
+                <li><i class="fas fa-circle"></i> Technical directors filter shortlists by position and rating</li>
+                <li><i class="fas fa-circle"></i> Recruitment decisions backed by structured scouting data</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financials -->
+        <div class="flip-card fade-up stagger-8" role="button" aria-label="Explore Financials module" tabindex="0">
+          <div class="flip-card-inner">
+            <div class="flip-card-front">
+              <div class="flip-front-icon"><i class="fas fa-coins"></i></div>
+              <div class="flip-front-title">Financials</div>
+              <p class="flip-front-summary">Club income and expense tracking fully integrated into the same platform your coaching staff uses. One operation. One place.</p>
+              <div class="flip-front-hint"><i class="fas fa-rotate"></i> Click to explore</div>
+            </div>
+            <div class="flip-card-back">
+              <div>
+                <div class="flip-back-tier">Elite</div>
+                <div class="flip-back-title">The full club operation. One platform.</div>
+                <p class="flip-back-body">Track income, expenses, and invoices without switching between systems. Log player fees, match costs, equipment, and event income. Generate financial reports for club leadership. Every financial record sits alongside the operational data your coaches and admin already use daily — no separate spreadsheet required.</p>
+              </div>
+              <ul class="flip-back-uses">
+                <li><i class="fas fa-circle"></i> Administrators track all club income and outgoings in one place</li>
+                <li><i class="fas fa-circle"></i> Club chairpersons pull financial reports on demand</li>
+                <li><i class="fas fa-circle"></i> Flag outstanding payments without leaving the platform</li>
+              </ul>
+              <div class="flip-back-hint"><i class="fas fa-rotate"></i> Click to flip back</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison table -->
+  <section class="comparison" id="compare">
+    <div class="container">
+      <div class="comparison-header fade-up">
+        <div class="section-label"><i class="fas fa-arrows-left-right"></i> Tier Comparison</div>
+        <h2 class="section-heading">What's included at each tier.</h2>
+        <p class="section-sub">Every tier is a complete product. Features are hidden (not crippled) on lower tiers — upgrade when the time is right for your club.</p>
+      </div>
+      <div class="comparison-table-wrap fade-up">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Free</th>
+              <th>Basic</th>
+              <th class="hl">Pro</th>
+              <th>Elite</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Player Profiles &amp; Squad Management</td>
+              <td><span class="partial">Partial</span></td>
+              <td><i class="fas fa-check check"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Match Fixtures &amp; Results</td>
+              <td><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Full Match Stats &amp; Team Reports</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Match Planning &amp; Player Watch</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Training Register &amp; Library</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Animated Session Drill Builder</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Player Attendance Tracking</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>4-Pillar Player Assessments</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Assessment History per Player</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><span class="partial">10 rolling</span></td>
+              <td><i class="fas fa-check check"></i> Unlimited</td>
+            </tr>
+            <tr>
+              <td>Analytics Page &amp; Radar Charts</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Scouting Module</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Media Tabs (Player, Squad, Staff)</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-check check"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Financials Module</td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-xmark cross"></i></td>
+              <td class="hl"><i class="fas fa-xmark cross"></i></td>
+              <td><i class="fas fa-check check"></i></td>
+            </tr>
+            <tr>
+              <td>Max Squads</td>
+              <td>5</td>
+              <td>5</td>
+              <td class="hl">10</td>
+              <td>Unlimited</td>
+            </tr>
+            <tr>
+              <td>Monthly Price</td>
+              <td>R0</td>
+              <td>R599</td>
+              <td class="hl" style="color:var(--accent);font-weight:600;">R2 499</td>
+              <td>R4 999</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="comparison-scroll-hint"><i class="fas fa-arrows-left-right"></i> Scroll to compare all tiers</p>
+      <p class="comparison-note fade-up">All pricing is in ZAR. Free tier requires no payment details. Paid tiers can be activated directly from your club settings.</p>
+    </div>
+  </section>
+
+  <!-- Player Analysis -->
+  <section class="player-analysis" id="players" style="scroll-margin-top: 64px;">
+    <div class="container">
+      <div class="pa-header fade-up">
+        <div class="section-label amber"><i class="fas fa-user-check"></i> For Individual Players</div>
+      </div>
+      <div class="pa-intro">
+        <h2 class="section-heading fade-up">Professional analysis.<br>For every player.</h2>
+        <p class="pa-body fade-up">You don't need to be at an academy to know where your game needs to improve. Submit your footage and get the same level of structured, unbiased analysis that professional clubs use to evaluate and develop players.</p>
+      </div>
+
+      <div class="pa-grid">
+        <!-- Match Report -->
+        <div class="pa-card fade-up stagger-1">
+          <div class="pa-tier-label">Tier 1</div>
+          <div class="pa-name">Match Report</div>
+          <div class="pa-price">
+            <span class="pa-currency">R</span>
+            <span class="pa-amount">299</span>
+          </div>
+          <div class="pa-period">once-off</div>
+          <p class="pa-desc">Submit one recorded game. Receive a full, written match analysis report. Unbiased. Structured. Actionable.</p>
+          <ul class="pa-features">
+            <li><i class="fas fa-check"></i> 1 recorded game submitted</li>
+            <li><i class="fas fa-check"></i> Full written match report</li>
+            <li><i class="fas fa-check"></i> Tactical, technical &amp; physical feedback</li>
+            <li><i class="fas fa-check"></i> Areas of strength identified</li>
+            <li><i class="fas fa-check"></i> Clear areas to improve</li>
+            <li><i class="fas fa-check"></i> Delivered within 48–72 hours</li>
+          </ul>
+          <a href="#contact" class="btn-pa outline">Get Your Report</a>
+        </div>
+
+        <!-- Player Profile Package -->
+        <div class="pa-card fade-up stagger-2">
+          <div class="pa-tier-label">Tier 2</div>
+          <div class="pa-name">Player Profile</div>
+          <div class="pa-price">
+            <span class="pa-currency">R</span>
+            <span class="pa-amount">799</span>
+          </div>
+          <div class="pa-period">once-off</div>
+          <p class="pa-desc">Submit up to 5 recorded games. A full digital player profile is built from your footage — the kind that travels with you.</p>
+          <ul class="pa-features">
+            <li><i class="fas fa-check"></i> Up to 5 recorded games analysed</li>
+            <li><i class="fas fa-check"></i> Full digital player profile created</li>
+            <li><i class="fas fa-check"></i> Stats tracked across all games</li>
+            <li><i class="fas fa-check"></i> Written performance summary</li>
+            <li><i class="fas fa-check"></i> Development recommendations</li>
+            <li><i class="fas fa-check"></i> Delivered within 5–7 days</li>
+          </ul>
+          <a href="#contact" class="btn-pa outline">Get Your Profile</a>
+        </div>
+
+        <!-- Live Scout Package -->
+        <div class="pa-card featured-pa fade-up stagger-3">
+          <div class="pa-popular">Premium</div>
+          <div class="pa-tier-label">Tier 3</div>
+          <div class="pa-name">Live Scout Package</div>
+          <div class="pa-price">
+            <span class="pa-currency">R</span>
+            <span class="pa-amount">1 999</span>
+          </div>
+          <div class="pa-period">once-off · Gauteng only</div>
+          <p class="pa-desc">We come to you. An analyst attends 5 of your games in person and builds a complete package from live observation.</p>
+          <ul class="pa-features">
+            <li><i class="fas fa-check"></i> Analyst attends 5 live games</li>
+            <li><i class="fas fa-check"></i> Full player profile created</li>
+            <li><i class="fas fa-check"></i> Highlights video package produced</li>
+            <li><i class="fas fa-check"></i> Unbiased written assessment</li>
+            <li><i class="fas fa-check"></i> Live + off-ball observation included</li>
+            <li><i class="fas fa-check"></i> Gauteng only — contact us to confirm</li>
+          </ul>
+          <a href="#contact" class="btn-pa">Book a Scout</a>
+        </div>
+
+        <!-- Monthly Analyst -->
+        <div class="pa-card fade-up stagger-4">
+          <div class="pa-tier-label">Tier 4</div>
+          <div class="pa-name">Personal Analyst</div>
+          <div class="pa-price">
+            <span class="pa-currency">R</span>
+            <span class="pa-amount">599</span>
+          </div>
+          <div class="pa-period">per month</div>
+          <p class="pa-desc">Your own ongoing analyst. Submit footage weekly, receive analysis monthly, and track your progress over the season.</p>
+          <ul class="pa-features">
+            <li><i class="fas fa-check"></i> Weekly video submission</li>
+            <li><i class="fas fa-check"></i> Monthly analysis report returned</li>
+            <li><i class="fas fa-check"></i> Ongoing stats &amp; progress tracking</li>
+            <li><i class="fas fa-check"></i> Season-long development view</li>
+            <li><i class="fas fa-check"></i> Direct feedback channel</li>
+            <li><i class="fas fa-check"></i> Cancel anytime</li>
+          </ul>
+          <a href="#contact" class="btn-pa outline">Start Monthly Plan</a>
+        </div>
+      </div>
+
+      <p class="pa-note fade-up">All packages are submitted via WhatsApp or email. <strong>Footage can be phone-recorded.</strong> We review everything and get back to you within the stated turnaround.</p>
+    </div>
+  </section>
+
+  <!-- Mission / Vision -->
+  <section class="mission" id="mission">
+    <div class="container">
+      <div class="fade-up" style="margin-bottom: 48px;">
+        <div class="section-label"><i class="fas fa-bullseye"></i> Our Purpose</div>
+        <h2 class="section-heading">Built by a coach.<br>For the game we love.</h2>
+      </div>
+      <div class="mission-inner">
+        <div class="mission-block fade-up stagger-1">
+          <div class="mission-divider"></div>
+          <h3>Our Mission</h3>
+          <p>
+            To give every football club — at every level — access to the tools and insight that were previously only available to professional organisations. We believe that structured data, professional analysis, and smart technology should not be reserved for the clubs with the biggest budgets.
+          </p>
+        </div>
+        <div class="mission-block fade-up stagger-2">
+          <div class="mission-divider"></div>
+          <h3>Our Vision</h3>
+          <p>
+            A South African football ecosystem where every grassroots club operates with the same professionalism as its top-flight counterparts — and where every talented player, regardless of background, has access to the analysis and visibility they deserve to progress in the game.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section" id="contact">
+    <div class="cta-glow" aria-hidden="true"></div>
+    <div class="container">
+      <div class="section-label" style="justify-content:center;" aria-hidden="true">
+        <i class="fas fa-rocket"></i> Get Started
+      </div>
+      <h2 class="fade-up">Ready to run your club<br>the <span class="accent">right way?</span></h2>
+      <p class="fade-up">Whether you're a club looking to upgrade your operation or a player who wants real analysis — reach out. We'll get back to you fast.</p>
+      <div class="cta-actions fade-up">
+        <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel Football Hub — Enquiry" class="btn-hero-primary">
+          <i class="fas fa-envelope"></i> Email Us
+        </a>
+        <a href="https://wa.me/27000000000?text=Hi%2C%20I%27d%20like%20to%20find%20out%20more%20about%20Sentinel%20Football%20Hub" class="btn-hero-secondary" target="_blank" rel="noopener noreferrer">
+          <i class="fab fa-whatsapp"></i> WhatsApp
+        </a>
+        <a href="/src/pages/login.html" class="btn-hero-secondary">
+          <i class="fas fa-arrow-right-to-bracket"></i> Sign In
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">
+          <div class="footer-logo-icon" aria-hidden="true"><i class="fas fa-futbol"></i></div>
+          Sentinel Football Hub
+        </div>
+        <ul class="footer-links">
+          <li><a href="#clubs">For Clubs</a></li>
+          <li><a href="#players">For Players</a></li>
+          <li><a href="#club-pricing">Pricing</a></li>
+          <li><a href="#mission">Our Purpose</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="/src/pages/login.html">Sign in</a></li>
+        </ul>
+        <p class="footer-copy">© 2026 Sentinel SportsTech. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const hamburgerIcon = document.getElementById('hamburgerIcon');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    hamburgerBtn.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.toggle('open');
+      hamburgerIcon.className = isOpen ? 'fas fa-xmark' : 'fas fa-bars';
+      hamburgerBtn.setAttribute('aria-expanded', isOpen);
+    });
+
+    function closeMobileMenu() {
+      mobileMenu.classList.remove('open');
+      hamburgerIcon.className = 'fas fa-bars';
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
+
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -32px 0px' });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    setTimeout(() => {
+      document.querySelectorAll('.hero .fade-up').forEach(el => el.classList.add('visible'));
+    }, 80);
+
+    // Nav solidify on scroll
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.style.background = window.scrollY > 40
+        ? 'rgba(8,11,15,0.96)'
+        : 'rgba(8,11,15,0.8)';
+    }, { passive: true });
+
+    // Flip cards — click to toggle, keyboard accessible
+    document.querySelectorAll('.flip-card').forEach(card => {
+      const toggle = () => card.classList.toggle('flipped');
+      card.addEventListener('click', toggle);
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href');
+        const target = document.querySelector(id);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

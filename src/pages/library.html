@@ -214,12 +214,10 @@
       background: #fff;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
-      overflow: hidden;
       transition: box-shadow 0.15s, transform 0.12s;
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      height: 100%;
     }
 
     .lib-card:hover {
@@ -232,6 +230,7 @@
       height: 150px;
       object-fit: cover;
       display: block;
+      border-radius: 10px 10px 0 0;
     }
 
     .card-thumb-placeholder {
@@ -243,6 +242,7 @@
       justify-content: center;
       font-size: 36px;
       color: #e2e8f0;
+      border-radius: 10px 10px 0 0;
     }
 
     .card-body {
@@ -294,27 +294,10 @@
       overflow: hidden;
     }
 
-    .card-top-section {
-      height: 88px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      padding-bottom: 0 !important;
-      /* Override card-body padding-bottom if needed */
-    }
-
-    .card-author {
-      font-size: 11px;
-      color: #a0aec0;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: auto;
-    }
-
     .card-author i {
       font-size: 10px;
+      flex-shrink: 0;
+      margin-top: 2px;
     }
 
     .card-meta {
@@ -442,7 +425,7 @@
       inset: 0;
       background: rgba(26, 32, 44, 0.7);
       backdrop-filter: blur(3px);
-      z-index: 500;
+      z-index: 1100;
       display: none;
       align-items: flex-start;
       justify-content: center;
@@ -739,9 +722,9 @@
       .lib-empty {
         padding: 30px 16px;
       }
-      /* Modal */
+      /* Modal — push below mobile top bar (56px) with breathing room */
       #modal-overlay {
-        padding: 16px 10px;
+        padding: 72px 10px 16px;
       }
       #modal-box {
         max-width: 100%;

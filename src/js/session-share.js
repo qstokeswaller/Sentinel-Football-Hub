@@ -3,6 +3,7 @@
  * Renders a read-only view of a shared session with drills (static + animated).
  */
 import supabase from '../supabase.js';
+import '../analytics.js';
 
 async function init() {
     const token = new URLSearchParams(window.location.search).get('token');

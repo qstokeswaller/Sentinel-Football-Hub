@@ -51,18 +51,23 @@ import supabase from './supabase.js';
     else document.addEventListener('DOMContentLoaded', inject);
 })();
 
-// In-memory cache to avoid redundant network calls within the same page load
+// In-memory cache: avoids redundant network calls within the same page load
 let _cachedUser = undefined;
 let _cachedProfile = undefined;
 
+// sessionStorage key for cross-page profile cache (cleared when browser tab closes)
+function _profileCacheKey(userId) { return `sfh_profile_${userId}`; }
+
 /**
  * Redirect to login if not authenticated.
- * Call at the top of every page's init function.
+ * Uses getSession() (local JWT check, no network) instead of getUser() (server roundtrip).
+ * Supabase RLS policies protect the data regardless, so local session check is safe here.
  */
 export async function requireAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
     if (!user) {
-        window.location.href = '/src/pages/login.html';
+        window.location.href = '/';
         return null;
     }
     _cachedUser = user;
@@ -71,17 +76,33 @@ export async function requireAuth() {
 
 /**
  * Get the current user's profile (includes club info and role).
- * Caches the result for the lifetime of the page.
+ * Three-layer cache: in-memory → sessionStorage → network.
+ * sessionStorage persists across page navigations within a tab but clears on tab close.
+ * Impersonating super_admins are never cached (their club context changes per-tab).
  */
 export async function getProfile() {
     if (_cachedProfile) return _cachedProfile;
 
     let user = _cachedUser;
     if (!user) {
-        const res = await supabase.auth.getUser();
-        user = res.data?.user;
+        const { data: { session } } = await supabase.auth.getSession();
+        user = session?.user ?? null;
         if (!user) return null;
         _cachedUser = user;
+    }
+
+    // Impersonating super_admins skip sessionStorage — their club context is tab-specific
+    const impClubId = getImpersonatingClubId();
+    const isImpersonating = !!impClubId;
+
+    if (!isImpersonating) {
+        try {
+            const raw = sessionStorage.getItem(_profileCacheKey(user.id));
+            if (raw) {
+                _cachedProfile = JSON.parse(raw);
+                return _cachedProfile;
+            }
+        } catch {}
     }
 
     const { data, error } = await supabase
@@ -96,10 +117,8 @@ export async function getProfile() {
     }
     _cachedProfile = { ...data, email: user.email };
 
-    // Impersonation override: if platform admin is impersonating a club,
-    // overlay the club_id and club data onto the profile
-    const impClubId = getImpersonatingClubId();
-    if (impClubId && _cachedProfile.role === 'super_admin' && !_cachedProfile.club_id) {
+    // Impersonation overlay
+    if (isImpersonating && _cachedProfile.role === 'super_admin' && !_cachedProfile.club_id) {
         const { data: club } = await supabase
             .from('clubs')
             .select('*')
@@ -112,7 +131,24 @@ export async function getProfile() {
         }
     }
 
+    // Write to sessionStorage for instant access on subsequent page navigations
+    if (!isImpersonating) {
+        try {
+            sessionStorage.setItem(_profileCacheKey(user.id), JSON.stringify(_cachedProfile));
+        } catch {}
+    }
+
     return _cachedProfile;
+}
+
+/**
+ * Invalidate the sessionStorage profile cache (call after profile edits in settings).
+ */
+export function invalidateProfileCache() {
+    if (_cachedUser?.id) {
+        try { sessionStorage.removeItem(_profileCacheKey(_cachedUser.id)); } catch {}
+    }
+    _cachedProfile = undefined;
 }
 
 /**
@@ -148,7 +184,7 @@ export async function logout() {
     sessionStorage.removeItem('sidebar-branding');
     sessionStorage.removeItem('sidebar-user');
     await supabase.auth.signOut();
-    window.location.href = '/src/pages/login.html';
+    window.location.href = '/';
 }
 
 /**

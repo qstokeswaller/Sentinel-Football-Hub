@@ -473,10 +473,12 @@
         import { initSidebar } from '../sidebar.js';
         import { showToast } from '../toast.js';
         import supabase from '../supabase.js';
+        import '../analytics.js';
         import { initCalendar, setSessionClickHandler, fetchCalendarSessions, reRenderCalendar, invalidateCalendarCache } from '../js/calendar-ui.js';
         import { openQuickSession } from '../js/quick-session.js';
         import squadManager from '../managers/squad-manager.js';
         import { upgradeTimePickers } from '../time-picker.js';
+        import { hasFeature, showUpgradeToast } from '../tier.js';
 
         // ── Attendance state ──
         let _calMode = 'calendar'; // 'calendar' | 'attendance'
@@ -616,7 +618,9 @@
                 const indicator = document.getElementById('savedIndicator');
                 if (indicator) indicator.style.display = 'inline-flex';
             } else if (isPrivateCoaching && sessionPlayerIds) {
-                const planned = allPlayers.filter(p => sessionPlayerIds.has(p.id));
+                // Search ALL squads so quick-session players are found regardless of team name matching
+                const allPlayersPool = squadManager.getPlayers({});
+                const planned = allPlayersPool.filter(p => sessionPlayerIds.has(p.id));
                 renderPlayerChips(planned);
                 document.querySelectorAll('#playerChips .reg-chip').forEach(chip => {
                     chip.classList.remove('absent');
@@ -1029,7 +1033,13 @@
             setupAddPlayerSearch();
 
             // Quick Session — invalidate cache then refresh calendar after save
-            window._openQuickSession = () => openQuickSession(() => { invalidateCalendarCache(); reRenderCalendar(); });
+            if (hasFeature('quick_session')) {
+                window._openQuickSession = () => openQuickSession(() => { invalidateCalendarCache(); reRenderCalendar(); });
+            } else {
+                window._openQuickSession = () => showUpgradeToast('pro', 'Quick Session');
+                const qsBtn = document.querySelector('#calAddMenu button[onclick*="_openQuickSession"]');
+                if (qsBtn) { qsBtn.style.opacity = '0.5'; qsBtn.title = 'Pro feature — upgrade to unlock'; }
+            }
 
             // Close dropdown when clicking outside
             document.addEventListener('click', (e) => {
@@ -1081,7 +1091,8 @@
 
             // Walkthrough
             try {
-                const { autoWalkthrough, startWalkthrough } = await import('../js/walkthrough.js');
+                const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('../js/walkthrough.js');
+                await initWalkthroughs(user?.id, supabase);
                 const _wp = new URLSearchParams(window.location.search);
                 if (_wp.get('walkthrough') === '1') { startWalkthrough('dashboard', true); window.history.replaceState({}, '', window.location.pathname); }
                 else autoWalkthrough('dashboard');

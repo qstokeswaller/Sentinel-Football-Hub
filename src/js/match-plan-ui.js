@@ -8,6 +8,44 @@ import matchManager from '../managers/match-manager.js';
 import { showToast } from '../toast.js';
 import { initCanvas, drawAll, setTokenSize, setEquipColor } from './drill-builder.js';
 
+/* -- Player unavailability helpers --------------------------------- */
+const _UNAVAIL_STATUSES = new Set(['injured', 'sick', 'suspended', 'unavailable']);
+function isPlayerUnavail(p) { return _UNAVAIL_STATUSES.has(p?.playerStatus); }
+
+function ensurePlanConfirmModal() {
+    if (document.getElementById('planConfirmModal')) return;
+    const el = document.createElement('div');
+    el.id = 'planConfirmModal';
+    el.className = 'modal-overlay';
+    el.innerHTML = `
+        <div class="modal-container" style="max-width:380px;">
+            <div class="modal-header"><h2 id="planConfirmTitle" style="font-size:1rem;font-weight:700;margin:0;"></h2></div>
+            <div class="modal-body" style="padding:16px 20px;"><p id="planConfirmMsg" style="font-size:.88rem;color:#475569;margin:0;line-height:1.6;"></p></div>
+            <div class="modal-footer">
+                <button id="planConfirmCancel" class="dash-btn outline">Cancel</button>
+                <button id="planConfirmOk" class="dash-btn primary">Add Anyway</button>
+            </div>
+        </div>`;
+    document.body.appendChild(el);
+}
+function planConfirm(title, msg) {
+    ensurePlanConfirmModal();
+    return new Promise(resolve => {
+        document.getElementById('planConfirmTitle').textContent = title;
+        document.getElementById('planConfirmMsg').textContent = msg;
+        const modal = document.getElementById('planConfirmModal');
+        modal.classList.add('active');
+        const settle = (v) => { modal.classList.remove('active'); resolve(v); };
+        const ok = document.getElementById('planConfirmOk');
+        const cancel = document.getElementById('planConfirmCancel');
+        const ok2 = ok.cloneNode(true); ok.parentNode.replaceChild(ok2, ok);
+        const c2 = cancel.cloneNode(true); cancel.parentNode.replaceChild(c2, cancel);
+        document.getElementById('planConfirmOk').addEventListener('click', () => settle(true), { once: true });
+        document.getElementById('planConfirmCancel').addEventListener('click', () => settle(false), { once: true });
+        modal.addEventListener('click', e => { if (e.target === modal) settle(false); }, { once: true });
+    });
+}
+
 /* -- State --------------------------------------------------------- */
 let currentStep = 0;
 const TOTAL_STEPS = 10;
@@ -345,7 +383,8 @@ async function onSquadChange() {
             id: p.id,
             name: p.name,
             position: p.position,
-            squadId: p.squad_id
+            squadId: p.squad_id,
+            playerStatus: p.player_status || 'active'
         }));
     } catch (e) {
         console.error('Failed to load players:', e);
@@ -394,11 +433,15 @@ function renderSquadPicker() {
     const chip = (p, source) => {
         const initials = (p.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
         const sel = selectedPlayerId === p.id ? ' selected' : '';
-        return `<div class="player-chip${sel}" draggable="true"
+        const unavail = isPlayerUnavail(p);
+        const statusLabel = p.playerStatus ? (p.playerStatus.charAt(0).toUpperCase() + p.playerStatus.slice(1)) : '';
+        const unavailBadge = unavail ? `<span style="position:absolute;top:-3px;right:-3px;background:#ef4444;color:#fff;border-radius:50%;width:13px;height:13px;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:700;" title="${statusLabel}">✗</span>` : '';
+        return `<div class="player-chip${sel}${unavail ? ' unavail-chip' : ''}" draggable="true"
             data-player-id="${p.id}" data-source="${source}"
             onclick="handlePlayerTap('${p.id}','${source}')"
-            ondragstart="onChipDragStart(event,'${p.id}','${source}')">
-            <div class="avatar">${initials}</div>
+            ondragstart="onChipDragStart(event,'${p.id}','${source}')"
+            style="${unavail ? 'opacity:0.6;' : ''}">
+            <div class="avatar" style="position:relative;">${initials}${unavailBadge}</div>
             <span>${escH(p.name)}</span>
             <span class="pos-badge">${p.position || '--'}</span>
         </div>`;
@@ -457,18 +500,26 @@ function renderSquadPicker() {
 }
 
 /* -- Player Move Logic -------------------------------------------- */
-function movePlayer(playerId, from, to) {
+async function movePlayer(playerId, from, to) {
     if (from === to) return;
-    // Remove from source
+    if (to === 'xi' || to === 'sub') {
+        const p = squadPlayers.find(x => x.id === playerId);
+        if (isPlayerUnavail(p)) {
+            const statusLabel = p.playerStatus.charAt(0).toUpperCase() + p.playerStatus.slice(1);
+            const ok = await planConfirm(
+                'Player Unavailable',
+                `${p.name} is currently marked as ${statusLabel}. Add them to the lineup anyway?`
+            );
+            if (!ok) return;
+        }
+    }
     if (from === 'xi') startingXI = startingXI.filter(id => id !== playerId);
     if (from === 'sub') substitutes = substitutes.filter(id => id !== playerId);
-    // Add to target
     if (to === 'xi') {
         if (startingXI.length < 11) startingXI.push(playerId);
-        else substitutes.push(playerId); // overflow
+        else substitutes.push(playerId);
     }
     if (to === 'sub') substitutes.push(playerId);
-    // 'available' = just remove (already done above)
     selectedPlayerId = null;
     renderSquadPicker();
     populateSetPieceTakers();
@@ -511,9 +562,11 @@ function onChipDrop(e, target) {
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
     if (!dragPlayerId) return;
-    movePlayer(dragPlayerId, dragSource, target);
+    const pid = dragPlayerId;
+    const src = dragSource;
     dragPlayerId = null;
     dragSource = null;
+    movePlayer(pid, src, target);
 }
 window.onChipDrop = onChipDrop;
 

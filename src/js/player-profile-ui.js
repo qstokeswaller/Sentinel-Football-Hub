@@ -8,6 +8,7 @@ import matchManager from '../managers/match-manager.js';
 import { showToast } from '../toast.js';
 import { createYearPicker } from './year-picker.js';
 import { REPORT_SECTIONS, REPORT_SCALE_LABELS } from './report-sections.js';
+import { hasFeature } from '../tier.js';
 
 console.log('Player Profile UI: Script Loaded');
 
@@ -15,6 +16,85 @@ let currentPlayer = null;
 let currentPlayerId = null;
 let editingDevStructureId = null;
 let editingAssessmentId = null;
+
+// ── Unsaved changes tracking ───────────────────────────────────────────────
+let _dirty = false;
+
+function markDirty() { _dirty = true; }
+function resetDirty() { _dirty = false; }
+
+// ── Platform-style confirm modal ──────────────────────────────────────────────
+function ensureProfileConfirmModal() {
+    if (document.getElementById('profileConfirmModal')) return;
+    const el = document.createElement('div');
+    el.id = 'profileConfirmModal';
+    el.className = 'modal-overlay';
+    el.innerHTML = `
+        <div class="modal-container" style="max-width:420px;">
+            <div class="modal-header">
+                <h2 id="profileConfirmTitle" style="font-size:1rem;font-weight:700;margin:0;"></h2>
+            </div>
+            <div class="modal-body" style="padding:20px 24px;">
+                <p id="profileConfirmMessage" style="font-size:.88rem;color:#475569;margin:0;line-height:1.6;"></p>
+            </div>
+            <div class="modal-footer">
+                <button id="profileConfirmCancel" class="dash-btn outline">Cancel</button>
+                <button id="profileConfirmOk" class="dash-btn primary">Confirm</button>
+            </div>
+        </div>`;
+    document.body.appendChild(el);
+}
+
+function profileConfirm(title, message, confirmLabel = 'Confirm', isDanger = true) {
+    ensureProfileConfirmModal();
+    return new Promise(resolve => {
+        document.getElementById('profileConfirmTitle').textContent = title;
+        document.getElementById('profileConfirmMessage').textContent = message;
+        const modal = document.getElementById('profileConfirmModal');
+        modal.classList.add('active');
+        const oldOk = document.getElementById('profileConfirmOk');
+        const newOk = oldOk.cloneNode(true);
+        newOk.textContent = confirmLabel;
+        newOk.className = 'dash-btn';
+        newOk.style.cssText = isDanger ? 'background:#ef4444;color:#fff;border-color:#ef4444;' : 'background:var(--blue-accent);color:#fff;border-color:var(--blue-accent);';
+        oldOk.parentNode.replaceChild(newOk, oldOk);
+        const oldCancel = document.getElementById('profileConfirmCancel');
+        const newCancel = oldCancel.cloneNode(true);
+        oldCancel.parentNode.replaceChild(newCancel, oldCancel);
+        let settled = false;
+        const done = (result) => {
+            if (settled) return;
+            settled = true;
+            modal.classList.remove('active');
+            resolve(result);
+        };
+        document.getElementById('profileConfirmOk').addEventListener('click', () => done(true));
+        document.getElementById('profileConfirmCancel').addEventListener('click', () => done(false));
+        modal.addEventListener('click', (e) => { if (e.target === modal) done(false); }, { once: true });
+    });
+}
+
+function confirmLeaveIfDirty(message) {
+    if (!_dirty) return Promise.resolve(true);
+    return profileConfirm('Unsaved Changes', message || 'You have unsaved changes. Leave without saving?', 'Leave', false);
+}
+
+function setupDirtyTracking() {
+    const panel = document.getElementById('profEditPanel');
+    if (!panel || panel._dirtyWired) return;
+    panel._dirtyWired = true;
+    panel.addEventListener('input', markDirty);
+    panel.addEventListener('change', markDirty);
+}
+
+window.addEventListener('beforeunload', (e) => {
+    if (_dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+// Tier helpers removed — use hasFeature() from tier.js (imported above)
 
 // --- Position Groups & Helpers (shared with player-ui.js) ---
 const POSITION_GROUPS = [
@@ -53,61 +133,36 @@ function displayAge(ageValue) {
     return ageValue;
 }
 
-function buildMultiSelectPositions(triggerId, optionsId) {
-    const trigger = document.getElementById(triggerId);
-    const optionsContainer = document.getElementById(optionsId);
-    if (!trigger || !optionsContainer) return;
-
-    let html = '';
+function buildPositionSelect(selectId, includeBlank = false) {
+    const el = document.getElementById(selectId);
+    if (!el || el._posBuilt) return;
+    el._posBuilt = true;
+    let html = includeBlank ? '<option value="">— None —</option>' : '<option value="">Select...</option>';
     POSITION_GROUPS.forEach(group => {
-        html += `<div class="multi-select-group-label">${group.label}</div>`;
+        html += `<optgroup label="${group.label}">`;
         group.positions.forEach(pos => {
-            html += `
-                <label class="multi-select-option">
-                    <input type="checkbox" value="${pos.value}" data-label="${pos.label}">
-                    ${pos.label}
-                </label>`;
+            html += `<option value="${pos.value}">${pos.label}</option>`;
         });
+        html += '</optgroup>';
     });
-    optionsContainer.innerHTML = html;
+    el.innerHTML = html;
+}
 
-    trigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isOpen = optionsContainer.style.display !== 'none';
-        optionsContainer.style.display = isOpen ? 'none' : 'block';
-    });
-
-    optionsContainer.addEventListener('change', () => {
-        const checked = optionsContainer.querySelectorAll('input[type="checkbox"]:checked');
-        const values = Array.from(checked).map(cb => cb.value);
-        trigger.textContent = values.length > 0 ? values.join(', ') : 'Select position(s)...';
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!trigger.contains(e.target) && !optionsContainer.contains(e.target)) {
-            optionsContainer.style.display = 'none';
-        }
+function setPositionSelects(primary, secondary, third) {
+    ['editProfPositionPrimary', 'editProfPositionSecondary', 'editProfPositionThird'].forEach((id, i) => {
+        buildPositionSelect(id, i > 0);
+        const el = document.getElementById(id);
+        if (!el) return;
+        const val = [primary, secondary, third][i] || '';
+        el.value = val;
     });
 }
 
-function getSelectedPositions(optionsId) {
-    const container = document.getElementById(optionsId);
-    if (!container) return '';
-    const checked = container.querySelectorAll('input[type="checkbox"]:checked');
-    return Array.from(checked).map(cb => cb.value).join(', ');
-}
-
-function setSelectedPositions(optionsId, triggerId, positionString) {
-    const container = document.getElementById(optionsId);
-    const trigger = document.getElementById(triggerId);
-    if (!container) return;
-    const values = positionString ? positionString.split(',').map(s => s.trim()) : [];
-    container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.checked = values.includes(cb.value);
-    });
-    if (trigger) {
-        trigger.textContent = values.length > 0 ? values.join(', ') : 'Select position(s)...';
-    }
+function getPositionFromSelects() {
+    const vals = ['editProfPositionPrimary', 'editProfPositionSecondary', 'editProfPositionThird']
+        .map(id => (document.getElementById(id)?.value || '').trim())
+        .filter(Boolean);
+    return vals.join(', ');
 }
 
 function populateYearOfBirthSelect(selectId) {
@@ -118,6 +173,17 @@ function populateYearOfBirthSelect(selectId) {
     createYearPicker(el, {
         minYear: 1970,
         maxYear: currentYear - 5,
+        placeholder: 'Select Year',
+    });
+}
+
+function populateYearJoinedSelect(selectId) {
+    const el = document.getElementById(selectId);
+    if (!el || el._yearPicker) return;
+    const currentYear = new Date().getFullYear();
+    createYearPicker(el, {
+        minYear: 2000,
+        maxYear: currentYear,
         placeholder: 'Select Year',
     });
 }
@@ -155,7 +221,7 @@ export async function initPlayerProfileUI() {
         currentPlayerId = urlParams.get('id');
 
         if (!currentPlayerId) {
-            alert("No player ID provided. Returning to roster.");
+            showToast('No player ID provided', 'error');
             window.location.href = 'players.html';
             return;
         }
@@ -168,16 +234,24 @@ export async function initPlayerProfileUI() {
 
         if (!currentPlayer) {
             console.error('Player Profile: Player NOT found for ID:', currentPlayerId);
-            alert("Player not found.");
+            showToast('Player not found', 'error');
             window.location.href = 'players.html';
             return;
         }
 
+        // Expose for share dossier button
+        window._currentPlayer = currentPlayer;
+
         populateProfileHeader();
+        initTabVisibility();
         setupTabs();
+        setupDirtyTracking();
+        setupBackNavigation();
+        setupReportsSubNav();
         setupAssessmentForm();
         setupOverviewEditor();
         setupAnalysisTab();
+        setupMediaTab();
         renderAssessmentHistory();
         renderOverviewHistory();
         renderPlayerRadarChart();
@@ -211,16 +285,19 @@ export async function initPlayerProfileUI() {
             }
         });
 
-        // --- Profile Header Action Buttons ---
+        // --- Player Action Buttons (now at bottom of Details tab) ---
         const btnProfileDelete = document.getElementById('btnProfileDeletePlayer');
         if (btnProfileDelete) {
             btnProfileDelete.addEventListener('click', async () => {
-                if (!confirm(`Delete ${currentPlayer.name}? This cannot be undone.`)) return;
+                const confirmed = await profileConfirm('Delete Player', `Permanently delete ${currentPlayer.name}? This cannot be undone.`, 'Delete Player');
+                if (!confirmed) return;
                 const ok = await squadManager.deletePlayer(currentPlayerId);
                 if (ok) {
-                    window.location.href = 'players.html';
+                    resetDirty();
+                    showToast('Player deleted', 'success');
+                    setTimeout(() => { window.location.href = 'players.html'; }, 800);
                 } else {
-                    alert('Failed to delete player.');
+                    showToast('Failed to delete player', 'error');
                 }
             });
         }
@@ -229,7 +306,7 @@ export async function initPlayerProfileUI() {
         if (btnProfileAssign) {
             btnProfileAssign.addEventListener('click', () => {
                 const squads = squadManager.getSquads();
-                if (!squads.length) { alert('No squads available.'); return; }
+                if (!squads.length) { showToast('No squads available', 'info'); return; }
                 const options = squads.map(s => `<option value="${s.id}" ${s.id === currentPlayer.squadId ? 'selected' : ''}>${s.name}</option>`).join('');
                 const overlay = document.createElement('div');
                 overlay.className = 'modal-overlay active';
@@ -254,14 +331,16 @@ export async function initPlayerProfileUI() {
                 document.getElementById('btnConfirmProfileAssign').addEventListener('click', async () => {
                     const newSquadId = document.getElementById('profileSquadSelect').value;
                     currentPlayer.squadId = newSquadId;
-                    const ok = await squadManager.updatePlayer(currentPlayer);
+                    const ok = await squadManager.updatePlayer(currentPlayerId, { squadId: newSquadId });
                     overlay.remove();
                     if (ok) {
                         const squad = squads.find(s => s.id === newSquadId);
                         const profSquadEl = document.getElementById('profSquad');
                         if (profSquadEl && squad) profSquadEl.textContent = squad.name;
                         showToast('Squad updated', 'success');
-                    } else { alert('Failed to update squad.'); }
+                    } else {
+                        showToast('Failed to update squad', 'error');
+                    }
                 });
             });
         }
@@ -269,6 +348,18 @@ export async function initPlayerProfileUI() {
     } catch (err) {
         console.error('Player Profile UI: Critical Error in init:', err);
     }
+}
+
+function setupBackNavigation() {
+    const btn = document.getElementById('btnProfileBack');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+        const ok = await confirmLeaveIfDirty('You have unsaved changes. Leave without saving?');
+        if (ok) {
+            resetDirty();
+            window.history.back();
+        }
+    });
 }
 
 // --- Overview & Dev Structures Logic (TuksFootball Player Report) ---
@@ -397,7 +488,7 @@ async function saveDevStructures() {
             btn.disabled = false;
         }, 1500);
     } else {
-        alert('Failed to save to database. Please ensure the backend is running and the database is accessible.');
+        showToast('Failed to save. Please try again.', 'error');
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
@@ -479,7 +570,8 @@ async function renderOverviewHistory() {
 }
 
 window.deleteDevStructure = async (id) => {
-    if (!confirm('Are you sure you want to delete this overall assessment record?')) return;
+    const ok = await profileConfirm('Delete Record', 'Are you sure you want to delete this overall assessment record?', 'Delete');
+    if (!ok) return;
     const success = await squadManager.deleteDevStructure(id);
     if (success) {
         renderOverviewHistory();
@@ -824,10 +916,12 @@ window.loadOverviewFromHistory = async (id) => {
     document.getElementById('overviewDate').value = fullRecord.date;
     editingDevStructureId = fullRecord.id;
 
-    // Switch to Overview tab
-    document.querySelector('[data-tab="overview"]').click();
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Switch to Reports tab > player-report section
+    document.querySelector('[data-tab="reports"]')?.click();
+    setTimeout(() => {
+        document.querySelector('.report-sub-btn[data-report="player-report"]')?.click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
     showToast('Report loaded for editing', 'success');
 };
 
@@ -868,35 +962,15 @@ function populateProfileHeader() {
     }
     document.getElementById('profSquad').textContent = squad ? squad.name : 'Unassigned';
 
-    // Populate Read-Only View
-    document.getElementById('viewProfAge').textContent = displayAge(currentPlayer.age);
-    document.getElementById('viewProfHeight').textContent = currentPlayer.height ? currentPlayer.height + ' cm' : '--';
-    document.getElementById('viewProfWeight').textContent = currentPlayer.weight ? currentPlayer.weight + ' kg' : '--';
-    document.getElementById('viewProfFoot').textContent = currentPlayer.foot || '--';
-    document.getElementById('viewProfPosition').textContent = currentPlayer.position || '--';
-    document.getElementById('viewProfClubs').textContent = currentPlayer.previousClubs || '--';
-    const viewSchool = document.getElementById('viewProfSchool');
-    if (viewSchool) viewSchool.textContent = currentPlayer.school || '--';
-
-    // Toggle Tuks vs Orion fields based on archetype
-    const isPC = window._profile?.clubs?.settings?.archetype === 'private_coaching';
-    const viewNewToClubChip = document.getElementById('viewProfNewToClubChip');
-    const viewCurrentClubChip = document.getElementById('viewProfCurrentClubChip');
-    if (isPC) {
-        if (viewNewToClubChip) viewNewToClubChip.style.display = 'none';
-        if (viewCurrentClubChip) {
-            viewCurrentClubChip.style.display = '';
-            const ccEl = document.getElementById('viewProfCurrentClub');
-            if (ccEl) ccEl.textContent = currentPlayer.currentClub || '--';
-        }
-    } else {
-        if (viewNewToClubChip) viewNewToClubChip.style.display = '';
-        if (viewCurrentClubChip) viewCurrentClubChip.style.display = 'none';
+    const profStatusSel = document.getElementById('profStatusSelect');
+    if (profStatusSel) {
+        const status = currentPlayer.playerStatus || 'active';
+        profStatusSel.value = status;
+        profStatusSel.className = `player-status-select status-${status}`;
     }
-    const viewNewToClub = document.getElementById('viewProfNewToClub');
-    if (viewNewToClub) viewNewToClub.textContent = currentPlayer.newToClub ? 'Yes' : 'No';
 
-    // Toggle edit form fields
+    // Toggle edit form fields (archetype-specific fields)
+    const isPC = window._profile?.clubs?.settings?.archetype === 'private_coaching';
     const editSchoolSelectBox = document.getElementById('editProfSchoolSelectBox');
     const editSchoolTextBox = document.getElementById('editProfSchoolTextBox');
     const editCurrentClubBox = document.getElementById('editProfCurrentClubBox');
@@ -918,11 +992,17 @@ function populateProfileHeader() {
     const editAgeEl = document.getElementById('editProfAge');
     if (editAgeEl?._yearPicker) editAgeEl._yearPicker.setValue(currentPlayer.age || '');
     else editAgeEl.value = currentPlayer.age || '';
+
+    // Year Joined Club picker
+    populateYearJoinedSelect('editProfYearJoined');
+    const editYearJoinedEl = document.getElementById('editProfYearJoined');
+    if (editYearJoinedEl?._yearPicker) editYearJoinedEl._yearPicker.setValue(currentPlayer.yearJoined || '');
+    else if (editYearJoinedEl) editYearJoinedEl.value = currentPlayer.yearJoined || '';
     document.getElementById('editProfHeight').value = currentPlayer.height || '';
     document.getElementById('editProfWeight').value = currentPlayer.weight || '';
     document.getElementById('editProfFoot').value = currentPlayer.foot || 'Right';
-    buildMultiSelectPositions('editProfPositionTrigger', 'editProfPositionOptions');
-    setSelectedPositions('editProfPositionOptions', 'editProfPositionTrigger', currentPlayer.position || '');
+    const posParts = (currentPlayer.position || '').split(',').map(s => s.trim());
+    setPositionSelects(posParts[0] || '', posParts[1] || '', posParts[2] || '');
     populateEditClubs(currentPlayer.previousClubs || '');
     if (isPC) {
         const editSchoolText = document.getElementById('editProfSchoolText');
@@ -940,6 +1020,8 @@ function populateProfileHeader() {
     const _setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
     _setVal('editProfJersey', currentPlayer.jerseyNumber);
     _setVal('editProfNationality', currentPlayer.nationality);
+    _setVal('editProfPhone', currentPlayer.phone);
+    _setVal('editProfEmail', currentPlayer.email);
     _setVal('editProfParentName', currentPlayer.parentName);
     _setVal('editProfParentPhone', currentPlayer.parentPhone);
     _setVal('editProfParentEmail', currentPlayer.parentEmail);
@@ -947,30 +1029,64 @@ function populateProfileHeader() {
     _setVal('editProfEmergencyPhone', currentPlayer.emergencyContactPhone);
     _setVal('editProfMedical', currentPlayer.medicalInfo);
 
-    // Action Buttons
-    const btnToggleEdit = document.getElementById('btnToggleEditProfile');
-    const btnCancelEdit = document.getElementById('btnCancelProfileEdit');
+    // Wire save button once
     const btnSave = document.getElementById('btnSaveProfileInfo');
+    if (btnSave && !btnSave._wired) {
+        btnSave._wired = true;
+        btnSave.addEventListener('click', saveProfileInfo);
+    }
 
-    if (btnToggleEdit) btnToggleEdit.addEventListener('click', () => toggleEditMode(true));
-    if (btnCancelEdit) btnCancelEdit.addEventListener('click', () => toggleEditMode(false));
-    if (btnSave) btnSave.addEventListener('click', saveProfileInfo);
-
-    // Profile image upload handler
+    // Profile image upload handler (wire once)
     const imageInput = document.getElementById('editProfImageInput');
-    if (imageInput) {
+    if (imageInput && !imageInput._wired) {
+        imageInput._wired = true;
         imageInput.addEventListener('change', handleProfileImageSelect);
     }
     const btnRemoveImg = document.getElementById('btnRemoveProfImage');
-    if (btnRemoveImg) {
+    if (btnRemoveImg && !btnRemoveImg._wired) {
+        btnRemoveImg._wired = true;
         btnRemoveImg.addEventListener('click', handleRemoveProfileImage);
     }
 
-    const allSquads = squadManager.getSquads();
-    const assessTeamSelect = document.getElementById('assessTeam');
-    if (assessTeamSelect) {
-        assessTeamSelect.innerHTML = '<option value="">Select Team / Squad</option>' +
-            allSquads.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+}
+
+function initTabVisibility() {
+    const reportsBtn = document.getElementById('tabBtnReports');
+    const analysisBtn = document.getElementById('tabBtnAnalysis');
+    const mediaBtn = document.querySelector('.tab-btn[data-tab="media"]');
+    const mediaSingle = document.getElementById('mediaSingleHighlight');
+    const mediaBase = document.getElementById('mediaBaseMessage');
+
+    if (reportsBtn) {
+        if (!hasFeature('player_reports')) {
+            reportsBtn.classList.add('tier-locked');
+            reportsBtn.title = 'Upgrade to Basic to access Reports';
+        }
+    }
+    if (mediaBtn) {
+        if (!hasFeature('media_tabs')) {
+            mediaBtn.classList.add('tier-locked');
+            mediaBtn.title = 'Upgrade to Pro to access Media';
+        }
+    }
+    if (analysisBtn) {
+        if (!hasFeature('media_tabs')) {
+            analysisBtn.classList.add('tier-locked');
+            analysisBtn.title = 'Upgrade to Pro to access Analysis';
+        }
+    }
+    if (mediaSingle) mediaSingle.style.display = hasFeature('media_tabs') ? '' : 'none';
+    if (mediaBase) mediaBase.style.display = hasFeature('media_tabs') ? 'none' : '';
+}
+
+function _triggerTabLoad(tabName) {
+    if (tabName === 'stats') {
+        loadCareerStats(currentPlayerId);
+        loadTrainingAttendance(currentPlayerId);
+    }
+    if (tabName === 'analysis') {
+        renderHighlights();
+        renderAnalysisVideos();
     }
 }
 
@@ -982,10 +1098,27 @@ function setupTabs() {
         tab.addEventListener('click', (e) => {
             const tabName = tab.getAttribute('data-tab');
 
-            // If manual click, clear editing state for that tab
-            if (e.isTrusted) {
-                if (tabName === 'assess') editingAssessmentId = null;
-                if (tabName === 'overview') editingDevStructureId = null;
+            // Block tier-locked tabs
+            if (tab.classList.contains('tier-locked')) {
+                showToast(tab.title || 'Upgrade required', 'info');
+                return;
+            }
+
+            // Warn if leaving Details tab with unsaved changes
+            const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab');
+            if (activeTab === 'details' && tabName !== 'details' && _dirty) {
+                profileConfirm('Unsaved Changes', 'You have unsaved changes. Leave without saving?', 'Leave', false)
+                    .then(ok => {
+                        if (!ok) return;
+                        resetDirty();
+                        tabs.forEach(t => t.classList.remove('active'));
+                        contents.forEach(c => c.classList.remove('active'));
+                        tab.classList.add('active');
+                        const targetEl = document.getElementById('tab-' + tabName);
+                        if (targetEl) targetEl.classList.add('active');
+                        _triggerTabLoad(tabName);
+                    });
+                return;
             }
 
             // Remove active
@@ -994,21 +1127,58 @@ function setupTabs() {
 
             // Add active
             tab.classList.add('active');
-            const targetId = 'tab-' + tabName;
-            const targetEl = document.getElementById(targetId);
+            const targetEl = document.getElementById('tab-' + tabName);
             if (targetEl) targetEl.classList.add('active');
 
-            if (tabName === 'history') {
+            _triggerTabLoad(tabName);
+        });
+    });
+}
+
+function setupReportsSubNav() {
+    const subBtns = document.querySelectorAll('.report-sub-btn');
+    const sections = document.querySelectorAll('.report-section');
+
+    // Gate sub-tabs that require Pro+
+    const assessSubBtn = document.querySelector('.report-sub-btn[data-report="new-assessment"]');
+    const historySubBtn = document.querySelector('.report-sub-btn[data-report="history"]');
+    if (assessSubBtn && !hasFeature('assessments')) {
+        assessSubBtn.classList.add('tier-locked');
+        assessSubBtn.title = 'Upgrade to Pro to create Assessments';
+        assessSubBtn.style.opacity = '0.5';
+    }
+    if (historySubBtn && !hasFeature('assessment_history')) {
+        historySubBtn.classList.add('tier-locked');
+        historySubBtn.title = 'Upgrade to Pro to view Assessment History';
+        historySubBtn.style.opacity = '0.5';
+    }
+
+    subBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.classList.contains('tier-locked')) {
+                showToast(btn.title || 'Upgrade required', 'info');
+                return;
+            }
+            const target = btn.getAttribute('data-report');
+
+            subBtns.forEach(b => b.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+
+            btn.classList.add('active');
+            const targetEl = document.getElementById('report-section-' + target);
+            if (targetEl) targetEl.classList.add('active');
+
+            if (target === 'history') {
                 renderAssessmentHistory();
                 renderOverviewHistory();
-            }
-
-            if (tabName === 'player-analysis') {
-                renderHighlights();
-                renderAnalysisVideos();
+                renderPlayerRadarChart();
+                renderOverviewRadarChart();
             }
         });
     });
+
+    // Activate first sub-section by default
+    if (subBtns.length > 0) subBtns[0].click();
 }
 
 function setupAssessmentForm() {
@@ -1028,7 +1198,7 @@ function setupAssessmentForm() {
     }
 
     // Wire up number-button rating selectors
-    document.querySelectorAll('#tab-new-assessment .rating-stars').forEach(group => {
+    document.querySelectorAll('#report-section-new-assessment .rating-stars').forEach(group => {
         group.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('click', () => {
                 group.querySelectorAll('button').forEach(b => b.classList.remove('active'));
@@ -1133,7 +1303,7 @@ async function saveAssessment() {
             btnSubmit.disabled = false;
 
             // Clear form (only assessment ratings + comments, not evaluator/team)
-            document.querySelectorAll('#tab-new-assessment .rating-stars button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#report-section-new-assessment .rating-stars button').forEach(b => b.classList.remove('active'));
             document.getElementById('assessComments').value = '';
             document.getElementById('assessMatch').value = '';
 
@@ -1141,7 +1311,7 @@ async function saveAssessment() {
             renderAssessmentHistory();
         }, 1500);
     } else {
-        alert('Failed to save assessment to database. Please check connection.');
+        showToast('Failed to save assessment. Check connection.', 'error');
         btnSubmit.innerHTML = originalText;
         btnSubmit.disabled = false;
     }
@@ -1400,7 +1570,8 @@ async function renderOverviewRadarChart() {
 }
 
 window.deleteAssessment = async (id) => {
-    if (!confirm('Are you sure you want to delete this assessment?')) return;
+    const ok = await profileConfirm('Delete Assessment', 'Are you sure you want to delete this assessment?', 'Delete');
+    if (!ok) return;
     const success = await squadManager.deleteAssessment(id);
     if (success) {
         renderAssessmentHistory();
@@ -1461,15 +1632,12 @@ window.loadAssessmentForEdit = async (id) => {
     // Populate comments
     document.getElementById('assessComments').value = record.notes || '';
 
-    // Switch to Assess tab
-    document.querySelector('[data-tab="assess"]').click();
-
-    // Scroll to form
-    const formSection = document.getElementById('tab-assess');
-    if (formSection) {
-        formSection.scrollIntoView({ behavior: 'smooth' });
-    }
-
+    // Switch to Reports > new-assessment section
+    document.querySelector('[data-tab="reports"]')?.click();
+    setTimeout(() => {
+        document.querySelector('.report-sub-btn[data-report="new-assessment"]')?.click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
     showToast('Assessment loaded for editing', 'success');
 };
 
@@ -1502,12 +1670,14 @@ window.viewAssessmentDetails = async (assessId) => {
         Object.keys(categories).forEach(catKey => {
             const catData = record.ratings[catKey];
             if (catData) {
+                const attrKeys = Object.keys(catData).filter(k => k !== '_comment');
+                const comment = catData._comment || '';
                 const section = document.createElement('div');
                 section.className = 'form-group-bubble';
                 section.innerHTML = `
                     <label style="color: var(--blue-accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">${categories[catKey]}</label>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        ${Object.keys(catData).map(attr => {
+                        ${attrKeys.map(attr => {
                     const val = catData[attr] || 0;
                     let numBtns = '';
                     for (let i = 1; i <= 5; i++) {
@@ -1523,6 +1693,7 @@ window.viewAssessmentDetails = async (assessId) => {
                             `;
                 }).join('')}
                     </div>
+                    ${comment ? `<div style="margin-top:8px;font-size:0.82rem;color:#475569;background:#f8fafc;border-radius:6px;padding:8px 10px;font-style:italic;border:1px solid #e2e8f0;">${comment.replace(/\n/g, '<br>')}</div>` : ''}
                 `;
                 ratingsContainer.appendChild(section);
             }
@@ -1558,28 +1729,6 @@ window.viewAssessmentDetails = async (assessId) => {
 
     // Show Modal
     document.getElementById('modalViewAssessment').classList.add('active');
-}
-
-function toggleEditMode(isEditing) {
-    const viewState = document.getElementById('profStatsViewState');
-    const editState = document.getElementById('profStatsEditState');
-    const editPanel = document.getElementById('profEditPanel');
-    const toggleBtn = document.getElementById('btnToggleEditProfile');
-
-    if (isEditing) {
-        viewState.style.display = 'none';
-        if (editPanel) editPanel.style.display = 'block';
-        editState.style.display = 'block';
-        toggleBtn.style.display = 'none';
-    } else {
-        viewState.style.display = 'flex';
-        if (editPanel) editPanel.style.display = 'none';
-        editState.style.display = 'none';
-        toggleBtn.style.display = 'block';
-
-        // Reset inputs on cancel
-        populateProfileHeader();
-    }
 }
 
 // ── Profile Image Upload ───────────────────────────────────────────────────
@@ -1661,6 +1810,21 @@ async function uploadProfileImage(file) {
     return publicUrl;
 }
 
+window.updateProfileStatus = async function(status) {
+    const success = await squadManager.updatePlayerStatus(currentPlayerId, status);
+    if (success) {
+        if (currentPlayer) currentPlayer.playerStatus = status;
+        const sel = document.getElementById('profStatusSelect');
+        if (sel) sel.className = `player-status-select status-${status}`;
+        const labels = { active: 'Active', injured: 'Injured', sick: 'Sick', suspended: 'Suspended', unavailable: 'Unavailable', trialist: 'Trialist' };
+        showToast(labels[status] || status, 'success');
+    } else {
+        showToast('Failed to update status', 'error');
+        const sel = document.getElementById('profStatusSelect');
+        if (sel && currentPlayer) { sel.value = currentPlayer.playerStatus || 'active'; }
+    }
+};
+
 async function saveProfileInfo() {
     const btn = document.getElementById('btnSaveProfileInfo');
     const originalHTML = btn.innerHTML;
@@ -1673,7 +1837,7 @@ async function saveProfileInfo() {
         height: document.getElementById('editProfHeight').value,
         weight: document.getElementById('editProfWeight').value,
         foot: document.getElementById('editProfFoot').value,
-        position: getSelectedPositions('editProfPositionOptions'),
+        position: getPositionFromSelects(),
         previousClubs: getEditClubs(),
         school: isPC
             ? (document.getElementById('editProfSchoolText')?.value || '')
@@ -1682,12 +1846,15 @@ async function saveProfileInfo() {
         newToClub: isPC ? false : (document.getElementById('editProfNewToClub')?.value === 'true'),
         jerseyNumber: document.getElementById('editProfJersey')?.value || '',
         nationality: document.getElementById('editProfNationality')?.value || '',
+        phone: document.getElementById('editProfPhone')?.value || '',
+        email: document.getElementById('editProfEmail')?.value || '',
         parentName: document.getElementById('editProfParentName')?.value || '',
         parentPhone: document.getElementById('editProfParentPhone')?.value || '',
         parentEmail: document.getElementById('editProfParentEmail')?.value || '',
         emergencyContactName: document.getElementById('editProfEmergencyName')?.value || '',
         emergencyContactPhone: document.getElementById('editProfEmergencyPhone')?.value || '',
         medicalInfo: document.getElementById('editProfMedical')?.value || '',
+        yearJoined: document.getElementById('editProfYearJoined')?.value || '',
     };
 
     // Handle profile image upload/removal
@@ -1711,16 +1878,16 @@ async function saveProfileInfo() {
         currentPlayer = { ...currentPlayer, ...updatedData };
         _pendingProfileImage = null;
 
-        // Refresh avatar display
+        // Refresh avatar display and form values
         populateProfileHeader();
+        resetDirty();
         btn.innerHTML = '<i class="fas fa-check"></i> Saved';
         btn.style.background = 'var(--green-accent)';
         btn.style.color = '#fff';
         btn.style.borderColor = 'var(--green-accent)';
+        showToast('Player details saved', 'success');
 
-        // Return to view mode with updated data
         setTimeout(() => {
-            toggleEditMode(false);
             btn.innerHTML = originalHTML;
             btn.style.background = '';
             btn.style.color = '';
@@ -1743,9 +1910,7 @@ async function saveProfileInfo() {
     }
 }// --- Player Analysis Logic ---
 function setupAnalysisTab() {
-    console.log('Player Profile: Setting up Analysis Tab...');
-
-    // Global functions for buttons in HTML
+    // Global functions for buttons in HTML onclick handlers
     window.openHighlightModal = () => {
         document.getElementById('modalAddHighlight').classList.add('active');
     };
@@ -1757,12 +1922,219 @@ function setupAnalysisTab() {
     window.closeModal = (id) => {
         document.getElementById(id).classList.remove('active');
     };
-
-    loadCareerStats(currentPlayerId);
-    loadTrainingAttendance(currentPlayerId);
-    renderHighlights();
-    renderAnalysisVideos();
+    // Rendering is lazy — triggered in setupTabs when analysis tab is clicked
 }
+
+function setupMediaTab() {
+    // Populate media tab avatar
+    const mediaInitials = document.getElementById('mediaAvatarInitials');
+    const mediaImage = document.getElementById('mediaAvatarImage');
+    if (mediaInitials) {
+        mediaInitials.textContent = (currentPlayer?.name || '--').substring(0, 2).toUpperCase();
+        mediaInitials.style.display = currentPlayer?.profileImageUrl ? 'none' : 'flex';
+    }
+    if (mediaImage) {
+        if (currentPlayer?.profileImageUrl) {
+            mediaImage.src = currentPlayer.profileImageUrl;
+            mediaImage.style.display = 'block';
+        } else {
+            mediaImage.style.display = 'none';
+        }
+    }
+
+    // Photo upload in media tab (wire once)
+    const mediaProfInput = document.getElementById('mediaProfImageInput');
+    if (mediaProfInput && !mediaProfInput._wired) {
+        mediaProfInput._wired = true;
+        mediaProfInput.addEventListener('change', async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const maxSize = 2 * 1024 * 1024;
+            if (file.size > maxSize) { showToast('File too large (max 2MB)', 'error'); e.target.value = ''; return; }
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { showToast('Invalid format', 'error'); e.target.value = ''; return; }
+            try {
+                const imageUrl = await uploadProfileImage(file);
+                const ok = await squadManager.updatePlayer(currentPlayerId, { profileImageUrl: imageUrl });
+                if (ok) {
+                    currentPlayer.profileImageUrl = imageUrl;
+                    populateProfileHeader();
+                    setupMediaTab();
+                    showToast('Photo updated', 'success');
+                }
+            } catch (err) {
+                showToast('Upload failed', 'error');
+            }
+        });
+    }
+
+    const btnMediaRemove = document.getElementById('btnMediaRemovePhoto');
+    if (btnMediaRemove && !btnMediaRemove._wired) {
+        btnMediaRemove._wired = true;
+        btnMediaRemove.addEventListener('click', async () => {
+            const ok = await squadManager.updatePlayer(currentPlayerId, { profileImageUrl: '' });
+            if (ok) {
+                currentPlayer.profileImageUrl = '';
+                populateProfileHeader();
+                setupMediaTab();
+                showToast('Photo removed', 'success');
+            }
+        });
+    }
+
+    // Show/hide remove button
+    if (btnMediaRemove) btnMediaRemove.style.display = currentPlayer?.profileImageUrl ? '' : 'none';
+
+    // Pro+: single highlight
+    if (hasFeature('media_tabs')) {
+        const highlights = typeof currentPlayer.highlights === 'string'
+            ? JSON.parse(currentPlayer.highlights || '[]')
+            : (currentPlayer.highlights || []);
+        const h = highlights[0];
+
+        const titleEl = document.getElementById('mediaHighlightTitle');
+        const urlEl = document.getElementById('mediaHighlightUrl');
+        if (titleEl) titleEl.value = h?.title || '';
+        if (urlEl) urlEl.value = h?.url || '';
+
+        const preview = document.getElementById('mediaHighlightPreview');
+        const previewTitle = document.getElementById('mediaHighlightPreviewTitle');
+        const previewUrl = document.getElementById('mediaHighlightPreviewUrl');
+        if (preview) preview.style.display = h ? '' : 'none';
+        if (previewTitle) previewTitle.textContent = h?.title || '';
+        if (previewUrl) { previewUrl.textContent = h?.url || ''; previewUrl.href = h?.url || '#'; }
+
+        const btnSave = document.getElementById('btnSaveMediaHighlight');
+        if (btnSave && !btnSave._wired) {
+            btnSave._wired = true;
+            btnSave.addEventListener('click', async () => {
+                const title = document.getElementById('mediaHighlightTitle')?.value?.trim();
+                const url = document.getElementById('mediaHighlightUrl')?.value?.trim();
+                if (!title || !url) { showToast('Title and URL are required', 'error'); return; }
+                const allHighlights = typeof currentPlayer.highlights === 'string'
+                    ? JSON.parse(currentPlayer.highlights || '[]')
+                    : (currentPlayer.highlights || []);
+                allHighlights[0] = { title, url, timestamp: new Date().toISOString() };
+                const ok = await squadManager.updatePlayer(currentPlayerId, { highlights: JSON.stringify(allHighlights) });
+                if (ok) {
+                    currentPlayer.highlights = allHighlights;
+                    setupMediaTab();
+                    showToast('Highlight saved', 'success');
+                }
+            });
+        }
+
+        const btnClear = document.getElementById('btnClearMediaHighlight');
+        if (btnClear && !btnClear._wired) {
+            btnClear._wired = true;
+            btnClear.addEventListener('click', async () => {
+                const ok = await squadManager.updatePlayer(currentPlayerId, { highlights: '[]' });
+                if (ok) {
+                    currentPlayer.highlights = [];
+                    if (document.getElementById('mediaHighlightTitle')) document.getElementById('mediaHighlightTitle').value = '';
+                    if (document.getElementById('mediaHighlightUrl')) document.getElementById('mediaHighlightUrl').value = '';
+                    setupMediaTab();
+                    showToast('Highlight cleared', 'success');
+                }
+            });
+        }
+    }
+
+    // ── Gallery Photos ─────────────────────────────────────────────────────
+    renderGalleryPhotos();
+
+    const galleryUpload = document.getElementById('mediaGalleryUpload');
+    if (galleryUpload && !galleryUpload._wired) {
+        galleryUpload._wired = true;
+        galleryUpload.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+
+            const statusEl = document.getElementById('mediaGalleryStatus');
+            const maxSize = 5 * 1024 * 1024;
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            const valid = files.filter(f => f.size <= maxSize && validTypes.includes(f.type));
+
+            if (valid.length < files.length) {
+                showToast(`${files.length - valid.length} file(s) skipped (max 5MB, JPG/PNG/WebP only)`, 'error');
+            }
+            if (!valid.length) return;
+
+            if (statusEl) statusEl.textContent = `Uploading ${valid.length} photo(s)...`;
+
+            const uploaded = [];
+            for (const file of valid) {
+                try {
+                    const ext = file.name.split('.').pop() || 'jpg';
+                    const path = `players/${currentPlayerId}/gallery/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+                    const { data, error } = await supabase.storage.from('avatars').upload(path, file, {
+                        cacheControl: '3600', upsert: false, contentType: file.type
+                    });
+                    if (error) throw error;
+                    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(data.path);
+                    uploaded.push({ url: publicUrl, name: file.name, uploadedAt: new Date().toISOString() });
+                } catch (err) {
+                    console.error('Gallery upload failed:', err);
+                }
+            }
+
+            if (uploaded.length) {
+                const existing = Array.isArray(currentPlayer.galleryPhotos) ? currentPlayer.galleryPhotos : [];
+                const merged = [...existing, ...uploaded];
+                const ok = await squadManager.updatePlayer(currentPlayerId, { galleryPhotos: merged });
+                if (ok) {
+                    currentPlayer.galleryPhotos = merged;
+                    renderGalleryPhotos();
+                    showToast(`${uploaded.length} photo(s) added`, 'success');
+                }
+            } else {
+                showToast('Upload failed — check storage bucket permissions', 'error');
+            }
+
+            if (statusEl) statusEl.textContent = '';
+            e.target.value = '';
+        });
+    }
+}
+
+function renderGalleryPhotos() {
+    const grid = document.getElementById('mediaGalleryGrid');
+    const empty = document.getElementById('mediaGalleryEmpty');
+    if (!grid) return;
+
+    const photos = Array.isArray(currentPlayer?.galleryPhotos) ? currentPlayer.galleryPhotos : [];
+
+    if (photos.length === 0) {
+        grid.innerHTML = '';
+        if (empty) empty.style.display = '';
+        return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    grid.innerHTML = photos.map((photo, idx) => `
+        <div style="position:relative; border-radius:10px; overflow:hidden; background:#f1f5f9; aspect-ratio:1; border:1px solid #e2e8f0;">
+            <img src="${photo.url}" alt="${photo.name || 'Gallery photo'}"
+                style="width:100%; height:100%; object-fit:cover; display:block; cursor:pointer;"
+                onclick="window.open('${photo.url}','_blank')">
+            <button onclick="deleteGalleryPhoto(${idx})" title="Delete"
+                style="position:absolute; top:5px; right:5px; width:24px; height:24px; border-radius:50%; background:rgba(239,68,68,0.9); border:none; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:0.65rem; line-height:1; padding:0;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+window.deleteGalleryPhoto = async (idx) => {
+    const confirmed = await profileConfirm('Remove Photo', 'Remove this photo from the gallery?', 'Remove');
+    if (!confirmed) return;
+    const photos = Array.isArray(currentPlayer?.galleryPhotos) ? [...currentPlayer.galleryPhotos] : [];
+    photos.splice(idx, 1);
+    const ok = await squadManager.updatePlayer(currentPlayerId, { galleryPhotos: photos });
+    if (ok) {
+        currentPlayer.galleryPhotos = photos;
+        renderGalleryPhotos();
+        showToast('Photo removed', 'success');
+    }
+};
 
 async function loadCareerStats(playerId) {
     const grid = document.getElementById('careerStatsGrid');
@@ -1785,33 +2157,91 @@ async function loadCareerStats(playerId) {
     if (emptyState) emptyState.style.display = 'none';
     grid.style.display = 'grid';
 
-    // Populate year filter from match dates
+    // Resolve all match objects referenced by stats
     const matchIds = [...new Set(allStats.map(s => s.matchId))];
     const matches = matchIds.map(id => matchManager.matches.find(m => String(m.id) === String(id))).filter(Boolean);
-    const years = [...new Set(matches.map(m => m.date ? m.date.substring(0, 4) : null).filter(Boolean))].sort().reverse();
+
+    // Load seasons for this club from Supabase (graceful fallback to calendar-year filter)
+    let seasons = [];
+    const clubId = squadManager.clubId;
+    if (clubId) {
+        try {
+            const { data: sData } = await supabase
+                .from('seasons')
+                .select('id, name, start_date, end_date')
+                .eq('club_id', clubId)
+                .order('start_date', { ascending: false })
+                .limit(20);
+            seasons = sData || [];
+        } catch (e) { /* table may not exist yet */ }
+    }
+
+    // Filter seasons to only those where this player has match data
+    if (seasons.length > 0 && matches.length > 0) {
+        const seasonIdsWithData = new Set();
+        seasons.forEach(s => {
+            if (!s.start_date || !s.end_date) return;
+            const hasMatch = matches.some(m => m.date && m.date >= s.start_date && m.date <= s.end_date);
+            if (hasMatch) seasonIdsWithData.add(s.id);
+        });
+        seasons = seasons.filter(s => seasonIdsWithData.has(s.id));
+    }
 
     if (yearFilter) {
         const currentVal = yearFilter.value;
-        yearFilter.innerHTML = '<option value="all">All Time</option>' +
-            years.map(y => `<option value="${y}">${y}</option>`).join('');
-        yearFilter.value = currentVal || 'all';
+        if (seasons.length > 0) {
+            yearFilter.innerHTML = '<option value="all">All Time</option>' +
+                seasons.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        } else {
+            // Fallback: calendar years from match dates
+            const years = [...new Set(matches.map(m => m.date ? m.date.substring(0, 4) : null).filter(Boolean))].sort().reverse();
+            yearFilter.innerHTML = '<option value="all">All Time</option>' +
+                years.map(y => `<option value="${y}">${y}</option>`).join('');
+        }
+        // Restore previous selection if it still exists
+        if (currentVal && yearFilter.querySelector(`option[value="${currentVal}"]`)) {
+            yearFilter.value = currentVal;
+        } else {
+            yearFilter.value = 'all';
+        }
 
-        // Wire filter change (only once)
         if (!yearFilter._wired) {
             yearFilter._wired = true;
             yearFilter.addEventListener('change', () => loadCareerStats(playerId));
         }
     }
 
-    // Filter by year
-    const selectedYear = yearFilter?.value || 'all';
+    // Filter by selected season or calendar year
+    const selectedVal = yearFilter?.value || 'all';
     let filtered = allStats;
     let filteredAssessments = allAssessments;
-    if (selectedYear !== 'all') {
-        const matchIdsInYear = matches.filter(m => m.date && m.date.startsWith(selectedYear)).map(m => m.id);
-        filtered = allStats.filter(s => matchIdsInYear.includes(s.matchId));
-        filteredAssessments = allAssessments.filter(a => a.date && a.date.startsWith(selectedYear));
+    if (selectedVal !== 'all') {
+        const season = seasons.find(s => String(s.id) === selectedVal);
+        if (season && season.start_date && season.end_date) {
+            // Season-based filtering: match date must fall within season date range
+            const matchIdsInSeason = matches
+                .filter(m => m.date && m.date >= season.start_date && m.date <= season.end_date)
+                .map(m => m.id);
+            filtered = allStats.filter(s => matchIdsInSeason.includes(s.matchId));
+            filteredAssessments = allAssessments.filter(a => a.date && a.date >= season.start_date && a.date <= season.end_date);
+        } else {
+            // Fallback: calendar year matching
+            const matchIdsInYear = matches.filter(m => m.date && m.date.startsWith(selectedVal)).map(m => m.id);
+            filtered = allStats.filter(s => matchIdsInYear.includes(s.matchId));
+            filteredAssessments = allAssessments.filter(a => a.date && a.date.startsWith(selectedVal));
+        }
     }
+
+    // Determine player position group for position-aware stat cards
+    const allPlayers = squadManager ? squadManager.getPlayers({}) : [];
+    const thisPlayer = allPlayers.find(p => String(p.id) === String(playerId));
+    const playerPosGroup = (() => {
+        const pos = (thisPlayer?.position || '').toUpperCase().trim();
+        if (!pos) return '';
+        if (pos.includes('GK') || pos.includes('GOAL')) return 'GK';
+        if (pos.includes('DEF') || pos.includes('CB') || pos.includes('RB') || pos.includes('LB') || pos.includes('BACK')) return 'DEF';
+        return 'OUT';
+    })();
 
     // Aggregate match stats
     const totals = {
@@ -1822,6 +2252,8 @@ async function loadCareerStats(playerId) {
         yellowCards: filtered.reduce((sum, s) => sum + (s.yellowCards || 0), 0),
         redCards: filtered.reduce((sum, s) => sum + (s.redCards || 0), 0),
         motm: filtered.filter(s => s.motm).length,
+        cleanSheets: filtered.filter(s => s.cleanSheet).length,
+        saves: filtered.reduce((sum, s) => sum + (s.saves || 0), 0),
         avgRating: 0
     };
 
@@ -1868,15 +2300,31 @@ async function loadCareerStats(playerId) {
         ? (globalRatingPoints.reduce((a, b) => a + b, 0) / globalRatingPoints.length).toFixed(1)
         : '--';
 
+    // Position-specific performance cards
+    const performanceCards = playerPosGroup === 'GK'
+        ? [
+            { icon: 'fa-shield-alt', color: '#10b981', value: totals.cleanSheets, label: 'Clean Sheets' },
+            { icon: 'fa-hand-paper', color: '#0ea5e9', value: totals.saves, label: 'Saves' },
+          ]
+        : playerPosGroup === 'DEF'
+        ? [
+            { icon: 'fa-bullseye', color: '#ef4444', value: totals.goals, label: 'Goals' },
+            { icon: 'fa-hands-helping', color: '#8b5cf6', value: totals.assists, label: 'Assists' },
+            { icon: 'fa-shield-alt', color: '#10b981', value: totals.cleanSheets, label: 'Clean Sheets' },
+          ]
+        : [
+            { icon: 'fa-bullseye', color: '#ef4444', value: totals.goals, label: 'Goals' },
+            { icon: 'fa-hands-helping', color: '#8b5cf6', value: totals.assists, label: 'Assists' },
+          ];
+
     const statCards = [
         { icon: 'fa-futbol', color: '#00C49A', value: totals.appearances, label: 'Appearances' },
         { icon: 'fa-play-circle', color: '#10b981', value: totals.started, label: 'Started' },
-        { icon: 'fa-bullseye', color: '#ef4444', value: totals.goals, label: 'Goals' },
-        { icon: 'fa-hands-helping', color: '#8b5cf6', value: totals.assists, label: 'Assists' },
+        { icon: 'fa-star', color: '#f59e0b', value: totals.avgRating || '--', label: 'Avg Rating' },
+        ...performanceCards,
         { icon: 'fa-square', color: '#facc15', value: totals.yellowCards, label: 'Yellow Cards' },
         { icon: 'fa-square', color: '#ef4444', value: totals.redCards, label: 'Red Cards' },
         { icon: 'fa-trophy', color: '#f59e0b', value: totals.motm, label: 'MOTM Awards' },
-        { icon: 'fa-star', color: '#0ea5e9', value: totals.avgRating || '--', label: 'Avg Rating' },
         { icon: 'fa-brain', color: '#6366f1', value: tacticalAvg, label: 'Tactical' },
         { icon: 'fa-futbol', color: '#0ea5e9', value: technicalAvg, label: 'Technical' },
         { icon: 'fa-running', color: '#10b981', value: physicalAvg, label: 'Physical' },
@@ -2670,7 +3118,7 @@ window.saveHighlight = async () => {
     const description = document.getElementById('highlightDescription').value;
 
     if (!title || !url) {
-        alert('Please provide at least a title and a URL.');
+        showToast('Please provide a title and URL.', 'warning');
         return;
     }
 
@@ -2695,7 +3143,7 @@ window.saveHighlight = async () => {
         document.getElementById('highlightDescription').value = '';
         showToast('Highlight added successfully', 'success');
     } else {
-        alert('Failed to save highlight.');
+        showToast('Failed to save highlight.', 'error');
     }
 };
 
@@ -2705,7 +3153,7 @@ window.saveAnalysisVideo = async () => {
     const notes = document.getElementById('analysisVideoNotes').value;
 
     if (!title || !url) {
-        alert('Please provide at least a title and a URL.');
+        showToast('Please provide a title and URL.', 'warning');
         return;
     }
 
@@ -2730,12 +3178,13 @@ window.saveAnalysisVideo = async () => {
         document.getElementById('analysisVideoNotes').value = '';
         showToast('Analysis video added successfully', 'success');
     } else {
-        alert('Failed to save analysis video.');
+        showToast('Failed to save video.', 'error');
     }
 };
 
 window.deleteHighlight = async (index) => {
-    if (!confirm('Are you sure you want to delete this highlight?')) return;
+    const ok = await profileConfirm('Delete Highlight', 'Are you sure you want to delete this highlight?', 'Delete');
+    if (!ok) return;
 
     const highlights = typeof currentPlayer.highlights === 'string'
         ? JSON.parse(currentPlayer.highlights || '[]')
@@ -2752,12 +3201,13 @@ window.deleteHighlight = async (index) => {
         renderHighlights();
         showToast('Highlight deleted', 'success');
     } else {
-        alert('Failed to delete highlight.');
+        showToast('Failed to delete highlight.', 'error');
     }
 };
 
 window.deleteAnalysisVideo = async (index) => {
-    if (!confirm('Are you sure you want to delete this analysis video?')) return;
+    const ok = await profileConfirm('Delete Video', 'Are you sure you want to delete this analysis video?', 'Delete');
+    if (!ok) return;
 
     const videos = typeof currentPlayer.analysisVideos === 'string'
         ? JSON.parse(currentPlayer.analysisVideos || '[]')
@@ -2774,7 +3224,7 @@ window.deleteAnalysisVideo = async (index) => {
         renderAnalysisVideos();
         showToast('Analysis video deleted', 'success');
     } else {
-        alert('Failed to delete analysis video.');
+        showToast('Failed to delete video.', 'error');
     }
 };
 

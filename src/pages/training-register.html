@@ -349,6 +349,8 @@
         import { requireAuth, getProfile } from '../auth.js';
         import { initSidebar } from '../sidebar.js';
         import '../toast.js';
+        import supabase from '../supabase.js';
+        import '../analytics.js';
         import { initTrainingRegisterUI } from '../js/training-register-ui.js';
         import { openQuickSession } from '../js/quick-session.js';
 
@@ -371,7 +373,8 @@
 
             // Walkthrough
             try {
-                const { autoWalkthrough, startWalkthrough } = await import('../js/walkthrough.js');
+                const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('../js/walkthrough.js');
+                await initWalkthroughs(user?.id, supabase);
                 const urlP = new URLSearchParams(window.location.search);
                 if (urlP.get('walkthrough') === '1') { startWalkthrough('training-register', true); window.history.replaceState({}, '', window.location.pathname); }
                 else autoWalkthrough('training-register');

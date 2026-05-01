@@ -740,6 +740,10 @@
             .club-detail-body { padding: 12px 8px; gap: 12px; }
             .detail-block { padding: 12px 10px; }
             .metrics-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            /* Reduce modal padding on small phones */
+            .modal { padding: 20px 16px; border-radius: 14px; }
+            /* Club cards single column when viewport is narrower than minmax(300px) */
+            .clubs-grid { grid-template-columns: 1fr !important; }
         }
     </style>
 </head>
@@ -873,6 +877,7 @@
         import supabase from '../supabase.js';
         import { requireAuth, getProfile, logout } from '../auth.js';
         import { isPlatformAdmin } from '../rbac.js';
+        import '../analytics.js';
         import { initPlatformAdmin } from '../js/platform-admin-ui.js';
 
         document.addEventListener('DOMContentLoaded', async () => {

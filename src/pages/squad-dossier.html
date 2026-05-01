@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Squad Dossier | Sentinel Football Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:  #00C49A;
+      --navy:    #0f172a;
+      --text:    #1e293b;
+      --text-2:  #475569;
+      --text-3:  #94a3b8;
+      --border:  #e2e8f0;
+      --surface: #f8fafc;
+      --radius:  12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f1f5f9;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── State screens ── */
+    .state-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 24px;
+    }
+    .state-screen i { font-size: 2.5rem; color: var(--text-3); }
+    .state-screen h2 { font-size: 1.2rem; color: var(--text); }
+    .state-screen p { font-size: 0.9rem; color: var(--text-2); max-width: 360px; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Top bar ── */
+    .dossier-topbar {
+      background: var(--navy);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .dossier-topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .dossier-topbar-club { font-size: 0.78rem; color: rgba(255,255,255,0.5); font-weight: 500; }
+    .dossier-topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .topbar-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.85);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .topbar-btn:hover { background: rgba(255,255,255,0.18); }
+
+    /* ── Squad hero ── */
+    .squad-hero {
+      background: white;
+      border-bottom: 1px solid var(--border);
+    }
+    .squad-hero-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 28px 28px;
+    }
+    .squad-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,196,154,0.1);
+      color: var(--accent);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .squad-hero-name {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+    .squad-hero-meta {
+      font-size: 0.9rem;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .squad-hero-meta .sep { color: var(--border); }
+    .squad-hero-hint {
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── Player selector grid ── */
+    .player-grid-wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+    .player-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .player-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 16px 18px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      position: relative;
+    }
+    .player-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,196,154,0.15);
+      border-color: var(--accent);
+    }
+    .player-card-jersey {
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+    .player-card-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: white;
+      font-size: 1.4rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid var(--border);
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .player-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .player-card-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .player-card-pos {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .player-card-arrow {
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 100px;
+      background: #dcfce7;
+      color: #16a34a;
+    }
+    .status-pill.injured, .status-pill.sick { background: #fee2e2; color: #dc2626; }
+    .status-pill.suspended { background: #fef9c3; color: #ca8a04; }
+    .status-pill.trialist { background: #ede9fe; color: #7c3aed; }
+    .status-pill.unavailable { background: #f1f5f9; color: #64748b; }
+
+    /* ── Player dossier view ── */
+    #playerDossierWrap { max-width: 860px; margin: 0 auto; padding: 0 0 48px; }
+
+    /* hero */
+    .dossier-hero {
+      background: white;
+      padding: 32px 28px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .dossier-avatar {
+      width: 96px; height: 96px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: white;
+      font-size: 2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 3px solid var(--border);
+      overflow: hidden;
+    }
+    .dossier-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .dossier-hero-info { flex: 1; min-width: 0; }
+    .dossier-jersey {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--accent); margin-bottom: 4px;
+    }
+    .dossier-name { font-size: 2rem; font-weight: 900; color: var(--navy); line-height: 1.1; margin-bottom: 6px; }
+    .dossier-subtitle {
+      font-size: 0.9rem; color: var(--text-2);
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .dossier-subtitle .sep { color: var(--border); }
+
+    /* info grid */
+    .dossier-info-grid {
+      background: white;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      border-bottom: 1px solid var(--border);
+    }
+    .info-cell { padding: 16px 20px; border-right: 1px solid var(--border); }
+    .info-cell:last-child { border-right: none; }
+    .info-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 4px; }
+    .info-value { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+
+    /* section container */
+    .dossier-section { background: white; margin-top: 12px; border-radius: var(--radius); overflow: hidden; }
+    .dossier-section-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .dossier-section-header i { color: var(--accent); font-size: 0.9rem; }
+    .dossier-section-header h3 { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+    .dossier-section-header .section-sub { font-size: 0.78rem; color: var(--text-3); margin-left: auto; }
+    .dossier-section-body { padding: 20px 24px; }
+
+    /* stat cards */
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 12px; text-align: center; }
+    .stat-card-value { font-size: 1.6rem; font-weight: 800; color: var(--navy); line-height: 1; margin-bottom: 4px; }
+    .stat-card-value.accent { color: var(--accent); }
+    .stat-card-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+    .stat-card-icon { font-size: 1rem; margin-bottom: 8px; }
+
+    /* match table */
+    .match-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .match-table thead tr { background: var(--surface); border-bottom: 2px solid var(--border); }
+    .match-table th { padding: 10px 12px; text-align: left; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+    .match-table th.center, .match-table td.center { text-align: center; }
+    .match-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    .match-table tbody tr:last-child { border-bottom: none; }
+    .match-table tbody tr:hover { background: var(--surface); }
+    .match-table td { padding: 10px 12px; color: var(--text); }
+    .result-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 6px; min-width: 28px; text-align: center; }
+    .result-W { background: #dcfce7; color: #16a34a; }
+    .result-D { background: #fef9c3; color: #ca8a04; }
+    .result-L { background: #fee2e2; color: #dc2626; }
+    .result-\? { background: #f3f4f6; color: #6b7280; }
+    .rating-cell { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; padding: 3px 8px; border-radius: 6px; font-weight: 800; font-size: 0.82rem; }
+    .rating-cell.high { background: #dcfce7; color: #15803d; }
+    .rating-cell.mid  { background: #fef9c3; color: #92400e; }
+    .rating-cell.low  { background: #fee2e2; color: #b91c1c; }
+    .match-table tbody tr.row-W { border-left: 3px solid #16a34a; }
+    .match-table tbody tr.row-D { border-left: 3px solid #d97706; }
+    .match-table tbody tr.row-L { border-left: 3px solid #ef4444; }
+    .motm-star { color: #f59e0b; font-size: 0.85rem; }
+
+    /* bio / text */
+    .dossier-text { font-size: 0.88rem; line-height: 1.7; color: var(--text-2); }
+    .prev-clubs-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .prev-club-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 4px 12px; font-size: 0.8rem; font-weight: 500; color: var(--text-2); }
+
+    /* attr grid + coach comments */
+    .attr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 16px; }
+    .attr-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .attr-item-label { font-size: 0.73rem; font-weight: 600; color: var(--text-2); text-transform: capitalize; flex: 1; }
+    .attr-item-value { min-width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+    .attr-item-value.high { background: #dcfce7; color: #15803d; }
+    .attr-item-value.mid  { background: #fef9c3; color: #92400e; }
+    .attr-item-value.low  { background: #fee2e2; color: #b91c1c; }
+    .coach-comments-block { background: #f8fafc; border: 1px solid var(--border); border-left: 3px solid #2563eb; border-radius: 8px; padding: 16px 18px; font-size: 0.88rem; color: var(--text); line-height: 1.7; font-style: italic; }
+    .coach-comments-byline { margin-top: 10px; font-size: 0.72rem; color: var(--text-3); font-style: normal; font-weight: 600; }
+    .assessment-sub-header { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+
+    /* ── Squad page footer (below player grid) ── */
+    .squad-page-footer {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .squad-page-footer-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.8rem; font-weight: 700; color: var(--navy);
+    }
+    .squad-page-footer-brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .squad-page-footer-meta { font-size: 0.75rem; color: var(--text-3); }
+
+    /* ── Player dossier footer (inside player view) ── */
+    .dossier-footer {
+      margin-top: 24px; padding: 20px 28px;
+      background: white; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    }
+    .dossier-footer-brand { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 700; color: var(--navy); }
+    .dossier-footer-brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .dossier-footer-meta { font-size: 0.75rem; color: var(--text-3); }
+
+    /* player dossier loading spinner */
+    .player-loading {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; padding: 80px 24px; text-align: center;
+    }
+    .player-loading i { font-size: 1.8rem; color: var(--accent); }
+    .player-loading p { font-size: 0.88rem; color: var(--text-3); }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .club-banner { padding: 14px 16px; gap: 12px; }
+      .club-banner-logo { width: 44px; height: 44px; border-radius: 8px; }
+      .club-banner-name { font-size: 0.88rem; }
+      .dossier-topbar { padding: 10px 16px; }
+      .dossier-topbar-brand span.brand-label { display: none; }
+      .dossier-topbar-club { display: none; }
+      .squad-hero-inner { padding: 20px 16px 20px; }
+      .squad-hero-name { font-size: 1.6rem; }
+      .player-grid-wrap { padding: 16px 12px 48px; }
+      .player-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .player-card { padding: 16px 10px 14px; }
+      .player-card-avatar { width: 56px; height: 56px; font-size: 1.1rem; }
+      .player-card-name { font-size: 0.8rem; }
+      .dossier-hero { padding: 20px 16px; gap: 14px; }
+      .dossier-avatar { width: 72px; height: 72px; font-size: 1.5rem; border-radius: 12px; }
+      .dossier-name { font-size: 1.4rem; }
+      .dossier-info-grid { grid-template-columns: repeat(2, 1fr); }
+      .info-cell:nth-child(even) { border-right: none; }
+      .dossier-section-body { padding: 16px; }
+      .stat-cards { grid-template-columns: repeat(3, 1fr); }
+      .match-table { font-size: 0.74rem; }
+      .match-table th, .match-table td { padding: 7px 5px; }
+      .dossier-footer { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 380px) {
+      .stat-cards { grid-template-columns: repeat(2, 1fr); }
+      .dossier-name { font-size: 1.2rem; }
+    }
+    /* ── Club banner ── */
+    .club-banner {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .club-banner-logo {
+      width: 56px; height: 56px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .club-banner-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .club-banner-logo i { font-size: 1.4rem; color: var(--text-3); }
+    .club-banner-info { display: flex; flex-direction: column; gap: 2px; }
+    .club-banner-name { font-size: 1rem; font-weight: 800; color: var(--navy); }
+    .club-banner-squad { font-size: 0.82rem; font-weight: 500; color: var(--text-2); }
+    .club-banner-powered {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.68rem; font-weight: 600; color: var(--accent);
+      margin-top: 3px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .club-banner-powered .pow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+    @media print {
+      .dossier-topbar { display: none !important; }
+      body { background: white; }
+      #playerDossierWrap { max-width: 100%; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Loading ── -->
+<div id="stateLoading" class="state-screen">
+  <i class="fas fa-spinner spin" style="color:var(--accent);font-size:2rem;"></i>
+  <h2>Loading squad dossier…</h2>
+</div>
+
+<!-- ── Error ── -->
+<div id="stateError" class="state-screen" style="display:none;">
+  <i class="fas fa-exclamation-circle" style="color:#ef4444;"></i>
+  <h2>Dossier not found</h2>
+  <p>This link may have been revoked or is invalid. Ask the coach to share a new link.</p>
+</div>
+
+<!-- ── Squad view ── -->
+<div id="stateSquad" style="display:none;">
+  <div class="dossier-topbar">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div class="dossier-topbar-brand">
+        <div class="brand-dot"></div>
+        <span class="brand-label">Sentinel Football Hub</span>
+      </div>
+      <span class="dossier-topbar-club" id="squadTopbarClub"></span>
+    </div>
+  </div>
+
+  <!-- Club banner (squad view) -->
+  <div class="club-banner" id="squadClubBanner" style="display:none;">
+    <div class="club-banner-logo">
+      <img class="banner-logo-img" src="" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='';">
+      <i class="fas fa-futbol" style="display:none;"></i>
+    </div>
+    <div class="club-banner-info">
+      <div class="club-banner-name banner-club-name"></div>
+      <div class="club-banner-squad banner-squad-name"></div>
+      <div class="club-banner-powered"><div class="pow-dot"></div> Powered by Sentinel Football Hub</div>
+    </div>
+  </div>
+
+  <div class="squad-hero">
+    <div class="squad-hero-inner">
+      <div class="squad-hero-badge"><i class="fas fa-users"></i> <span id="squadAgeBadge">Squad</span></div>
+      <div class="squad-hero-name" id="squadHeroName">—</div>
+      <div class="squad-hero-meta">
+        <span id="squadClubName" style="font-weight:600;"></span>
+        <span class="sep">·</span>
+        <span id="squadPlayerCount"></span>
+      </div>
+      <div class="squad-hero-hint"><i class="fas fa-hand-pointer" style="color:var(--accent);"></i> Tap a player to view their profile</div>
+    </div>
+  </div>
+
+  <div class="player-grid-wrap">
+    <div class="player-grid" id="playerGrid"></div>
+  </div>
+
+  <div class="squad-page-footer">
+    <div class="squad-page-footer-brand">
+      <div class="dot"></div>
+      Sentinel Football Hub
+    </div>
+    <span class="squad-page-footer-meta" id="squadFooterMeta"></span>
+  </div>
+</div>
+
+<!-- ── Player view ── -->
+<div id="statePlayer" style="display:none;">
+  <div class="dossier-topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="topbar-btn" id="btnBackToSquad" onclick="handleBackToSquad()">
+        <i class="fas fa-arrow-left"></i> <span class="back-label">Squad</span>
+      </button>
+      <span style="color:rgba(255,255,255,0.4);font-size:0.75rem;" id="playerTopbarSquadName"></span>
+    </div>
+    <div class="dossier-topbar-right">
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <div class="dossier-topbar-brand">
+          <div class="brand-dot"></div>
+          <span class="brand-label">Sentinel Football Hub</span>
+        </div>
+        <span class="dossier-topbar-club" id="playerTopbarClub"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Club banner (player view) -->
+  <div class="club-banner" id="playerClubBanner" style="display:none;">
+    <div class="club-banner-logo">
+      <img class="banner-logo-img" src="" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='';">
+      <i class="fas fa-futbol" style="display:none;"></i>
+    </div>
+    <div class="club-banner-info">
+      <div class="club-banner-name banner-club-name"></div>
+      <div class="club-banner-squad banner-squad-name"></div>
+      <div class="club-banner-powered"><div class="pow-dot"></div> Powered by Sentinel Football Hub</div>
+    </div>
+  </div>
+
+  <div id="playerDossierWrap">
+    <!-- Populated by renderPlayerDossier() -->
+  </div>
+</div>
+
+<script type="module">
+  import supabase from '../supabase.js';
+
+  function getSupabase() { return supabase; }
+
+  const params = new URLSearchParams(location.search);
+  const token  = params.get('token');
+  let squadData = null;
+  let currentPlayerId = null;
+
+  const show = id => { document.getElementById(id).style.display = ''; };
+  const hide = id => { document.getElementById(id).style.display = 'none'; };
+
+  // ── Helpers ──
+  function initials(name) {
+    return (name || '').trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  }
+  function fmtDate(d) {
+    if (!d) return '—';
+    const dt = new Date(d);
+    return isNaN(dt) ? d : dt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function calcAge(dob) {
+    if (!dob) return null;
+    const d = new Date(dob), now = new Date();
+    let age = now.getFullYear() - d.getFullYear();
+    if (now < new Date(now.getFullYear(), d.getMonth(), d.getDate())) age--;
+    return age;
+  }
+  function statusLabel(s) {
+    return { active: 'Active', injured: 'Injured', sick: 'Sick', suspended: 'Suspended', unavailable: 'Unavailable', trialist: 'Trialist' }[s] || 'Active';
+  }
+  function getResult(stat) {
+    if (stat.result) {
+      const r = stat.result.toUpperCase().charAt(0);
+      return ['W','D','L'].includes(r) ? r : '?';
+    }
+    if (stat.home_score == null) return '?';
+    const isHome = stat.our_side === 'home';
+    const ours   = isHome ? stat.home_score : stat.away_score;
+    const theirs = isHome ? stat.away_score : stat.home_score;
+    return ours > theirs ? 'W' : ours < theirs ? 'L' : 'D';
+  }
+  function getScore(stat) {
+    if (stat.home_score == null) return '';
+    return `${stat.home_score}–${stat.away_score}`;
+  }
+  function ratingClass(r) {
+    if (!r) return '';
+    if (r >= 7) return 'high';
+    if (r >= 5) return 'mid';
+    return 'low';
+  }
+
+  // ── Initial load ──
+  async function init() {
+    if (!token) { show('stateError'); hide('stateLoading'); return; }
+
+    const sb = getSupabase();
+    const { data, error } = await sb.rpc('get_squad_dossier', { p_token: token });
+
+    if (error || !data) { show('stateError'); hide('stateLoading'); return; }
+    squadData = data;
+
+    renderSquadHero(squadData);
+    renderPlayerGrid(squadData.players || []);
+
+    hide('stateLoading');
+
+    // If URL already has a player param, show that player's dossier
+    const initPlayer = params.get('player');
+    if (initPlayer) {
+      await showPlayerView(initPlayer, false);
+    } else {
+      show('stateSquad');
+    }
+  }
+
+  // ── Squad hero ──
+  function renderSquadHero(data) {
+    const squad    = data.squad || {};
+    const club     = data.club_name || data.display_name || '';
+    const logoUrl  = data.logo_url || null;
+    const players  = data.players || [];
+    const age      = squad.age_group || 'Squad';
+
+    document.getElementById('squadHeroName').textContent    = squad.name || 'Squad';
+    document.getElementById('squadAgeBadge').textContent   = age;
+    document.getElementById('squadClubName').textContent   = club;
+    document.getElementById('squadPlayerCount').textContent = `${players.length} Player${players.length !== 1 ? 's' : ''}`;
+    document.getElementById('squadTopbarClub').textContent  = club;
+    document.getElementById('playerTopbarClub').textContent = club;
+    document.getElementById('playerTopbarSquadName').textContent = squad.name || '';
+    const footerMeta = document.getElementById('squadFooterMeta');
+    if (footerMeta) footerMeta.textContent = `${club}${squad.name ? ` · ${squad.name}` : ''}`;
+
+    // ── Club banners (squad view + player view) ──
+    if (club) {
+      ['squadClubBanner', 'playerClubBanner'].forEach(bannerId => {
+        const banner = document.getElementById(bannerId);
+        if (!banner) return;
+        banner.querySelectorAll('.banner-club-name').forEach(el => el.textContent = club);
+        banner.querySelectorAll('.banner-squad-name').forEach(el => el.textContent = squad.name || '');
+        const img = banner.querySelector('.banner-logo-img');
+        const fallback = img?.nextElementSibling;
+        if (logoUrl && img) {
+          img.src = logoUrl;
+          img.alt = club;
+          img.style.display = '';
+          if (fallback) fallback.style.display = 'none';
+        } else if (img) {
+          img.style.display = 'none';
+          if (fallback) fallback.style.display = '';
+        }
+        banner.style.display = '';
+      });
+    }
+  }
+
+  // ── Player selector grid ──
+  function renderPlayerGrid(players) {
+    const grid = document.getElementById('playerGrid');
+    if (!players.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 24px;color:var(--text-3);">
+        <i class="fas fa-users" style="font-size:2.5rem;margin-bottom:16px;display:block;"></i>
+        No players in this squad.
+      </div>`;
+      return;
+    }
+    grid.innerHTML = players.map(p => {
+      const status = p.player_status || 'active';
+      const ini = initials(p.full_name);
+      const avatarInner = p.photo_url
+        ? `${ini}<img src="${p.photo_url}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.remove();">`
+        : ini;
+      return `
+        <div class="player-card" onclick="window._selectPlayer('${p.id}')">
+          ${p.jersey_number ? `<div class="player-card-jersey">#${p.jersey_number}</div>` : ''}
+          <div class="player-card-avatar">${avatarInner}</div>
+          <div class="player-card-name">${p.full_name}</div>
+          <div class="player-card-pos">${p.position_primary || '—'}</div>
+          ${status !== 'active' ? `<span class="status-pill ${status}">${statusLabel(status)}</span>` : ''}
+          <div class="player-card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Show squad view ──
+  window._showSquadView = function(pushHistory = true) {
+    if (pushHistory) {
+      history.pushState({}, '', `?token=${token}`);
+    }
+    hide('statePlayer');
+    show('stateSquad');
+    window.scrollTo(0, 0);
+  };
+
+  // ── Select player ──
+  window._selectPlayer = async function(playerId) {
+    await showPlayerView(playerId, true);
+  };
+
+  // ── Show player dossier ──
+  async function showPlayerView(playerId, pushHistory) {
+    if (pushHistory) {
+      history.pushState({ player: playerId }, '', `?token=${token}&player=${playerId}`);
+    }
+    currentPlayerId = playerId;
+    hide('stateSquad');
+
+    // Show loading state inside player view
+    const wrap = document.getElementById('playerDossierWrap');
+    wrap.innerHTML = `<div class="player-loading"><i class="fas fa-spinner spin"></i><p>Loading player profile…</p></div>`;
+    show('statePlayer');
+    window.scrollTo(0, 0);
+
+    const sb = getSupabase();
+    const { data, error } = await sb.rpc('get_squad_player_dossier', {
+      p_squad_token: token,
+      p_player_id:   playerId,
+    });
+
+    if (error || !data) {
+      wrap.innerHTML = `<div class="player-loading"><i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><p>Could not load this player's profile.</p></div>`;
+      return;
+    }
+
+    renderPlayerDossier(data, wrap);
+  }
+
+  // ── Render individual player dossier ──
+  function renderPlayerDossier(data, wrap) {
+    const player     = data.player || {};
+    const stats      = Array.isArray(data.stats) ? data.stats : [];
+    const assessment = data.assessment || null;
+
+    const squad     = squadData?.squad || {};
+    const clubName  = squadData?.club_name || '';
+
+    // Derived fields
+    const age       = calcAge(player.dob);
+    const statusCls = player.player_status || 'active';
+    const statusLbl = statusLabel(statusCls);
+    const avatarInner = player.photo_url
+      ? `<img src="${player.photo_url}" alt="${player.full_name}" style="width:100%;height:100%;object-fit:cover;">`
+      : `<span>${initials(player.full_name)}</span>`;
+
+    // Career stats
+    const apps      = stats.length;
+    const started   = stats.filter(s => s.started).length;
+    const goals     = stats.reduce((a, s) => a + (s.goals || 0), 0);
+    const assists   = stats.reduce((a, s) => a + (s.assists || 0), 0);
+    const motmCount = stats.filter(s => s.motm).length;
+    const ratings   = stats.filter(s => s.rating).map(s => s.rating);
+    const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : null;
+    const wins      = stats.filter(s => getResult(s) === 'W').length;
+
+    // Stat cards
+    const statCards = [
+      { icon: 'fa-futbol',      color: '#2563eb', val: apps,           label: 'Appearances' },
+      { icon: 'fa-play',        color: '#7c3aed', val: started,        label: 'Started' },
+      { icon: 'fa-star',        color: '#f59e0b', val: avgRating ?? '—', label: 'Avg Rating', accent: !!avgRating },
+      { icon: 'fa-fire',        color: '#ef4444', val: goals,          label: 'Goals' },
+      { icon: 'fa-hands-helping', color: '#10b981', val: assists,      label: 'Assists' },
+      { icon: 'fa-trophy',      color: '#f59e0b', val: wins,           label: 'Wins' },
+      { icon: 'fa-medal',       color: '#f59e0b', val: motmCount,      label: 'MOTM' },
+    ];
+
+    // Match rows
+    const recentMatches = stats.slice(0, 8);
+    const matchRowsHTML = recentMatches.map(s => {
+      const res      = getResult(s);
+      const score    = getScore(s);
+      const rc       = ratingClass(s.rating);
+      const rowCls   = ['W', 'D', 'L'].includes(res) ? `row-${res}` : '';
+      const minsLabel = s.minutes_played ? `${s.minutes_played}'` : (s.started ? '90\'' : 'Sub');
+      return `<tr class="${rowCls}">
+        <td>${fmtDate(s.date)}</td>
+        <td style="font-weight:600;">${s.opponent || '—'}</td>
+        <td style="color:var(--text-3);font-size:0.78rem;">${s.competition || '—'}</td>
+        <td class="center"><span class="result-badge result-${res}">${res}${score ? ` ${score}` : ''}</span></td>
+        <td class="center" style="color:var(--text-2);font-size:0.78rem;font-weight:600;">${minsLabel}</td>
+        <td class="center" style="font-weight:700;">${s.goals ?? '—'}</td>
+        <td class="center" style="font-weight:700;">${s.assists ?? '—'}</td>
+        <td class="center">${s.rating ? `<span class="rating-cell ${rc}">${s.rating}</span>` : '<span style="color:var(--text-3);">—</span>'}</td>
+        <td class="center">${s.motm ? '<span class="motm-star"><i class="fas fa-star"></i></span>' : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    // Previous clubs
+    const prevClubsHTML = (() => {
+      if (!player.previous_clubs?.trim()) return '';
+      const clubs = player.previous_clubs.split(/[,\n]+/).map(c => c.trim()).filter(Boolean);
+      if (!clubs.length) return '';
+      return `<div class="dossier-section">
+        <div class="dossier-section-header"><i class="fas fa-history"></i><h3>Previous Clubs</h3></div>
+        <div class="dossier-section-body">
+          <div class="prev-clubs-list">${clubs.map(c => `<span class="prev-club-pill">${c}</span>`).join('')}</div>
+        </div>
+      </div>`;
+    })();
+
+    // Assessment
+    const assessmentHTML = (() => {
+      if (!assessment) return '';
+      const ratingsObj = assessment.ratings || {};
+      const ratingEntries = Object.entries(ratingsObj).filter(([, v]) => v != null && v !== '');
+      const attrCls = v => Number(v) >= 7 ? 'high' : Number(v) >= 5 ? 'mid' : 'low';
+      const attrLbl = k => k.replace(/_/g, ' ');
+
+      const attrGridHTML = ratingEntries.length ? `
+        <div class="assessment-sub-header" style="color:#7c3aed;">
+          <i class="fas fa-sliders-h"></i> Player Attributes
+        </div>
+        <div class="attr-grid">
+          ${ratingEntries.map(([k, v]) => `
+            <div class="attr-item">
+              <div class="attr-item-label">${attrLbl(k)}</div>
+              <div class="attr-item-value ${attrCls(v)}">${v}</div>
+            </div>`).join('')}
+        </div>` : '';
+
+      const metaParts = [];
+      if (assessment.date) metaParts.push(fmtDate(assessment.date));
+      if (assessment.author) metaParts.push(`Coach: ${assessment.author}`);
+      if (assessment.type) metaParts.push(assessment.type);
+
+      const notesHTML = assessment.notes?.trim() ? `
+        <div class="assessment-sub-header" style="color:#2563eb;${attrGridHTML ? 'margin-top:20px;' : ''}">
+          <i class="fas fa-comment-alt"></i> Coach Comments
+        </div>
+        <div class="coach-comments-block">
+          "${assessment.notes.trim()}"
+          ${metaParts.length ? `<div class="coach-comments-byline">${metaParts.join(' · ')}</div>` : ''}
+        </div>` : '';
+
+      if (!attrGridHTML && !notesHTML) return '';
+      return `<div class="dossier-section">
+        <div class="dossier-section-header">
+          <i class="fas fa-clipboard-check" style="color:#2563eb;"></i>
+          <h3>Coach's Assessment</h3>
+        </div>
+        <div class="dossier-section-body">${attrGridHTML}${notesHTML}</div>
+      </div>`;
+    })();
+
+    wrap.innerHTML = `
+      <!-- Hero -->
+      <div class="dossier-hero">
+        <div class="dossier-avatar">${avatarInner}</div>
+        <div class="dossier-hero-info">
+          ${player.jersey_number ? `<div class="dossier-jersey">#${player.jersey_number}</div>` : ''}
+          <div class="dossier-name">${player.full_name}</div>
+          <div class="dossier-subtitle">
+            <span>${player.position || '—'}</span>
+            <span class="sep">·</span>
+            <span>${squad.name || ''}</span>
+            ${statusCls !== 'active' ? `<span class="sep">·</span><span class="status-pill ${statusCls}">${statusLbl}</span>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- Info strip -->
+      <div class="dossier-info-grid">
+        <div class="info-cell"><div class="info-label">Date of Birth</div><div class="info-value">${player.dob ? `${fmtDate(player.dob)}${age != null ? ` (${age})` : ''}` : '—'}</div></div>
+        <div class="info-cell"><div class="info-label">Nationality</div><div class="info-value">${player.nationality || '—'}</div></div>
+        <div class="info-cell"><div class="info-label">Pref. Foot</div><div class="info-value">${player.foot || '—'}</div></div>
+        <div class="info-cell"><div class="info-label">Height</div><div class="info-value">${player.height || '—'}</div></div>
+        <div class="info-cell"><div class="info-label">Weight</div><div class="info-value">${player.weight || '—'}</div></div>
+      </div>
+
+      <!-- Career stats -->
+      ${apps > 0 ? `<div class="dossier-section">
+        <div class="dossier-section-header"><i class="fas fa-chart-bar"></i><h3>Career Stats</h3><span class="section-sub">All recorded appearances</span></div>
+        <div class="dossier-section-body">
+          <div class="stat-cards">
+            ${statCards.map(c => `<div class="stat-card">
+              <div class="stat-card-icon"><i class="fas ${c.icon}" style="color:${c.color};"></i></div>
+              <div class="stat-card-value${c.accent ? ' accent' : ''}">${c.val}</div>
+              <div class="stat-card-label">${c.label}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>` : ''}
+
+      <!-- Recent matches -->
+      ${recentMatches.length > 0 ? `<div class="dossier-section">
+        <div class="dossier-section-header"><i class="fas fa-calendar-alt"></i><h3>Match History</h3><span class="section-sub">Last ${recentMatches.length} appearances</span></div>
+        <div style="overflow-x:auto;">
+          <table class="match-table">
+            <thead><tr>
+              <th>Date</th><th>Opponent</th><th>Competition</th>
+              <th class="center">Result</th><th class="center">Mins</th>
+              <th class="center">G</th><th class="center">A</th>
+              <th class="center">Rating</th><th class="center">MOTM</th>
+            </tr></thead>
+            <tbody>${matchRowsHTML}</tbody>
+          </table>
+        </div>
+      </div>` : ''}
+
+      <!-- Bio -->
+      ${player.bio?.trim() ? `<div class="dossier-section">
+        <div class="dossier-section-header"><i class="fas fa-user"></i><h3>Biography</h3></div>
+        <div class="dossier-section-body"><p class="dossier-text">${player.bio.trim()}</p></div>
+      </div>` : ''}
+
+      <!-- Previous clubs -->
+      ${prevClubsHTML}
+
+      <!-- Assessment -->
+      ${assessmentHTML}
+
+      <!-- Footer -->
+      <div class="dossier-footer">
+        <div class="dossier-footer-brand"><div class="dot"></div> Sentinel Football Hub</div>
+        <div class="dossier-footer-meta">${clubName} · ${squad.name || ''}</div>
+      </div>`;
+  }
+
+  // ── Back button handler ──
+  window.handleBackToSquad = function() {
+    window._showSquadView(true);
+  };
+
+  // ── Browser back/forward ──
+  window.addEventListener('popstate', async () => {
+    const p = new URLSearchParams(location.search).get('player');
+    if (p) {
+      await showPlayerView(p, false);
+    } else {
+      hide('statePlayer');
+      show('stateSquad');
+      window.scrollTo(0, 0);
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>

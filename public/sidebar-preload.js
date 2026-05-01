@@ -49,6 +49,8 @@
     try {
         cachedUser = JSON.parse(store.getItem('sidebar-user'));
     } catch (e) {}
+    var cachedSeason = null;
+    try { cachedSeason = JSON.parse(store.getItem('sidebar-season')); } catch (e) {}
     var logo = cached && cached.logo_url;
     var name = (cached && cached.display_name) || 'Football Hub';
     var collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -60,15 +62,21 @@
 
     var navItems = [
         { href: '/src/pages/dashboard.html', icon: 'fa-th-large', label: 'Dashboard', id: 'dashboard' },
-        { href: '/src/pages/planner.html', icon: 'fa-clipboard-list', label: 'Session Planner', id: 'planner', feature: 'session_planner' },
-        { href: '/src/pages/library.html', icon: 'fa-book', label: 'Library', id: 'library', feature: 'library' },
-        { href: '/src/pages/reports.html', icon: 'fa-file-alt', label: 'Reports', id: 'reports', feature: 'reports' },
+        { href: '/src/pages/planner.html', icon: 'fa-clipboard-list', label: 'Session Planner', id: 'planner', feature: 'session_planner', minTier: 'basic' },
+        { href: '/src/pages/library.html', icon: 'fa-book', label: 'Library', id: 'library', feature: 'library', minTier: 'basic' },
+        { href: '/src/pages/reports.html', icon: 'fa-file-alt', label: 'Reports', id: 'reports', feature: 'reports', minTier: 'basic' },
         { href: '/src/pages/squad.html', icon: 'fa-user-friends', label: 'Squad & Players', id: 'squad' },
         { href: '/src/pages/matches.html', icon: 'fa-futbol', label: 'Matches', id: 'matches' },
-        { href: '/src/pages/analytics.html', icon: 'fa-chart-line', label: 'Analytics', id: 'analytics', feature: 'analytics_dashboard' },
-        { href: '/src/pages/scouting.html', icon: 'fa-binoculars', label: 'Scouting', id: 'scouting' },
-        { href: '/src/pages/financials.html', icon: 'fa-file-invoice-dollar', label: 'Financials', id: 'financials', requireArchetype: 'private_coaching', requireRole: true },
+        { href: '/src/pages/analytics.html', icon: 'fa-chart-line', label: 'Analytics', id: 'analytics', feature: 'analytics_dashboard', minTier: 'pro' },
+        { href: '/src/pages/scouting.html', icon: 'fa-binoculars', label: 'Scouting', id: 'scouting', minTier: 'basic' },
+        { href: '/src/pages/financials.html', icon: 'fa-file-invoice-dollar', label: 'Financials', id: 'financials', minTier: 'elite', requireArchetype: 'private_coaching', requireRole: true },
     ];
+
+    // Cached tier (set by sidebar.js after profile loads)
+    var cachedTier = 'free';
+    try { cachedTier = store.getItem('sidebar-tier') || 'free'; } catch (e) {}
+    var _tierOrder = ['free', 'basic', 'pro', 'elite'];
+    var cachedTierIdx = Math.max(0, _tierOrder.indexOf(cachedTier));
 
     // Determine visibility for role/archetype-gated items using cached data
     var cachedArchetype = cached && cached.archetype;
@@ -85,6 +93,11 @@
         if (item.requireRole && cachedRole && !isAdminRole) hidden = true;
         // If no cache yet (first visit), hide by default — sidebar.js will show it after profile loads
         if (item.requireArchetype && !cachedArchetype) hidden = true;
+        // Tier-based hiding — hide nav items below the club's cached tier
+        if (item.minTier) {
+            var minTierIdx = _tierOrder.indexOf(item.minTier);
+            if (cachedTierIdx < minTierIdx) hidden = true;
+        }
         var hiddenAttr = hidden ? ' style="display:none"' : '';
         navHTML += '<li' + featureAttr + hiddenAttr + '><a href="' + item.href + '"><i class="fas ' + item.icon + '"></i><span>' + item.label + '</span></a></li>';
     }
@@ -107,14 +120,19 @@
         }
     }
 
+    // Inline bg prevents FOUC: sidebar colour visible before style.css parses
+    var sidebarBg = (savedTheme === 'dark') ? '#0A1218' : '#0D1B2A';
     var sidebarHTML =
-        '<aside class="sidebar' + (isDesktop && collapsed ? ' collapsed' : '') + '">' +
+        '<aside class="sidebar' + (isDesktop && collapsed ? ' collapsed' : '') + '" style="background-color:' + sidebarBg + '">' +
             '<div class="sidebar-brand">' +
                 '<div class="sidebar-logo">' + logoHTML + '</div>' +
                 '<div class="brand-text"><h3>' + name + '</h3><p>Sentinel Football Hub</p></div>' +
             '</div>' +
             '<nav class="sidebar-nav"><ul>' + navHTML + '</ul></nav>' +
             '<div class="sidebar-footer">' +
+                (cachedSeason && cachedSeason.name
+                    ? '<div class="sidebar-season-chip" id="sidebarSeasonChip"><i class="fas fa-calendar-alt"></i><span>' + cachedSeason.name + '</span></div>'
+                    : '<div class="sidebar-season-chip" id="sidebarSeasonChip" style="display:none;"><i class="fas fa-calendar-alt"></i><span></span></div>') +
                 '<a href="/src/pages/settings.html" class="sidebar-user-info" title="Settings">' +
                     '<div class="sidebar-user-avatar" id="sidebarUserAvatar">' + userInitials + '</div>' +
                     '<div class="sidebar-user-details">' +

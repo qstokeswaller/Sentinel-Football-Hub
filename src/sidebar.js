@@ -1,4 +1,5 @@
 import { getProfile } from './auth.js';
+import { injectSidebarTierBadge } from './tier.js';
 
 /**
  * Injects the shared sidebar into the page and sets up toggle logic.
@@ -29,14 +30,14 @@ export function initSidebar(activePage = '') {
 
     const navItemDefs = [
         { href: '/src/pages/dashboard.html', icon: 'fa-th-large', label: 'Dashboard', id: 'dashboard' },
-        { href: '/src/pages/planner.html', icon: 'fa-clipboard-list', label: 'Session Planner', id: 'planner', feature: 'session_planner' },
-        { href: '/src/pages/library.html', icon: 'fa-book', label: 'Library', id: 'library', feature: 'library' },
-        { href: '/src/pages/reports.html', icon: 'fa-file-alt', label: 'Reports', id: 'reports', feature: 'reports' },
+        { href: '/src/pages/planner.html', icon: 'fa-clipboard-list', label: 'Session Planner', id: 'planner', feature: 'session_planner', minTier: 'basic' },
+        { href: '/src/pages/library.html', icon: 'fa-book', label: 'Library', id: 'library', feature: 'library', minTier: 'basic' },
+        { href: '/src/pages/reports.html', icon: 'fa-file-alt', label: 'Reports', id: 'reports', feature: 'reports', minTier: 'basic' },
         { href: '/src/pages/squad.html', icon: 'fa-user-friends', label: 'Squad & Players', id: 'squad' },
         { href: '/src/pages/matches.html', icon: 'fa-futbol', label: 'Matches', id: 'matches' },
-        { href: '/src/pages/analytics.html', icon: 'fa-chart-line', label: 'Analytics', id: 'analytics', feature: 'analytics_dashboard' },
-        { href: '/src/pages/scouting.html', icon: 'fa-binoculars', label: 'Scouting', id: 'scouting' },
-        { href: '/src/pages/financials.html', icon: 'fa-file-invoice-dollar', label: 'Financials', id: 'financials' },
+        { href: '/src/pages/analytics.html', icon: 'fa-chart-line', label: 'Analytics', id: 'analytics', feature: 'analytics_dashboard', minTier: 'pro' },
+        { href: '/src/pages/scouting.html', icon: 'fa-binoculars', label: 'Scouting', id: 'scouting', minTier: 'basic' },
+        { href: '/src/pages/financials.html', icon: 'fa-file-invoice-dollar', label: 'Financials', id: 'financials', minTier: 'elite' },
     ];
 
     // Check if sidebar was already injected by preload script
@@ -168,6 +169,9 @@ export function initSidebar(activePage = '') {
             name, role: profile.role, initials
         }));
 
+        // Inject tier badge into sidebar footer (pass profile directly to avoid window._profile race)
+        injectSidebarTierBadge(profile);
+
         // Scout restriction — scouts only see Dashboard + Scouting
         if (profile.role === 'scout') {
             const allowedIds = ['dashboard', 'scouting'];
@@ -179,7 +183,7 @@ export function initSidebar(activePage = '') {
             });
         }
 
-        // Feature flags — hide nav items for disabled features
+        // Feature flags — hide nav items for disabled features (old per-club flag system)
         const features = profile.clubs?.settings?.features;
         if (features) {
             document.querySelectorAll('.sidebar-nav [data-feature]').forEach(el => {
@@ -190,12 +194,30 @@ export function initSidebar(activePage = '') {
             });
         }
 
-        // Financials — only visible for admin/super_admin + private_coaching archetype
+        // Tier-based nav hiding — hides pages not available on the club's tier
+        const _tierOrder = ['free', 'basic', 'pro', 'elite'];
+        const rawTier = (profile.clubs?.settings?.tier || profile.clubs?.settings?.plan || 'free').toLowerCase();
+        const clubTier = _tierOrder.includes(rawTier) ? rawTier : 'free';
+        const clubTierIdx = _tierOrder.indexOf(clubTier);
+        // Cache tier for sidebar-preload.js on next page load
+        _brandingStore.setItem('sidebar-tier', clubTier);
+
+        const allNavLisTier = document.querySelectorAll('.sidebar-nav li');
+        navItemDefs.forEach((item, idx) => {
+            if (!item.minTier) return;
+            const minIdx = _tierOrder.indexOf(item.minTier);
+            if (clubTierIdx < minIdx && allNavLisTier[idx]) {
+                allNavLisTier[idx].style.display = 'none';
+            }
+        });
+
+        // Financials — tier already gates it above; additionally restrict to admin roles
         const archetype = profile.clubs?.settings?.archetype;
         const allNavLis = document.querySelectorAll('.sidebar-nav li');
         const financialsIdx = navItemDefs.findIndex(item => item.id === 'financials');
         if (financialsIdx >= 0 && allNavLis[financialsIdx]) {
-            const showFinancials = archetype === 'private_coaching' && ['admin', 'super_admin'].includes(profile.role);
+            const tierAllowsFinancials = clubTierIdx >= _tierOrder.indexOf('elite');
+            const showFinancials = tierAllowsFinancials && ['admin', 'super_admin'].includes(profile.role);
             allNavLis[financialsIdx].style.display = showFinancials ? '' : 'none';
         }
 

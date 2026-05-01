@@ -26,6 +26,35 @@
             }
         }
 
+        /* Sub-tab nav inside panels */
+        .sub-tab-nav {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-light);
+            margin-bottom: 24px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .sub-tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            transition: color 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .sub-tab-btn:hover { color: var(--navy-dark); }
+        .sub-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .sub-tab-content { display: none; }
+        .sub-tab-content.active { display: block; }
+
         .settings-nav {
             display: flex;
             flex-direction: column;
@@ -331,7 +360,135 @@
             color: var(--primary) !important;
         }
 
+        .web-link-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+        .web-link-row input {
+            padding: 8px 12px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.84rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* ── Custom select: remove OS chrome, add platform chevron ── */
+        .settings-form-group select,
+        .settings-modal select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px 8px;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+        .settings-form-group select:focus,
+        .settings-modal select:focus {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232563eb' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        }
+
+        /* ── Date inputs: tint the calendar picker indicator ── */
+        input[type="date"],
+        input[type="time"] {
+            position: relative;
+            cursor: pointer;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.45;
+            border-radius: 4px;
+            padding: 3px;
+            transition: opacity 0.15s, background 0.15s;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator:hover,
+        input[type="time"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+            background-color: rgba(37, 99, 235, 0.1);
+        }
+        input[type="date"]:focus::-webkit-calendar-picker-indicator,
+        input[type="time"]:focus::-webkit-calendar-picker-indicator {
+            opacity: 0.8;
+        }
+
+        /* ── Number inputs: clean spinner ── */
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        /* Re-add spin controls via a wrapper for the points inputs */
+        .num-stepper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        .num-stepper input[type="number"] {
+            border: none;
+            border-radius: 0;
+            text-align: center;
+            flex: 1;
+            min-width: 0;
+            box-shadow: none;
+            background: transparent;
+        }
+        .num-stepper input[type="number"]:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: transparent;
+        }
+        .num-stepper-btn {
+            width: 34px;
+            height: 100%;
+            min-height: 42px;
+            border: none;
+            background: var(--bg-body);
+            color: var(--text-medium);
+            font-size: 1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.15s, color 0.15s;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .num-stepper-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
         @media (max-width: 480px) {
+            .web-link-row {
+                grid-template-columns: 1fr auto;
+                grid-template-rows: auto auto;
+            }
+            .web-link-row input:first-child {
+                grid-column: 1;
+                grid-row: 1;
+            }
+            .web-link-row input:last-of-type {
+                grid-column: 1;
+                grid-row: 2;
+            }
+            .web-link-row button {
+                grid-column: 2;
+                grid-row: 1 / 3;
+                align-self: center;
+            }
             .settings-card {
                 padding: 20px 16px;
             }
@@ -385,6 +542,12 @@
                     </button>
                     <button class="settings-nav-item" data-panel="club">
                         <i class="fas fa-shield-alt"></i> Club Settings
+                    </button>
+                    <button class="settings-nav-item" data-panel="staff" id="staffNavBtn" style="display:none;">
+                        <i class="fas fa-id-badge"></i> Staff Management
+                    </button>
+                    <button class="settings-nav-item" data-panel="seasons" id="seasonsNavBtn" style="display:none;">
+                        <i class="fas fa-calendar-alt"></i> Seasons
                     </button>
                     <button class="settings-nav-item" data-panel="appearance">
                         <i class="fas fa-palette"></i> Appearance
@@ -473,83 +636,169 @@
 
                     <!-- Club Settings Panel (admin only) -->
                     <div class="settings-panel" id="panel-club">
-                        <div class="settings-card">
-                            <h3>Club Information</h3>
-                            <p>Manage your club's details and branding.</p>
-                            <div class="settings-form-group">
-                                <label>Club Name</label>
-                                <input type="text" id="settingsClubName" placeholder="Club name">
-                            </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <nav class="sub-tab-nav">
+                            <button class="sub-tab-btn active" data-target="club-tab-details"><i class="fas fa-info-circle" style="margin-right:6px;"></i>Details</button>
+                            <button class="sub-tab-btn" data-target="club-tab-links"><i class="fas fa-link" style="margin-right:6px;"></i>Links</button>
+                        </nav>
+
+                        <!-- Details tab: Club Info + About -->
+                        <div class="sub-tab-content active" id="club-tab-details">
+                            <div class="settings-card">
+                                <h3>Club Information</h3>
+                                <p>Manage your club's core details and branding.</p>
                                 <div class="settings-form-group">
-                                    <label>Club Email</label>
-                                    <input type="email" id="settingsClubEmail" placeholder="e.g. info@club.com">
+                                    <label>Club Name</label>
+                                    <input type="text" id="settingsClubName" placeholder="Club name">
                                 </div>
-                                <div class="settings-form-group">
-                                    <label>Club Phone</label>
-                                    <input type="tel" id="settingsClubPhone" placeholder="e.g. 012 345 6789">
-                                </div>
-                            </div>
-                            <div class="settings-form-group">
-                                <label>Club Address</label>
-                                <input type="text" id="settingsClubAddress" placeholder="e.g. 123 Main St, Pretoria">
-                            </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                <div class="settings-form-group">
-                                    <label>Current Season</label>
-                                    <input type="text" id="settingsCurrentSeason" placeholder="e.g. 2026">
-                                </div>
-                                <div class="settings-form-group">
-                                    <label>Default Venue</label>
-                                    <input type="text" id="settingsDefaultVenue" placeholder="e.g. Main Pitch">
-                                </div>
-                            </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                <div class="settings-form-group">
-                                    <label>Default Session Time</label>
-                                    <input type="time" id="settingsDefaultTime">
-                                </div>
-                                <div class="settings-form-group">
-                                    <label>Default Session Duration</label>
-                                    <input type="text" id="settingsDefaultDuration" placeholder="e.g. 90 min">
-                                </div>
-                            </div>
-                            <div class="settings-form-group">
-                                <label>Club Logo</label>
-                                <div style="display:flex;align-items:center;gap:16px;margin-top:4px;">
-                                    <div id="clubLogoPreview" style="width:64px;height:64px;border-radius:12px;background:var(--bg-card);border:2px dashed var(--border-light);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
-                                        <i class="fas fa-image" style="font-size:1.4rem;color:var(--text-muted);"></i>
+                                <div class="settings-form-row">
+                                    <div class="settings-form-group">
+                                        <label>Club Email</label>
+                                        <input type="email" id="settingsClubEmail" placeholder="e.g. info@club.com">
                                     </div>
-                                    <div style="display:flex;flex-direction:column;gap:6px;">
-                                        <input type="file" id="clubLogoInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display:none;">
-                                        <button type="button" class="dash-btn" id="btnUploadLogo" style="font-size:0.8rem;padding:6px 14px;">
-                                            <i class="fas fa-upload"></i> Upload Logo
-                                        </button>
-                                        <button type="button" class="dash-btn" id="btnRemoveLogo" style="font-size:0.75rem;padding:4px 10px;color:#ef4444;display:none;">
-                                            <i class="fas fa-times"></i> Remove
-                                        </button>
-                                        <span style="font-size:0.72rem;color:var(--text-muted);">JPEG, PNG, WebP, or SVG. Max 2 MB.</span>
+                                    <div class="settings-form-group">
+                                        <label>Club Phone</label>
+                                        <input type="tel" id="settingsClubPhone" placeholder="e.g. 012 345 6789">
                                     </div>
                                 </div>
+                                <div class="settings-form-group">
+                                    <label>Club Address</label>
+                                    <input type="text" id="settingsClubAddress" placeholder="e.g. 123 Main St, Pretoria">
+                                </div>
+                                <div class="settings-form-group">
+                                    <label>Club Logo</label>
+                                    <div style="display:flex;align-items:center;gap:16px;margin-top:4px;">
+                                        <div id="clubLogoPreview" style="width:64px;height:64px;border-radius:12px;background:var(--bg-card);border:2px dashed var(--border-light);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                                            <i class="fas fa-image" style="font-size:1.4rem;color:var(--text-muted);"></i>
+                                        </div>
+                                        <div style="display:flex;flex-direction:column;gap:6px;">
+                                            <input type="file" id="clubLogoInput" accept="image/jpeg,image/png,image/webp,image/svg+xml" style="display:none;">
+                                            <button type="button" class="dash-btn outline sm" id="btnUploadLogo">
+                                                <i class="fas fa-upload"></i> Upload Logo
+                                            </button>
+                                            <button type="button" class="dash-btn sm" id="btnRemoveLogo" style="background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;display:none;">
+                                                <i class="fas fa-times"></i> Remove
+                                            </button>
+                                            <span style="font-size:0.72rem;color:var(--text-muted);">JPEG, PNG, WebP, or SVG. Max 2 MB.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="settings-actions">
+                                    <button class="dash-btn primary" id="btnSaveClub">
+                                        <i class="fas fa-save"></i> Save Club Info
+                                    </button>
+                                </div>
                             </div>
-                            <div class="settings-actions">
-                                <button class="dash-btn primary" id="btnSaveClub">
-                                    <i class="fas fa-save"></i> Save Club Settings
-                                </button>
+
+                            <div class="settings-card">
+                                <h3>About the Club</h3>
+                                <p>Introduce your club — shown on your public club profile.</p>
+                                <div class="settings-form-group">
+                                    <label>Introduction</label>
+                                    <textarea id="settingsClubIntro" rows="4" placeholder="Brief intro about your club, its history, and values..."></textarea>
+                                </div>
+                                <div class="settings-form-group">
+                                    <label>Club Facts <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted);">(one per line, e.g. "Founded: 1987")</span></label>
+                                    <textarea id="settingsClubFacts" rows="4" placeholder="Founded: 1987&#10;Home Ground: Loftus Versfeld&#10;Colours: Blue &amp; White"></textarea>
+                                </div>
+                                <div class="settings-actions">
+                                    <button class="dash-btn primary" id="btnSaveClubAbout">
+                                        <i class="fas fa-save"></i> Save About
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="settings-card">
-                            <h3>Team Members <span id="teamMemberCount" style="font-size:13px;font-weight:500;color:var(--text-secondary);"></span></h3>
-                            <p>Manage coaches, viewers, and staff with access to this club. Assign roles and squad access.</p>
-                            <div id="teamMembersList" style="margin-bottom: 16px;">
-                                <div style="text-align:center;padding:20px;color:var(--text-secondary);">
-                                    <i class="fas fa-spinner fa-spin"></i> Loading members...
+                        <!-- Links tab: Social Media + Web Links -->
+                        <div class="sub-tab-content" id="club-tab-links">
+                            <div class="settings-card">
+                                <h3>Social Media</h3>
+                                <p>Add your club's social media accounts.</p>
+                                <div class="settings-form-row">
+                                    <div class="settings-form-group">
+                                        <label><i class="fab fa-facebook" style="color:#1877f2;margin-right:6px;"></i>Facebook</label>
+                                        <input type="url" id="socialFacebook" placeholder="https://facebook.com/yourclub">
+                                    </div>
+                                    <div class="settings-form-group">
+                                        <label><i class="fab fa-instagram" style="color:#e1306c;margin-right:6px;"></i>Instagram</label>
+                                        <input type="url" id="socialInstagram" placeholder="https://instagram.com/yourclub">
+                                    </div>
+                                    <div class="settings-form-group">
+                                        <label><i class="fab fa-twitter" style="color:#1da1f2;margin-right:6px;"></i>X / Twitter</label>
+                                        <input type="url" id="socialTwitter" placeholder="https://x.com/yourclub">
+                                    </div>
+                                    <div class="settings-form-group">
+                                        <label><i class="fab fa-youtube" style="color:#ff0000;margin-right:6px;"></i>YouTube</label>
+                                        <input type="url" id="socialYoutube" placeholder="https://youtube.com/@yourclub">
+                                    </div>
+                                    <div class="settings-form-group">
+                                        <label><i class="fab fa-tiktok" style="color:#010101;margin-right:6px;"></i>TikTok</label>
+                                        <input type="url" id="socialTiktok" placeholder="https://tiktok.com/@yourclub">
+                                    </div>
+                                    <div class="settings-form-group">
+                                        <label><i class="fas fa-globe" style="color:var(--primary);margin-right:6px;"></i>Club Website</label>
+                                        <input type="url" id="socialWebsite" placeholder="https://yourclub.co.za">
+                                    </div>
+                                </div>
+                                <div class="settings-actions">
+                                    <button class="dash-btn primary" id="btnSaveSocials">
+                                        <i class="fas fa-save"></i> Save Social Media
+                                    </button>
                                 </div>
                             </div>
-                            <button class="dash-btn primary" id="btnInviteMember">
-                                <i class="fas fa-user-plus"></i> Invite Member
-                            </button>
+
+                            <div class="settings-card">
+                                <h3>Web Links</h3>
+                                <p>Add any useful links — league tables, documents, livestreams, etc.</p>
+                                <div id="webLinksContainer" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;"></div>
+                                <button type="button" class="dash-btn outline sm" id="btnAddWebLink">
+                                    <i class="fas fa-plus"></i> Add Link
+                                </button>
+                                <div class="settings-actions" style="margin-top:16px;">
+                                    <button class="dash-btn primary" id="btnSaveWebLinks">
+                                        <i class="fas fa-save"></i> Save Links
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seasons Panel (admin only) -->
+                    <div class="settings-panel" id="panel-seasons">
+                        <div class="settings-card">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                                <div>
+                                    <h3 style="margin:0;">Seasons</h3>
+                                    <p style="margin:4px 0 0;font-size:0.82rem;">Create seasons for the whole club or specific squads. Set one as current per squad — it shows above your name in the sidebar.</p>
+                                </div>
+                                <button class="dash-btn primary" id="btnNewSeason" style="flex-shrink:0;margin-left:16px;">
+                                    <i class="fas fa-plus"></i> New Season
+                                </button>
+                            </div>
+                            <div class="seasons-list" id="seasonsList">
+                                <div style="text-align:center;padding:30px;color:var(--text-muted);">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Staff Management Panel (admin only) -->
+                    <div class="settings-panel" id="panel-staff">
+                        <div class="settings-card">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                                <div>
+                                    <h3 style="margin:0;">Staff Management</h3>
+                                    <p style="margin:4px 0 0;font-size:0.82rem;color:var(--text-muted);">All platform members grouped by role. Click a card to view or edit their profile.</p>
+                                </div>
+                                <button class="dash-btn primary" id="btnInviteMember" style="flex-shrink:0;margin-left:16px;">
+                                    <i class="fas fa-user-plus"></i> Invite Member
+                                </button>
+                            </div>
+                            <div id="memberGroupsContainer">
+                                <div style="text-align:center;padding:30px;color:var(--text-muted);">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading...
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -663,6 +912,357 @@
         </div>
     </div>
 
+    <!-- Add / Edit Staff Modal -->
+    <div class="settings-modal-overlay" id="staffModal">
+        <div class="settings-modal" style="max-width:520px;">
+            <h3 id="staffModalTitle"><i class="fas fa-id-badge" style="color:var(--primary);margin-right:8px;"></i>Add Staff Member</h3>
+            <input type="hidden" id="staffModalId">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="settings-form-group">
+                    <label>First Name</label>
+                    <input type="text" id="staffFirstName" placeholder="First name">
+                </div>
+                <div class="settings-form-group">
+                    <label>Last Name</label>
+                    <input type="text" id="staffLastName" placeholder="Last name">
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="settings-form-group">
+                    <label>Role</label>
+                    <select id="staffRole">
+                        <option value="admin">Admin</option>
+                        <option value="coach" selected>Coach</option>
+                        <option value="manager">Manager</option>
+                        <option value="analyst">Analyst</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="kit_manager">Kit Manager</option>
+                    </select>
+                </div>
+                <div class="settings-form-group">
+                    <label>Contact Mobile <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <input type="tel" id="staffMobile" placeholder="e.g. 082 123 4567">
+                </div>
+            </div>
+            <div class="settings-form-group">
+                <label>Contact Email <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(used for platform invite if access granted)</span></label>
+                <input type="email" id="staffEmail" placeholder="staff@club.com">
+            </div>
+            <div class="settings-form-group" id="staffSquadGroup">
+                <label>Assigned Squads <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                <div class="squad-checklist" id="staffSquadList" style="max-height:140px;overflow-y:auto;">Loading squads...</div>
+            </div>
+            <div class="settings-form-group">
+                <label>Bio <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(shown on squad page — optional)</span></label>
+                <textarea id="staffBio" placeholder="Short description..." style="width:100%;padding:10px 12px;border:1px solid var(--border-light);border-radius:10px;font-family:inherit;font-size:0.85rem;resize:vertical;min-height:60px;color:var(--text-primary);background:var(--bg-body);box-sizing:border-box;"></textarea>
+            </div>
+            <div class="settings-form-group">
+                <label>Platform Access</label>
+                <div style="display:flex;gap:8px;margin-top:4px;">
+                    <button type="button" class="staff-access-btn active" id="staffAccessYes">
+                        <i class="fas fa-paper-plane"></i> Yes — Send invite
+                    </button>
+                    <button type="button" class="staff-access-btn" id="staffAccessNo">
+                        <i class="fas fa-times"></i> No access
+                    </button>
+                </div>
+            </div>
+            <div class="settings-form-group" id="staffInviteRoleGroup">
+                <label>Platform Role</label>
+                <select id="staffInviteRole">
+                    <option value="coach">Coach</option>
+                    <option value="viewer">Viewer</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <p style="margin:4px 0 0;font-size:0.71rem;color:var(--text-muted);">This controls what they can do in the platform, separate from their staff role.</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="staffCancelBtn">Cancel</button>
+                <button class="dash-btn primary" id="staffSaveBtn">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Season Modal -->
+    <div class="settings-modal-overlay" id="seasonModal">
+        <div class="settings-modal" style="max-width:540px;max-height:88vh;overflow-y:auto;">
+            <h3 id="seasonModalTitle"><i class="fas fa-calendar-alt" style="color:var(--primary);margin-right:8px;"></i>New Season</h3>
+            <input type="hidden" id="seasonModalId">
+            <div class="settings-form-group">
+                <label>Season Name</label>
+                <input type="text" id="seasonName" placeholder="e.g. 2025/26 or Winter Cup Season">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="settings-form-group">
+                    <label>Start Date <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <input type="date" id="seasonStartDate">
+                </div>
+                <div class="settings-form-group">
+                    <label>End Date <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <input type="date" id="seasonEndDate">
+                </div>
+            </div>
+            <div class="settings-form-group" style="padding:12px;background:var(--bg-body);border-radius:10px;border:1px solid var(--border-light);">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;">
+                    <input type="checkbox" id="seasonIsCurrent" style="width:16px;height:16px;accent-color:var(--primary);flex-shrink:0;">
+                    <span>
+                        <strong style="font-size:0.85rem;">Mark as current season</strong>
+                        <span style="display:block;font-size:0.71rem;color:var(--text-muted);font-weight:400;margin-top:1px;">The current season name appears above your name in the sidebar. Ticking this will unset any other current season.</span>
+                    </span>
+                </label>
+            </div>
+            <div class="settings-form-group">
+                <label>Applies To</label>
+                <div style="display:flex;gap:8px;margin-top:4px;">
+                    <button type="button" class="staff-access-btn active" id="seasonScopeAll">All Squads</button>
+                    <button type="button" class="staff-access-btn" id="seasonScopeSpecific">Specific Squads</button>
+                </div>
+            </div>
+            <div class="settings-form-group" id="seasonSquadsGroup" style="display:none;">
+                <label>Select Squads</label>
+                <div class="squad-checklist" id="seasonSquadList" style="max-height:120px;overflow-y:auto;">Loading...</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="settings-form-group">
+                    <label>Match Format</label>
+                    <select id="seasonFormat">
+                        <option value="11">11-a-side</option>
+                        <option value="9">9-a-side</option>
+                        <option value="7">7-a-side</option>
+                        <option value="6">6-a-side</option>
+                        <option value="5">5-a-side</option>
+                    </select>
+                </div>
+                <div class="settings-form-group">
+                    <label>Match Duration</label>
+                    <select id="seasonDuration">
+                        <option value="90">90 minutes</option>
+                        <option value="80">80 minutes</option>
+                        <option value="70">70 minutes</option>
+                        <option value="60">60 minutes</option>
+                        <option value="50">50 minutes</option>
+                        <option value="40">40 minutes</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                <div class="settings-form-group">
+                    <label>Win Pts</label>
+                    <div class="num-stepper">
+                        <button type="button" class="num-stepper-btn" data-target="seasonWinPts" data-dir="-1">−</button>
+                        <input type="number" id="seasonWinPts" value="3" min="0" max="10">
+                        <button type="button" class="num-stepper-btn" data-target="seasonWinPts" data-dir="1">+</button>
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label>Draw Pts</label>
+                    <div class="num-stepper">
+                        <button type="button" class="num-stepper-btn" data-target="seasonDrawPts" data-dir="-1">−</button>
+                        <input type="number" id="seasonDrawPts" value="1" min="0" max="10">
+                        <button type="button" class="num-stepper-btn" data-target="seasonDrawPts" data-dir="1">+</button>
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label>Loss Pts</label>
+                    <div class="num-stepper">
+                        <button type="button" class="num-stepper-btn" data-target="seasonLossPts" data-dir="-1">−</button>
+                        <input type="number" id="seasonLossPts" value="0" min="0" max="10">
+                        <button type="button" class="num-stepper-btn" data-target="seasonLossPts" data-dir="1">+</button>
+                    </div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="settings-form-group">
+                    <label>League / Competition <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <input type="text" id="seasonLeague" placeholder="e.g. Tshwane League">
+                </div>
+                <div class="settings-form-group">
+                    <label>Division <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <input type="text" id="seasonDivision" placeholder="e.g. Division 1">
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="settings-form-group">
+                    <label>Age Group <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <select id="seasonAgeGroup">
+                        <option value="">Not specified</option>
+                        <option value="Senior">Senior</option>
+                        <option value="U23">U23</option>
+                        <option value="U19">U19</option>
+                        <option value="U17">U17</option>
+                        <option value="U16">U16</option>
+                        <option value="U14">U14</option>
+                        <option value="U12">U12</option>
+                        <option value="U10">U10</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="settings-form-group">
+                    <label>Gender <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                    <select id="seasonGender">
+                        <option value="">Not specified</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Mixed">Mixed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-form-group">
+                <label>Home Venue <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+                <input type="text" id="seasonHomeVenue" placeholder="e.g. Loftus Versfeld">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="seasonCancelBtn">Cancel</button>
+                <button class="dash-btn primary" id="seasonSaveBtn">
+                    <i class="fas fa-save"></i> Save Season
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Profile Modal -->
+    <div class="settings-modal-overlay" id="memberProfileModal">
+        <div class="settings-modal" style="max-width:560px;">
+            <!-- Header -->
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                <div id="memberProfileAvatar" style="width:56px;height:56px;border-radius:16px;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;flex-shrink:0;overflow:hidden;">??</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:1.1rem;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="memberProfileName">Member Name</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;" id="memberProfileRoleBadge"></div>
+                </div>
+                <button class="btn-cancel" id="memberProfileCloseBtn" style="flex-shrink:0;">Close</button>
+            </div>
+
+            <!-- Sub-tabs -->
+            <nav class="sub-tab-nav" id="memberProfileTabNav">
+                <button class="sub-tab-btn active" data-target="mp-tab-details">Details</button>
+                <button class="sub-tab-btn" data-target="mp-tab-personal">Personal</button>
+                <button class="sub-tab-btn" data-target="mp-tab-bio">Bio & Photo</button>
+            </nav>
+
+            <!-- Details tab -->
+            <div class="sub-tab-content active" id="mp-tab-details">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="settings-form-group">
+                        <label>First Name</label>
+                        <input type="text" id="mpFirstName" placeholder="First name">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Last Name</label>
+                        <input type="text" id="mpLastName" placeholder="Last name">
+                    </div>
+                </div>
+                <div class="settings-form-group" id="mpRolePickerGroup">
+                    <label>Platform Role</label>
+                    <div id="mpRolePicker" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
+                </div>
+                <div class="settings-form-group">
+                    <label>Squads <span style="font-weight:400;font-size:0.72rem;color:var(--text-muted);" id="mpSquadsNote"></span></label>
+                    <div id="mpSquadsDisplay" style="font-size:0.85rem;color:var(--text-primary);padding:8px 0;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="settings-form-group">
+                        <label>Email</label>
+                        <input type="email" id="mpEmail" placeholder="email@example.com">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Mobile</label>
+                        <input type="tel" id="mpMobile" placeholder="e.g. 082 123 4567">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal tab -->
+            <div class="sub-tab-content" id="mp-tab-personal">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="settings-form-group">
+                        <label>Date of Birth</label>
+                        <input type="date" id="mpDob">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Postcode</label>
+                        <input type="text" id="mpPostcode" placeholder="e.g. 0001">
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label>Address</label>
+                    <input type="text" id="mpAddress" placeholder="Street address">
+                </div>
+                <div class="settings-form-group">
+                    <label>Notes <span style="font-weight:400;font-size:0.72rem;color:var(--text-muted);">(admin only)</span></label>
+                    <textarea id="mpNotes" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--border-light);border-radius:8px;font-family:inherit;font-size:0.85rem;resize:vertical;box-sizing:border-box;" placeholder="Private notes about this member..."></textarea>
+                </div>
+            </div>
+
+            <!-- Bio & Photo tab -->
+            <div class="sub-tab-content" id="mp-tab-bio">
+                <div class="settings-form-group">
+                    <label>Profile Photo</label>
+                    <div style="display:flex;align-items:center;gap:16px;margin-top:4px;">
+                        <div id="mpPhotoPreview" style="width:64px;height:64px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border-light);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;">
+                            <i class="fas fa-user" style="font-size:1.4rem;color:var(--text-muted);"></i>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <input type="file" id="mpPhotoInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                            <button type="button" class="dash-btn outline sm" id="mpPhotoUploadBtn"><i class="fas fa-upload"></i> Upload Photo</button>
+                            <span style="font-size:0.72rem;color:var(--text-muted);">JPEG, PNG or WebP. Max 2 MB.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-form-group">
+                    <label>Bio <span style="font-weight:400;font-size:0.72rem;color:var(--text-muted);">(shown on squad page)</span></label>
+                    <textarea id="mpBio" rows="5" style="width:100%;padding:10px 12px;border:1px solid var(--border-light);border-radius:8px;font-family:inherit;font-size:0.85rem;resize:vertical;box-sizing:border-box;" placeholder="Short description about this member..."></textarea>
+                </div>
+            </div>
+
+            <!-- Footer actions -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border-light);flex-wrap:wrap;gap:8px;">
+                <div id="memberProfileAdminActions" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+                <button class="dash-btn primary" id="memberProfileSaveBtn" style="display:none;">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Platform Confirm Modal (replaces all browser confirm() dialogs) -->
+    <div class="settings-modal-overlay" id="platformConfirmModal">
+        <div class="settings-modal" style="max-width:400px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <div style="width:40px;height:40px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="fas fa-exclamation-triangle" style="color:#ef4444;font-size:1rem;"></i>
+                </div>
+                <h3 id="platformConfirmTitle" style="margin:0;font-size:1rem;color:var(--text-primary);font-weight:700;">Confirm Action</h3>
+            </div>
+            <p id="platformConfirmMessage" style="margin:0 0 24px;font-size:0.88rem;color:var(--text-secondary);line-height:1.5;"></p>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button id="platformConfirmCancel" class="dash-btn outline" style="min-width:80px;">Cancel</button>
+                <button id="platformConfirmOk" class="dash-btn" style="min-width:80px;background:#ef4444;color:#fff;border-color:#ef4444;">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Profile View Modal -->
+    <div class="settings-modal-overlay" id="staffViewModal">
+        <div class="settings-modal" style="max-width:440px;">
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                <div class="staff-avatar" id="staffViewAvatar" style="width:48px;height:48px;font-size:16px;border-radius:14px;">??</div>
+                <div>
+                    <div style="font-weight:700;font-size:1.05rem;color:var(--text-primary);" id="staffViewName">Staff Name</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);" id="staffViewRole">Role</div>
+                    <div style="font-size:0.72rem;color:var(--primary);margin-top:2px;" id="staffViewSquads"></div>
+                </div>
+            </div>
+            <div id="staffViewDetails"></div>
+            <div class="modal-actions" style="justify-content:space-between;">
+                <div id="staffViewAdminActions" style="display:flex;gap:6px;"></div>
+                <button class="btn-cancel" id="staffViewCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initPage, supabase, getProfile } from '../page-init.js';
         import { showToast } from '../toast.js';
@@ -673,6 +1273,27 @@
         let currentProfile = null;
         let allSquads = [];
         let allSquadCoaches = [];
+
+        // Platform-styled confirm dialog — replaces all browser confirm() calls
+        function platformConfirm(message, title = 'Confirm Action', confirmLabel = 'Confirm') {
+            return new Promise(resolve => {
+                document.getElementById('platformConfirmTitle').textContent = title;
+                document.getElementById('platformConfirmMessage').textContent = message;
+                document.getElementById('platformConfirmOk').textContent = confirmLabel;
+                const modal = document.getElementById('platformConfirmModal');
+                modal.classList.add('active');
+                const ok = document.getElementById('platformConfirmOk');
+                const cancel = document.getElementById('platformConfirmCancel');
+                const cleanup = (result) => {
+                    modal.classList.remove('active');
+                    ok.replaceWith(ok.cloneNode(true));
+                    cancel.replaceWith(cancel.cloneNode(true));
+                    resolve(result);
+                };
+                document.getElementById('platformConfirmOk').addEventListener('click', () => cleanup(true), { once: true });
+                document.getElementById('platformConfirmCancel').addEventListener('click', () => cleanup(false), { once: true });
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await initPage('settings', { squad: false });
@@ -709,10 +1330,19 @@
                 document.getElementById('settingsClubEmail').value = clubSettings.contact_email || '';
                 document.getElementById('settingsClubPhone').value = clubSettings.contact_phone || '';
                 document.getElementById('settingsClubAddress').value = clubSettings.contact_address || '';
-                document.getElementById('settingsCurrentSeason').value = clubSettings.current_season || new Date().getFullYear().toString();
-                document.getElementById('settingsDefaultVenue').value = clubSettings.default_venue || '';
-                document.getElementById('settingsDefaultTime').value = clubSettings.default_time || '';
-                document.getElementById('settingsDefaultDuration').value = clubSettings.default_duration || '';
+
+                // Populate About
+                document.getElementById('settingsClubIntro').value = clubSettings.about?.intro || '';
+                document.getElementById('settingsClubFacts').value = clubSettings.about?.facts || '';
+                // Populate Social Media
+                document.getElementById('socialFacebook').value = clubSettings.social?.facebook || '';
+                document.getElementById('socialInstagram').value = clubSettings.social?.instagram || '';
+                document.getElementById('socialTwitter').value = clubSettings.social?.twitter || '';
+                document.getElementById('socialYoutube').value = clubSettings.social?.youtube || '';
+                document.getElementById('socialTiktok').value = clubSettings.social?.tiktok || '';
+                document.getElementById('socialWebsite').value = clubSettings.social?.website || '';
+                // Populate Web Links
+                renderWebLinks(clubSettings.web_links || []);
 
                 // Init logo preview
                 const existingLogo = profile.clubs.settings?.branding?.logo_url;
@@ -743,8 +1373,7 @@
                     document.getElementById('clubLogoInput').value = '';
                 });
 
-                await loadSquadsAndCoaches(profile.club_id);
-                await loadTeamMembers(profile.club_id);
+                // squads + members loaded in parallel in admin reveal block below
             } else {
                 const clubNav = document.querySelector('[data-panel="club"]');
                 if (clubNav) clubNav.style.display = 'none';
@@ -762,6 +1391,17 @@
                 document.getElementById('inviteSquadGroup').style.display = showSquads ? 'block' : 'none';
             });
 
+            // Sub-tab switching (within panels)
+            document.querySelectorAll('.sub-tab-nav .sub-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const panel = btn.closest('.settings-panel');
+                    panel.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+                    panel.querySelectorAll('.sub-tab-content').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    panel.querySelector('#' + btn.dataset.target).classList.add('active');
+                });
+            });
+
             // Settings nav switching
             document.querySelectorAll('.settings-nav-item').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -769,8 +1409,9 @@
                     document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
                     btn.classList.add('active');
                     document.getElementById(`panel-${btn.dataset.panel}`).classList.add('active');
-                    // Load deleted items when tab is shown
+                    // Load panel-specific data when shown
                     if (btn.dataset.panel === 'deleted') loadDeletedItems();
+                    if (btn.dataset.panel === 'seasons') loadSeasons(sessionStorage.getItem('impersonating_club_id') || currentProfile?.club_id);
                     // Populate walkthrough list
                     if (btn.dataset.panel === 'walkthrough') {
                         const list = document.getElementById('walkthroughList');
@@ -918,10 +1559,6 @@
                     currentSettings.contact_email = document.getElementById('settingsClubEmail').value.trim() || null;
                     currentSettings.contact_phone = document.getElementById('settingsClubPhone').value.trim() || null;
                     currentSettings.contact_address = document.getElementById('settingsClubAddress').value.trim() || null;
-                    currentSettings.current_season = document.getElementById('settingsCurrentSeason').value.trim() || null;
-                    currentSettings.default_venue = document.getElementById('settingsDefaultVenue').value.trim() || null;
-                    currentSettings.default_time = document.getElementById('settingsDefaultTime').value || null;
-                    currentSettings.default_duration = document.getElementById('settingsDefaultDuration').value.trim() || null;
 
                     // Upload logo file if selected
                     if (_pendingLogoFile) {
@@ -940,9 +1577,10 @@
                     }
 
                     const updatedSettings = { ...currentSettings, branding };
+                    const targetClubId = sessionStorage.getItem('impersonating_club_id') || profile.club_id;
                     const { error } = await supabase.from('clubs')
                         .update({ name: clubName, settings: updatedSettings })
-                        .eq('id', profile.club_id);
+                        .eq('id', targetClubId);
 
                     if (error) throw error;
 
@@ -964,6 +1602,103 @@
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-save"></i> Save Club Settings';
+                }
+            });
+
+            // ──── Web Links helpers ────
+            function buildWebLinkRow(url = '', label = '') {
+                const row = document.createElement('div');
+                row.className = 'web-link-row';
+                row.innerHTML = `
+                    <input type="url" class="web-link-url" placeholder="https://..." value="${url.replace(/"/g, '&quot;')}">
+                    <input type="text" class="web-link-label" placeholder="Label (e.g. League Table)" value="${label.replace(/"/g, '&quot;')}">
+                    <button type="button" class="btn-icon remove-member" title="Remove"><i class="fas fa-times"></i></button>`;
+                row.querySelector('button').addEventListener('click', () => row.remove());
+                return row;
+            }
+
+            function renderWebLinks(links) {
+                const container = document.getElementById('webLinksContainer');
+                container.innerHTML = '';
+                links.forEach(link => container.appendChild(buildWebLinkRow(link.url || '', link.label || '')));
+            }
+
+            document.getElementById('btnAddWebLink')?.addEventListener('click', () => {
+                document.getElementById('webLinksContainer').appendChild(buildWebLinkRow());
+            });
+
+            // Save About the Club
+            document.getElementById('btnSaveClubAbout')?.addEventListener('click', async () => {
+                const btn = document.getElementById('btnSaveClubAbout');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                try {
+                    const currentSettings = profile.clubs?.settings || {};
+                    currentSettings.about = {
+                        intro: document.getElementById('settingsClubIntro').value.trim() || null,
+                        facts: document.getElementById('settingsClubFacts').value.trim() || null,
+                    };
+                    const { error } = await supabase.from('clubs').update({ settings: currentSettings }).eq('id', profile.club_id);
+                    if (error) throw error;
+                    profile.clubs.settings = currentSettings;
+                    showToast('About saved', 'success');
+                } catch (err) {
+                    showToast('Failed to save: ' + err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save About';
+                }
+            });
+
+            // Save Social Media
+            document.getElementById('btnSaveSocials')?.addEventListener('click', async () => {
+                const btn = document.getElementById('btnSaveSocials');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                try {
+                    const currentSettings = profile.clubs?.settings || {};
+                    currentSettings.social = {
+                        facebook:  document.getElementById('socialFacebook').value.trim() || null,
+                        instagram: document.getElementById('socialInstagram').value.trim() || null,
+                        twitter:   document.getElementById('socialTwitter').value.trim() || null,
+                        youtube:   document.getElementById('socialYoutube').value.trim() || null,
+                        tiktok:    document.getElementById('socialTiktok').value.trim() || null,
+                        website:   document.getElementById('socialWebsite').value.trim() || null,
+                    };
+                    const { error } = await supabase.from('clubs').update({ settings: currentSettings }).eq('id', profile.club_id);
+                    if (error) throw error;
+                    profile.clubs.settings = currentSettings;
+                    showToast('Social media links saved', 'success');
+                } catch (err) {
+                    showToast('Failed to save: ' + err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save Social Media';
+                }
+            });
+
+            // Save Web Links
+            document.getElementById('btnSaveWebLinks')?.addEventListener('click', async () => {
+                const btn = document.getElementById('btnSaveWebLinks');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                try {
+                    const rows = document.querySelectorAll('#webLinksContainer .web-link-row');
+                    const links = [...rows].map(row => ({
+                        url:   row.querySelector('.web-link-url')?.value.trim() || '',
+                        label: row.querySelector('.web-link-label')?.value.trim() || '',
+                    })).filter(l => l.url);
+                    const currentSettings = profile.clubs?.settings || {};
+                    currentSettings.web_links = links;
+                    const { error } = await supabase.from('clubs').update({ settings: currentSettings }).eq('id', profile.club_id);
+                    if (error) throw error;
+                    profile.clubs.settings = currentSettings;
+                    showToast('Web links saved', 'success');
+                } catch (err) {
+                    showToast('Failed to save: ' + err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-save"></i> Save Links';
                 }
             });
 
@@ -1029,7 +1764,7 @@
                     showToast('Invite created! Link copied & email opened.', 'success');
                     document.getElementById('inviteEmail').value = '';
                     document.getElementById('inviteModal').classList.remove('active');
-                    await loadTeamMembers(profile.club_id);
+                    await loadTeamMembers(sessionStorage.getItem('impersonating_club_id') || profile.club_id);
                 } catch (e) {
                     showToast('Failed: ' + e.message, 'error');
                 }
@@ -1073,8 +1808,8 @@
 
                     showToast('Squad assignments updated', 'success');
                     document.getElementById('squadAssignModal').classList.remove('active');
-                    await loadSquadsAndCoaches(profile.club_id);
-                    await loadTeamMembers(profile.club_id);
+                    await loadSquadsAndCoaches(sessionStorage.getItem('impersonating_club_id') || profile.club_id);
+                    await loadTeamMembers(sessionStorage.getItem('impersonating_club_id') || profile.club_id);
                 } catch (e) {
                     showToast('Failed to update assignments: ' + e.message, 'error');
                 }
@@ -1121,6 +1856,39 @@
                     showToast(`Theme set to ${theme} mode`, 'success');
                 });
             });
+
+            // Show staff + seasons nav for admins, load their data
+            if (canManage(profile)) {
+                const effectiveClubId = sessionStorage.getItem('impersonating_club_id') || profile.club_id;
+                const staffNav = document.getElementById('staffNavBtn');
+                if (staffNav) staffNav.style.display = '';
+                const seasonsNav = document.getElementById('seasonsNavBtn');
+                if (seasonsNav) seasonsNav.style.display = '';
+                await Promise.all([
+                    loadSquadsAndCoaches(effectiveClubId),
+                    loadTeamMembers(effectiveClubId),
+                    loadSeasons(effectiveClubId),
+                ]);
+            }
+
+            // Handle URL params: ?panel=X&view=ID (e.g. from squad staff chip links)
+            const _urlP = new URLSearchParams(window.location.search);
+            const _urlPanel = _urlP.get('panel');
+            const _urlView = _urlP.get('view');
+            if (_urlPanel) {
+                const targetBtn = document.querySelector(`.settings-nav-item[data-panel="${_urlPanel}"]`);
+                const targetPanelEl = document.getElementById(`panel-${_urlPanel}`);
+                if (targetBtn && targetPanelEl) {
+                    document.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+                    targetBtn.classList.add('active');
+                    targetPanelEl.classList.add('active');
+                    if (_urlPanel === 'deleted') loadDeletedItems();
+                }
+            }
+            if (_urlPanel === 'staff' && _urlView && window.openStaffView) {
+                window.openStaffView(_urlView);
+            }
         });
 
         // ──── Data Loading ────
@@ -1149,146 +1917,946 @@
             `).join('');
         }
 
-        // ──── Team Members List ────
+        // ──── Staff Management (platform members) ────
+
+        const MEMBER_ROLE_CONFIG = {
+            super_admin: { label: 'Super Admin', icon: 'fa-crown',               color: '#b45309' },
+            admin:       { label: 'Admin',       icon: 'fa-shield-alt',           color: '#c8902e' },
+            coach:       { label: 'Coach',       icon: 'fa-chalkboard-teacher',   color: '#2563eb' },
+            manager:     { label: 'Manager',     icon: 'fa-user-tie',             color: '#7c3aed' },
+            analyst:     { label: 'Analyst',     icon: 'fa-chart-bar',            color: '#0891b2' },
+            viewer:      { label: 'Viewer',      icon: 'fa-eye',                  color: '#6b7280' },
+        };
+        const SQUAD_ASSIGNABLE = new Set(['coach', 'manager', 'analyst', 'viewer']);
+        let allMembers = [];
 
         async function loadTeamMembers(clubId) {
-            const container = document.getElementById('teamMembersList');
+            const container = document.getElementById('memberGroupsContainer');
+            if (!container) return;
+
             const { data: members, error } = await supabase
                 .from('profiles')
                 .select('id, full_name, role')
                 .eq('club_id', clubId)
-                .order('role');
+                .order('full_name');
 
             if (error || !members) {
-                container.innerHTML = '<p style="color:var(--text-secondary);">Could not load members.</p>';
+                container.innerHTML = '<p style="color:var(--text-secondary);padding:20px;">Could not load members.</p>';
                 return;
             }
 
-            // Update member count
-            const countEl = document.getElementById('teamMemberCount');
-            if (countEl) countEl.textContent = `(${members.length})`;
-
-
+            allMembers = members;
             const profile = currentProfile;
-            const myAssignableRoles = assignableRoles(profile);
 
-            container.innerHTML = members.map(m => {
-                const initials = (m.full_name || '?').trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
-                const memberSquads = allSquadCoaches.filter(sc => sc.coach_id === m.id);
-                const squadNames = memberSquads.map(sc => {
-                    const sq = allSquads.find(s => s.id === sc.squad_id);
-                    return sq ? sq.name : '';
-                }).filter(Boolean);
-                const isPrivateCoaching = profile?.clubs?.settings?.archetype === 'private_coaching';
-                const squadText = isPrivateCoaching ? '' : (squadNames.length ? squadNames.join(', ') : (m.role === 'coach' ? 'No squads assigned' : ''));
+            // Group by role in a fixed display order
+            const roleOrder = ['super_admin', 'admin', 'coach', 'manager', 'analyst', 'viewer'];
+            let html = '';
 
-                const isSelf = m.id === profile.id;
-                const canChangeRole = !isSelf && myAssignableRoles.length > 0 && myAssignableRoles.includes(m.role);
-                const canChangeToHigher = isSuperAdmin(profile);
-                const showSquadBtn = !isPrivateCoaching && m.role !== 'super_admin' && !isSelf;
+            roleOrder.forEach(role => {
+                const group = members.filter(m => m.role === role);
+                if (!group.length) return;
+                const cfg = MEMBER_ROLE_CONFIG[role] || { label: role, icon: 'fa-user', color: '#6b7280' };
+                html += `<div class="staff-role-group">
+                    <div class="staff-role-header">
+                        <i class="fas ${cfg.icon}" style="color:${cfg.color};font-size:0.82rem;"></i>
+                        <span class="staff-role-label">${cfg.label}s</span>
+                        <span class="staff-role-count">${group.length}</span>
+                    </div>`;
 
-                // Build role options — only roles the current user can assign
-                let roleOptions = '';
-                if (canChangeRole || (canChangeToHigher && m.role !== 'super_admin')) {
-                    const opts = isSuperAdmin(profile)
-                        ? ['admin', 'coach', 'viewer']
-                        : myAssignableRoles;
-                    roleOptions = opts.map(r =>
-                        `<option value="${r}" ${m.role === r ? 'selected' : ''}>${roleLabel(r)}</option>`
-                    ).join('');
+                group.forEach(m => {
+                    const initials = (m.full_name || '?').trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                    const isSelf = m.id === profile?.id;
+
+                    // Squad info — only for squad-assignable roles (coaches/managers/analysts don't have global access)
+                    let squadText = '';
+                    if (SQUAD_ASSIGNABLE.has(role)) {
+                        const names = allSquadCoaches
+                            .filter(sc => sc.coach_id === m.id)
+                            .map(sc => allSquads.find(s => s.id === sc.squad_id)?.name)
+                            .filter(Boolean);
+                        squadText = names.length ? names.join(', ') : 'No squads assigned';
+                    }
+
+                    html += `<div class="staff-card" data-member-id="${m.id}" style="cursor:pointer;">
+                        <div class="staff-avatar" style="background:${cfg.color};">${initials}</div>
+                        <div class="staff-card-info">
+                            <span class="staff-card-name">${m.full_name || 'Unnamed'}${isSelf ? ' <span style="font-weight:400;color:var(--text-muted);font-size:0.78rem;">(you)</span>' : ''}</span>
+                            ${squadText ? `<span class="staff-card-squads"><i class="fas fa-users" style="font-size:9px;margin-right:3px;"></i>${squadText}</span>` : ''}
+                        </div>
+                        <i class="fas fa-chevron-right" style="font-size:0.7rem;color:var(--text-muted);flex-shrink:0;"></i>
+                    </div>`;
+                });
+                html += `</div>`;
+            });
+
+            if (!members.length) {
+                html = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <i class="fas fa-users" style="font-size:2rem;margin-bottom:12px;display:block;opacity:0.2;"></i>
+                    <p style="font-weight:600;">No members yet</p>
+                    <p style="font-size:0.78rem;">Invite your first member using the button above.</p>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+
+            container.querySelectorAll('.staff-card').forEach(card => {
+                card.addEventListener('click', () => openMemberProfile(card.dataset.memberId, clubId));
+            });
+        }
+
+        // Photo upload state for member profile modal
+        let _mpPendingPhotoFile = null;
+        let _mpCurrentMemberId = null;
+        let _mpCurrentClubId = null;
+        let _mpCurrentRole = null;
+
+        async function openMemberProfile(memberId, clubId) {
+            const m = allMembers.find(x => x.id === memberId);
+            if (!m) return;
+            const profile = currentProfile;
+            const cfg = MEMBER_ROLE_CONFIG[m.role] || { label: m.role, color: '#6b7280' };
+            const initials = (m.full_name || '?').trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+            const isAdmin = canManage(profile);
+            const isSelf = m.id === profile?.id;
+            const canEdit = isAdmin || isSelf;
+
+            _mpCurrentMemberId = memberId;
+            _mpCurrentClubId = clubId;
+            _mpCurrentRole = m.role;
+            _mpPendingPhotoFile = null;
+
+            // Header
+            const avatarEl = document.getElementById('memberProfileAvatar');
+            avatarEl.textContent = initials;
+            avatarEl.style.background = cfg.color;
+            avatarEl.style.backgroundImage = '';
+            document.getElementById('memberProfileName').textContent = m.full_name || 'Unnamed';
+            document.getElementById('memberProfileRoleBadge').innerHTML =
+                `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${cfg.color}22;color:${cfg.color};">
+                    <i class="fas ${cfg.icon || 'fa-user'}"></i>${cfg.label}${isSelf ? ' <span style="opacity:0.65;">(you)</span>' : ''}</span>`;
+
+            // Reset tab to Details
+            document.querySelectorAll('#memberProfileTabNav .sub-tab-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+            document.querySelectorAll('#memberProfileModal .sub-tab-content').forEach((c, i) => c.classList.toggle('active', i === 0));
+
+            // Squad info in details tab
+            const squadNames = SQUAD_ASSIGNABLE.has(m.role)
+                ? allSquadCoaches.filter(sc => sc.coach_id === m.id).map(sc => allSquads.find(s => s.id === sc.squad_id)?.name).filter(Boolean)
+                : null;
+            const squadsDisplay = document.getElementById('mpSquadsDisplay');
+            const squadsNote = document.getElementById('mpSquadsNote');
+            if (squadNames !== null) {
+                squadsNote.textContent = '';
+                squadsDisplay.innerHTML = squadNames.length
+                    ? squadNames.map(n => `<span style="display:inline-block;padding:3px 10px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:20px;font-size:0.78rem;margin:2px;">${n}</span>`).join('')
+                    : '<span style="color:var(--text-muted);font-size:0.82rem;">No squads assigned</span>';
+            } else {
+                squadsNote.textContent = '';
+                squadsDisplay.innerHTML = '<span style="color:var(--text-muted);font-size:0.82rem;"><i class="fas fa-check-circle" style="color:#10b981;margin-right:4px;"></i>Has access to all squads</span>';
+            }
+
+            // Role picker (admin editing non-self non-super_admin)
+            const rolePickerGroup = document.getElementById('mpRolePickerGroup');
+            const rolePicker = document.getElementById('mpRolePicker');
+            if (isAdmin && !isSelf && m.role !== 'super_admin') {
+                rolePickerGroup.style.display = '';
+                const editableRoles = ['admin', 'coach', 'manager', 'analyst', 'viewer'];
+                rolePicker.innerHTML = editableRoles.map(r => {
+                    const rcfg = MEMBER_ROLE_CONFIG[r];
+                    const isActive = m.role === r;
+                    return `<button type="button" class="mp-role-btn${isActive ? ' active' : ''}" data-role="${r}"
+                        style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:2px solid ${isActive ? rcfg.color : 'var(--border-light)'};background:${isActive ? rcfg.color + '18' : 'white'};color:${isActive ? rcfg.color : 'var(--text-medium)'};font-family:inherit;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.15s;">
+                        <i class="fas ${rcfg.icon}" style="font-size:0.72rem;"></i>${rcfg.label}</button>`;
+                }).join('');
+                rolePicker.querySelectorAll('.mp-role-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        rolePicker.querySelectorAll('.mp-role-btn').forEach(b => {
+                            const r = b.dataset.role;
+                            const rc = MEMBER_ROLE_CONFIG[r];
+                            b.classList.remove('active');
+                            b.style.borderColor = 'var(--border-light)';
+                            b.style.background = 'white';
+                            b.style.color = 'var(--text-medium)';
+                        });
+                        const selRole = btn.dataset.role;
+                        const selCfg = MEMBER_ROLE_CONFIG[selRole];
+                        btn.classList.add('active');
+                        btn.style.borderColor = selCfg.color;
+                        btn.style.background = selCfg.color + '18';
+                        btn.style.color = selCfg.color;
+                        _mpCurrentRole = selRole;
+                    });
+                });
+            } else {
+                rolePickerGroup.style.display = 'none';
+            }
+
+            // Fetch extended profile data from staff table via user_id
+            const { data: staffRec } = await supabase
+                .from('staff')
+                .select('*')
+                .eq('user_id', memberId)
+                .maybeSingle();
+
+            // Populate Details
+            const nameParts = (m.full_name || '').trim().split(/\s+/);
+            document.getElementById('mpFirstName').value = staffRec?.first_name || nameParts[0] || '';
+            document.getElementById('mpLastName').value = staffRec?.last_name || nameParts.slice(1).join(' ') || '';
+            document.getElementById('mpEmail').value = staffRec?.email || '';
+            document.getElementById('mpMobile').value = staffRec?.mobile || '';
+
+            // Populate Personal
+            document.getElementById('mpDob').value = staffRec?.date_of_birth || '';
+            document.getElementById('mpAddress').value = staffRec?.address || '';
+            document.getElementById('mpPostcode').value = staffRec?.postcode || '';
+            document.getElementById('mpNotes').value = staffRec?.notes || '';
+
+            // Populate Bio
+            document.getElementById('mpBio').value = staffRec?.bio || '';
+            const photoPreview = document.getElementById('mpPhotoPreview');
+            if (staffRec?.profile_image_url) {
+                photoPreview.innerHTML = `<img src="${staffRec.profile_image_url}" alt="Photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+                avatarEl.style.backgroundImage = `url(${staffRec.profile_image_url})`;
+                avatarEl.style.backgroundSize = 'cover';
+                avatarEl.textContent = '';
+            } else {
+                photoPreview.innerHTML = '<i class="fas fa-user" style="font-size:1.4rem;color:var(--text-muted);"></i>';
+            }
+
+            // Lock inputs for non-editors
+            const inputIds = ['mpFirstName','mpLastName','mpEmail','mpMobile','mpDob','mpAddress','mpPostcode','mpNotes','mpBio'];
+            inputIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = !canEdit;
+            });
+            document.getElementById('mpPhotoUploadBtn').style.display = canEdit ? '' : 'none';
+
+            // Admin actions footer
+            const actionsEl = document.getElementById('memberProfileAdminActions');
+            const saveBtn = document.getElementById('memberProfileSaveBtn');
+            saveBtn.style.display = canEdit ? '' : 'none';
+
+            if (isAdmin && !isSelf) {
+                const showSquadBtn = SQUAD_ASSIGNABLE.has(m.role);
+                actionsEl.innerHTML = `
+                    ${showSquadBtn ? `<button class="dash-btn sm outline" id="mpSquadBtn"><i class="fas fa-users"></i> Assign Squads</button>` : ''}
+                    ${m.role !== 'super_admin' ? `<button class="dash-btn sm" id="mpRemoveBtn" style="color:#ef4444;border-color:#fca5a5;"><i class="fas fa-user-times"></i> Remove</button>` : ''}`;
+
+                document.getElementById('mpSquadBtn')?.addEventListener('click', () => {
+                    document.getElementById('squadAssignUserId').value = m.id;
+                    document.getElementById('squadAssignSubtitle').textContent = `Select squads ${m.full_name || 'this member'} can access.`;
+                    renderSquadChecklist('squadAssignList', allSquadCoaches.filter(sc => sc.coach_id === m.id).map(sc => sc.squad_id));
+                    document.getElementById('memberProfileModal').classList.remove('active');
+                    document.getElementById('squadAssignModal').classList.add('active');
+                });
+
+                document.getElementById('mpRemoveBtn')?.addEventListener('click', async () => {
+                    if (!await platformConfirm(`Remove ${m.full_name || 'this member'} from the club? They will lose all platform access.`, 'Remove Member', 'Remove')) return;
+                    await supabase.from('squad_coaches').delete().eq('coach_id', m.id);
+                    const { error } = await supabase.from('profiles').delete().eq('id', m.id);
+                    if (error) { showToast('Failed to remove member', 'error'); return; }
+                    showToast(`${m.full_name || 'Member'} removed`, 'success');
+                    document.getElementById('memberProfileModal').classList.remove('active');
+                    await loadTeamMembers(clubId);
+                });
+            } else {
+                actionsEl.innerHTML = '';
+            }
+
+            document.getElementById('memberProfileModal').classList.add('active');
+        }
+
+        // Save member profile
+        document.getElementById('memberProfileSaveBtn')?.addEventListener('click', async () => {
+            const memberId = _mpCurrentMemberId;
+            const clubId = _mpCurrentClubId;
+            if (!memberId) return;
+
+            const btn = document.getElementById('memberProfileSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                const m = allMembers.find(x => x.id === memberId);
+                const profile = currentProfile;
+                const isAdmin = canManage(profile);
+                const isSelf = m?.id === profile?.id;
+
+                const firstName = document.getElementById('mpFirstName').value.trim();
+                const lastName = document.getElementById('mpLastName').value.trim();
+
+                // Update full_name in profiles
+                const newFullName = [firstName, lastName].filter(Boolean).join(' ') || m?.full_name || '';
+                if (newFullName !== m?.full_name) {
+                    await supabase.from('profiles').update({ full_name: newFullName }).eq('id', memberId);
+                    const idx = allMembers.findIndex(x => x.id === memberId);
+                    if (idx !== -1) allMembers[idx].full_name = newFullName;
                 }
 
-                return `
-                <div class="team-member-card">
-                    <div class="member-info">
-                        <div class="member-avatar">${initials}</div>
-                        <div class="member-details">
-                            <div class="member-name">${m.full_name || 'Unnamed'}${isSelf ? ' <span style="color:var(--text-secondary);font-weight:400;">(you)</span>' : ''}</div>
-                            ${squadText ? `<div class="member-squads"><i class="fas fa-futbol" style="margin-right:4px;"></i>${squadText}</div>` : ''}
-                            ${!roleOptions ? `<span class="settings-badge ${m.role}" style="margin-top:4px;">${roleLabel(m.role)}</span>` : ''}
-                        </div>
+                // Update role in profiles if admin changed it
+                if (isAdmin && !isSelf && _mpCurrentRole && _mpCurrentRole !== m?.role) {
+                    if (await platformConfirm(`Change ${m?.full_name || 'this member'}'s role to ${MEMBER_ROLE_CONFIG[_mpCurrentRole]?.label || _mpCurrentRole}?`, 'Change Role', 'Change Role')) {
+                        await supabase.from('profiles').update({ role: _mpCurrentRole }).eq('id', memberId);
+                        if (m) m.role = _mpCurrentRole;
+                    }
+                }
+
+                // Upload photo if pending
+                let photoUrl = null;
+                if (_mpPendingPhotoFile) {
+                    const ext = _mpPendingPhotoFile.name.split('.').pop().toLowerCase();
+                    const path = `members/${memberId}/photo_${Date.now()}.${ext}`;
+                    const { data: up, error: upErr } = await supabase.storage.from('avatars').upload(path, _mpPendingPhotoFile, { upsert: true });
+                    if (upErr) throw upErr;
+                    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(up.path);
+                    photoUrl = publicUrl;
+                    _mpPendingPhotoFile = null;
+                }
+
+                // Upsert staff record linked by user_id
+                const staffPayload = {
+                    club_id: clubId,
+                    user_id: memberId,
+                    first_name: firstName || (m?.full_name?.split(' ')[0] || 'Member'),
+                    last_name: lastName || '',
+                    role: _mpCurrentRole || m?.role || 'coach',
+                    email: document.getElementById('mpEmail').value.trim() || null,
+                    mobile: document.getElementById('mpMobile').value.trim() || null,
+                    date_of_birth: document.getElementById('mpDob').value || null,
+                    address: document.getElementById('mpAddress').value.trim() || null,
+                    postcode: document.getElementById('mpPostcode').value.trim() || null,
+                    notes: document.getElementById('mpNotes').value.trim() || null,
+                    bio: document.getElementById('mpBio').value.trim() || null,
+                    ...(photoUrl ? { profile_image_url: photoUrl } : {}),
+                    platform_access: true,
+                    status: 'active',
+                };
+
+                // Check if staff record exists for this user
+                const { data: existing } = await supabase.from('staff').select('id').eq('user_id', memberId).maybeSingle();
+                if (existing?.id) {
+                    await supabase.from('staff').update(staffPayload).eq('id', existing.id);
+                } else {
+                    await supabase.from('staff').insert(staffPayload);
+                }
+
+                showToast('Profile saved', 'success');
+                document.getElementById('memberProfileModal').classList.remove('active');
+                await loadTeamMembers(clubId);
+            } catch (e) {
+                showToast('Failed to save: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            }
+        });
+
+        // Photo upload handler
+        document.getElementById('mpPhotoUploadBtn')?.addEventListener('click', () => {
+            document.getElementById('mpPhotoInput').click();
+        });
+        document.getElementById('mpPhotoInput')?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) { showToast('Photo must be under 2 MB', 'error'); return; }
+            _mpPendingPhotoFile = file;
+            const url = URL.createObjectURL(file);
+            document.getElementById('mpPhotoPreview').innerHTML = `<img src="${url}" alt="Photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        });
+
+        // Sub-tab switching inside member profile modal
+        document.getElementById('memberProfileTabNav')?.querySelectorAll('.sub-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#memberProfileTabNav .sub-tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('#memberProfileModal .sub-tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.target).classList.add('active');
+            });
+        });
+
+        document.getElementById('memberProfileCloseBtn')?.addEventListener('click', () => {
+            document.getElementById('memberProfileModal').classList.remove('active');
+        });
+
+        // Stepper buttons (number inputs with +/− controls)
+        document.querySelectorAll('.num-stepper-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById(btn.dataset.target);
+                if (!input) return;
+                const dir = parseInt(btn.dataset.dir);
+                const min = parseInt(input.min ?? 0);
+                const max = parseInt(input.max ?? 99);
+                const val = Math.min(max, Math.max(min, (parseInt(input.value) || 0) + dir));
+                input.value = val;
+            });
+        });
+
+        // Season scope toggle
+        document.getElementById('seasonScopeAll')?.addEventListener('click', () => {
+            document.getElementById('seasonScopeAll').classList.add('active');
+            document.getElementById('seasonScopeSpecific').classList.remove('active');
+            document.getElementById('seasonSquadsGroup').style.display = 'none';
+        });
+        document.getElementById('seasonScopeSpecific')?.addEventListener('click', () => {
+            document.getElementById('seasonScopeSpecific').classList.add('active');
+            document.getElementById('seasonScopeAll').classList.remove('active');
+            document.getElementById('seasonSquadsGroup').style.display = '';
+            populateSeasonSquadList();
+        });
+
+        // Staff access toggle
+        document.getElementById('staffAccessYes')?.addEventListener('click', () => {
+            document.getElementById('staffAccessYes').classList.add('active');
+            document.getElementById('staffAccessNo').classList.remove('active');
+            document.getElementById('staffInviteRoleGroup').style.display = '';
+        });
+        document.getElementById('staffAccessNo')?.addEventListener('click', () => {
+            document.getElementById('staffAccessNo').classList.add('active');
+            document.getElementById('staffAccessYes').classList.remove('active');
+            document.getElementById('staffInviteRoleGroup').style.display = 'none';
+        });
+
+        // Staff role → show/hide squad assignment
+        document.getElementById('staffRole')?.addEventListener('change', () => {
+            const role = document.getElementById('staffRole').value;
+            const showSquads = ['coach', 'manager', 'analyst'].includes(role);
+            document.getElementById('staffSquadGroup').style.display = showSquads ? '' : 'none';
+        });
+
+        // ─────────────────────────────────────────────
+        // Staff Management
+        // ─────────────────────────────────────────────
+        const STAFF_ROLE_CONFIG = {
+            admin:       { label: 'Admins',       icon: 'fa-shield-alt',        color: '#c8902e' },
+            coach:       { label: 'Coaches',      icon: 'fa-chalkboard-teacher', color: '#2563eb' },
+            manager:     { label: 'Managers',     icon: 'fa-user-tie',           color: '#7c3aed' },
+            analyst:     { label: 'Analysts',     icon: 'fa-chart-bar',          color: '#0891b2' },
+            viewer:      { label: 'Viewers',      icon: 'fa-eye',                color: '#6b7280' },
+            kit_manager: { label: 'Kit Managers', icon: 'fa-tshirt',             color: '#059669' },
+        };
+
+        let allStaff = [];
+
+        async function loadStaff(clubId) {
+            const container = document.getElementById('staffGroupsContainer');
+            const { data, error } = await supabase
+                .from('staff')
+                .select('*')
+                .eq('club_id', clubId)
+                .order('first_name');
+
+            if (error) {
+                // Table may not exist yet — show setup prompt
+                container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);">
+                    <i class="fas fa-database" style="font-size:2rem;margin-bottom:10px;display:block;opacity:0.3;"></i>
+                    <p style="font-weight:600;margin-bottom:4px;">Staff table not set up yet</p>
+                    <p style="font-size:0.78rem;">Run the staff migration in Supabase to enable this feature.</p>
+                </div>`;
+                return;
+            }
+
+            allStaff = data || [];
+            renderStaffGroups();
+        }
+
+        function renderStaffGroups() {
+            const container = document.getElementById('staffGroupsContainer');
+            const activeStaff = allStaff.filter(s => s.status !== 'inactive');
+            const inactiveStaff = allStaff.filter(s => s.status === 'inactive');
+            const isAdmin = canManage(currentProfile);
+            let html = '';
+
+            const roles = Object.keys(STAFF_ROLE_CONFIG);
+            roles.forEach(role => {
+                const members = activeStaff.filter(s => s.role === role);
+                const cfg = STAFF_ROLE_CONFIG[role];
+                html += `<div class="staff-role-group">
+                    <div class="staff-role-header">
+                        <i class="fas ${cfg.icon}" style="color:${cfg.color};font-size:0.85rem;"></i>
+                        <span class="staff-role-label">${cfg.label}</span>
+                        <span class="staff-role-count">${members.length}</span>
+                    </div>`;
+                if (members.length === 0) {
+                    html += `<div class="staff-empty">No ${cfg.label.toLowerCase()} added yet</div>`;
+                } else {
+                    members.forEach(m => { html += buildStaffCard(m, isAdmin); });
+                }
+                html += `</div>`;
+            });
+
+            if (inactiveStaff.length > 0) {
+                html += `<div class="staff-role-group" id="inactiveGroup">
+                    <div class="staff-role-header" style="cursor:pointer;" onclick="toggleInactiveGroup()">
+                        <i class="fas fa-user-slash" style="color:#9ca3af;font-size:0.85rem;"></i>
+                        <span class="staff-role-label" style="color:#9ca3af;">Inactive</span>
+                        <span class="staff-role-count">${inactiveStaff.length}</span>
+                        <i class="fas fa-chevron-down" id="inactiveChevron" style="font-size:0.7rem;color:var(--text-muted);"></i>
                     </div>
-                    <div class="member-actions">
-                        ${roleOptions ? `
-                            <select data-member-id="${m.id}" data-member-name="${m.full_name || 'this user'}" data-old-role="${m.role}" class="role-select" title="Change role">
-                                ${roleOptions}
-                            </select>
-                        ` : ''}
-                        ${showSquadBtn ? `
-                            <button class="btn-icon squad-assign" data-member-id="${m.id}" data-member-name="${m.full_name || 'Unnamed'}" title="Assign squads">
-                                <i class="fas fa-users"></i>
-                            </button>
-                        ` : ''}
-                        ${!isSelf && m.role !== 'super_admin' ? `
-                            <button class="btn-icon remove-member" data-member-id="${m.id}" data-member-name="${m.full_name || 'Unnamed'}" title="Remove member">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        ` : ''}
+                    <div id="inactiveList" style="display:none;">`;
+                inactiveStaff.forEach(m => { html += buildStaffCard(m, isAdmin); });
+                html += `</div></div>`;
+            }
+
+            if (allStaff.length === 0) {
+                html = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <i class="fas fa-id-badge" style="font-size:2rem;margin-bottom:12px;display:block;opacity:0.25;"></i>
+                    <p style="font-weight:600;margin-bottom:4px;">No staff members yet</p>
+                    <p style="font-size:0.78rem;">Add your first staff member using the button above.</p>
+                </div>`;
+            }
+
+            container.innerHTML = html;
+            container.querySelectorAll('.staff-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) return;
+                    openStaffView(card.dataset.staffId);
+                });
+            });
+        }
+
+        function buildStaffCard(m, isAdmin) {
+            const initials = ((m.first_name?.[0] || '') + (m.last_name?.[0] || '')).toUpperCase() || '??';
+            const name = `${m.first_name || ''} ${m.last_name || ''}`.trim();
+            const cfg = STAFF_ROLE_CONFIG[m.role] || { label: m.role, color: '#6b7280' };
+            const lastActive = m.last_active_at
+                ? 'Last active ' + timeAgo(m.last_active_at)
+                : 'Never logged in';
+            const squads = m.squad_names ? m.squad_names.join(', ') : '';
+            const adminBtns = isAdmin ? `
+                <button class="dash-btn sm" onclick="event.stopPropagation();openEditStaff('${m.id}')" title="Edit" style="padding:4px 10px;font-size:0.72rem;">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button class="dash-btn sm" onclick="event.stopPropagation();toggleStaffStatus('${m.id}','${m.status}')" title="${m.status === 'inactive' ? 'Activate' : 'Deactivate'}" style="padding:4px 10px;font-size:0.72rem;">
+                    <i class="fas ${m.status === 'inactive' ? 'fa-user-check' : 'fa-user-slash'}"></i>
+                </button>
+                <button class="dash-btn sm" onclick="event.stopPropagation();deleteStaff('${m.id}','${name}')" title="Delete" style="padding:4px 10px;font-size:0.72rem;color:#ef4444;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>` : '';
+            return `<div class="staff-card ${m.status === 'inactive' ? 'inactive' : ''}" data-staff-id="${m.id}">
+                <div class="staff-avatar" style="background:${cfg.color};">${initials}</div>
+                <div class="staff-card-info">
+                    <span class="staff-card-name">${name}</span>
+                    <span class="staff-card-meta">${cfg.label} · ${lastActive}${m.platform_access ? ' · <i class="fas fa-circle" style="color:#10b981;font-size:7px;vertical-align:middle;"></i> Has access' : ''}</span>
+                    ${squads ? `<span class="staff-card-squads"><i class="fas fa-users" style="font-size:9px;"></i> ${squads}</span>` : ''}
+                </div>
+                <div class="staff-card-actions">${adminBtns}</div>
+                <span class="staff-status-dot ${m.status === 'inactive' ? 'inactive' : 'active'}"></span>
+            </div>`;
+        }
+
+        function timeAgo(dateStr) {
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const days = Math.floor(diff / 86400000);
+            if (days === 0) return 'today';
+            if (days === 1) return 'yesterday';
+            if (days < 7) return `${days} days ago`;
+            if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+            return `${Math.floor(days / 30)} months ago`;
+        }
+
+        window.toggleInactiveGroup = function() {
+            const list = document.getElementById('inactiveList');
+            const chev = document.getElementById('inactiveChevron');
+            const open = list.style.display === 'none';
+            list.style.display = open ? '' : 'none';
+            chev.className = open ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+            chev.style.cssText = 'font-size:0.7rem;color:var(--text-muted);';
+        };
+
+        // Open add staff modal
+        document.getElementById('btnAddStaff')?.addEventListener('click', () => {
+            document.getElementById('staffModalId').value = '';
+            document.getElementById('staffModalTitle').innerHTML = '<i class="fas fa-id-badge" style="color:var(--primary);margin-right:8px;"></i>Add Staff Member';
+            document.getElementById('staffFirstName').value = '';
+            document.getElementById('staffLastName').value = '';
+            document.getElementById('staffRole').value = 'coach';
+            document.getElementById('staffEmail').value = '';
+            document.getElementById('staffMobile').value = '';
+            document.getElementById('staffBio').value = '';
+            document.getElementById('staffAccessYes').classList.add('active');
+            document.getElementById('staffAccessNo').classList.remove('active');
+            document.getElementById('staffInviteRoleGroup').style.display = '';
+            document.getElementById('staffSquadGroup').style.display = '';
+            populateStaffSquadList();
+            document.getElementById('staffModal').classList.add('active');
+        });
+
+        document.getElementById('staffCancelBtn')?.addEventListener('click', () => {
+            document.getElementById('staffModal').classList.remove('active');
+        });
+
+        window.openEditStaff = function(id) {
+            const m = allStaff.find(s => s.id === id);
+            if (!m) return;
+            document.getElementById('staffModalId').value = id;
+            document.getElementById('staffModalTitle').innerHTML = '<i class="fas fa-id-badge" style="color:var(--primary);margin-right:8px;"></i>Edit Staff Member';
+            document.getElementById('staffFirstName').value = m.first_name || '';
+            document.getElementById('staffLastName').value = m.last_name || '';
+            document.getElementById('staffRole').value = m.role || 'coach';
+            document.getElementById('staffEmail').value = m.email || '';
+            document.getElementById('staffMobile').value = m.mobile || '';
+            document.getElementById('staffBio').value = m.bio || '';
+            const showSquads = ['coach', 'manager', 'analyst'].includes(m.role);
+            document.getElementById('staffSquadGroup').style.display = showSquads ? '' : 'none';
+            if (m.platform_access) {
+                document.getElementById('staffAccessYes').classList.add('active');
+                document.getElementById('staffAccessNo').classList.remove('active');
+                document.getElementById('staffInviteRoleGroup').style.display = '';
+            } else {
+                document.getElementById('staffAccessNo').classList.add('active');
+                document.getElementById('staffAccessYes').classList.remove('active');
+                document.getElementById('staffInviteRoleGroup').style.display = 'none';
+            }
+            populateStaffSquadList(m.squad_ids || []);
+            document.getElementById('staffModal').classList.add('active');
+        };
+
+        window.openStaffView = function(id) {
+            const m = allStaff.find(s => s.id === id);
+            if (!m) return;
+            const initials = ((m.first_name?.[0] || '') + (m.last_name?.[0] || '')).toUpperCase() || '??';
+            const name = `${m.first_name || ''} ${m.last_name || ''}`.trim();
+            const cfg = STAFF_ROLE_CONFIG[m.role] || { label: m.role, color: '#6b7280' };
+            document.getElementById('staffViewAvatar').textContent = initials;
+            document.getElementById('staffViewAvatar').style.background = cfg.color;
+            document.getElementById('staffViewName').textContent = name;
+            document.getElementById('staffViewRole').textContent = cfg.label + (m.status === 'inactive' ? ' · Inactive' : '');
+            document.getElementById('staffViewSquads').textContent = m.squad_names ? m.squad_names.join(', ') : '';
+            document.getElementById('staffViewDetails').innerHTML = `
+                ${m.email ? `<div style="font-size:0.82rem;margin-bottom:6px;"><i class="fas fa-envelope" style="width:16px;color:var(--text-muted);"></i> ${m.email}</div>` : ''}
+                ${m.mobile ? `<div style="font-size:0.82rem;margin-bottom:6px;"><i class="fas fa-phone" style="width:16px;color:var(--text-muted);"></i> ${m.mobile}</div>` : ''}
+                ${m.bio ? `<div style="font-size:0.82rem;color:var(--text-secondary);margin-top:12px;padding:10px;background:var(--bg-body);border-radius:8px;">${m.bio}</div>` : ''}
+                <div style="font-size:0.72rem;color:var(--text-muted);margin-top:12px;">
+                    ${m.platform_access ? '<i class="fas fa-circle" style="color:#10b981;font-size:8px;vertical-align:middle;margin-right:4px;"></i>Has platform access' : 'No platform access'}
+                    · ${m.last_active_at ? 'Last active ' + timeAgo(m.last_active_at) : 'Never logged in'}
+                </div>`;
+            const adminActions = document.getElementById('staffViewAdminActions');
+            if (canManage(currentProfile)) {
+                adminActions.innerHTML = `
+                    <button class="dash-btn sm" onclick="openEditStaff('${m.id}');document.getElementById('staffViewModal').classList.remove('active');" style="font-size:0.78rem;">
+                        <i class="fas fa-pencil-alt"></i> Edit
+                    </button>`;
+            } else {
+                adminActions.innerHTML = '';
+            }
+            document.getElementById('staffViewModal').classList.add('active');
+        };
+
+        document.getElementById('staffViewCloseBtn')?.addEventListener('click', () => {
+            document.getElementById('staffViewModal').classList.remove('active');
+        });
+
+        function populateStaffSquadList(selectedIds = []) {
+            const container = document.getElementById('staffSquadList');
+            if (!allSquads.length) { container.innerHTML = '<em style="font-size:0.78rem;color:var(--text-muted);">No squads found</em>'; return; }
+            container.innerHTML = allSquads.map(sq => `
+                <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:0.84rem;cursor:pointer;">
+                    <input type="checkbox" value="${sq.id}" ${selectedIds.includes(sq.id) ? 'checked' : ''} style="accent-color:var(--primary);">
+                    ${sq.name}
+                </label>`).join('');
+        }
+
+        document.getElementById('staffSaveBtn')?.addEventListener('click', async () => {
+            const id = document.getElementById('staffModalId').value;
+            const firstName = document.getElementById('staffFirstName').value.trim();
+            const lastName = document.getElementById('staffLastName').value.trim();
+            if (!firstName) { showToast('First name is required', 'error'); return; }
+
+            const role = document.getElementById('staffRole').value;
+            const email = document.getElementById('staffEmail').value.trim();
+            const mobile = document.getElementById('staffMobile').value.trim();
+            const bio = document.getElementById('staffBio').value.trim();
+            const platformAccess = document.getElementById('staffAccessYes').classList.contains('active');
+            const squadIds = [...document.querySelectorAll('#staffSquadList input[type=checkbox]:checked')].map(cb => cb.value);
+
+            const payload = {
+                club_id: currentProfile.club_id,
+                first_name: firstName,
+                last_name: lastName,
+                role,
+                email: email || null,
+                mobile: mobile || null,
+                bio: bio || null,
+                platform_access: platformAccess,
+                squad_ids: squadIds,
+                status: 'active',
+            };
+
+            const btn = document.getElementById('staffSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                let error;
+                if (id) {
+                    ({ error } = await supabase.from('staff').update(payload).eq('id', id));
+                } else {
+                    ({ error } = await supabase.from('staff').insert(payload));
+                    // Send platform invite if access requested and email provided
+                    if (!error && platformAccess && email) {
+                        const inviteRole = document.getElementById('staffInviteRole').value;
+                        const inviteUrl = `${window.location.origin}/src/pages/login.html`;
+                        await supabase.functions.invoke('send-invite', {
+                            body: { email, role: inviteRole, club_id: currentProfile.club_id, invite_url: inviteUrl }
+                        });
+                        showToast(`Invite sent to ${email}`, 'success');
+                    }
+                }
+                if (error) throw error;
+                showToast(id ? 'Staff member updated' : 'Staff member added', 'success');
+                document.getElementById('staffModal').classList.remove('active');
+                await loadStaff(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save';
+            }
+        });
+
+        window.toggleStaffStatus = async function(id, currentStatus) {
+            const newStatus = currentStatus === 'inactive' ? 'active' : 'inactive';
+            const { error } = await supabase.from('staff').update({ status: newStatus }).eq('id', id);
+            if (error) { showToast('Failed to update status', 'error'); return; }
+            showToast(`Staff member ${newStatus === 'inactive' ? 'deactivated' : 'reactivated'}`, 'success');
+            await loadStaff(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
+        };
+
+        window.deleteStaff = async function(id, name) {
+            if (!await platformConfirm(`Permanently delete ${name}? This cannot be undone.`, 'Delete Staff Member', 'Delete')) return;
+            const { error } = await supabase.from('staff').delete().eq('id', id);
+            if (error) { showToast('Failed to delete: ' + error.message, 'error'); return; }
+            showToast(`${name} deleted`, 'success');
+            await loadStaff(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
+        };
+
+        // ─────────────────────────────────────────────
+        // Seasons
+        // ─────────────────────────────────────────────
+        let allSeasons = [];
+
+        document.getElementById('btnNewSeason')?.addEventListener('click', () => openSeasonModal());
+
+        function openSeasonModal(season = null) {
+            document.getElementById('seasonModalId').value = season?.id || '';
+            document.getElementById('seasonModalTitle').innerHTML = season
+                ? '<i class="fas fa-calendar-alt" style="color:var(--primary);margin-right:8px;"></i>Edit Season'
+                : '<i class="fas fa-calendar-alt" style="color:var(--primary);margin-right:8px;"></i>New Season';
+            document.getElementById('seasonName').value = season?.name || '';
+            document.getElementById('seasonStartDate').value = season?.start_date || '';
+            document.getElementById('seasonEndDate').value = season?.end_date || '';
+            document.getElementById('seasonIsCurrent').checked = season?.is_current || false;
+            document.getElementById('seasonFormat').value = season?.match_format || '11';
+            document.getElementById('seasonDuration').value = season?.match_duration || '90';
+            document.getElementById('seasonWinPts').value = season?.win_points ?? 3;
+            document.getElementById('seasonDrawPts').value = season?.draw_points ?? 1;
+            document.getElementById('seasonLossPts').value = season?.loss_points ?? 0;
+            document.getElementById('seasonLeague').value = season?.league_name || '';
+            document.getElementById('seasonDivision').value = season?.division || '';
+            document.getElementById('seasonAgeGroup').value = season?.age_group || '';
+            document.getElementById('seasonGender').value = season?.gender || '';
+            document.getElementById('seasonHomeVenue').value = season?.home_venue || '';
+            // Scope
+            const isSpecific = season?.scope === 'specific';
+            document.getElementById('seasonScopeAll').classList.toggle('active', !isSpecific);
+            document.getElementById('seasonScopeSpecific').classList.toggle('active', isSpecific);
+            document.getElementById('seasonSquadsGroup').style.display = isSpecific ? '' : 'none';
+            if (isSpecific) populateSeasonSquadList(season?.squad_ids || []);
+            document.getElementById('seasonModal').classList.add('active');
+        }
+
+        document.getElementById('seasonCancelBtn')?.addEventListener('click', () => {
+            document.getElementById('seasonModal').classList.remove('active');
+        });
+
+        function populateSeasonSquadList(selectedIds = []) {
+            const container = document.getElementById('seasonSquadList');
+            if (!allSquads.length) { container.innerHTML = '<em style="font-size:0.78rem;color:var(--text-muted);">No squads found</em>'; return; }
+            container.innerHTML = allSquads.map(sq => `
+                <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:0.84rem;cursor:pointer;">
+                    <input type="checkbox" value="${sq.id}" ${selectedIds.includes(sq.id) ? 'checked' : ''} style="accent-color:var(--primary);">
+                    ${sq.name}
+                </label>`).join('');
+        }
+
+        document.getElementById('seasonSaveBtn')?.addEventListener('click', async () => {
+            const id = document.getElementById('seasonModalId').value;
+            const name = document.getElementById('seasonName').value.trim();
+            if (!name) { showToast('Season name is required', 'error'); return; }
+
+            const isSpecific = document.getElementById('seasonScopeSpecific').classList.contains('active');
+            const squadIds = isSpecific
+                ? [...document.querySelectorAll('#seasonSquadList input[type=checkbox]:checked')].map(cb => cb.value)
+                : [];
+            const isCurrent = document.getElementById('seasonIsCurrent').checked;
+
+            const payload = {
+                club_id: currentProfile.club_id,
+                name,
+                start_date: document.getElementById('seasonStartDate').value || null,
+                end_date: document.getElementById('seasonEndDate').value || null,
+                is_current: isCurrent,
+                scope: isSpecific ? 'specific' : 'all',
+                squad_ids: squadIds,
+                match_format: document.getElementById('seasonFormat').value,
+                match_duration: parseInt(document.getElementById('seasonDuration').value),
+                win_points: parseInt(document.getElementById('seasonWinPts').value),
+                draw_points: parseInt(document.getElementById('seasonDrawPts').value),
+                loss_points: parseInt(document.getElementById('seasonLossPts').value),
+                league_name: document.getElementById('seasonLeague').value.trim() || null,
+                division: document.getElementById('seasonDivision').value.trim() || null,
+                age_group: document.getElementById('seasonAgeGroup').value || null,
+                gender: document.getElementById('seasonGender').value || null,
+                home_venue: document.getElementById('seasonHomeVenue').value.trim() || null,
+                status: 'active',
+            };
+
+            const btn = document.getElementById('seasonSaveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                let error;
+                if (id) {
+                    ({ error } = await supabase.from('seasons').update(payload).eq('id', id));
+                } else {
+                    ({ error } = await supabase.from('seasons').insert(payload));
+                }
+                if (error) throw error;
+
+                // If marked current, update sidebar chip
+                if (isCurrent) setSidebarSeasonChip(name);
+
+                showToast(id ? 'Season updated' : 'Season created', 'success');
+                document.getElementById('seasonModal').classList.remove('active');
+                await loadSeasons(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Season';
+            }
+        });
+
+        async function loadSeasons(clubId) {
+            const container = document.getElementById('seasonsList');
+            if (!container) return;
+            container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+
+            const { data, error } = await supabase
+                .from('seasons')
+                .select('*')
+                .eq('club_id', clubId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                container.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);">
+                    <i class="fas fa-database" style="font-size:2rem;margin-bottom:10px;display:block;opacity:0.3;"></i>
+                    <p style="font-weight:600;margin-bottom:4px;">Seasons table not set up yet</p>
+                    <p style="font-size:0.78rem;">Run the seasons migration in Supabase to enable this feature.</p>
+                </div>`;
+                return;
+            }
+
+            allSeasons = data || [];
+            if (!allSeasons.length) {
+                container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <i class="fas fa-calendar-times" style="font-size:2rem;margin-bottom:12px;display:block;opacity:0.25;"></i>
+                    <p style="font-weight:600;margin-bottom:4px;">No seasons yet</p>
+                    <p style="font-size:0.78rem;">Create your first season to track matches, stats and finances by period.</p>
+                </div>`;
+                return;
+            }
+
+            container.innerHTML = allSeasons.map(s => {
+                const dateRange = [s.start_date, s.end_date].filter(Boolean)
+                    .map(d => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))
+                    .join(' → ');
+                const meta = [
+                    dateRange,
+                    s.scope === 'specific' ? 'Specific squads' : 'All squads',
+                    s.match_format ? s.match_format + '-a-side' : null,
+                    s.league_name,
+                ].filter(Boolean).join(' · ');
+                return `<div class="season-card ${s.is_current ? 'current' : ''}">
+                    <div class="season-card-main">
+                        <div class="season-card-name">${s.name}</div>
+                        ${meta ? `<div class="season-card-meta">${meta}</div>` : ''}
+                    </div>
+                    ${s.is_current ? '<span class="season-status-pill current">Current</span>' : ''}
+                    ${s.status === 'archived' ? '<span class="season-status-pill archived">Archived</span>' : ''}
+                    <div class="season-card-actions">
+                        ${!s.is_current ? `<button class="dash-btn sm" onclick="setCurrentSeason('${s.id}','${s.name}')" style="font-size:0.72rem;padding:4px 10px;" title="Set as current">
+                            <i class="fas fa-check-circle"></i>
+                        </button>` : ''}
+                        <button class="dash-btn sm" onclick="editSeason('${s.id}')" style="font-size:0.72rem;padding:4px 10px;">
+                            <i class="fas fa-pencil-alt"></i>
+                        </button>
+                        <button class="dash-btn sm" onclick="archiveSeason('${s.id}','${s.name}')" style="font-size:0.72rem;padding:4px 10px;color:#6b7280;" title="Archive">
+                            <i class="fas fa-archive"></i>
+                        </button>
                     </div>
                 </div>`;
             }).join('');
+        }
 
-            // ── Role change handlers ──
-            container.querySelectorAll('.role-select').forEach(select => {
-                select.addEventListener('change', async (e) => {
-                    const memberId = e.target.dataset.memberId;
-                    const memberName = e.target.dataset.memberName;
-                    const oldRole = e.target.dataset.oldRole;
-                    const newRole = e.target.value;
+        window.editSeason = function(id) {
+            const s = allSeasons.find(s => s.id === id);
+            if (s) openSeasonModal(s);
+        };
 
-                    const confirmed = confirm(`Change ${memberName}'s role from ${roleLabel(oldRole)} to ${roleLabel(newRole)}?`);
-                    if (!confirmed) {
-                        e.target.value = oldRole; // revert selection
-                        return;
-                    }
+        window.setCurrentSeason = async function(id, name) {
+            const season = allSeasons.find(s => s.id === id);
+            if (!season) return;
 
-                    const { error } = await supabase
-                        .from('profiles')
-                        .update({ role: newRole })
-                        .eq('id', memberId);
-                    if (error) {
-                        showToast('Failed to update role: ' + error.message, 'error');
-                        await loadTeamMembers(clubId);
-                    } else {
-                        showToast(`${memberName}'s role updated to ${roleLabel(newRole)}`, 'success');
-                        await loadTeamMembers(clubId);
-                    }
-                });
-            });
+            // Mark this season as is_current (informational flag only — no longer uniquely constrained)
+            // Other seasons are NOT cleared — multiple can be active for different squads simultaneously
+            const { error: flagErr } = await supabase.from('seasons')
+                .update({ is_current: true }).eq('id', id);
+            if (flagErr) { showToast('Failed to update season', 'error'); return; }
 
-            // ── Squad assign button handlers ──
-            container.querySelectorAll('.squad-assign').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const memberId = btn.dataset.memberId;
-                    const memberName = btn.dataset.memberName;
-                    document.getElementById('squadAssignUserId').value = memberId;
-                    document.getElementById('squadAssignSubtitle').textContent = `Select squads ${memberName} can access.`;
-                    const currentSquads = allSquadCoaches.filter(sc => sc.coach_id === memberId).map(sc => sc.squad_id);
-                    renderSquadChecklist('squadAssignList', currentSquads);
-                    document.getElementById('squadAssignModal').classList.add('active');
-                });
-            });
+            // Write current_season_id to the affected squads based on scope
+            const clubId = currentProfile.club_id;
+            let squadUpdateError = null;
+            if (season.scope === 'all') {
+                // Apply to every squad in this club
+                const { error } = await supabase.from('squads')
+                    .update({ current_season_id: id })
+                    .eq('club_id', clubId);
+                squadUpdateError = error;
+            } else if (season.scope === 'specific' && Array.isArray(season.squad_ids) && season.squad_ids.length) {
+                // Apply only to the named squads
+                const { error } = await supabase.from('squads')
+                    .update({ current_season_id: id })
+                    .in('id', season.squad_ids);
+                squadUpdateError = error;
+            }
 
-            // ── Remove member handlers ──
-            container.querySelectorAll('.remove-member').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const memberId = btn.dataset.memberId;
-                    const memberName = btn.dataset.memberName;
-                    if (!confirm(`Remove ${memberName} from this club? They will lose all access.`)) return;
+            if (squadUpdateError) { showToast('Season flagged but squad update failed', 'error'); return; }
 
-                    try {
-                        // Remove squad assignments first
-                        await supabase.from('squad_coaches').delete().eq('coach_id', memberId);
-                        // Remove profile (this doesn't delete the auth user, just club access)
-                        const { error } = await supabase.from('profiles').delete().eq('id', memberId);
-                        if (error) throw error;
-                        showToast(`${memberName} removed from club`, 'success');
-                        await loadTeamMembers(clubId);
-                    } catch (e) {
-                        showToast('Failed to remove member: ' + e.message, 'error');
-                    }
-                });
-            });
+            setSidebarSeasonChip(name);
+            showToast(`"${name}" set as current season for ${season.scope === 'all' ? 'all squads' : 'selected squads'}`, 'success');
+            await loadSeasons(clubId);
+        };
+
+        window.archiveSeason = async function(id, name) {
+            if (!await platformConfirm(`Archive "${name}"? It will remain accessible but no new matches can be added.`, 'Archive Season', 'Archive')) return;
+            const { error } = await supabase.from('seasons').update({ status: 'archived', is_current: false }).eq('id', id);
+            if (error) { showToast('Failed to archive', 'error'); return; }
+            showToast(`"${name}" archived`, 'success');
+            await loadSeasons(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
+        };
+
+        function setSidebarSeasonChip(name) {
+            const isImpersonating = !!sessionStorage.getItem('impersonating_club_id');
+            const store = isImpersonating ? sessionStorage : localStorage;
+            store.setItem('sidebar-season', JSON.stringify({ name }));
+            const chip = document.getElementById('sidebarSeasonChip');
+            if (chip) {
+                chip.style.display = '';
+                const span = chip.querySelector('span');
+                if (span) span.textContent = name;
+            }
         }
     </script>
 </body>

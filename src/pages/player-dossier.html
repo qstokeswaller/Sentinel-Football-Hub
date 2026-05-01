@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Dossier | Sentinel Football Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: #00C49A;
+      --navy: #0f172a;
+      --text: #1e293b;
+      --text-2: #475569;
+      --text-3: #94a3b8;
+      --border: #e2e8f0;
+      --surface: #f8fafc;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f1f5f9;
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Loading / Error ── */
+    .state-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 24px;
+    }
+    .state-screen i { font-size: 2.5rem; color: var(--text-3); }
+    .state-screen h2 { font-size: 1.2rem; color: var(--text); }
+    .state-screen p { font-size: 0.9rem; color: var(--text-2); max-width: 360px; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Page wrapper ── */
+    #dossierContent { max-width: 860px; margin: 0 auto; padding: 0 0 48px; }
+
+    /* ── Top bar ── */
+    .dossier-topbar {
+      background: var(--navy);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .dossier-topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+    .dossier-topbar-brand .brand-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .dossier-topbar-club {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.5);
+      font-weight: 500;
+    }
+    .dossier-topbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .topbar-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.85);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+    .topbar-btn:hover { background: rgba(255,255,255,0.18); }
+    .topbar-btn.wa { background: rgba(37,211,102,0.2); border-color: rgba(37,211,102,0.3); color: #4ade80; }
+    .topbar-btn.wa:hover { background: rgba(37,211,102,0.3); }
+
+    /* ── Hero card ── */
+    .dossier-hero {
+      background: white;
+      padding: 32px 28px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    .dossier-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: white;
+      font-size: 2rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 3px solid var(--border);
+      overflow: hidden;
+    }
+    .dossier-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .dossier-hero-info { flex: 1; min-width: 0; }
+    .dossier-jersey {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .dossier-name {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+    .dossier-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .dossier-subtitle .sep { color: var(--border); }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 10px;
+      border-radius: 100px;
+      background: #dcfce7;
+      color: #16a34a;
+    }
+    .status-pill.injured, .status-pill.sick { background: #fee2e2; color: #dc2626; }
+    .status-pill.suspended { background: #fef9c3; color: #ca8a04; }
+    .status-pill.trialist { background: #ede9fe; color: #7c3aed; }
+    .status-pill.unavailable { background: #f1f5f9; color: #64748b; }
+
+    /* ── Info grid ── */
+    .dossier-info-grid {
+      background: white;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      border-bottom: 1px solid var(--border);
+    }
+    .info-cell {
+      padding: 16px 20px;
+      border-right: 1px solid var(--border);
+    }
+    .info-cell:last-child { border-right: none; }
+    .info-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-3);
+      margin-bottom: 4px;
+    }
+    .info-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ── Section container ── */
+    .dossier-section {
+      background: white;
+      margin-top: 12px;
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .dossier-section-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dossier-section-header i { color: var(--accent); font-size: 0.9rem; }
+    .dossier-section-header h3 { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+    .dossier-section-body { padding: 20px 24px; }
+
+    /* ── Season stat cards ── */
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .stat-card-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-card-value.accent { color: var(--accent); }
+    .stat-card-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+    }
+    .stat-card-icon { font-size: 1rem; margin-bottom: 8px; }
+
+    /* ── Match history table ── */
+    .match-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .match-table thead tr { background: var(--surface); border-bottom: 2px solid var(--border); }
+    .match-table th {
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-3);
+    }
+    .match-table th.center, .match-table td.center { text-align: center; }
+    .match-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    .match-table tbody tr:last-child { border-bottom: none; }
+    .match-table tbody tr:hover { background: var(--surface); }
+    .match-table td { padding: 10px 12px; color: var(--text); }
+    .result-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      min-width: 28px;
+      text-align: center;
+    }
+    .result-W { background: #dcfce7; color: #16a34a; }
+    .result-D { background: #fef9c3; color: #ca8a04; }
+    .result-L { background: #fee2e2; color: #dc2626; }
+    .result-\? { background: #f3f4f6; color: #6b7280; }
+    .rating-cell {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 30px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 0.82rem;
+    }
+    .rating-cell.high { background: #dcfce7; color: #15803d; }
+    .rating-cell.mid  { background: #fef9c3; color: #92400e; }
+    .rating-cell.low  { background: #fee2e2; color: #b91c1c; }
+    .match-table tbody tr.row-W { border-left: 3px solid #16a34a; }
+    .match-table tbody tr.row-D { border-left: 3px solid #d97706; }
+    .match-table tbody tr.row-L { border-left: 3px solid #ef4444; }
+    .motm-star { color: #f59e0b; font-size: 0.85rem; }
+
+    /* ── Attribute ratings grid (from assessment.ratings) ── */
+    .attr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .attr-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .attr-item-label {
+      font-size: 0.73rem;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: capitalize;
+      flex: 1;
+    }
+    .attr-item-value {
+      min-width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .attr-item-value.high { background: #dcfce7; color: #15803d; }
+    .attr-item-value.mid  { background: #fef9c3; color: #92400e; }
+    .attr-item-value.low  { background: #fee2e2; color: #b91c1c; }
+
+    /* ── Coach comments block ── */
+    .coach-comments-block {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-left: 3px solid #2563eb;
+      border-radius: 8px;
+      padding: 16px 18px;
+      font-size: 0.88rem;
+      color: var(--text);
+      line-height: 1.7;
+      font-style: italic;
+    }
+    .coach-comments-byline {
+      margin-top: 10px;
+      font-size: 0.72rem;
+      color: var(--text-3);
+      font-style: normal;
+      font-weight: 600;
+    }
+    .assessment-sub-header {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.68rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    /* ── Bio / text sections ── */
+    .dossier-text {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text-2);
+    }
+    .prev-clubs-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .prev-club-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+    .assessment-note {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 14px 16px;
+      font-size: 0.87rem;
+      line-height: 1.7;
+      color: var(--text-2);
+    }
+    .assessment-meta {
+      font-size: 0.72rem;
+      color: var(--text-3);
+      margin-top: 8px;
+    }
+
+    /* ── Footer ── */
+    .dossier-footer {
+      margin-top: 24px;
+      padding: 20px 28px;
+      background: white;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .dossier-footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .dossier-footer-brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .dossier-footer-meta { font-size: 0.75rem; color: var(--text-3); }
+
+    /* ── Club banner ── */
+    .club-banner {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .club-banner-logo {
+      width: 56px; height: 56px;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .club-banner-logo img { width: 100%; height: 100%; object-fit: contain; }
+    .club-banner-logo i { font-size: 1.4rem; color: var(--text-3); }
+    .club-banner-info { display: flex; flex-direction: column; gap: 2px; }
+    .club-banner-name { font-size: 1rem; font-weight: 800; color: var(--navy); }
+    .club-banner-squad { font-size: 0.82rem; font-weight: 500; color: var(--text-2); }
+    .club-banner-powered {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.68rem; font-weight: 600; color: var(--accent);
+      margin-top: 3px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .club-banner-powered .pow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+    @media (max-width: 600px) {
+      .club-banner { padding: 14px 16px; gap: 12px; }
+      .club-banner-logo { width: 44px; height: 44px; border-radius: 8px; }
+      .club-banner-name { font-size: 0.88rem; }
+    }
+
+    /* ── Print ── */
+    @media print {
+      .dossier-topbar-actions, .topbar-btn { display: none !important; }
+      body { background: white; }
+      #dossierContent { max-width: 100%; padding: 0; }
+      .dossier-section { box-shadow: none; border: 1px solid #e2e8f0; margin-top: 8px; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .dossier-topbar { padding: 10px 16px; gap: 8px; }
+      .topbar-btn .btn-label { display: none; }
+      .dossier-topbar-brand { font-size: 0.82rem; }
+      .dossier-hero { padding: 20px 16px; gap: 14px; flex-wrap: wrap; }
+      .dossier-avatar { width: 72px; height: 72px; font-size: 1.5rem; border-radius: 12px; }
+      .dossier-name { font-size: 1.4rem; }
+      .dossier-info-grid { grid-template-columns: repeat(2, 1fr); }
+      .info-cell:nth-child(even) { border-right: none; }
+      .dossier-section-body { padding: 16px; }
+      .stat-cards { grid-template-columns: repeat(3, 1fr); }
+      .match-table { font-size: 0.75rem; }
+      .match-table th, .match-table td { padding: 8px 6px; }
+      .dossier-footer { flex-direction: column; align-items: flex-start; }
+    }
+    @media (max-width: 380px) {
+      .stat-cards { grid-template-columns: repeat(2, 1fr); }
+      .dossier-name { font-size: 1.2rem; }
+      .dossier-topbar-club { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="stateLoading" class="state-screen">
+    <i class="fas fa-spinner spin" style="color:var(--accent);"></i>
+    <h2>Loading dossier…</h2>
+  </div>
+
+  <!-- Error -->
+  <div id="stateError" class="state-screen" style="display:none;">
+    <i class="fas fa-exclamation-circle" style="color:#ef4444;"></i>
+    <h2>Dossier not found</h2>
+    <p>This link may have been revoked or is invalid. Ask the coach to share a new link.</p>
+  </div>
+
+  <!-- Dossier -->
+  <div id="dossierContent">
+
+    <!-- Top bar -->
+    <div class="dossier-topbar">
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <div class="dossier-topbar-brand">
+          <div class="brand-dot"></div>
+          Sentinel Football Hub
+        </div>
+        <span class="dossier-topbar-club" id="topbarClub"></span>
+      </div>
+      <div class="dossier-topbar-actions">
+        <a id="btnWAShare" class="topbar-btn wa" href="#" target="_blank" rel="noopener noreferrer">
+          <i class="fab fa-whatsapp"></i> Share
+        </a>
+        <button class="topbar-btn" onclick="window.print()">
+          <i class="fas fa-print"></i> Print
+        </button>
+      </div>
+    </div>
+
+    <!-- Club banner -->
+    <div class="club-banner" id="clubBanner" style="display:none;">
+      <div class="club-banner-logo">
+        <img id="bannerLogo" src="" alt="" onerror="this.style.display='none';document.getElementById('bannerLogoFallback').style.display='flex';">
+        <i class="fas fa-futbol" id="bannerLogoFallback" style="display:none;"></i>
+      </div>
+      <div class="club-banner-info">
+        <div class="club-banner-name" id="bannerClubName"></div>
+        <div class="club-banner-squad" id="bannerSquadName"></div>
+        <div class="club-banner-powered"><div class="pow-dot"></div> Powered by Sentinel Football Hub</div>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="dossier-hero" id="dossierHero" style="background:white;"></div>
+
+    <!-- Info strip -->
+    <div class="dossier-info-grid" id="dossierInfoGrid"></div>
+
+    <!-- Season stats -->
+    <div class="dossier-section" id="sectionStats" style="display:none;">
+      <div class="dossier-section-header">
+        <i class="fas fa-chart-bar"></i>
+        <h3>Season Statistics</h3>
+        <span id="statsSeasonLabel" style="margin-left:auto;font-size:0.72rem;color:var(--text-3);font-weight:500;"></span>
+      </div>
+      <div class="dossier-section-body">
+        <div class="stat-cards" id="statCards"></div>
+      </div>
+    </div>
+
+    <!-- Recent matches -->
+    <div class="dossier-section" id="sectionMatches" style="display:none;">
+      <div class="dossier-section-header">
+        <i class="fas fa-futbol"></i>
+        <h3>Recent Appearances</h3>
+        <span id="matchCountLabel" style="margin-left:auto;font-size:0.72rem;color:var(--text-3);font-weight:500;"></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="match-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Opponent</th>
+              <th>Competition</th>
+              <th class="center">Result</th>
+              <th class="center">Mins</th>
+              <th class="center">G</th>
+              <th class="center">A</th>
+              <th class="center">Rtg</th>
+              <th class="center">MOTM</th>
+            </tr>
+          </thead>
+          <tbody id="matchRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bio -->
+    <div class="dossier-section" id="sectionBio" style="display:none;">
+      <div class="dossier-section-header">
+        <i class="fas fa-user"></i>
+        <h3>Player Profile</h3>
+      </div>
+      <div class="dossier-section-body">
+        <p class="dossier-text" id="bioText"></p>
+      </div>
+    </div>
+
+    <!-- Previous clubs -->
+    <div class="dossier-section" id="sectionPrevClubs" style="display:none;">
+      <div class="dossier-section-header">
+        <i class="fas fa-history"></i>
+        <h3>Previous Clubs</h3>
+      </div>
+      <div class="dossier-section-body">
+        <div class="prev-clubs-list" id="prevClubsList"></div>
+      </div>
+    </div>
+
+    <!-- Latest assessment notes -->
+    <div class="dossier-section" id="sectionAssessment" style="display:none;">
+      <div class="dossier-section-header">
+        <i class="fas fa-clipboard-check"></i>
+        <h3>Latest Assessment Notes</h3>
+      </div>
+      <div class="dossier-section-body">
+        <div class="assessment-note" id="assessmentNote"></div>
+        <p class="assessment-meta" id="assessmentMeta"></p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="dossier-footer">
+      <div class="dossier-footer-brand">
+        <div class="dot"></div>
+        Sentinel Football Hub
+      </div>
+      <span class="dossier-footer-meta" id="footerMeta"></span>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import supabase from '../supabase.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    function show(id) { document.getElementById(id).style.display = ''; }
+    function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+    function calcAge(dob) {
+      if (!dob) return null;
+      const d = new Date(dob), now = new Date();
+      let age = now.getFullYear() - d.getFullYear();
+      if (now < new Date(now.getFullYear(), d.getMonth(), d.getDate())) age--;
+      return age;
+    }
+
+    function fmtDate(str) {
+      if (!str) return '—';
+      const d = new Date(str);
+      return isNaN(d) ? str : d.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function getResult(stat) {
+      if (stat.result) {
+        const r = stat.result.toUpperCase().charAt(0);
+        return ['W', 'D', 'L'].includes(r) ? r : '?';
+      }
+      if (stat.home_score == null) return '?';
+      const isHome = stat.our_side === 'home';
+      const ours = isHome ? stat.home_score : stat.away_score;
+      const theirs = isHome ? stat.away_score : stat.home_score;
+      if (ours > theirs) return 'W';
+      if (ours < theirs) return 'L';
+      return 'D';
+    }
+
+    function getScore(stat) {
+      if (stat.home_score == null) return '';
+      return `${stat.home_score}–${stat.away_score}`;
+    }
+
+    function ratingClass(r) {
+      if (!r) return '';
+      if (r >= 7) return 'high';
+      if (r >= 5) return 'mid';
+      return 'low';
+    }
+
+    async function loadDossier() {
+      if (!token) {
+        hide('stateLoading');
+        show('stateError');
+        return;
+      }
+
+      const { data, error } = await supabase.rpc('get_player_dossier', { p_token: token });
+
+      if (error || !data) {
+        hide('stateLoading');
+        show('stateError');
+        return;
+      }
+
+      const { player, squad, club, match_stats: stats, latest_assessment: assessment } = data;
+
+      // ── Top bar ──
+      document.title = `${player.name} | Player Dossier`;
+      document.getElementById('topbarClub').textContent = club?.display_name || club?.name || '';
+      const waText = encodeURIComponent(`Player Dossier — ${player.name}\n${window.location.href}`);
+      document.getElementById('btnWAShare').href = `https://wa.me/?text=${waText}`;
+
+      // ── Club banner ──
+      const clubDisplayName = club?.display_name || club?.name || '';
+      if (clubDisplayName) {
+        document.getElementById('bannerClubName').textContent = clubDisplayName;
+        document.getElementById('bannerSquadName').textContent = [squad?.name, squad?.age_group].filter(Boolean).join(' · ');
+        const logoImg = document.getElementById('bannerLogo');
+        const logoFallback = document.getElementById('bannerLogoFallback');
+        if (club?.logo_url) {
+          logoImg.src = club.logo_url;
+          logoImg.alt = clubDisplayName;
+          logoImg.style.display = '';
+          logoFallback.style.display = 'none';
+        } else {
+          logoImg.style.display = 'none';
+          logoFallback.style.display = '';
+        }
+        document.getElementById('clubBanner').style.display = '';
+      }
+
+      // ── Hero ──
+      const initials = player.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      const squadLabel = [squad?.name, squad?.age_group].filter(Boolean).join(' · ');
+      const statusMap = { active: 'Active', injured: 'Injured', sick: 'Sick', suspended: 'Suspended', trialist: 'Trialist', unavailable: 'Unavailable' };
+      const statusCls = player.player_status || 'active';
+      const statusText = statusMap[statusCls] || statusCls;
+
+      document.getElementById('dossierHero').innerHTML = `
+        <div class="dossier-avatar" id="heroAvatar">${initials}</div>
+        <div class="dossier-hero-info">
+          ${player.jersey_number ? `<div class="dossier-jersey">#${player.jersey_number}</div>` : ''}
+          <div class="dossier-name">${player.name}</div>
+          <div class="dossier-subtitle">
+            ${player.position ? `<span>${player.position}</span>` : ''}
+            ${squadLabel ? `<span class="sep">·</span><span>${squadLabel}</span>` : ''}
+            ${player.current_club && player.current_club !== (club?.name || '') ? `<span class="sep">·</span><span>${player.current_club}</span>` : ''}
+            <span class="status-pill ${statusCls}">${statusText}</span>
+          </div>
+        </div>
+      `;
+
+      if (player.profile_image_url) {
+        const img = document.createElement('img');
+        img.src = player.profile_image_url;
+        img.alt = player.name;
+        img.onload = () => { document.getElementById('heroAvatar').innerHTML = ''; document.getElementById('heroAvatar').appendChild(img); };
+      }
+
+      // ── Info grid ──
+      const age = calcAge(player.date_of_birth) || player.age;
+      const infoItems = [
+        player.date_of_birth ? { label: 'Date of Birth', value: fmtDate(player.date_of_birth) + (age ? ` (${age})` : '') } : null,
+        player.nationality   ? { label: 'Nationality', value: player.nationality } : null,
+        player.foot          ? { label: 'Preferred Foot', value: player.foot } : null,
+        player.height        ? { label: 'Height', value: player.height } : null,
+        player.weight        ? { label: 'Weight', value: player.weight } : null,
+      ].filter(Boolean);
+
+      document.getElementById('dossierInfoGrid').innerHTML = infoItems.map(item => `
+        <div class="info-cell">
+          <div class="info-label">${item.label}</div>
+          <div class="info-value">${item.value}</div>
+        </div>
+      `).join('');
+
+      // ── Season stats ──
+      if (stats && stats.length > 0) {
+        const apps = stats.length;
+        const started = stats.filter(s => s.started).length;
+        const goals = stats.reduce((n, s) => n + (s.goals || 0), 0);
+        const assists = stats.reduce((n, s) => n + (s.assists || 0), 0);
+        const motm = stats.filter(s => s.motm).length;
+        const rated = stats.filter(s => s.rating > 0);
+        const avgRating = rated.length ? (rated.reduce((n, s) => n + s.rating, 0) / rated.length).toFixed(1) : '—';
+        const minutes = stats.reduce((n, s) => n + (s.minutes_played || 0), 0);
+
+        const years = [...new Set(stats.map(s => s.date?.slice(0, 4)).filter(Boolean))].sort();
+        document.getElementById('statsSeasonLabel').textContent = years.length ? years.join('/') : '';
+
+        document.getElementById('statCards').innerHTML = [
+          { icon: 'fa-futbol', color: '#00C49A', val: apps, label: 'Appearances' },
+          { icon: 'fa-play-circle', color: '#10b981', val: started, label: 'Started' },
+          { icon: 'fa-star', color: '#f59e0b', val: avgRating, label: 'Avg Rating', accent: true },
+          { icon: 'fa-bullseye', color: '#ef4444', val: goals, label: 'Goals' },
+          { icon: 'fa-hands-helping', color: '#8b5cf6', val: assists, label: 'Assists' },
+          { icon: 'fa-trophy', color: '#f59e0b', val: motm, label: 'MOTM' },
+          { icon: 'fa-clock', color: '#64748b', val: minutes, label: 'Minutes' },
+        ].map(c => `
+          <div class="stat-card">
+            <div class="stat-card-icon"><i class="fas ${c.icon}" style="color:${c.color};"></i></div>
+            <div class="stat-card-value${c.accent ? ' accent' : ''}">${c.val}</div>
+            <div class="stat-card-label">${c.label}</div>
+          </div>
+        `).join('');
+
+        show('sectionStats');
+
+        // ── Recent matches (last 8) ──
+        const recent = stats.slice(0, 8);
+        document.getElementById('matchCountLabel').textContent = `Last ${recent.length} appearances`;
+        document.getElementById('matchRows').innerHTML = recent.map(s => {
+          const res = getResult(s);
+          const score = getScore(s);
+          const rc = ratingClass(s.rating);
+          const rowCls = ['W', 'D', 'L'].includes(res) ? `row-${res}` : '';
+          const minsLabel = s.minutes_played ? `${s.minutes_played}'` : (s.started ? '90\'' : 'Sub');
+          return `
+            <tr class="${rowCls}">
+              <td>${fmtDate(s.date)}</td>
+              <td style="font-weight:600;">${s.opponent || '—'}</td>
+              <td style="color:var(--text-3);font-size:0.78rem;">${s.competition || '—'}</td>
+              <td class="center">
+                <span class="result-badge result-${res}">${res}${score ? ` ${score}` : ''}</span>
+              </td>
+              <td class="center" style="color:var(--text-2);font-size:0.78rem;font-weight:600;">${minsLabel}</td>
+              <td class="center" style="font-weight:700;">${s.goals ?? '—'}</td>
+              <td class="center" style="font-weight:700;">${s.assists ?? '—'}</td>
+              <td class="center">
+                ${s.rating ? `<span class="rating-cell ${rc}">${s.rating}</span>` : '<span style="color:var(--text-3);">—</span>'}
+              </td>
+              <td class="center">${s.motm ? '<span class="motm-star"><i class="fas fa-star"></i></span>' : '—'}</td>
+            </tr>
+          `;
+        }).join('');
+        show('sectionMatches');
+      }
+
+      // ── Bio ──
+      if (player.bio?.trim()) {
+        document.getElementById('bioText').textContent = player.bio.trim();
+        show('sectionBio');
+      }
+
+      // ── Previous clubs ──
+      if (player.previous_clubs?.trim()) {
+        const clubs = player.previous_clubs.split(/[,\n]+/).map(c => c.trim()).filter(Boolean);
+        document.getElementById('prevClubsList').innerHTML = clubs.map(c => `<span class="prev-club-pill">${c}</span>`).join('');
+        show('sectionPrevClubs');
+      }
+
+      // ── Latest assessment ──
+      if (assessment) {
+        const ratingsObj = assessment.ratings || {};
+        const ratingEntries = Object.entries(ratingsObj).filter(([, v]) => v != null && v !== '');
+        const attrClass = v => Number(v) >= 7 ? 'high' : Number(v) >= 5 ? 'mid' : 'low';
+        const attrLabel = k => k.replace(/_/g, ' ');
+
+        const attrGridHTML = ratingEntries.length ? `
+          <div class="assessment-sub-header" style="color:#7c3aed;">
+            <i class="fas fa-sliders-h"></i> Player Attributes
+          </div>
+          <div class="attr-grid">
+            ${ratingEntries.map(([k, v]) => `
+              <div class="attr-item">
+                <div class="attr-item-label">${attrLabel(k)}</div>
+                <div class="attr-item-value ${attrClass(v)}">${v}</div>
+              </div>`).join('')}
+          </div>
+        ` : '';
+
+        const metaParts = [];
+        if (assessment.date) metaParts.push(fmtDate(assessment.date));
+        if (assessment.author) metaParts.push(`Coach: ${assessment.author}`);
+        if (assessment.type) metaParts.push(assessment.type);
+
+        const notesHTML = assessment.notes?.trim() ? `
+          <div class="assessment-sub-header" style="color:#2563eb;margin-top:${attrGridHTML ? '20px' : '0'};">
+            <i class="fas fa-comment-alt"></i> Coach Comments
+          </div>
+          <div class="coach-comments-block">
+            "${assessment.notes.trim()}"
+            ${metaParts.length ? `<div class="coach-comments-byline">${metaParts.join(' · ')}</div>` : ''}
+          </div>
+        ` : '';
+
+        if (attrGridHTML || notesHTML) {
+          const secEl = document.getElementById('sectionAssessment');
+          secEl.querySelector('.dossier-section-body').innerHTML = attrGridHTML + notesHTML;
+          show('sectionAssessment');
+        }
+      }
+
+      // ── Footer ──
+      document.getElementById('footerMeta').textContent = `Generated ${new Date().toLocaleDateString('en-ZA', { day: '2-digit', month: 'long', year: 'numeric' })}`;
+
+      // ── Show ──
+      hide('stateLoading');
+      show('dossierContent');
+    }
+
+    loadDossier();
+  </script>
+</body>
+</html>

@@ -4,19 +4,19 @@
 import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
 import matchManager from '../managers/match-manager.js';
-import { showToast } from '../toast.js';
+import { showToast, showConfirm } from '../toast.js';
 
 // Lookup: match_id → plan { id, title }. Populated before first render.
 let matchPlanMap = {};
 
-export async function initMatchUI() {
-    // Both managers must be initialized before rendering
-    await Promise.all([
-        squadManager.init(),
-        matchManager.init()
-    ]);
+// Add Match modal state
+let _amMode = 'fixture'; // 'fixture' | 'result'
+let _amEvents = [];      // array of event objects
+let _amCurrentEventType = null;
 
-    // Build match → plan lookup so fixture cards can show plan links
+export async function initMatchUI() {
+    // Managers already initialized by page-init.js (with clubId).
+    // Just build the plan lookup map.
     await buildMatchPlanMap();
 
     populateTeamSelector();
@@ -43,14 +43,17 @@ export async function initMatchUI() {
         btnNewMatch.addEventListener('click', handleAddMatchClick);
     }
 
-    // Form Submission Handler
-    const matchForm = document.getElementById('matchForm');
-    if (matchForm) {
-        matchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            handleSaveMatch();
-        });
-    }
+    // Wire squad change → refresh competition datalist
+    const amSquadEl = document.getElementById('amSquadId');
+    if (amSquadEl) amSquadEl.addEventListener('change', _updateAmCompetitionList);
+
+    // Wire score label / preview updates in Add Match modal
+    const ourSideEl = document.getElementById('amOurSide');
+    if (ourSideEl) ourSideEl.addEventListener('change', _updateScoreLabels);
+    const homeScoreEl = document.getElementById('amHomeScore');
+    if (homeScoreEl) homeScoreEl.addEventListener('input', _updateResultPreview);
+    const awayScoreEl = document.getElementById('amAwayScore');
+    if (awayScoreEl) awayScoreEl.addEventListener('input', _updateResultPreview);
 }
 
 function getVisibleSquads() {
@@ -62,51 +65,19 @@ function getVisibleSquads() {
 
 function populateTeamSelector() {
     const squads = getVisibleSquads();
+    const squadOptions = squads.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
     // --- Page-level Team Filter ---
     const selector = document.getElementById('matchesTeamSelector');
     if (selector) {
-        selector.innerHTML = '<option value="all">All Teams</option>' +
-            squads.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        selector.innerHTML = '<option value="all">All Teams</option>' + squadOptions;
     }
 
-    // --- Modal: Home/Away Team Dropdowns ---
-    const homeSelect = document.getElementById('matchHomeTeam');
-    const awaySelect = document.getElementById('matchAwayTeam');
-
-    const squadOptions = squads.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-
-    if (homeSelect) {
-        homeSelect.innerHTML = '<option value="">Select Your Squad</option>' +
-            squadOptions +
-            '<option value="__other__">Other (type in)</option>';
-    }
-    if (awaySelect) {
-        awaySelect.innerHTML = '<option value="">Select Your Squad</option>' +
-            squadOptions +
-            '<option value="__other__">Other (type in)</option>';
-    }
-
-    // --- Modal: Competition/League Dropdown (from squad leagues) ---
-    const competitionSelector = document.getElementById('matchCompetition');
-    if (competitionSelector) {
-        const uniqueLeagues = new Set();
-        squads.forEach(s => {
-            if (s.leagues) {
-                if (Array.isArray(s.leagues)) s.leagues.forEach(l => uniqueLeagues.add(l));
-                else if (typeof s.leagues === 'string') s.leagues.split(',').forEach(l => uniqueLeagues.add(l.trim()));
-                else uniqueLeagues.add(s.leagues);
-            }
-        });
-
-        if (uniqueLeagues.size > 0) {
-            competitionSelector.innerHTML = '<option value="">Select Competition / League</option>' +
-                Array.from(uniqueLeagues).sort().map(l => `<option value="${l}">${l}</option>`).join('');
-        } else {
-            // No leagues configured — allow text entry by converting to optional
-            competitionSelector.innerHTML = '<option value="">No leagues configured (Optional)</option>';
-            competitionSelector.removeAttribute('required');
-        }
+    // --- Modal: Squad selector (Add Match modal) ---
+    const amSquadSelect = document.getElementById('amSquadId');
+    if (amSquadSelect) {
+        amSquadSelect.innerHTML = '<option value="">Select Squad</option>' + squadOptions;
+        if (squads.length === 1) amSquadSelect.value = squads[0].id;
     }
 
     // --- Page-level League Filter ---
@@ -124,59 +95,6 @@ function populateTeamSelector() {
             Array.from(allLeagues).sort().map(l => `<option value="${l}">${l}</option>`).join('');
     }
 }
-
-/**
- * Smart Home/Away toggle:
- * When a squad is selected on one side, the OTHER side becomes a text input for the opponent.
- * If "Other (type in)" is selected, that side becomes a text input too.
- */
-function onTeamSelectChange(side) {
-    const homeSelect = document.getElementById('matchHomeTeam');
-    const awaySelect = document.getElementById('matchAwayTeam');
-    const homeWrapper = document.getElementById('homeTeamWrapper');
-    const awayWrapper = document.getElementById('awayTeamWrapper');
-    const homeTextWrapper = document.getElementById('homeTeamTextWrapper');
-    const awayTextWrapper = document.getElementById('awayTeamTextWrapper');
-
-    if (side === 'home') {
-        const val = homeSelect.value;
-        if (val && val !== '__other__' && val !== '') {
-            awayWrapper.style.display = 'none';
-            awayTextWrapper.style.display = 'block';
-            homeTextWrapper.style.display = 'none';
-            homeWrapper.style.display = 'block';
-        } else if (val === '__other__') {
-            homeWrapper.style.display = 'none';
-            homeTextWrapper.style.display = 'block';
-            awayWrapper.style.display = 'block';
-            awayTextWrapper.style.display = 'none';
-        } else {
-            homeWrapper.style.display = 'block';
-            homeTextWrapper.style.display = 'none';
-            awayWrapper.style.display = 'block';
-            awayTextWrapper.style.display = 'none';
-        }
-    } else if (side === 'away') {
-        const val = awaySelect.value;
-        if (val && val !== '__other__' && val !== '') {
-            homeWrapper.style.display = 'none';
-            homeTextWrapper.style.display = 'block';
-            awayTextWrapper.style.display = 'none';
-            awayWrapper.style.display = 'block';
-        } else if (val === '__other__') {
-            awayWrapper.style.display = 'none';
-            awayTextWrapper.style.display = 'block';
-            homeWrapper.style.display = 'block';
-            homeTextWrapper.style.display = 'none';
-        } else {
-            homeWrapper.style.display = 'block';
-            homeTextWrapper.style.display = 'none';
-            awayWrapper.style.display = 'block';
-            awayTextWrapper.style.display = 'none';
-        }
-    }
-}
-window.onTeamSelectChange = onTeamSelectChange;
 
 // Helper to get squad name safely
 function getSquadName(squadId) {
@@ -292,7 +210,6 @@ function createMatchCard(m, isPast) {
     const resText = res.text;
     const resultClass = resText.toLowerCase();
 
-    // Resolve watched player name for player watch matches
     let watchedPlayerName = '';
     if (m.matchType === 'player_watch' && m.watchedPlayerId) {
         const allPlayers = squadManager.getPlayers({});
@@ -300,80 +217,126 @@ function createMatchCard(m, isPast) {
         watchedPlayerName = wp ? wp.name : '';
     }
 
+    const expandedContent = (() => {
+        let html = `<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+            <span><i class="fas fa-map-marker-alt" style="margin-right:6px;color:var(--primary);"></i><strong>Venue:</strong> ${m.venue || 'TBD'}</span>
+            ${!isPast ? `<span><i class="fas fa-clock" style="margin-right:6px;color:var(--primary);"></i><strong>Kickoff:</strong> ${m.time || 'TBA'}</span>` : ''}
+        </div>`;
+
+        const isPlayerWatch = m.matchType === 'player_watch';
+
+        // Report / Observation link
+        const reportLabel = isPlayerWatch ? 'Observation Report' : 'Match Report';
+        const reportIcon = isPlayerWatch ? 'fa-clipboard-list' : 'fa-file-alt';
+        html += `<div style="margin-top:4px;padding:10px 14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
+            <span style="font-size:0.85rem;color:#0369a1;font-weight:600;"><i class="fas ${reportIcon}" style="margin-right:6px;"></i>${reportLabel}</span>
+            <a href="match-details.html?id=${m.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 14px;">
+                <i class="fas fa-arrow-right" style="margin-right:4px;"></i>Open
+            </a>
+        </div>`;
+
+        // Player profile shortcut for player_watch
+        if (isPlayerWatch && m.watchedPlayerId) {
+            html += `<div style="margin-top:10px;padding:10px 14px;background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
+                <span style="font-size:0.85rem;color:#6d28d9;font-weight:600;"><i class="fas fa-user" style="margin-right:6px;"></i>${watchedPlayerName || 'Player'}</span>
+                <a href="player-profile.html?id=${m.watchedPlayerId}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 12px;">View Profile</a>
+            </div>`;
+        }
+
+        if (!isPast && !isPlayerWatch) {
+            // Fixtures only (team matches): Match Planning block
+            const plan = matchPlanMap[m.id];
+            if (plan) {
+                html += `<div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
+                    <span style="font-size:0.85rem;color:#166534;font-weight:600;"><i class="fas fa-chess-board" style="margin-right:6px;"></i>Match Plan: ${escapeHtmlMP(plan.title)}</span>
+                    <a href="match-plan.html?id=${plan.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 12px;">View Plan</a>
+                </div>`;
+            } else {
+                html += `<div style="margin-top:10px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
+                    <span style="font-size:0.85rem;color:#92400e;"><i class="fas fa-chess-board" style="margin-right:6px;opacity:0.5;"></i>No match plan linked yet</span>
+                    <a href="match-plan.html?match_id=${m.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 12px;"><i class="fas fa-plus" style="margin-right:4px;"></i>Create Plan</a>
+                </div>`;
+            }
+
+            // Enter Result — team matches only
+            html += `<div id="enterResult-${m.id}" style="margin-top:10px;" onclick="event.stopPropagation()">
+                <button class="dash-btn outline sm" onclick="toggleEnterResult('${m.id}')" style="font-size:0.82rem;border-color:var(--primary);color:var(--primary);">
+                    <i class="fas fa-flag-checkered" style="margin-right:4px;"></i> Enter Result
+                </button>
+                <div id="resultForm-${m.id}" style="display:none;margin-top:8px;padding:14px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;">
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+                        <span style="font-size:0.85rem;font-weight:700;color:var(--navy-dark);">${escapeHtmlMP(homeName)}</span>
+                        <input type="number" id="resultHome-${m.id}" min="0" value="0" style="width:56px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;text-align:center;font-weight:700;font-size:1.1rem;font-family:inherit;">
+                        <span style="font-weight:700;color:#94a3b8;font-size:1.1rem;">–</span>
+                        <input type="number" id="resultAway-${m.id}" min="0" value="0" style="width:56px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;text-align:center;font-weight:700;font-size:1.1rem;font-family:inherit;">
+                        <span style="font-size:0.85rem;font-weight:700;color:var(--navy-dark);">${escapeHtmlMP(awayName)}</span>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button class="dash-btn outline sm" onclick="submitResult('${m.id}','${m.ourSide || 'home'}',false)" style="font-size:0.82rem;">
+                            <i class="fas fa-check" style="margin-right:4px;"></i> Save Result
+                        </button>
+                        <button class="dash-btn primary sm" onclick="submitResult('${m.id}','${m.ourSide || 'home'}',true)" style="font-size:0.82rem;">
+                            <i class="fas fa-file-alt" style="margin-right:4px;"></i> Save & Match Report
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        return html;
+    })();
+
     return `
-    <div class="dash-card match-card" data-id="${m.id}" style="margin-bottom: 12px; padding: 0; overflow: hidden; transition: all 0.2s ease;">
-        <div class="match-card-header match-card-grid" onclick="toggleMatchVenue('${m.id}')" style="padding: 20px 24px; cursor: pointer;">
+    <div class="dash-card match-card" data-id="${m.id}" style="margin-bottom:12px;padding:0;overflow:hidden;transition:all 0.2s ease;">
+        <div class="match-card-header match-card-grid" onclick="toggleMatchVenue('${m.id}')"
+            style="padding:18px 24px;cursor:pointer;transition:background 0.15s;"
+            onmouseover="this.style.background='#f8fafc';const _ch=document.getElementById('chevron-${m.id}');if(_ch)_ch.style.color='#6366f1';"
+            onmouseout="this.style.background='';const _ch=document.getElementById('chevron-${m.id}');const _p=document.getElementById('match-venue-${m.id}');if(_ch)_ch.style.color=(_p&&_p.style.display!=='none')?'#6366f1':'#94a3b8';">
             <div class="match-card-info">
-                <span style="font-weight: 700; color: var(--navy-dark); font-size: 1rem;">
-                    <i class="far fa-calendar-alt" style="margin-right: 6px; color: var(--text-medium); opacity: 0.7;"></i> ${m.date}
+                <span style="font-weight:700;color:var(--navy-dark);font-size:.95rem;">
+                    <i class="far fa-calendar-alt" style="margin-right:6px;color:var(--text-medium);opacity:.7;"></i>${m.date}
                 </span>
-                <span style="font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-left: 22px;">
+                <span style="font-size:0.82rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-left:20px;">
                     ${m.competition || 'Friendly'}
                 </span>
                 ${m.matchType === 'player_watch' ? `<span style="background:rgba(99,102,241,0.12);color:#6366f1;font-size:0.72rem;padding:3px 8px;border-radius:12px;font-weight:600;margin-left:8px;"><i class="fas fa-eye" style="margin-right:4px;"></i>Player Watch${watchedPlayerName ? ': ' + watchedPlayerName : ''}</span>` : ''}
             </div>
             <div class="match-teams-score">
-                <div class="match-team-name home">${homeName}</div>
-                <div class="match-score-badge ${isPast ? 'past' : ''} ${isPast ? resultClass : ''}">
-                    ${isPast ? `${hScore} - ${aScore}` : 'VS'}
-                </div>
-                <div class="match-team-name away">${awayName}</div>
+                ${m.matchType === 'player_watch'
+                    ? `<div style="display:flex;align-items:center;gap:8px;justify-content:center;width:100%;">
+                        <i class="fas fa-eye" style="color:#6366f1;font-size:.9rem;"></i>
+                        <span style="font-weight:700;color:#1e293b;font-size:.9rem;">${watchedPlayerName || 'Player Watch'}</span>
+                        ${isPast && (hScore || aScore) ? `<span style="font-size:.8rem;color:#64748b;margin-left:4px;">${hScore} – ${aScore}</span>` : ''}
+                       </div>`
+                    : `<div class="match-team-name home">${homeName}</div>
+                       <div class="match-score-badge ${isPast ? 'past' : ''} ${isPast ? resultClass : ''}">
+                           ${isPast ? `${hScore} - ${aScore}` : 'VS'}
+                       </div>
+                       <div class="match-team-name away">${awayName}</div>`
+                }
             </div>
             <div class="match-meta-info">
-                ${!isPast ? `<i class="far fa-clock"></i> ${m.time || 'TBA'}` : `<span style="color: ${resultColor}; letter-spacing: 1px; font-weight: 800;">${resText}</span>`}
-            </div>
-            <div class="match-actions" style="display: flex; gap: 8px;" onclick="event.stopPropagation()">
-                ${isPast
-                    ? `<a href="match-details.html?id=${m.id}" class="dash-btn outline sm" title="Report"><i class="fas fa-file-alt"></i> Report</a>
-                       <a href="match-analysis.html?id=${m.id}" class="dash-btn outline sm" title="Analysis"><i class="fas fa-video"></i> Analysis</a>`
-                    : ''
+                ${m.matchType === 'player_watch'
+                    ? `<span style="color:#6366f1;font-weight:600;font-size:.78rem;letter-spacing:.5px;">OBSERVATION</span>`
+                    : (!isPast ? `<i class="far fa-clock"></i> ${m.time || 'TBA'}` : `<span style="color:${resultColor};letter-spacing:1px;font-weight:800;">${resText}</span>`)
                 }
-                <button onclick="handleDeleteMatch('${m.id}')" class="dash-btn outline sm danger" style="padding: 0 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Delete">
-                    <i class="fas fa-trash-alt"></i>
+            </div>
+            <div style="display:flex;align-items:center;flex-shrink:0;">
+                <button onclick="event.stopPropagation();handleDeleteMatch('${m.id}')"
+                    style="border:none;background:none;width:32px;height:32px;border-radius:6px;cursor:pointer;color:#e2e8f0;display:flex;align-items:center;justify-content:center;transition:color .15s,background .15s;flex-shrink:0;"
+                    onmouseover="this.style.color='#ef4444';this.style.background='rgba(239,68,68,0.08)'"
+                    onmouseout="this.style.color='#e2e8f0';this.style.background='none'"
+                    title="Delete match">
+                    <i class="fas fa-trash-alt" style="font-size:.7rem;pointer-events:none;"></i>
                 </button>
+                <div style="width:1px;height:18px;background:#e2e8f0;margin:0 10px;flex-shrink:0;"></div>
+                <span id="chevron-${m.id}" style="color:#94a3b8;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;transition:transform .25s ease,color .15s;border-radius:6px;">
+                    <i class="fas fa-chevron-down" style="font-size:.75rem;pointer-events:none;"></i>
+                </span>
             </div>
         </div>
-        <div id="match-venue-${m.id}" style="display: none; background: #f8fafc; padding: 12px 24px; border-top: 1px solid var(--border-light); font-size: 0.9rem; color: var(--text-medium);">
-            <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: center;">
-                <span><i class="fas fa-map-marker-alt" style="margin-right: 6px; color: var(--primary);"></i> <strong>Venue:</strong> ${m.venue || 'TBD'}</span>
-                ${isPast ? '' : `<span><i class="fas fa-clock" style="margin-right: 6px; color: var(--primary);"></i> <strong>Kickoff:</strong> ${m.time || 'TBA'}</span>`}
-            </div>
-            ${(() => {
-                const plan = matchPlanMap[m.id];
-                let html = '';
-                if (plan) {
-                    html += `<div style="margin-top: 10px; padding: 10px 14px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;" onclick="event.stopPropagation()">
-                        <span style="font-size: 0.85rem; color: #166534; font-weight: 600;"><i class="fas fa-chess-board" style="margin-right: 6px;"></i>Match Plan: ${escapeHtmlMP(plan.title)}</span>
-                        <a href="match-plan.html?id=${plan.id}" class="dash-btn outline sm" style="font-size: 0.8rem; padding: 4px 12px;">View Plan</a>
-                    </div>`;
-                } else {
-                    html += `<div style="margin-top: 10px; padding: 10px 14px; background: #fefce8; border: 1px solid #fde68a; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;" onclick="event.stopPropagation()">
-                        <span style="font-size: 0.85rem; color: #92400e;"><i class="fas fa-chess-board" style="margin-right: 6px; opacity: 0.5;"></i>No match plan linked yet</span>
-                        <a href="match-plan.html?match_id=${m.id}" class="dash-btn outline sm" style="font-size: 0.8rem; padding: 4px 12px;"><i class="fas fa-plus" style="margin-right: 4px;"></i>Create Plan</a>
-                    </div>`;
-                }
-                // Enter Result row — only for upcoming fixtures
-                if (!isPast) {
-                    html += `<div id="enterResult-${m.id}" style="margin-top: 10px;" onclick="event.stopPropagation()">
-                        <button class="dash-btn ghost sm" onclick="toggleEnterResult('${m.id}')" style="font-size:0.82rem;">
-                            <i class="fas fa-flag-checkered" style="margin-right:4px;"></i> Enter Result
-                        </button>
-                        <div id="resultForm-${m.id}" style="display:none;margin-top:8px;padding:12px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
-                            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-                                <span style="font-size:0.85rem;font-weight:600;color:var(--navy-dark);">${escapeHtmlMP(homeName)}</span>
-                                <input type="number" id="resultHome-${m.id}" min="0" value="0" style="width:56px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-weight:700;font-size:1rem;">
-                                <span style="font-weight:700;color:#94a3b8;">–</span>
-                                <input type="number" id="resultAway-${m.id}" min="0" value="0" style="width:56px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;text-align:center;font-weight:700;font-size:1rem;">
-                                <span style="font-size:0.85rem;font-weight:600;color:var(--navy-dark);">${escapeHtmlMP(awayName)}</span>
-                                <button class="dash-btn primary sm" onclick="submitResult('${m.id}','${m.ourSide || 'home'}')" style="margin-left:auto;font-size:0.82rem;padding:6px 16px;">
-                                    <i class="fas fa-check" style="margin-right:4px;"></i> Save Result
-                                </button>
-                            </div>
-                        </div>
-                    </div>`;
-                }
-                return html;
-            })()}
+        <div id="match-venue-${m.id}" style="display:none;background:#f8fafc;padding:14px 24px;border-top:1px solid var(--border-light);font-size:0.9rem;color:var(--text-medium);">
+            ${expandedContent}
         </div>
     </div>`;
 }
@@ -393,8 +356,12 @@ function renderMatches() {
     const resultsContainer = document.getElementById('resultsList');
     const matches = getFilteredMatches();
 
-    const upcoming = matches.filter(m => !m.isPast);
-    const past = matches.filter(m => m.isPast);
+    const upcoming = matches.filter(m => m.status !== 'result' && !m.isPast);
+    const past = matches.filter(m => m.status === 'result' || m.isPast);
+
+    // Sort upcoming by date ascending (soonest first)
+    upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Results already sorted by desc date from manager
 
     // Fixtures
     if (fixturesContainer) {
@@ -487,7 +454,8 @@ async function loadMatchPlans() {
 }
 
 async function deleteMatchPlan(id) {
-    if (!confirm('Delete this match plan?')) return;
+    const ok = await showConfirm('Delete Match Plan', 'This will permanently remove the match plan. This cannot be undone.', { confirmLabel: 'Delete', isDanger: true, icon: 'fa-trash-alt' });
+    if (!ok) return;
     try {
         const { error } = await supabase.from('match_plans').delete().eq('id', id);
         if (error) throw error;
@@ -508,55 +476,62 @@ function escapeHtmlMP(str) {
 
 function toggleMatchVenue(id) {
     const el = document.getElementById(`match-venue-${id}`);
+    const chevron = document.getElementById(`chevron-${id}`);
     if (el) {
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        const isOpen = el.style.display !== 'none';
+        el.style.display = isOpen ? 'none' : 'block';
+        if (chevron) {
+            chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+            chevron.style.color = isOpen ? '#94a3b8' : '#6366f1';
+        }
     }
 }
 window.toggleMatchVenue = toggleMatchVenue;
 
 /* --- Modal & Form Handling --- */
 
-function handleAddMatchClick() {
+async function handleAddMatchClick() {
+    // Reset modal state
+    _amMode = 'fixture';
+    _amEvents = [];
+    _amCurrentEventType = null;
+
+    // Clear fields
+    const clearVal = (id, val = '') => { const el = document.getElementById(id); if (el) el.value = val; };
+    clearVal('amOpponent');
+    clearVal('amDate');
+    clearVal('amTime');
+    clearVal('amVenue');
+    clearVal('amCompetition');
+    clearVal('amFormation');
+    clearVal('amReportTitle');
+    clearVal('amReportGeneral');
+    clearVal('amHomeScore', '0');
+    clearVal('amAwayScore', '0');
+
+    // Clear lineup lists
+    const startersList = document.getElementById('am-starters-list');
+    const subsList = document.getElementById('am-subs-list');
+    if (startersList) startersList.innerHTML = '';
+    if (subsList) subsList.innerHTML = '';
+
+    // Reset events feed
+    _renderEventsFeed();
+
+    // Set mode (shows/hides elements correctly)
+    setAddMatchMode('fixture');
+
+    // Populate season dropdown async
+    await _populateAmSeasonSelect();
+
+    // Update score labels
+    _updateScoreLabels();
+
+    // Show modal
     const modal = document.getElementById('createMatchModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-    switchTab('details');
-    // Populate watched player dropdown
-    populateWatchedPlayerDropdown();
+    if (modal) modal.style.display = 'flex';
 }
 window.handleAddMatchClick = handleAddMatchClick;
-
-function populateWatchedPlayerDropdown() {
-    const select = document.getElementById('matchWatchedPlayer');
-    if (!select) return;
-    const players = squadManager.getPlayers();
-    select.innerHTML = '<option value="">Select Player</option>' +
-        players.map(p => {
-            const pos = p.position ? ` (${p.position.split(',')[0].trim()})` : '';
-            return `<option value="${p.id}">${p.name}${pos}</option>`;
-        }).join('');
-}
-
-function onMatchTypeChange() {
-    const selected = document.querySelector('input[name="matchType"]:checked')?.value || 'team';
-    const watchedGroup = document.getElementById('watchedPlayerGroup');
-    const teamLabel = document.getElementById('matchTypeTeamLabel');
-    const watchLabel = document.getElementById('matchTypeWatchLabel');
-
-    if (watchedGroup) watchedGroup.style.display = selected === 'player_watch' ? '' : 'none';
-
-    // Style the active radio label
-    if (teamLabel) {
-        teamLabel.style.borderColor = selected === 'team' ? 'var(--primary, #00594f)' : '#e2e8f0';
-        teamLabel.style.background = selected === 'team' ? 'rgba(0,196,154,0.08)' : '#f8fafc';
-    }
-    if (watchLabel) {
-        watchLabel.style.borderColor = selected === 'player_watch' ? 'var(--primary, #00594f)' : '#e2e8f0';
-        watchLabel.style.background = selected === 'player_watch' ? 'rgba(0,196,154,0.08)' : '#f8fafc';
-    }
-}
-window.onMatchTypeChange = onMatchTypeChange;
 
 function closeAddMatchModal() {
     const modal = document.getElementById('createMatchModal');
@@ -564,154 +539,474 @@ function closeAddMatchModal() {
 }
 window.closeAddMatchModal = closeAddMatchModal;
 
-function switchTab(tabId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const targetBtn = document.getElementById(`tab-btn-${tabId}`);
-    if (targetBtn) targetBtn.classList.add('active');
+/* --- Add Match Modal: mode, tabs, lineup, events --- */
 
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    const targetContent = document.getElementById(`tab-${tabId}`);
-    if (targetContent) targetContent.classList.add('active');
+function setAddMatchMode(mode) {
+    _amMode = mode;
+    const isResult = mode === 'result';
+
+    const fixtureBtn = document.getElementById('amToggleFixture');
+    const resultBtn = document.getElementById('amToggleResult');
+
+    if (fixtureBtn) {
+        fixtureBtn.style.borderColor = isResult ? '#e2e8f0' : 'var(--blue-accent, #2563eb)';
+        fixtureBtn.style.background = isResult ? '#f8fafc' : 'rgba(37,99,235,0.07)';
+        fixtureBtn.style.color = isResult ? '#64748b' : 'var(--blue-accent, #2563eb)';
+    }
+    if (resultBtn) {
+        resultBtn.style.borderColor = isResult ? 'var(--primary, #00c49a)' : '#e2e8f0';
+        resultBtn.style.background = isResult ? 'rgba(0,196,154,0.08)' : '#f8fafc';
+        resultBtn.style.color = isResult ? 'var(--primary, #00c49a)' : '#64748b';
+    }
+
+    const resultTabs = document.getElementById('amResultTabs');
+    if (resultTabs) resultTabs.style.display = isResult ? 'flex' : 'none';
+
+    const scoreRow = document.getElementById('amScoreRow');
+    if (scoreRow) scoreRow.style.display = isResult ? 'block' : 'none';
+
+    switchAmTab('am-details');
 }
-window.switchTab = switchTab;
+window.setAddMatchMode = setAddMatchMode;
+
+function switchAmTab(tabId) {
+    // Validate that details are filled before accessing result-only tabs
+    if (tabId !== 'am-details') {
+        const squadId = document.getElementById('amSquadId')?.value;
+        const date = document.getElementById('amDate')?.value;
+        const opponent = document.getElementById('amOpponent')?.value;
+        if (!squadId || !date || !opponent) {
+            showToast('Fill in Squad, Date and Opponent in Details first', 'error');
+            return;
+        }
+    }
+    document.querySelectorAll('.am-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+    });
+    document.querySelectorAll('.am-tab-content').forEach(tc => {
+        tc.style.display = tc.id === tabId ? 'block' : 'none';
+    });
+}
+window.switchAmTab = switchAmTab;
+
+function _updateAmCompetitionList() {
+    const squadId = document.getElementById('amSquadId')?.value;
+    const datalist = document.getElementById('amCompetitionList');
+    if (!datalist) return;
+    if (!squadId) { datalist.innerHTML = ''; return; }
+    const squad = squadManager.getSquad(squadId);
+    const leagues = Array.isArray(squad?.leagues) ? squad.leagues : [];
+    datalist.innerHTML = leagues.map(l => `<option value="${escapeHtmlMP(l)}">`).join('');
+    // Auto-fill if only one competition and field is empty
+    const compEl = document.getElementById('amCompetition');
+    if (compEl && !compEl.value && leagues.length === 1) compEl.value = leagues[0];
+}
+window._updateAmCompetitionList = _updateAmCompetitionList;
+
+function addLineupRow(containerId, type) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const squadId = document.getElementById('amSquadId')?.value;
+    const allPlayers = squadManager.getPlayers(squadId ? { squadId } : {});
+
+    const rowId = `lineup-row-${Date.now()}`;
+    const playerOptions = allPlayers.length > 0
+        ? allPlayers.map(p => {
+            const pos = p.position ? ` — ${p.position.split(',')[0].trim()}` : '';
+            return `<option value="${p.id}">${escapeHtmlMP(p.name)}${pos}</option>`;
+        }).join('')
+        : '<option value="">No players in squad</option>';
+
+    const row = document.createElement('div');
+    row.id = rowId;
+    row.style.cssText = 'display:flex; align-items:center; gap:8px; padding:6px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;';
+    row.innerHTML = `
+        <span style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#94a3b8; min-width:24px;">${type === 'starter' ? 'ST' : 'SB'}</span>
+        <select style="flex:1; padding:5px 8px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.85rem; background:white;">
+            <option value="">Select player...</option>
+            ${playerOptions}
+        </select>
+        <button type="button" onclick="document.getElementById('${rowId}').remove()" style="padding:4px 8px; background:none; border:1px solid #fca5a5; border-radius:6px; color:#ef4444; cursor:pointer; font-size:0.75rem;" title="Remove">✕</button>
+    `;
+    container.appendChild(row);
+}
+window.addLineupRow = addLineupRow;
+
+async function _populateAmSeasonSelect() {
+    const sel = document.getElementById('amSeasonId');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Loading...</option>';
+    const seasons = await matchManager.getSeasons();
+    const active = seasons.find(s => s.is_current || s.status === 'active');
+    if (seasons.length === 0) {
+        const created = await matchManager.getOrCreateActiveSeason();
+        if (created) {
+            sel.innerHTML = `<option value="${created.id}">${escapeHtmlMP(created.name)}</option>`;
+        } else {
+            sel.innerHTML = '<option value="">No season</option>';
+        }
+        return;
+    }
+    sel.innerHTML = '<option value="">No Season</option>' +
+        seasons.map(s =>
+            `<option value="${s.id}"${s.id === active?.id ? ' selected' : ''}>${escapeHtmlMP(s.name)}</option>`
+        ).join('');
+}
+
+function _updateScoreLabels() {
+    const ourSide = document.getElementById('amOurSide')?.value || 'home';
+    const homeLabel = document.getElementById('amHomeLabel');
+    const awayLabel = document.getElementById('amAwayLabel');
+    if (homeLabel) homeLabel.textContent = ourSide === 'home' ? 'Home (Us)' : 'Home (Them)';
+    if (awayLabel) awayLabel.textContent = ourSide === 'home' ? 'Away (Them)' : 'Away (Us)';
+    _updateResultPreview();
+}
+
+function _updateResultPreview() {
+    const preview = document.getElementById('amResultPreview');
+    if (!preview) return;
+    const hScore = parseInt(document.getElementById('amHomeScore')?.value) || 0;
+    const aScore = parseInt(document.getElementById('amAwayScore')?.value) || 0;
+    const ourSide = document.getElementById('amOurSide')?.value || 'home';
+    const ourScore = ourSide === 'home' ? hScore : aScore;
+    const theirScore = ourSide === 'home' ? aScore : hScore;
+
+    let text, bg, color;
+    if (ourScore > theirScore) {
+        text = 'WIN'; bg = 'rgba(16,185,129,0.12)'; color = '#059669';
+    } else if (ourScore < theirScore) {
+        text = 'LOSS'; bg = 'rgba(239,68,68,0.12)'; color = '#dc2626';
+    } else {
+        text = 'DRAW'; bg = 'rgba(100,116,139,0.12)'; color = '#475569';
+    }
+    preview.textContent = text;
+    preview.style.background = bg;
+    preview.style.color = color;
+}
+
+/* --- Add Event Modal --- */
+
+function openAddEventModal() {
+    _amCurrentEventType = null;
+    document.querySelectorAll('.event-type-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('eventDetailForm').style.display = 'none';
+    _populateEventPlayerSelect();
+    document.getElementById('addEventModal').style.display = 'flex';
+}
+window.openAddEventModal = openAddEventModal;
+
+function closeAddEventModal() {
+    document.getElementById('addEventModal').style.display = 'none';
+}
+window.closeAddEventModal = closeAddEventModal;
+
+function _populateEventPlayerSelect() {
+    const getLineupPlayers = (containerId) => {
+        const container = document.getElementById(containerId);
+        if (!container) return [];
+        return Array.from(container.querySelectorAll('select')).map(sel => ({
+            id: sel.value,
+            name: sel.options[sel.selectedIndex]?.text || ''
+        })).filter(p => p.id);
+    };
+
+    const starters = getLineupPlayers('am-starters-list');
+    const subs = getLineupPlayers('am-subs-list');
+    let players = [...starters, ...subs];
+
+    // Fall back to full squad if lineup empty
+    if (players.length === 0) {
+        const squadId = document.getElementById('amSquadId')?.value;
+        players = squadManager.getPlayers(squadId ? { squadId } : {})
+            .map(p => ({ id: p.id, name: p.name }));
+    }
+
+    const opts = players.map(p => `<option value="${p.id}">${escapeHtmlMP(p.name)}</option>`).join('');
+    document.getElementById('eventPlayer').innerHTML = '<option value="">Select player</option>' + opts;
+    document.getElementById('eventAssist').innerHTML = '<option value="">No assist</option>' + opts;
+    document.getElementById('eventSubOff').innerHTML = '<option value="">Select player</option>' + opts;
+}
+
+function selectEventType(type) {
+    _amCurrentEventType = type;
+    document.querySelectorAll('.event-type-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === type);
+    });
+    document.getElementById('eventDetailForm').style.display = 'block';
+
+    const assistRow = document.getElementById('eventAssistRow');
+    const subOffRow = document.getElementById('eventSubOffRow');
+    const playerLabel = document.getElementById('eventPlayerLabel');
+
+    assistRow.style.display = type === 'goal' ? 'block' : 'none';
+    subOffRow.style.display = type === 'substitution' ? 'block' : 'none';
+    playerLabel.textContent = type === 'substitution' ? 'Player On'
+        : type === 'own_goal' ? 'Player (own goal)'
+        : 'Player';
+}
+window.selectEventType = selectEventType;
+
+function confirmAddEvent() {
+    if (!_amCurrentEventType) { showToast('Select an event type first', 'error'); return; }
+
+    const playerSel = document.getElementById('eventPlayer');
+    const minuteEl = document.getElementById('eventMinute');
+    const assistSel = document.getElementById('eventAssist');
+    const subOffSel = document.getElementById('eventSubOff');
+
+    const minute = parseInt(minuteEl?.value) || 0;
+    if (!minute || minute < 1) { showToast('Enter the minute', 'error'); return; }
+
+    const event = {
+        id: Date.now(),
+        type: _amCurrentEventType,
+        playerId: playerSel?.value || null,
+        playerName: playerSel?.value ? (playerSel.options[playerSel.selectedIndex]?.text || '') : '',
+        minute
+    };
+
+    if (_amCurrentEventType === 'goal') {
+        event.assistId = assistSel?.value || null;
+        event.assistName = assistSel?.value ? (assistSel.options[assistSel.selectedIndex]?.text || '') : null;
+    } else if (_amCurrentEventType === 'substitution') {
+        event.subOffId = subOffSel?.value || null;
+        event.subOffName = subOffSel?.value ? (subOffSel.options[subOffSel.selectedIndex]?.text || '') : null;
+    }
+
+    _amEvents.push(event);
+    _renderEventsFeed();
+    _updateLiveScore();
+    closeAddEventModal();
+    showToast('Event added', 'success');
+}
+window.confirmAddEvent = confirmAddEvent;
+
+function removeAmEvent(id) {
+    _amEvents = _amEvents.filter(e => e.id !== id);
+    _renderEventsFeed();
+    _updateLiveScore();
+}
+window.removeAmEvent = removeAmEvent;
+
+function _renderEventsFeed() {
+    const feed = document.getElementById('amEventsFeed');
+    if (!feed) return;
+
+    if (_amEvents.length === 0) {
+        feed.innerHTML = `<div style="text-align:center; padding:32px; color:#94a3b8; font-size:0.85rem;">
+            <i class="fas fa-bolt" style="font-size:1.5rem; display:block; margin-bottom:8px; opacity:0.4;"></i>
+            No events yet — click Add Event to log goals, cards, subs
+        </div>`;
+        const liveScore = document.getElementById('amLiveScore');
+        if (liveScore) liveScore.style.display = 'none';
+        return;
+    }
+
+    const icons = {
+        goal: '<i class="fas fa-futbol" style="color:#10b981;"></i>',
+        own_goal: '<i class="fas fa-futbol" style="color:#ef4444; opacity:0.6;"></i>',
+        yellow_card: '<i class="fas fa-square" style="color:#fbbf24;"></i>',
+        red_card: '<i class="fas fa-square" style="color:#ef4444;"></i>',
+        substitution: '<i class="fas fa-exchange-alt" style="color:#6366f1;"></i>',
+        penalty_saved: '<i class="fas fa-hand-paper" style="color:#10b981;"></i>',
+        missed_penalty: '<i class="fas fa-times-circle" style="color:#ef4444;"></i>',
+        injury: '<i class="fas fa-user-injured" style="color:#f59e0b;"></i>'
+    };
+    const labels = {
+        goal: 'Goal', own_goal: 'Own Goal', yellow_card: 'Yellow Card',
+        red_card: 'Red Card', substitution: 'Sub', penalty_saved: 'Pen Saved',
+        missed_penalty: 'Missed Pen', injury: 'Injury'
+    };
+
+    const sorted = [..._amEvents].sort((a, b) => a.minute - b.minute);
+    feed.innerHTML = sorted.map(ev => {
+        let detail = ev.playerName || '—';
+        if (ev.type === 'goal' && ev.assistName) detail += ` (assist: ${escapeHtmlMP(ev.assistName)})`;
+        if (ev.type === 'substitution' && ev.subOffName) detail += ` ↔ ${escapeHtmlMP(ev.subOffName)} off`;
+        return `<div style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+            <span style="min-width:32px; font-size:0.78rem; font-weight:700; color:#64748b;">${ev.minute}'</span>
+            ${icons[ev.type] || '<i class="fas fa-circle"></i>'}
+            <span style="flex:1; font-size:0.85rem; color:#1e293b;">${escapeHtmlMP(detail)}</span>
+            <span style="font-size:0.75rem; color:#94a3b8;">${labels[ev.type] || ev.type}</span>
+            <button type="button" onclick="removeAmEvent(${ev.id})" style="padding:2px 6px; background:none; border:1px solid #fca5a5; border-radius:4px; color:#ef4444; cursor:pointer; font-size:0.7rem;" title="Remove">✕</button>
+        </div>`;
+    }).join('');
+}
+
+function _updateLiveScore() {
+    const liveScore = document.getElementById('amLiveScore');
+    if (!liveScore) return;
+    if (_amEvents.length === 0) { liveScore.style.display = 'none'; return; }
+
+    const ourSide = document.getElementById('amOurSide')?.value || 'home';
+    const goals = _amEvents.filter(e => e.type === 'goal').length;
+    const ownGoals = _amEvents.filter(e => e.type === 'own_goal').length;
+    const homeGoals = ourSide === 'home' ? goals : ownGoals;
+    const awayGoals = ourSide === 'home' ? ownGoals : goals;
+
+    liveScore.style.display = 'block';
+    liveScore.textContent = `${homeGoals} — ${awayGoals}`;
+}
+
+function _collectLineup() {
+    const getPlayers = (containerId) => {
+        const container = document.getElementById(containerId);
+        if (!container) return [];
+        return Array.from(container.querySelectorAll('select')).map(sel => ({
+            playerId: sel.value,
+            playerName: sel.options[sel.selectedIndex]?.text || ''
+        })).filter(p => p.playerId);
+    };
+    return { starters: getPlayers('am-starters-list'), subs: getPlayers('am-subs-list') };
+}
 
 /* --- Save Match Logic --- */
 
-window.toggleScoreInputs = function () { };
-
 async function handleSaveMatch() {
-    const getVal = (id) => {
-        const el = document.getElementById(id);
-        return el ? el.value : '';
-    };
+    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
 
-    // Determine Home & Away team names captured exactly as entered
-    const homeSelect = document.getElementById('matchHomeTeam');
-    const awaySelect = document.getElementById('matchAwayTeam');
-    const homeSelectVal = homeSelect ? homeSelect.value : '';
-    const awaySelectVal = awaySelect ? awaySelect.value : '';
-    const homeTextVal = getVal('matchHomeTeamText');
-    const awayTextVal = getVal('matchAwayTeamText');
+    const squadId = getVal('amSquadId');
+    const date = getVal('amDate');
+    const opponent = getVal('amOpponent');
 
-    let homeTeam = '';
-    let awayTeam = '';
-    let squadId = '';
-    let ourSide = 'home';
-    let opponent = '';
+    if (!squadId) { showToast('Please select a squad', 'error'); return; }
+    if (!date) { showToast('Please select a date', 'error'); return; }
+    if (!opponent) { showToast('Please enter the opponent name', 'error'); return; }
 
-    // Handle Home Team
-    if (homeSelectVal && homeSelectVal !== '__other__' && homeSelectVal !== '') {
-        squadId = homeSelectVal;
-        homeTeam = homeSelect.options[homeSelect.selectedIndex].text;
-        ourSide = 'home';
-    } else {
-        homeTeam = homeTextVal || '';
+    const isResult = _amMode === 'result';
+    const ourSide = getVal('amOurSide') || 'home';
+    const homeScore = isResult ? (parseInt(getVal('amHomeScore')) || 0) : null;
+    const awayScore = isResult ? (parseInt(getVal('amAwayScore')) || 0) : null;
+
+    let result = null;
+    if (isResult && homeScore !== null && awayScore !== null) {
+        const ourScore = ourSide === 'home' ? homeScore : awayScore;
+        const theirScore = ourSide === 'home' ? awayScore : homeScore;
+        result = ourScore > theirScore ? 'Win' : ourScore < theirScore ? 'Loss' : 'Draw';
     }
 
-    // Handle Away Team
-    if (awaySelectVal && awaySelectVal !== '__other__' && awaySelectVal !== '') {
-        if (!squadId) {
-            squadId = awaySelectVal;
-            ourSide = 'away';
-        }
-        awayTeam = awaySelect.options[awaySelect.selectedIndex].text;
-    } else {
-        awayTeam = awayTextVal || '';
-    }
+    const squad = squadManager.getSquad(squadId);
+    const squadName = squad?.name || 'Us';
+    const homeTeam = ourSide === 'home' ? squadName : opponent;
+    const awayTeam = ourSide === 'home' ? opponent : squadName;
 
-    // Set Opponent for search/filtering
-    opponent = (ourSide === 'home') ? awayTeam : homeTeam;
-
-    if (!homeTeam || !awayTeam) {
-        alert('Please specify both Home and Away teams.');
-        return;
-    }
-
-    const competition = getVal('matchCompetition');
-    const date = getVal('matchDate');
-
-    if (!date) {
-        alert('Please fill in the Date.');
-        return;
-    }
-
-    // Match Status Logic
-    const status = getVal('matchStatus') || 'upcoming';
-    const isPast = status === 'completed';
-
-    // Match type
-    const matchType = document.querySelector('input[name="matchType"]:checked')?.value || 'team';
-    const watchedPlayerId = matchType === 'player_watch' ? getVal('matchWatchedPlayer') : null;
+    const lineup = _collectLineup();
 
     const matchData = {
-        competition: competition || 'Friendly',
-        date,
-        time: getVal('matchTime'),
-        venue: getVal('matchVenue'),
         squadId,
+        date,
+        time: getVal('amTime'),
+        venue: getVal('amVenue'),
+        opponent,
+        competition: getVal('amCompetition') || 'Friendly',
+        ourSide,
         homeTeam,
         awayTeam,
-        opponent,
-        ourSide,
-        isPast: isPast,
-        homeScore: isPast ? parseInt(getVal('matchHomeScore') || 0) : 0,
-        awayScore: isPast ? parseInt(getVal('matchAwayScore') || 0) : 0,
-        status: status,
-        matchType,
-        watchedPlayerId: watchedPlayerId || null,
-
-        // Stats
+        status: isResult ? 'result' : 'fixture',
+        matchFormat: getVal('amFormat') || '11-a-side',
+        formation: getVal('amFormation') || null,
+        homeScore,
+        awayScore,
+        result,
+        seasonId: getVal('amSeasonId') || null,
+        matchType: getVal('amMatchType') || 'team',
+        lineup,
+        matchEvents: _amEvents,
+        reportTitle: getVal('amReportTitle') || null,
+        reportGeneral: getVal('amReportGeneral') || null,
         stats: matchManager.getDefaultStats(),
         links: [],
         videos: []
     };
 
-    // Calculate Result relative to our squad
-    if (matchData.isPast) {
-        let ourScore = ourSide === 'away' ? matchData.awayScore : matchData.homeScore;
-        let theirScore = ourSide === 'away' ? matchData.homeScore : matchData.awayScore;
-        matchData.result = (ourScore > theirScore) ? 'Win' :
-            (ourScore < theirScore) ? 'Loss' : 'Draw';
-    }
+    const saveBtn = document.getElementById('amSaveBtn');
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
 
-    // Capture Report/Analysis Fields
-    const reportLink = getVal('matchReportLink');
-    const reportText = getVal('matchTakeaways');
-    const videoLink = getVal('matchVideoLink');
-    const highlightsLink = getVal('matchHighlightsLink');
-
-    // Handle File Uploads (Metadata only)
-    const reportFile = document.getElementById('matchReportFile');
-    if (reportFile && reportFile.files.length > 0) {
-        matchData.links.push({ title: "Report File: " + reportFile.files[0].name, url: "#", type: "file" });
-    }
-
-    const videoFile = document.getElementById('matchVideoFile');
-    if (videoFile && videoFile.files.length > 0) {
-        matchData.videos.push({ title: "Video File: " + videoFile.files[0].name, url: "#", type: "file" });
-    }
-
-    if (reportLink) matchData.links.push({ title: "Match Report", url: reportLink, type: "report" });
-    if (videoLink) matchData.videos.push({ title: "Full Match", url: videoLink, type: "full" });
-    if (highlightsLink) matchData.videos.push({ title: "Highlights", url: highlightsLink, type: "highlights" });
-    if (reportText) matchData.notes = reportText;
-
-    // Save
     try {
-        await matchManager.createMatch(matchData);
-        showToast("Match Added Successfully!", "success");
+        const created = await matchManager.createMatch(matchData);
+        // Write player stats from lineup + events for result matches
+        if (isResult && created?.id) {
+            await _deriveAndSavePlayerStats(created.id, lineup, _amEvents, matchData.seasonId);
+        }
+        showToast('Match added successfully!', 'success');
         closeAddMatchModal();
-        await matchManager.init(); // Refresh data from server
+        await matchManager.init();
         renderMatches();
-    } catch (error) {
-        console.error("Failed to create match:", error);
-        showToast("Error: Failed to create match.", "error");
+    } catch (err) {
+        console.error('Failed to create match:', err);
+        showToast('Failed to save match', 'error');
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Match'; }
+    }
+}
+
+async function _deriveAndSavePlayerStats(matchId, lineup, events, seasonId) {
+    const statsMap = {};
+
+    const ensurePlayer = (playerId) => {
+        if (!playerId) return null;
+        if (!statsMap[playerId]) {
+            statsMap[playerId] = {
+                playerId,
+                appeared: false, started: false,
+                goals: 0, assists: 0,
+                yellowCards: 0, redCards: 0,
+                motm: false, rating: null, notes: ''
+            };
+        }
+        return statsMap[playerId];
+    };
+
+    // Starters
+    (lineup.starters || []).forEach(p => {
+        const s = ensurePlayer(p.playerId);
+        if (s) { s.appeared = true; s.started = true; }
+    });
+    // Subs
+    (lineup.subs || []).forEach(p => {
+        const s = ensurePlayer(p.playerId);
+        if (s) { s.appeared = true; s.started = false; }
+    });
+
+    // Events
+    (events || []).forEach(ev => {
+        if (ev.type === 'goal' && ev.playerId) {
+            const s = ensurePlayer(ev.playerId);
+            if (s) { s.appeared = true; s.goals++; }
+            if (ev.assistId) {
+                const a = ensurePlayer(ev.assistId);
+                if (a) { a.appeared = true; a.assists++; }
+            }
+        } else if (ev.type === 'yellow_card' && ev.playerId) {
+            const s = ensurePlayer(ev.playerId);
+            if (s) { s.appeared = true; s.yellowCards++; }
+        } else if (ev.type === 'red_card' && ev.playerId) {
+            const s = ensurePlayer(ev.playerId);
+            if (s) { s.appeared = true; s.redCards++; }
+        } else if (ev.type === 'substitution') {
+            if (ev.playerId) { const s = ensurePlayer(ev.playerId); if (s) s.appeared = true; }
+            if (ev.subOffId) { const s = ensurePlayer(ev.subOffId); if (s) s.appeared = true; }
+        }
+    });
+
+    const playerStatsArray = Object.values(statsMap);
+    if (playerStatsArray.length === 0) return;
+
+    await matchManager.saveMatchPlayerStats(matchId, playerStatsArray);
+
+    // Recalc season totals for each player
+    if (seasonId) {
+        await Promise.all(
+            playerStatsArray.map(ps => matchManager.recalcPlayerSeasonStats(ps.playerId, seasonId))
+        );
     }
 }
 window.handleSaveMatch = handleSaveMatch;
 
 async function handleDeleteMatch(id) {
-    if (!confirm('Are you sure you want to delete this match? This will also remove all associated reports and analysis.')) return;
+    const ok = await showConfirm('Delete Match', 'This will permanently remove the match and all associated stats, reports and player data. This cannot be undone.', { confirmLabel: 'Delete Match', isDanger: true, icon: 'fa-trash-alt' });
+    if (!ok) return;
 
     try {
         await matchManager.deleteMatch(id);
@@ -1007,7 +1302,7 @@ function toggleEnterResult(matchId) {
 }
 window.toggleEnterResult = toggleEnterResult;
 
-async function submitResult(matchId, ourSide) {
+async function submitResult(matchId, ourSide, navigate = false) {
     const homeEl = document.getElementById(`resultHome-${matchId}`);
     const awayEl = document.getElementById(`resultAway-${matchId}`);
     const hScore = parseInt(homeEl?.value, 10) || 0;
@@ -1019,9 +1314,10 @@ async function submitResult(matchId, ourSide) {
     const result = ourScore > theirScore ? 'Win' : ourScore < theirScore ? 'Loss' : 'Draw';
 
     try {
-        // Update in DB
+        // Update in DB — write both legacy is_past and new status field
         await matchManager.updateMatchInfo(matchId, {
             isPast: true,
+            status: 'result',
             homeScore: hScore,
             awayScore: aScore,
             result
@@ -1044,9 +1340,14 @@ async function submitResult(matchId, ourSide) {
             updated.result = result;
         }
 
-        renderMatches();
-        switchMatchesTab('results');
-        showToast(`Result saved: ${hScore} – ${aScore} (${result})`, 'success');
+        if (navigate) {
+            showToast(`Result saved: ${hScore} – ${aScore} (${result})`, 'success');
+            window.location.href = `match-details.html?id=${matchId}`;
+        } else {
+            renderMatches();
+            switchMatchesTab('results');
+            showToast(`Result saved: ${hScore} – ${aScore} (${result})`, 'success');
+        }
     } catch (err) {
         console.error('Failed to save result:', err);
         showToast('Failed to save result', 'error');
