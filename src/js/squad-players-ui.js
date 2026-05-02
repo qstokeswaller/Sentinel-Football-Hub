@@ -172,11 +172,16 @@ function ensurePlayerCardStyles() {
         .view-toggle-btn:hover { background:#f8fafc; color:#00C49A; }
         .view-toggle-btn.active { background:#00C49A; color:#fff; }
         @media(max-width:768px){ .player-cards-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:16px;} .player-card-actions{display:none;} .player-card-action-btn .btn-label{display:none;} }
-        /* Squad detail table rows */
+        /* Squad detail table */
+        .squad-table { border-collapse:collapse; }
+        .squad-table thead tr { background:#f8fafc; }
+        .squad-table th { padding:9px 16px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#64748b; border-bottom:1px solid #e2e8f0; }
         .squad-table tbody tr { cursor:pointer; transition:background .12s; }
         .squad-table tbody tr:hover td { background:rgba(0,196,154,.06); }
+        .squad-table td { border-bottom:1px solid #f1f5f9; }
+        .squad-table tbody tr:last-child td { border-bottom:none; }
         .squad-table tbody tr.squad-group-header-row { cursor:default; }
-        .squad-table tbody tr.squad-group-header-row:hover td { background:none; }
+        .squad-table tbody tr.squad-group-header-row:hover td { background:#f8fafc; }
         .squad-table td, .squad-table th { vertical-align:middle; }
         /* Squad detail layout — named grid areas */
         .sd-back-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
@@ -1483,7 +1488,7 @@ function renderSquadDetailPlayers(players) {
                 } else {
                     let html = '';
                     grouped.forEach(group => {
-                        html += `<tr class="squad-group-header-row"><td colspan="4"><span class="squad-group-label">${group.label}</span><span class="squad-group-count">${group.players.length}</span></td></tr>`;
+                        html += `<tr class="squad-group-header-row"><td colspan="5"><span class="squad-group-label">${group.label}</span><span class="squad-group-count">${group.players.length}</span></td></tr>`;
                         html += group.players.map(p => renderSquadPlayerRow(p)).join('');
                     });
                     tbody.innerHTML = html;
