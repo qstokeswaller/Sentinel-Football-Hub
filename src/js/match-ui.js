@@ -5,6 +5,7 @@ import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
 import matchManager from '../managers/match-manager.js';
 import { showToast, showConfirm } from '../toast.js';
+import { hasFeature, showUpgradeToast } from '../tier.js';
 
 // Lookup: match_id → plan { id, title }. Populated before first render.
 let matchPlanMap = {};
@@ -244,18 +245,20 @@ function createMatchCard(m, isPast) {
         }
 
         if (!isPast && !isPlayerWatch) {
-            // Fixtures only (team matches): Match Planning block
-            const plan = matchPlanMap[m.id];
-            if (plan) {
-                html += `<div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
-                    <span style="font-size:0.85rem;color:#166534;font-weight:600;"><i class="fas fa-chess-board" style="margin-right:6px;"></i>Match Plan: ${escapeHtmlMP(plan.title)}</span>
-                    <a href="match-plan.html?id=${plan.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 12px;">View Plan</a>
-                </div>`;
-            } else {
-                html += `<div style="margin-top:10px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
-                    <span style="font-size:0.85rem;color:#92400e;"><i class="fas fa-chess-board" style="margin-right:6px;opacity:0.5;"></i>No match plan linked yet</span>
-                    <a href="match-plan.html?match_id=${m.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 12px;"><i class="fas fa-plus" style="margin-right:4px;"></i>Create Plan</a>
-                </div>`;
+            // Fixtures only (team matches): Match Planning block — Pro+ only
+            if (hasFeature('match_planning')) {
+                const plan = matchPlanMap[m.id];
+                if (plan) {
+                    html += `<div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
+                        <span style="font-size:0.85rem;color:#166534;font-weight:600;"><i class="fas fa-chess-board" style="margin-right:6px;"></i>Match Plan: ${escapeHtmlMP(plan.title)}</span>
+                        <a href="match-plan.html?id=${plan.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 12px;">View Plan</a>
+                    </div>`;
+                } else {
+                    html += `<div style="margin-top:10px;padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:8px;display:flex;justify-content:space-between;align-items:center;" onclick="event.stopPropagation()">
+                        <span style="font-size:0.85rem;color:#92400e;"><i class="fas fa-chess-board" style="margin-right:6px;opacity:0.5;"></i>No match plan linked yet</span>
+                        <a href="match-plan.html?match_id=${m.id}" class="dash-btn outline sm" style="font-size:0.8rem;padding:4px 12px;"><i class="fas fa-plus" style="margin-right:4px;"></i>Create Plan</a>
+                    </div>`;
+                }
             }
 
             // Enter Result — team matches only

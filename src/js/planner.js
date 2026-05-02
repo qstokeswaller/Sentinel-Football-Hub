@@ -2,6 +2,7 @@
  * Session Planner Logic — ES Module (Supabase)
  * Migrated from legacy fetch-based planner
  */
+import '../css/planner.css';
 import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
 import { showToast } from '../toast.js';

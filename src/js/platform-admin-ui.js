@@ -272,12 +272,16 @@ function viewClubDetail(clubId) {
         const logoUrl = club?.settings?.branding?.logo_url || '';
         const archetype = club?.settings?.archetype || '';
         const displayName = club?.settings?.branding?.club_display_name || clubName;
+        const tier = (club?.settings?.tier || club?.settings?.plan || 'free').toLowerCase();
+        const features = club?.settings?.features || {};
         const params = new URLSearchParams({
             club: cId,
             club_name: clubName,
             club_logo: logoUrl,
             club_display: displayName,
             club_archetype: archetype,
+            club_tier: tier,
+            club_features: JSON.stringify(features),
         });
         window.open(`/src/pages/dashboard.html?${params.toString()}`, '_blank');
     });

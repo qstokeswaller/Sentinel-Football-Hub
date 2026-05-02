@@ -189,15 +189,24 @@ export function applyTierGates() {
 
 export function injectSidebarTierBadge(profile) {
   const footer = document.querySelector('.sidebar-footer');
-  if (!footer || document.getElementById('sidebarTierBadge')) return;
+  if (!footer) return;
   const settings = profile?.clubs?.settings;
   const raw = (settings?.tier || settings?.plan || 'free').toLowerCase();
   const tier = ['free', 'basic', 'pro', 'elite'].includes(raw) ? raw : 'free';
+  const existing = document.getElementById('sidebarTierBadge');
+  if (existing) {
+    // Preload already rendered the badge — silently correct it if tier changed
+    const correctClass = `tier-badge-sidebar ${tier}`;
+    if (existing.className !== correctClass) {
+      existing.className = correctClass;
+      existing.innerHTML = `<span>${TIER_LABELS[tier]} Plan</span>`;
+    }
+    return;
+  }
   const badge = document.createElement('div');
   badge.id = 'sidebarTierBadge';
   badge.className = `tier-badge-sidebar ${tier}`;
   badge.innerHTML = `<span>${TIER_LABELS[tier]} Plan</span>`;
-  // Insert before the user-info link so it sits at the top of the footer
   const userInfo = footer.querySelector('.sidebar-user-info');
   userInfo ? footer.insertBefore(badge, userInfo) : footer.prepend(badge);
 }

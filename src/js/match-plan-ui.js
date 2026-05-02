@@ -2,6 +2,7 @@
  * Match Plan Wizard -- UI Logic
  * Manages the multi-step match planning wizard with pitch canvases.
  */
+import '../css/planner.css';
 import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
 import matchManager from '../managers/match-manager.js';

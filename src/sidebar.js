@@ -1,3 +1,4 @@
+import './css/style.css';
 import { getProfile } from './auth.js';
 import { injectSidebarTierBadge } from './tier.js';
 
@@ -37,7 +38,7 @@ export function initSidebar(activePage = '') {
         { href: '/src/pages/matches.html', icon: 'fa-futbol', label: 'Matches', id: 'matches' },
         { href: '/src/pages/analytics.html', icon: 'fa-chart-line', label: 'Analytics', id: 'analytics', feature: 'analytics_dashboard', minTier: 'pro' },
         { href: '/src/pages/scouting.html', icon: 'fa-binoculars', label: 'Scouting', id: 'scouting', minTier: 'basic' },
-        { href: '/src/pages/financials.html', icon: 'fa-file-invoice-dollar', label: 'Financials', id: 'financials', minTier: 'elite' },
+        { href: '/src/pages/financials.html', icon: 'fa-file-invoice-dollar', label: 'Financials', id: 'financials', feature: 'financials', minTier: 'elite' },
     ];
 
     // Check if sidebar was already injected by preload script
@@ -183,8 +184,10 @@ export function initSidebar(activePage = '') {
             });
         }
 
-        // Feature flags — hide nav items for disabled features (old per-club flag system)
+        // Feature flags — hide nav items for disabled features
         const features = profile.clubs?.settings?.features;
+        // Cache for preload so next page renders correctly without flicker
+        _brandingStore.setItem('sidebar-features', JSON.stringify(features || {}));
         if (features) {
             document.querySelectorAll('.sidebar-nav [data-feature]').forEach(el => {
                 const featureKey = el.dataset.feature;
@@ -211,13 +214,13 @@ export function initSidebar(activePage = '') {
             }
         });
 
-        // Financials — tier already gates it above; additionally restrict to admin roles
-        const archetype = profile.clubs?.settings?.archetype;
+        // Financials — requires elite tier, admin role, AND feature flag not explicitly disabled
         const allNavLis = document.querySelectorAll('.sidebar-nav li');
         const financialsIdx = navItemDefs.findIndex(item => item.id === 'financials');
         if (financialsIdx >= 0 && allNavLis[financialsIdx]) {
             const tierAllowsFinancials = clubTierIdx >= _tierOrder.indexOf('elite');
-            const showFinancials = tierAllowsFinancials && ['admin', 'super_admin'].includes(profile.role);
+            const featureAllowsFinancials = !features || features['financials'] !== false;
+            const showFinancials = tierAllowsFinancials && featureAllowsFinancials && ['admin', 'super_admin'].includes(profile.role);
             allNavLis[financialsIdx].style.display = showFinancials ? '' : 'none';
         }
 
