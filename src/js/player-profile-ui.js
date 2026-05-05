@@ -2702,26 +2702,31 @@ async function loadTrainingAttendance(playerId) {
         const isPrivateCoaching = window._profile?.clubs?.settings?.archetype === 'private_coaching';
         const playerSquadId = currentPlayer?.squad_id || currentPlayer?.squadId;
 
-        // Fetch attendance records
-        let attendQuery = supabase.from('training_attendance').select('id, session_id, squad_id, absent_player_ids');
+        // Fetch attendance records (with date for session-by-session view)
+        let attendQuery = supabase.from('training_attendance')
+            .select('id, session_id, squad_id, absent_player_ids, date, attendance_count, attendance_total')
+            .order('date', { ascending: false })
+            .limit(60);
         if (!isPrivateCoaching && playerSquadId) attendQuery = attendQuery.eq('squad_id', playerSquadId);
 
         const fetchPromises = [attendQuery];
 
         // For Orion: also fetch sessions to check player_ids inclusion
         if (isPrivateCoaching) {
-            fetchPromises.push(supabase.from('sessions').select('id, player_ids'));
+            fetchPromises.push(supabase.from('sessions').select('id, title, date, player_ids').order('date', { ascending: false }).limit(60));
         } else {
             fetchPromises.push(Promise.resolve({ data: null }));
         }
 
         const [{ data: attendance }, { data: sessions }] = await Promise.all(fetchPromises);
 
-        // For Orion: build a set of session IDs where this player was included in the plan
+        // For Orion: build a map of session ID → session metadata where this player was included
         let playerSessionIds = null;
+        let sessionMetaMap = {};
         if (isPrivateCoaching && sessions) {
             playerSessionIds = new Set();
             sessions.forEach(s => {
+                sessionMetaMap[s.id] = s;
                 let pIds = [];
                 try { pIds = typeof s.player_ids === 'string' ? JSON.parse(s.player_ids) : (s.player_ids || []); } catch (e) { /* */ }
                 if (Array.isArray(pIds) && pIds.includes(playerId)) {
@@ -2733,38 +2738,70 @@ async function loadTrainingAttendance(playerId) {
         // Filter attendance to only relevant sessions
         let merged = (attendance || []);
         if (isPrivateCoaching && playerSessionIds) {
-            // Orion: only count sessions where this player was in the plan
             merged = merged.filter(r => r.session_id && playerSessionIds.has(r.session_id));
         }
 
         if (merged.length === 0) {
-            section.style.display = 'none';
+            section.style.display = 'block';
+            content.innerHTML = `<div style="padding:16px 20px;background:white;border:1px solid #e2e8f0;border-radius:12px;text-align:center;color:#94a3b8;font-size:0.85rem;">
+                <i class="fas fa-clipboard-list" style="font-size:1.4rem;display:block;margin-bottom:8px;opacity:0.3;"></i>
+                No training sessions recorded yet for this player.
+            </div>`;
             return;
         }
 
-        // Count sessions where player is absent
-        let missed = 0;
-        merged.forEach(r => {
-            let absentIds = [];
-            try { absentIds = typeof r.absent_player_ids === 'string' ? JSON.parse(r.absent_player_ids) : (r.absent_player_ids || []); } catch (e) { /* */ }
-            if (Array.isArray(absentIds) && absentIds.includes(playerId)) missed++;
-        });
+        // Fetch session titles for squad model (Tuks)
+        if (!isPrivateCoaching) {
+            const sessionIds = [...new Set(merged.map(r => r.session_id).filter(Boolean))];
+            if (sessionIds.length > 0) {
+                const { data: sessData } = await supabase.from('sessions').select('id, title, date').in('id', sessionIds);
+                (sessData || []).forEach(s => { sessionMetaMap[s.id] = s; });
+            }
+        }
 
-        const total = merged.length;
+        // Compute presence per session
+        const sessionRows = merged.map(r => {
+            let absentIds = [];
+            try { absentIds = Array.isArray(r.absent_player_ids) ? r.absent_player_ids : JSON.parse(r.absent_player_ids || '[]'); } catch (e) { /* */ }
+            const wasAbsent = absentIds.includes(playerId);
+            const sess = sessionMetaMap[r.session_id] || {};
+            return {
+                date: r.date || sess.date || null,
+                title: sess.title || 'Training Session',
+                wasAbsent,
+            };
+        }).sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1);
+
+        const total = sessionRows.length;
+        const missed = sessionRows.filter(r => r.wasAbsent).length;
         const attended = total - missed;
         const pct = total > 0 ? Math.round((attended / total) * 100) : null;
 
-        if (pct === null) {
-            section.style.display = 'none';
-            return;
-        }
+        if (pct === null) { section.style.display = 'none'; return; }
 
         section.style.display = 'block';
-
         const pctColor = pct >= 80 ? '#10b981' : pct >= 60 ? '#f59e0b' : '#ef4444';
 
+        // Build session history rows
+        const historyRows = sessionRows.map(r => {
+            const icon = r.wasAbsent
+                ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#fee2e2;color:#dc2626;font-size:0.7rem;"><i class="fas fa-times"></i></span>`
+                : `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#dcfce7;color:#166534;font-size:0.7rem;"><i class="fas fa-check"></i></span>`;
+            const label = r.wasAbsent
+                ? `<span style="font-size:0.8rem;font-weight:600;color:#dc2626;">Absent</span>`
+                : `<span style="font-size:0.8rem;font-weight:600;color:#166534;">Present</span>`;
+            return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9;">
+                ${icon}
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.83rem;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.title !== 'Training Session' ? r.title : (r.date ? 'Session · ' + r.date : 'Training Session')}</div>
+                    ${r.date && r.title !== 'Training Session' ? `<div style="font-size:0.72rem;color:#94a3b8;">${r.date}</div>` : ''}
+                </div>
+                ${label}
+            </div>`;
+        }).join('');
+
         content.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 20px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px;">
+            <div style="display: flex; align-items: center; gap: 20px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 14px;">
                 <div style="text-align: center; min-width: 80px;">
                     <div style="font-size: 2rem; font-weight: 800; color: ${pctColor}; line-height: 1;">${pct}%</div>
                     <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-top: 4px;">${attended}/${total}</div>
@@ -2779,6 +2816,10 @@ async function loadTrainingAttendance(playerId) {
                         <span style="color: #dc2626; font-weight: 700;"><i class="fas fa-times-circle" style="margin-right: 4px;"></i>${missed} Missed</span>
                     </div>
                 </div>
+            </div>
+            <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;max-height:280px;overflow-y:auto;">
+                <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;margin-bottom:6px;">Session History (${total} sessions)</div>
+                ${historyRows}
             </div>
         `;
     } catch (e) {

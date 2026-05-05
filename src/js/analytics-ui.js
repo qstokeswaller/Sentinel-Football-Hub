@@ -30,6 +30,7 @@ function scopePlayerQuery(query) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 let playerTabInitialized = false;
+let teamAttInitialized = false;
 
 window.switchAnalyticsTab = function (tabName) {
     // Update tab buttons
@@ -56,6 +57,11 @@ window.switchAnalyticsTab = function (tabName) {
     const url = new URL(window.location);
     url.searchParams.set('tab', tabName);
     window.history.replaceState(null, '', url);
+
+    if (tabName === 'team' && !teamAttInitialized) {
+        teamAttInitialized = true;
+        initTeamAttendance();
+    }
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -94,6 +100,10 @@ export async function initAnalyticsUI() {
     document.getElementById('filterAgeGroup').addEventListener('change', calculateAndRenderAnalytics);
     document.getElementById('filterCoach').addEventListener('change', calculateAndRenderAnalytics);
     document.getElementById('filterTeam').addEventListener('change', calculateAndRenderAnalytics);
+
+    // Init team attendance on first load (team tab is default active)
+    teamAttInitialized = true;
+    initTeamAttendance();
 }
 
 function populateTeamFilters() {
@@ -1535,4 +1545,224 @@ window.compareHeadToHead = async function() {
             </div>`;
         }).join('')}
     `;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEAM TRAINING ATTENDANCE (Tuks-style squad model)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _teamAttPlayerMap = {};
+
+async function initTeamAttendance() {
+    const card = document.getElementById('teamAttCard');
+    if (!card) return;
+
+    // Don't show team attendance for private coaching clubs (no squads)
+    const archetype = window._profile?.clubs?.settings?.archetype;
+    if (archetype === 'private_coaching') { card.style.display = 'none'; return; }
+
+    // Populate squad selector with visible squads
+    const squads = getVisibleSquads();
+    const squadSel = document.getElementById('teamAttSquad');
+    const yearSel = document.getElementById('teamAttYear');
+    if (!squadSel || !yearSel) return;
+
+    squads.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id; opt.textContent = s.name;
+        squadSel.appendChild(opt);
+    });
+    if (squads.length > 0) squadSel.value = squads[0].id;
+
+    // Populate year selector
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear; y >= currentYear - 3; y--) {
+        const opt = document.createElement('option');
+        opt.value = y; opt.textContent = y;
+        yearSel.appendChild(opt);
+    }
+
+    squadSel.addEventListener('change', loadTeamAttendance);
+    yearSel.addEventListener('change', loadTeamAttendance);
+
+    loadTeamAttendance();
+}
+
+async function loadTeamAttendance() {
+    const squadId = document.getElementById('teamAttSquad')?.value || 'all';
+    const year = document.getElementById('teamAttYear')?.value || 'all';
+    const summaryEl = document.getElementById('teamAttSummary');
+    const tbody = document.getElementById('teamAttTableBody');
+    if (!tbody) return;
+
+    const setEmpty = (msg) => {
+        tbody.innerHTML = `<tr><td colspan="5" class="table-empty" style="padding:32px;">
+            <i class="fas fa-clipboard-list" style="font-size:1.6rem;margin-bottom:10px;display:block;opacity:0.25;"></i>
+            ${msg}
+        </td></tr>`;
+        if (summaryEl) summaryEl.innerHTML = '';
+    };
+
+    tbody.innerHTML = '<tr><td colspan="5" class="table-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
+    if (summaryEl) summaryEl.innerHTML = '';
+
+    try {
+        const clubId = getActiveClubId();
+
+        // Build date range filter from year
+        let dateFrom = null, dateTo = null;
+        if (year && year !== 'all') {
+            dateFrom = `${year}-01-01`;
+            dateTo = `${year}-12-31`;
+        }
+
+        // Fetch attendance records
+        let attQ = supabase.from('training_attendance')
+            .select('id, session_id, date, absent_player_ids, attendance_count, attendance_total, squad_id')
+            .limit(120);
+        if (clubId) attQ = attQ.eq('club_id', clubId);
+        if (squadId && squadId !== 'all') attQ = attQ.eq('squad_id', squadId);
+        if (dateFrom) attQ = attQ.gte('date', dateFrom).lte('date', dateTo);
+
+        const { data: attData, error: attErr } = await attQ;
+        if (attErr) throw attErr;
+
+        const attRecords = (attData || []).sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1);
+
+        // Fetch player names for the selected squad
+        _teamAttPlayerMap = {};
+        if (squadId && squadId !== 'all') {
+            const { data: players } = await supabase.from('players')
+                .select('id, name')
+                .eq('squad_id', squadId);
+            (players || []).forEach(p => { _teamAttPlayerMap[p.id] = p.name; });
+        }
+
+        // Fetch session titles
+        const sessionIds = [...new Set(attRecords.map(r => r.session_id).filter(Boolean))];
+        let sessionMap = {};
+        if (sessionIds.length > 0) {
+            const { data: sessions } = await supabase.from('sessions')
+                .select('id, title, date')
+                .in('id', sessionIds);
+            (sessions || []).forEach(s => { sessionMap[s.id] = s; });
+        }
+
+        if (attRecords.length === 0) {
+            setEmpty('No attendance records found for this squad.<br><span style="font-size:0.8rem;color:#94a3b8;">Take attendance in Training Register to see data here.</span>');
+            return;
+        }
+
+        // Summary stats
+        let totalPctSum = 0, pctCount = 0;
+        attRecords.forEach(r => {
+            if (r.attendance_count != null && r.attendance_total > 0) {
+                totalPctSum += (r.attendance_count / r.attendance_total) * 100;
+                pctCount++;
+            }
+        });
+        const avgPct = pctCount > 0 ? Math.round(totalPctSum / pctCount) : null;
+        const textCol = pctTextColor(avgPct);
+        const bgCol = avgPct >= 90 ? '#dcfce7' : avgPct >= 75 ? '#ccf5ec' : avgPct >= 60 ? '#fef3c7' : '#fee2e2';
+
+        if (summaryEl) {
+            summaryEl.innerHTML = `
+                <div style="display:flex;gap:24px;align-items:center;margin-bottom:20px;padding:14px 20px;background:#f8fafc;border-radius:12px;flex-wrap:wrap;">
+                    <div style="text-align:center;">
+                        <div style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Sessions Tracked</div>
+                        <div style="font-size:1.8rem;font-weight:800;color:#0f172a;">${attRecords.length}</div>
+                    </div>
+                    <div style="width:1px;height:44px;background:#e2e8f0;"></div>
+                    <div style="text-align:center;">
+                        <div style="font-size:0.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Avg Attendance</div>
+                        <div style="font-size:1.8rem;font-weight:800;color:${textCol};background:${bgCol};padding:2px 16px;border-radius:8px;display:inline-block;">${avgPct !== null ? avgPct + '%' : '—'}</div>
+                    </div>
+                </div>`;
+        }
+
+        renderTeamAttTable(attRecords, sessionMap);
+
+    } catch (e) {
+        console.error('Team attendance load error:', e);
+        tbody.innerHTML = `<tr><td colspan="5" class="table-empty" style="color:#ef4444;padding:32px;">
+            <i class="fas fa-exclamation-triangle" style="display:block;font-size:1.4rem;margin-bottom:8px;opacity:0.6;"></i>
+            Failed to load attendance data.
+        </td></tr>`;
+        if (summaryEl) summaryEl.innerHTML = '';
+    }
+}
+
+function renderTeamAttTable(records, sessionMap) {
+    const tbody = document.getElementById('teamAttTableBody');
+    const playerMap = _teamAttPlayerMap;
+    const hasPlayers = Object.keys(playerMap).length > 0;
+
+    tbody.innerHTML = '';
+    records.forEach(r => {
+        const sess = sessionMap[r.session_id] || {};
+        const displayDate = r.date || sess.date || '—';
+        const title = sess.title || 'Training Session';
+        const count = r.attendance_count ?? '—';
+        const total = r.attendance_total ?? '—';
+        const pct = (r.attendance_count != null && r.attendance_total > 0)
+            ? Math.round(r.attendance_count / r.attendance_total * 100) : null;
+        const barCol = pctColor(pct);
+
+        let absentIds = [];
+        try { absentIds = Array.isArray(r.absent_player_ids) ? r.absent_player_ids : JSON.parse(r.absent_player_ids || '[]'); } catch (_) {}
+
+        const presentIds = hasPlayers ? Object.keys(playerMap).filter(id => !absentIds.includes(id)) : [];
+        const absentNames = absentIds.map(id => playerMap[id] || null).filter(Boolean);
+        const presentNames = presentIds.map(id => playerMap[id]);
+        const showDetail = hasPlayers || absentNames.length > 0;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="font-weight:500;color:#1e293b;white-space:nowrap;">${escHtml(String(displayDate))}</td>
+            <td style="color:#475569;font-size:0.88rem;">${escHtml(title)}</td>
+            <td class="center" style="font-weight:600;">${count} / ${total}</td>
+            <td class="center">
+                ${pct !== null ? `
+                    <span class="att-pct-bar"><span class="att-pct-fill att-pct-${barCol}" style="width:${pct}%;"></span></span>
+                    <span style="font-weight:700;color:${pctTextColor(pct)};">${pct}%</span>
+                ` : '<span style="color:#94a3b8;">—</span>'}
+            </td>
+            <td class="center">
+                ${showDetail ? `<button class="dash-btn outline sm" style="font-size:0.78rem;padding:4px 10px;border-radius:8px;" onclick="toggleTeamAttRow(this)"><i class="fas fa-chevron-down"></i></button>` : '<span style="color:#94a3b8;">—</span>'}
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+
+        if (showDetail) {
+            const absentChips = absentNames.map(n =>
+                `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#fee2e2;color:#991b1b;border-radius:20px;font-size:0.78rem;font-weight:600;margin:2px;"><i class="fas fa-times" style="font-size:0.6rem;"></i>${escHtml(n)}</span>`
+            ).join('');
+            const presentChips = presentNames.map(n =>
+                `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:#dcfce7;color:#166534;border-radius:20px;font-size:0.78rem;font-weight:600;margin:2px;"><i class="fas fa-check" style="font-size:0.6rem;"></i>${escHtml(n)}</span>`
+            ).join('');
+
+            const expandTr = document.createElement('tr');
+            expandTr.className = 'team-att-expand';
+            expandTr.style.display = 'none';
+            expandTr.innerHTML = `
+                <td colspan="5" style="padding:12px 24px;background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+                    ${absentNames.length > 0 ? `<div style="margin-bottom:8px;"><span style="font-size:0.72rem;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:0.5px;">Absent (${absentNames.length})</span><div style="margin-top:4px;">${absentChips}</div></div>` : ''}
+                    ${hasPlayers && presentNames.length > 0 ? `<div><span style="font-size:0.72rem;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:0.5px;">Present (${presentNames.length})</span><div style="margin-top:4px;">${presentChips}</div></div>` : ''}
+                    ${absentNames.length === 0 ? `<span style="font-size:0.85rem;color:#166534;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Full attendance — no absences recorded.</span>` : ''}
+                </td>
+            `;
+            tbody.appendChild(expandTr);
+        }
+    });
+}
+
+window.toggleTeamAttRow = function (btn) {
+    const tr = btn.closest('tr');
+    const next = tr.nextElementSibling;
+    if (!next || !next.classList.contains('team-att-expand')) return;
+    const isOpen = next.style.display !== 'none';
+    next.style.display = isOpen ? 'none' : '';
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = isOpen ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
 };

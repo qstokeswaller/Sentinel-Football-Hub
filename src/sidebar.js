@@ -34,7 +34,7 @@ export function initSidebar(activePage = '') {
         { href: '/src/pages/planner.html', icon: 'fa-clipboard-list', label: 'Session Planner', id: 'planner', feature: 'session_planner', minTier: 'basic' },
         { href: '/src/pages/library.html', icon: 'fa-book', label: 'Library', id: 'library', feature: 'library', minTier: 'basic' },
         { href: '/src/pages/reports.html', icon: 'fa-file-alt', label: 'Reports', id: 'reports', feature: 'reports', minTier: 'basic' },
-        { href: '/src/pages/squad.html', icon: 'fa-user-friends', label: 'Squad & Players', id: 'squad' },
+        { href: '/src/pages/squad.html', icon: 'fa-user-friends', label: 'Squad Management', id: 'squad' },
         { href: '/src/pages/matches.html', icon: 'fa-futbol', label: 'Matches', id: 'matches' },
         { href: '/src/pages/analytics.html', icon: 'fa-chart-line', label: 'Analytics', id: 'analytics', feature: 'analytics_dashboard', minTier: 'pro' },
         { href: '/src/pages/scouting.html', icon: 'fa-binoculars', label: 'Scouting', id: 'scouting', minTier: 'basic' },
@@ -233,6 +233,12 @@ export function initSidebar(activePage = '') {
             archetype: profile.clubs?.settings?.archetype || null,
         };
         _brandingStore.setItem('sidebar-branding', JSON.stringify(newCache));
+
+        // Update squad nav label based on archetype
+        const squadNavSpan = document.querySelector('.sidebar-nav a[href*="squad.html"] span');
+        if (squadNavSpan) {
+            squadNavSpan.textContent = newCache.archetype === 'private_coaching' ? 'Player Management' : 'Squad Management';
+        }
 
         // Only touch the DOM if the cache wasn't already applied at render time
         const cacheChanged = !cached || cached.logo_url !== newCache.logo_url || cached.display_name !== newCache.display_name;

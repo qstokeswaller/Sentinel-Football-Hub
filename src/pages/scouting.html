@@ -495,6 +495,7 @@
         import supabase from '../supabase.js';
         import '../analytics.js';
         import { initScoutingUI } from '../js/scouting-ui.js';
+        import { initCustomSelects, enableAutoInit } from '../js/custom-select.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             initSidebar('scouting');
@@ -505,6 +506,8 @@
             initScoutingUI(profile);
             const mc = document.querySelector('.main-content');
             if (mc) mc.classList.add('page-ready');
+            initCustomSelects();
+            enableAutoInit();
 
             try {
                 const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('../js/walkthrough.js');

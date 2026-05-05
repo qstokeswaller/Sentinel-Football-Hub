@@ -479,6 +479,7 @@
         import squadManager from '../managers/squad-manager.js';
         import { upgradeTimePickers } from '../time-picker.js';
         import { hasFeature, showUpgradeToast } from '../tier.js';
+        import { initCustomSelects, enableAutoInit } from '../js/custom-select.js';
 
         // ── Attendance state ──
         let _calMode = 'calendar'; // 'calendar' | 'attendance'
@@ -1052,6 +1053,8 @@
             // Reveal content
             const mc = document.querySelector('.main-content');
             if (mc) mc.classList.add('page-ready');
+            initCustomSelects();
+            enableAutoInit();
 
             // Global search on dashboard
             const _searchInput = document.getElementById('globalSearchInput');

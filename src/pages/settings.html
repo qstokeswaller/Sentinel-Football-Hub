@@ -1299,7 +1299,7 @@
             const user = await initPage('settings', { squad: false });
             if (!user) return;
 
-            currentProfile = await getProfile();
+            currentProfile = window._profile;
             const profile = currentProfile;
 
             // Populate profile fields

@@ -353,6 +353,7 @@
         import '../analytics.js';
         import { initTrainingRegisterUI } from '../js/training-register-ui.js';
         import { openQuickSession } from '../js/quick-session.js';
+        import { initCustomSelects, enableAutoInit } from '../js/custom-select.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             initSidebar('training-register');
@@ -362,6 +363,8 @@
             const profile = await getProfile();
             if (profile) window._profile = profile;
             initTrainingRegisterUI();
+            initCustomSelects();
+            enableAutoInit();
 
             // Wire quick session button — refresh calendar after save
             window._openQuickSession = () => openQuickSession(() => {

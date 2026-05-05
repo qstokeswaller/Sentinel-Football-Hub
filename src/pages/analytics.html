@@ -638,6 +638,47 @@
                     </div>
                 </div>
 
+                <!-- Team Training Attendance -->
+                <div class="premium-stat-card" id="teamAttCard" style="margin-bottom: 40px;">
+                    <div class="section-header" style="margin-bottom: 16px;">
+                        <div>
+                            <h3><i class="fas fa-clipboard-list" style="color: #10b981; margin-right: 8px;"></i>Training Attendance</h3>
+                            <p>Session-by-session attendance for your squad &mdash; tap a row to see who was present or absent</p>
+                        </div>
+                        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                            <div class="filter-pill-container">
+                                <select id="teamAttSquad" class="filter-select-pill">
+                                    <option value="all">All Squads</option>
+                                </select>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="filter-pill-container">
+                                <select id="teamAttYear" class="filter-select-pill">
+                                    <option value="all">All Time</option>
+                                </select>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="teamAttSummary"></div>
+                    <div class="table-container" style="border: 1px solid #f1f5f9; border-radius: 14px; overflow: hidden;">
+                        <table class="matrix-table">
+                            <thead>
+                                <tr>
+                                    <th style="min-width:100px;">Date</th>
+                                    <th>Session</th>
+                                    <th class="center">Attended / Total</th>
+                                    <th class="center">Attendance %</th>
+                                    <th class="center">Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teamAttTableBody">
+                                <tr><td colspan="5" class="table-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
             <!-- /tab-team -->
 

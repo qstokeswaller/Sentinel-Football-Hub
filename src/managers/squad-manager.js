@@ -5,9 +5,11 @@ class SquadManager {
         this.squads = [];
         this.players = [];
         this.clubId = null;
+        this._initialized = false;
     }
 
     async init(clubIdOverride) {
+        if (this._initialized) return true;
         try {
             // Accept clubId from caller (page-init already has it) to avoid redundant auth calls
             const impClubId = sessionStorage.getItem('impersonating_club_id');
@@ -56,7 +58,7 @@ class SquadManager {
 
             this.players = (playersRes.data || []).map(p => this._mapPlayer(p));
 
-            console.log('SquadManager initialized with Supabase data');
+            this._initialized = true;
             return true;
         } catch (error) {
             console.error('Error initializing SquadManager:', error);
@@ -65,6 +67,8 @@ class SquadManager {
             return false;
         }
     }
+
+    resetInit() { this._initialized = false; }
 
     _mapPlayer(p) {
         return {

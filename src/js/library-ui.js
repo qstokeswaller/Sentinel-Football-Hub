@@ -60,36 +60,27 @@ export async function initLibraryUI() {
 
 async function loadAll() {
     try {
-        let sessionsData = [];
-        let drillsData = [];
         const clubId = sessionStorage.getItem('impersonating_club_id') || window._profile?.club_id;
 
-        try {
-            let sq = supabase
-                .from('sessions')
-                .select('*, drills(*)')
-                .order('created_at', { ascending: false })
-                .not('purpose', 'in', '("Quick Session","Recurring Session")');
-            if (clubId) sq = sq.eq('club_id', clubId);
-            const { data, error } = await sq;
-            if (error) throw error;
-            sessionsData = data || [];
-        } catch (e) {
-            console.warn('Sessions failed:', e);
-        }
+        let sq = supabase
+            .from('sessions')
+            .select('*, drills(*)')
+            .order('created_at', { ascending: false })
+            .not('purpose', 'in', '("Quick Session","Recurring Session")');
+        if (clubId) sq = sq.eq('club_id', clubId);
 
-        try {
-            let dq = supabase
-                .from('drills')
-                .select('*')
-                .order('created_at', { ascending: false });
-            if (clubId) dq = dq.eq('club_id', clubId);
-            const { data, error } = await dq;
-            if (error) throw error;
-            drillsData = data || [];
-        } catch (e) {
-            console.warn('Drills failed:', e);
-        }
+        let dq = supabase
+            .from('drills')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (clubId) dq = dq.eq('club_id', clubId);
+
+        const [sessionsRes, drillsRes] = await Promise.all([sq, dq]);
+
+        const sessionsData = sessionsRes.error ? [] : (sessionsRes.data || []);
+        const drillsData = drillsRes.error ? [] : (drillsRes.data || []);
+        if (sessionsRes.error) console.warn('Sessions failed:', sessionsRes.error);
+        if (drillsRes.error) console.warn('Drills failed:', drillsRes.error);
 
         // Map database fields to UI format
         sessions = (sessionsData || []).map(s => ({

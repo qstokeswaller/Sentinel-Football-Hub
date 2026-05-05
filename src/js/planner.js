@@ -2519,8 +2519,8 @@ window.selectDrillFromPicker = selectDrillFromPicker;
 //  INIT
 // ═══════════════════════════════════════════════════════════
 export async function initPlanner() {
-  // Fetch club_id and author name for save operations
-  const profile = await getProfile();
+  // profile already loaded by page-init.js — read from global, no extra network call
+  const profile = window._profile;
   _clubId = sessionStorage.getItem('impersonating_club_id') || profile?.club_id || null;
   _userId = profile?.id || null;
   _profileName = profile?.full_name || '';

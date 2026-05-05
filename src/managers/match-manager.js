@@ -4,9 +4,11 @@ class MatchManager {
     constructor() {
         this.matches = [];
         this.clubId = null;
+        this._initialized = false;
     }
 
     async init(clubIdOverride) {
+        if (this._initialized) return true;
         try {
             // Accept clubId from caller (page-init already has it) to avoid redundant auth calls
             const impClubId = sessionStorage.getItem('impersonating_club_id');
@@ -36,7 +38,7 @@ class MatchManager {
             if (error) throw error;
 
             this.matches = (data || []).map(m => this._mapMatch(m));
-            console.log('MatchManager initialized with Supabase data');
+            this._initialized = true;
             return true;
         } catch (error) {
             console.error('Error initializing MatchManager:', error);
@@ -44,6 +46,8 @@ class MatchManager {
             return false;
         }
     }
+
+    resetInit() { this._initialized = false; }
 
     _mapMatch(m) {
         return {

@@ -6,6 +6,7 @@ import { requireAuth, getProfile, logout, getImpersonatingClubId, stopImpersonat
 import { initSidebar } from './sidebar.js';
 import './toast.js';
 import './analytics.js';
+import { initCustomSelects, enableAutoInit } from './js/custom-select.js';
 import supabase from './supabase.js';
 import squadManager from './managers/squad-manager.js';
 import matchManager from './managers/match-manager.js';
@@ -17,6 +18,7 @@ window.supabase = supabase;
 window.squadManager = squadManager;
 window.matchManager = matchManager;
 window.logout = logout;
+window.initCustomSelects = initCustomSelects;
 
 /**
  * Initialize an authenticated page.
@@ -75,6 +77,10 @@ export async function initPage(pageName, opts = {}) {
     if (mc) mc.classList.add('page-ready');
 
     // Auto-trigger walkthrough on first visit or if ?walkthrough=1 in URL
+    // Initialise custom selects on all current selects, and watch for new ones added dynamically
+    initCustomSelects();
+    enableAutoInit();
+
     try {
         const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('./js/walkthrough.js');
         // Pass user object so initWalkthroughs skips a redundant getUser() network call

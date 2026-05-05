@@ -512,6 +512,7 @@
         import { requireAuth, getProfile } from '../auth.js';
         import '../analytics.js';
         import { initScoutedPlayerUI } from '../js/scouted-player-ui.js';
+        import { initCustomSelects, enableAutoInit } from '../js/custom-select.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             initSidebar('scouting');
@@ -522,6 +523,8 @@
             initScoutedPlayerUI(profile);
             const mc = document.querySelector('.main-content');
             if (mc) mc.classList.add('page-ready');
+            initCustomSelects();
+            enableAutoInit();
         });
     </script>
 </body>

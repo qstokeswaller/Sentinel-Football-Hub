@@ -879,6 +879,7 @@
         import { isPlatformAdmin } from '../rbac.js';
         import '../analytics.js';
         import { initPlatformAdmin } from '../js/platform-admin-ui.js';
+        import { initCustomSelects, enableAutoInit } from '../js/custom-select.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Auth guard — no sidebar, no initPage
@@ -913,6 +914,8 @@
 
             // Init platform admin UI
             initPlatformAdmin(profile);
+            initCustomSelects();
+            enableAutoInit();
         });
     </script>
 </body>

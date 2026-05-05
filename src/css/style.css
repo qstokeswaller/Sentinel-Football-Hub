@@ -331,9 +331,17 @@
 
 /* Forms inside dark cards need matching backgrounds */
 [data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
-[data-theme="dark"] select,
 [data-theme="dark"] textarea {
   background: var(--bg-body) !important;
+  color: var(--text-dark) !important;
+  border-color: var(--border-light) !important;
+}
+
+[data-theme="dark"] select {
+  background-color: var(--bg-body) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300C49A'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
   color: var(--text-dark) !important;
   border-color: var(--border-light) !important;
 }
@@ -1325,6 +1333,41 @@ body {
   letter-spacing: 0.03em;
 }
 
+/* ── Global select reset — applies Inter styling to every <select> site-wide ── */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dark, #1e293b);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300C49A'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 34px 8px 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+select:hover {
+  border-color: #cbd5e1;
+}
+
+select:focus {
+  border-color: var(--primary, #00C49A);
+  box-shadow: 0 0 0 3px rgba(0, 196, 154, 0.12);
+  background-color: #fff;
+}
+
+select option {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  padding: 6px 10px;
+  background: #fff;
+  color: #1e293b;
+}
+
 .form-input,
 .form-select,
 .form-textarea {
@@ -2201,6 +2244,15 @@ select.form-input option {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
   box-sizing: border-box;
+}
+
+select.form-control-bubble {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300C49A'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
 }
 
 .form-control-bubble::placeholder {
@@ -3741,4 +3793,238 @@ img, video, iframe, embed {
   font-size: 9px; font-weight: 700; flex-shrink: 0;
 }
 .squad-staff-chip .chip-role { font-size: 0.64rem; color: var(--text-muted); font-weight: 500; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   CUSTOM SELECT COMPONENT
+   Replaces native <select> dropdowns with fully branded Sentinel-styled ones.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.cs-wrap {
+    position: relative;
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Trigger (the visible "select box") ─────────────────────────────────────── */
+
+.cs-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 10px 8px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+    white-space: nowrap;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    min-height: 36px;
+    box-sizing: border-box;
+}
+
+/* Pill variant — matches .filter-select-pill */
+.cs-wrap.cs-pill .cs-trigger {
+    background: white;
+    border: 1px solid var(--border-light, #e2e8f0);
+    border-radius: var(--radius-lg, 12px);
+    padding: 8px 10px 8px 14px;
+    font-size: 13px;
+    min-height: 36px;
+}
+
+/* Bubble variant — matches .form-control-bubble */
+.cs-wrap.cs-bubble .cs-trigger {
+    background: #f8fafc;
+    border: 2px solid #eef2f6;
+    border-radius: 16px;
+    padding: 13px 14px 13px 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    min-height: auto;
+    width: 100%;
+}
+
+.cs-trigger:hover:not(.cs-disabled) {
+    border-color: #cbd5e1;
+    background: #fafbfc;
+}
+
+.cs-trigger:focus:not(.cs-disabled),
+.cs-trigger.cs-open:not(.cs-disabled) {
+    border-color: #00C49A;
+    box-shadow: 0 0 0 3px rgba(0, 196, 154, 0.12);
+    outline: none;
+    background: #fff;
+}
+
+.cs-wrap.cs-bubble .cs-trigger:focus,
+.cs-wrap.cs-bubble .cs-trigger.cs-open {
+    border-color: #00C49A;
+    background: #fff;
+}
+
+.cs-trigger.cs-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #f8fafc;
+}
+
+/* ── Text + Chevron ─────────────────────────────────────────────────────────── */
+
+.cs-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.cs-chevron {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    color: #00C49A;
+    transition: transform 0.2s ease;
+    margin-left: 4px;
+}
+
+.cs-trigger.cs-open .cs-chevron {
+    transform: rotate(180deg);
+}
+
+/* ── Dropdown Panel ─────────────────────────────────────────────────────────── */
+
+.cs-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    min-width: 100%;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 4px 10px -4px rgba(0, 0, 0, 0.07);
+    z-index: 9500;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.cs-panel.cs-panel-visible {
+    display: block;
+    animation: cs-drop-in 0.13s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cs-panel.cs-panel-up {
+    animation: cs-drop-up 0.13s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cs-drop-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+@keyframes cs-drop-up {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+/* Scrollbar inside panel */
+.cs-panel::-webkit-scrollbar { width: 4px; }
+.cs-panel::-webkit-scrollbar-track { background: transparent; }
+.cs-panel::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+/* ── Options ────────────────────────────────────────────────────────────────── */
+
+.cs-option {
+    padding: 8px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.1s, color 0.1s;
+}
+
+.cs-option:hover:not(.cs-opt-disabled) {
+    background: #f0fdf9;
+    color: #00a882;
+}
+
+.cs-option.cs-opt-active {
+    background: #e6f9f4;
+    color: #00a882;
+    font-weight: 600;
+}
+
+.cs-option.cs-opt-active:hover {
+    background: #d1f5ec;
+}
+
+.cs-option.cs-opt-disabled {
+    color: #94a3b8;
+    cursor: default;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* ── Dark mode ──────────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] .cs-trigger {
+    background: var(--bg-card, #1e293b);
+    border-color: var(--border-light, #334155);
+    color: var(--text-dark, #e2e8f0);
+}
+
+[data-theme="dark"] .cs-trigger:hover:not(.cs-disabled) {
+    background: var(--bg-body, #0f172a);
+    border-color: #475569;
+}
+
+[data-theme="dark"] .cs-trigger.cs-open,
+[data-theme="dark"] .cs-trigger:focus {
+    background: var(--bg-card, #1e293b);
+    border-color: #00C49A;
+}
+
+[data-theme="dark"] .cs-panel {
+    background: var(--bg-card, #1e293b);
+    border-color: var(--border-light, #334155);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .cs-option {
+    color: var(--text-dark, #e2e8f0);
+}
+
+[data-theme="dark"] .cs-option:hover:not(.cs-opt-disabled) {
+    background: rgba(0, 196, 154, 0.1);
+    color: #00C49A;
+}
+
+[data-theme="dark"] .cs-option.cs-opt-active {
+    background: rgba(0, 196, 154, 0.15);
+    color: #00C49A;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .cs-panel {
+        max-height: 200px;
+    }
+    .cs-trigger {
+        font-size: 14px;
+    }
+}
 [data-theme="dark"] .squad-staff-chip { background: var(--bg-card); }
