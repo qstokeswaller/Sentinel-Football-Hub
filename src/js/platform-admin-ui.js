@@ -172,12 +172,19 @@ function viewClubDetail(clubId) {
                         <div class="name">${escapeHtml(u.full_name || 'Unknown')}</div>
                         <div class="email">${escapeHtml(u.email || '')} &middot; ${userSessions} sessions &middot; ${userDrills} drills</div>
                     </div>
-                    <select class="member-role-select" data-user-id="${u.id}" data-club-id="${clubId}" style="font-size:0.75rem;padding:4px 28px 4px 8px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-bg);color:var(--plat-text);cursor:pointer;">
-                        <option value="admin"   ${u.role === 'admin'   ? 'selected' : ''}>Admin</option>
-                        <option value="coach"   ${u.role === 'coach'   ? 'selected' : ''}>Coach</option>
-                        <option value="viewer"  ${u.role === 'viewer'  ? 'selected' : ''}>Viewer</option>
-                        <option value="scout"   ${u.role === 'scout'   ? 'selected' : ''}>Scout</option>
-                    </select>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <select class="member-role-select" data-no-custom data-user-id="${u.id}" data-original-role="${u.role}"
+                            style="font-size:0.75rem;padding:5px 8px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);cursor:pointer;font-family:inherit;">
+                            <option value="admin"   ${u.role === 'admin'   ? 'selected' : ''}>Admin</option>
+                            <option value="coach"   ${u.role === 'coach'   ? 'selected' : ''}>Coach</option>
+                            <option value="viewer"  ${u.role === 'viewer'  ? 'selected' : ''}>Viewer</option>
+                            <option value="scout"   ${u.role === 'scout'   ? 'selected' : ''}>Scout</option>
+                        </select>
+                        <button class="member-role-save" data-user-id="${u.id}"
+                            style="font-size:0.7rem;padding:5px 10px;border-radius:8px;background:var(--plat-accent);color:#000;font-weight:700;border:none;cursor:pointer;white-space:nowrap;">
+                            Save
+                        </button>
+                    </div>
                 </div>
             `;
         }).join('')
@@ -240,11 +247,6 @@ function viewClubDetail(clubId) {
                     <button class="btn-impersonate" id="btnImpersonate" data-club-id="${club.id}" data-club-name="${escapeHtml(club.name)}">
                         <i class="fas fa-eye"></i> Enter as Admin
                     </button>
-                    <button id="btnTogglePause" data-club-id="${club.id}" data-paused="${isPaused}"
-                        style="padding:8px 14px;border-radius:10px;font-size:0.8rem;font-weight:600;cursor:pointer;border:1.5px solid;
-                               ${isPaused ? 'background:#10b981;color:#fff;border-color:#10b981;' : 'background:#f59e0b;color:#000;border-color:#f59e0b;'}">
-                        <i class="fas ${isPaused ? 'fa-play' : 'fa-pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}
-                    </button>
                     <button class="btn-back" id="btnDeleteClub" data-club-id="${club.id}" data-club-name="${escapeHtml(club.name)}" style="background:#ef4444;color:#fff;border-color:#ef4444;">
                         <i class="fas fa-trash"></i> Delete Club
                     </button>
@@ -257,10 +259,11 @@ function viewClubDetail(clubId) {
                 </div>
                 <div class="detail-block">
                     <h3><i class="fas fa-sliders-h"></i> Subscription Management</h3>
-                    <div style="display:flex;flex-direction:column;gap:16px;margin-top:4px;">
+                    <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px;">
                         <div>
-                            <div style="font-size:0.75rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Tier</div>
-                            <select id="clubTierSelect" data-club-id="${club.id}" style="width:100%;padding:9px 34px 9px 12px;border-radius:10px;border:1.5px solid var(--plat-border);background:var(--plat-bg);color:var(--plat-text);font-size:0.85rem;cursor:pointer;">
+                            <div style="font-size:0.72rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Tier</div>
+                            <select id="clubTierSelect" data-no-custom data-club-id="${club.id}"
+                                style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.85rem;cursor:pointer;font-family:inherit;">
                                 <option value="free"  ${currentTier === 'free'  ? 'selected' : ''}>Free</option>
                                 <option value="basic" ${currentTier === 'basic' ? 'selected' : ''}>Basic</option>
                                 <option value="pro"   ${currentTier === 'pro'   ? 'selected' : ''}>Pro</option>
@@ -268,18 +271,33 @@ function viewClubDetail(clubId) {
                             </select>
                         </div>
                         <div>
-                            <div style="font-size:0.75rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Status</div>
-                            <div style="display:flex;align-items:center;gap:10px;">
-                                <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${isPaused ? '#f59e0b' : '#10b981'};"></span>
-                                <span style="font-size:0.88rem;font-weight:600;color:var(--plat-text);">${isPaused ? 'Paused' : 'Active'}</span>
-                                <span style="font-size:0.78rem;color:var(--plat-text-dim);">${isPaused ? '— users cannot log in' : '— all users have access'}</span>
+                            <div style="font-size:0.72rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Subscription Status</div>
+                            <div style="display:flex;gap:8px;">
+                                <button id="btnSetActive" data-club-id="${club.id}"
+                                    style="flex:1;padding:8px 12px;border-radius:10px;font-size:0.82rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.15s;
+                                           ${!isPaused ? 'background:#10b981;color:#fff;border-color:#10b981;' : 'background:transparent;color:var(--plat-text-dim);border-color:var(--plat-border);'}">
+                                    <i class="fas fa-play"></i> Active
+                                </button>
+                                <button id="btnSetPaused" data-club-id="${club.id}"
+                                    style="flex:1;padding:8px 12px;border-radius:10px;font-size:0.82rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all 0.15s;
+                                           ${isPaused ? 'background:#f59e0b;color:#000;border-color:#f59e0b;' : 'background:transparent;color:var(--plat-text-dim);border-color:var(--plat-border);'}">
+                                    <i class="fas fa-pause"></i> Paused
+                                </button>
                             </div>
+                            <p style="font-size:0.72rem;color:var(--plat-text-dim);margin-top:6px;" id="statusNote">
+                                ${isPaused ? 'Users cannot access the platform while paused.' : 'All users have full access.'}
+                            </p>
                         </div>
+                        <button id="btnSaveSubscription" data-club-id="${club.id}"
+                            style="width:100%;padding:10px;border-radius:10px;background:var(--plat-accent);color:#000;font-size:0.85rem;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;">
+                            <i class="fas fa-save"></i> Save Subscription Changes
+                        </button>
+                        <p id="subSaveConfirm" style="font-size:0.75rem;color:#10b981;text-align:center;display:none;"><i class="fas fa-check-circle"></i> Saved successfully</p>
                     </div>
                 </div>
                 <div class="detail-block">
                     <h3><i class="fas fa-users"></i> Team Members (${clubUsers.length})</h3>
-                    <p style="font-size:0.75rem;color:var(--plat-text-dim);margin-bottom:10px;">Change a role with the dropdown — saves instantly.</p>
+                    <p style="font-size:0.75rem;color:var(--plat-text-dim);margin-bottom:10px;">Select a new role and click Save to update a member.</p>
                     <div class="members-list">${membersHTML}</div>
                 </div>
                 <div class="detail-block">
@@ -348,34 +366,27 @@ function viewClubDetail(clubId) {
         }
     });
 
-    // Pause / Resume subscription
-    document.getElementById('btnTogglePause').addEventListener('click', async (e) => {
-        const btn = e.currentTarget;
-        const cId = btn.dataset.clubId;
-        const paused = btn.dataset.paused === 'true';
-        const newStatus = paused ? 'active' : 'paused';
-        const label = paused ? 'resume' : 'pause';
-        if (!confirm(`${capitalize(label)} the subscription for "${club.name}"?\n\n${newStatus === 'paused' ? 'All non-admin users will lose access immediately.' : 'All users will regain access.'}`)) return;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        const { error } = await supabase.from('clubs').update({
-            settings: { ...club.settings, status: newStatus }
-        }).eq('id', cId);
-        if (error) {
-            alert(`Failed to ${label}: ${error.message}`);
-            btn.disabled = false;
-        } else {
-            club.settings = { ...club.settings, status: newStatus };
-            await loadPlatformData();
-            viewClubDetail(cId);
-        }
+    // Active / Paused toggle — visual only, committed on Save
+    let _pendingStatus = currentStatus;
+    document.getElementById('btnSetActive').addEventListener('click', (e) => {
+        _pendingStatus = 'active';
+        e.currentTarget.style.cssText += 'background:#10b981;color:#fff;border-color:#10b981;';
+        document.getElementById('btnSetPaused').style.cssText = document.getElementById('btnSetPaused').style.cssText.replace(/background:[^;]+;color:[^;]+;border-color:[^;]+;/, 'background:transparent;color:var(--plat-text-dim);border-color:var(--plat-border);');
+        document.getElementById('statusNote').textContent = 'All users have full access.';
+    });
+    document.getElementById('btnSetPaused').addEventListener('click', (e) => {
+        _pendingStatus = 'paused';
+        e.currentTarget.style.cssText += 'background:#f59e0b;color:#000;border-color:#f59e0b;';
+        document.getElementById('btnSetActive').style.cssText = document.getElementById('btnSetActive').style.cssText.replace(/background:[^;]+;color:[^;]+;border-color:[^;]+;/, 'background:transparent;color:var(--plat-text-dim);border-color:var(--plat-border);');
+        document.getElementById('statusNote').textContent = 'Users cannot access the platform while paused.';
     });
 
-    // Tier change
-    document.getElementById('clubTierSelect').addEventListener('change', async (e) => {
-        const sel = e.currentTarget;
-        const cId = sel.dataset.clubId;
-        const newTier = sel.value;
+    // Save subscription changes (tier + status together)
+    document.getElementById('btnSaveSubscription').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const cId = btn.dataset.clubId;
+        const newTier = document.getElementById('clubTierSelect').value;
+        const newStatus = _pendingStatus;
         const tierOrder = ['free', 'basic', 'pro', 'elite'];
         const idx = tierOrder.indexOf(newTier);
         const atLeast = (t) => idx >= tierOrder.indexOf(t);
@@ -391,37 +402,51 @@ function viewClubDetail(clubId) {
             video_analysis:      false,
             export_pdf:          atLeast('elite'),
         };
-        sel.disabled = true;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         const { error } = await supabase.from('clubs').update({
-            settings: { ...club.settings, tier: newTier, features: newFeatures }
+            settings: { ...club.settings, tier: newTier, status: newStatus, features: newFeatures }
         }).eq('id', cId);
         if (error) {
-            alert(`Failed to update tier: ${error.message}`);
-            sel.value = currentTier;
+            alert(`Failed to save: ${error.message}`);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Subscription Changes';
         } else {
-            club.settings = { ...club.settings, tier: newTier, features: newFeatures };
-            showToast(`Tier updated to ${newTier.charAt(0).toUpperCase() + newTier.slice(1)}`, 'success');
+            club.settings = { ...club.settings, tier: newTier, status: newStatus, features: newFeatures };
+            btn.innerHTML = '<i class="fas fa-check"></i> Saved';
+            btn.style.background = '#10b981';
+            const confirm = document.getElementById('subSaveConfirm');
+            if (confirm) { confirm.style.display = 'block'; setTimeout(() => { confirm.style.display = 'none'; }, 3000); }
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Subscription Changes';
+                btn.style.background = '';
+            }, 2000);
         }
-        sel.disabled = false;
     });
 
-    // Role change per member
-    container.querySelectorAll('.member-role-select').forEach(sel => {
-        sel.addEventListener('change', async (e) => {
-            const userId = sel.dataset.userId;
+    // Role save per member row
+    container.querySelectorAll('.member-role-save').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const userId = btn.dataset.userId;
+            const sel = container.querySelector(`.member-role-select[data-user-id="${userId}"]`);
             const newRole = sel.value;
             const userName = allProfiles.find(p => p.id === userId)?.full_name || 'this user';
-            sel.disabled = true;
+            btn.disabled = true;
+            btn.textContent = '...';
             const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
             if (error) {
                 alert(`Failed to update role: ${error.message}`);
-                sel.value = allProfiles.find(p => p.id === userId)?.role || 'coach';
+                sel.value = sel.dataset.originalRole;
             } else {
                 const p = allProfiles.find(p => p.id === userId);
                 if (p) p.role = newRole;
+                sel.dataset.originalRole = newRole;
+                btn.textContent = '✓';
+                btn.style.background = '#10b981';
+                setTimeout(() => { btn.disabled = false; btn.textContent = 'Save'; btn.style.background = ''; }, 1800);
                 showToast(`${userName} is now ${newRole}`, 'success');
             }
-            sel.disabled = false;
         });
     });
 
