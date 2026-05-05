@@ -3906,7 +3906,6 @@ img, video, iframe, embed {
     position: absolute;
     top: calc(100% + 5px);
     left: 0;
-    min-width: 100%;
     max-height: 240px;
     overflow-y: auto;
     background: #fff;

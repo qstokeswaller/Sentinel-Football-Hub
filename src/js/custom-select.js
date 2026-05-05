@@ -123,7 +123,8 @@ function buildCustomSelect(sel) {
         const goUp = spaceBelow < 220 && rect.top > spaceBelow;
 
         panel.style.position = 'fixed';
-        panel.style.width    = rect.width + 'px';
+        panel.style.width    = 'auto';
+        panel.style.minWidth = rect.width + 'px';
         panel.style.left     = rect.left + 'px';
         panel.style.zIndex   = '99999';
 
@@ -159,6 +160,7 @@ function buildCustomSelect(sel) {
         panel.classList.remove('cs-panel-visible', 'cs-panel-up');
         panel.style.position = '';
         panel.style.width    = '';
+        panel.style.minWidth = '';
         panel.style.left     = '';
         panel.style.top      = '';
         panel.style.bottom   = '';
