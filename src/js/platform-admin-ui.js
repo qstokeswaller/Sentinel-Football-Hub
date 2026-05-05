@@ -426,6 +426,7 @@ function setupEventListeners(profile) {
         const adminEmail = document.getElementById('newClubAdminEmail').value.trim();
         const adminName = document.getElementById('newClubAdminName').value.trim();
         const archetype = document.getElementById('newClubArchetype').value;
+        const tier = document.getElementById('newClubTier').value;
         const logoFile = document.getElementById('newClubLogoFile')?.files?.[0] || null;
 
         try {
@@ -457,6 +458,7 @@ function setupEventListeners(profile) {
                     adminEmail,
                     adminName,
                     archetype,
+                    tier,
                     logoUrl: logoUrl || undefined,
                 }),
             });
@@ -474,8 +476,9 @@ function setupEventListeners(profile) {
             if (preview) preview.innerHTML = '<i class="fas fa-image" style="font-size:1.1rem;color:var(--plat-muted);"></i>';
 
             if (response.status === 207) {
-                // Club created but invite email failed — show warning
                 alert(`Club "${clubName}" created, but the invite email failed to send.\n\n${result.fallbackMessage || 'Create a manual invite from the club detail view.'}`);
+            } else if (result.existingUser) {
+                alert(`Club "${clubName}" created!\n\n${adminEmail} already has an account — their profile has been updated to admin for this club.`);
             } else {
                 alert(`Club "${clubName}" created!\n\nAn invite email has been sent to ${adminEmail}.\nThey'll click the link in their email to activate their admin account.`);
             }
@@ -496,20 +499,26 @@ function setupEventListeners(profile) {
 
 // ── Default Settings by Archetype ──
 
-function buildDefaultSettings(archetype) {
+function buildDefaultSettings(archetype, tier = 'free') {
+    const tierOrder = ['free', 'basic', 'pro', 'elite'];
+    const tierIdx = Math.max(0, tierOrder.indexOf(tier));
+    const atLeast = (t) => tierIdx >= tierOrder.indexOf(t);
+
     const base = {
         archetype,
+        tier,
         status: 'active',
-        plan: 'trial',
+        plan: tier === 'free' ? 'trial' : 'active',
         features: {
-            session_planner: true,
-            library: true,
-            reports: true,
-            match_planning: true,
-            analytics_dashboard: true,
-            player_assessments: true,
-            video_analysis: false,
-            export_pdf: false,
+            session_planner:      atLeast('basic'),
+            library:              atLeast('basic'),
+            reports:              atLeast('basic'),
+            match_planning:       atLeast('pro'),
+            analytics_dashboard:  atLeast('pro'),
+            player_assessments:   atLeast('pro'),
+            video_analysis:       false,
+            export_pdf:           atLeast('elite'),
+            financials:           atLeast('elite'),
         },
         limits: {
             max_squads: 2,
