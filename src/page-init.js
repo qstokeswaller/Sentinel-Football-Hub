@@ -40,6 +40,23 @@ export async function initPage(pageName, opts = {}) {
 
     // Apply role-based permission guards immediately
     if (profile) {
+        // Block access if club subscription is paused (except super_admin / platform_admin)
+        const clubStatus = profile.clubs?.settings?.status;
+        const isPrivileged = profile.role === 'super_admin' || profile.role === 'platform_admin';
+        if (clubStatus === 'paused' && !isPrivileged) {
+            document.body.innerHTML = `
+                <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8fafc;font-family:'Inter',sans-serif;padding:32px;text-align:center;">
+                    <div style="font-size:3rem;margin-bottom:16px;">⏸️</div>
+                    <h1 style="font-size:1.5rem;font-weight:700;color:#1e293b;margin-bottom:8px;">Subscription Paused</h1>
+                    <p style="color:#64748b;max-width:400px;line-height:1.6;margin-bottom:24px;">
+                        Your club's subscription has been paused. Please contact your administrator or reach out to
+                        <a href="mailto:stokeswallerq@gmail.com" style="color:#00C49A;">support</a> to restore access.
+                    </p>
+                    <a href="/src/pages/login.html" style="font-size:0.85rem;color:#94a3b8;">Sign out</a>
+                </div>`;
+            return null;
+        }
+
         applyPermissionGuards(profile);
         window._profile = profile;
         window._canEdit = canEdit(profile);

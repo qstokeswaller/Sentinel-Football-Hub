@@ -7,6 +7,7 @@
  */
 import supabase from '../supabase.js';
 import { startImpersonation } from '../auth.js';
+import { showToast } from '../toast.js';
 
 let allClubs = [];
 let allProfiles = [];
@@ -146,6 +147,9 @@ function viewClubDetail(clubId) {
     const clubDrills = allDrills.filter(d => d.club_id === clubId);
     const archetype = (club.settings?.archetype || 'academy').replace(/_/g, ' ');
     const features = club.settings?.features || {};
+    const currentTier = club.settings?.tier || 'free';
+    const currentStatus = club.settings?.status || 'active';
+    const isPaused = currentStatus === 'paused';
     const initials = club.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
     const logoUrl = club.settings?.branding?.logo_url;
     const created = new Date(club.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -160,16 +164,20 @@ function viewClubDetail(clubId) {
 
     const membersHTML = clubUsers.length > 0
         ? clubUsers.map(u => {
-            const roleClass = u.role === 'admin' ? 'admin' : u.role === 'coach' ? 'coach' : 'viewer';
             const userSessions = clubSessions.filter(s => s.created_by === u.id).length;
             const userDrills = clubDrills.filter(d => d.created_by === u.id).length;
             return `
-                <div class="member-item member-clickable" data-user-id="${u.id}" data-club-id="${clubId}" style="cursor:pointer;" title="Click to view activity">
-                    <div>
+                <div class="member-item" data-user-id="${u.id}" data-club-id="${clubId}">
+                    <div class="member-clickable" data-user-id="${u.id}" data-club-id="${clubId}" style="cursor:pointer;flex:1;" title="Click to view activity">
                         <div class="name">${escapeHtml(u.full_name || 'Unknown')}</div>
-                        <div class="email">${userSessions} sessions &middot; ${userDrills} drills</div>
+                        <div class="email">${escapeHtml(u.email || '')} &middot; ${userSessions} sessions &middot; ${userDrills} drills</div>
                     </div>
-                    <span class="role-tag ${roleClass}">${u.role}</span>
+                    <select class="member-role-select" data-user-id="${u.id}" data-club-id="${clubId}" style="font-size:0.75rem;padding:4px 28px 4px 8px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-bg);color:var(--plat-text);cursor:pointer;">
+                        <option value="admin"   ${u.role === 'admin'   ? 'selected' : ''}>Admin</option>
+                        <option value="coach"   ${u.role === 'coach'   ? 'selected' : ''}>Coach</option>
+                        <option value="viewer"  ${u.role === 'viewer'  ? 'selected' : ''}>Viewer</option>
+                        <option value="scout"   ${u.role === 'scout'   ? 'selected' : ''}>Scout</option>
+                    </select>
                 </div>
             `;
         }).join('')
@@ -232,6 +240,11 @@ function viewClubDetail(clubId) {
                     <button class="btn-impersonate" id="btnImpersonate" data-club-id="${club.id}" data-club-name="${escapeHtml(club.name)}">
                         <i class="fas fa-eye"></i> Enter as Admin
                     </button>
+                    <button id="btnTogglePause" data-club-id="${club.id}" data-paused="${isPaused}"
+                        style="padding:8px 14px;border-radius:10px;font-size:0.8rem;font-weight:600;cursor:pointer;border:1.5px solid;
+                               ${isPaused ? 'background:#10b981;color:#fff;border-color:#10b981;' : 'background:#f59e0b;color:#000;border-color:#f59e0b;'}">
+                        <i class="fas ${isPaused ? 'fa-play' : 'fa-pause'}"></i> ${isPaused ? 'Resume' : 'Pause'}
+                    </button>
                     <button class="btn-back" id="btnDeleteClub" data-club-id="${club.id}" data-club-name="${escapeHtml(club.name)}" style="background:#ef4444;color:#fff;border-color:#ef4444;">
                         <i class="fas fa-trash"></i> Delete Club
                     </button>
@@ -243,7 +256,30 @@ function viewClubDetail(clubId) {
                     ${metricsHTML}
                 </div>
                 <div class="detail-block">
+                    <h3><i class="fas fa-sliders-h"></i> Subscription Management</h3>
+                    <div style="display:flex;flex-direction:column;gap:16px;margin-top:4px;">
+                        <div>
+                            <div style="font-size:0.75rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Tier</div>
+                            <select id="clubTierSelect" data-club-id="${club.id}" style="width:100%;padding:9px 34px 9px 12px;border-radius:10px;border:1.5px solid var(--plat-border);background:var(--plat-bg);color:var(--plat-text);font-size:0.85rem;cursor:pointer;">
+                                <option value="free"  ${currentTier === 'free'  ? 'selected' : ''}>Free</option>
+                                <option value="basic" ${currentTier === 'basic' ? 'selected' : ''}>Basic</option>
+                                <option value="pro"   ${currentTier === 'pro'   ? 'selected' : ''}>Pro</option>
+                                <option value="elite" ${currentTier === 'elite' ? 'selected' : ''}>Elite</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div style="font-size:0.75rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Status</div>
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${isPaused ? '#f59e0b' : '#10b981'};"></span>
+                                <span style="font-size:0.88rem;font-weight:600;color:var(--plat-text);">${isPaused ? 'Paused' : 'Active'}</span>
+                                <span style="font-size:0.78rem;color:var(--plat-text-dim);">${isPaused ? '— users cannot log in' : '— all users have access'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-block">
                     <h3><i class="fas fa-users"></i> Team Members (${clubUsers.length})</h3>
+                    <p style="font-size:0.75rem;color:var(--plat-text-dim);margin-bottom:10px;">Change a role with the dropdown — saves instantly.</p>
                     <div class="members-list">${membersHTML}</div>
                 </div>
                 <div class="detail-block">
@@ -312,15 +348,91 @@ function viewClubDetail(clubId) {
         }
     });
 
+    // Pause / Resume subscription
+    document.getElementById('btnTogglePause').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const cId = btn.dataset.clubId;
+        const paused = btn.dataset.paused === 'true';
+        const newStatus = paused ? 'active' : 'paused';
+        const label = paused ? 'resume' : 'pause';
+        if (!confirm(`${capitalize(label)} the subscription for "${club.name}"?\n\n${newStatus === 'paused' ? 'All non-admin users will lose access immediately.' : 'All users will regain access.'}`)) return;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        const { error } = await supabase.from('clubs').update({
+            settings: { ...club.settings, status: newStatus }
+        }).eq('id', cId);
+        if (error) {
+            alert(`Failed to ${label}: ${error.message}`);
+            btn.disabled = false;
+        } else {
+            club.settings = { ...club.settings, status: newStatus };
+            await loadPlatformData();
+            viewClubDetail(cId);
+        }
+    });
+
+    // Tier change
+    document.getElementById('clubTierSelect').addEventListener('change', async (e) => {
+        const sel = e.currentTarget;
+        const cId = sel.dataset.clubId;
+        const newTier = sel.value;
+        const tierOrder = ['free', 'basic', 'pro', 'elite'];
+        const idx = tierOrder.indexOf(newTier);
+        const atLeast = (t) => idx >= tierOrder.indexOf(t);
+        const arch = club.settings?.archetype || 'academy';
+        const newFeatures = {
+            session_planner:     atLeast('basic'),
+            library:             atLeast('basic'),
+            reports:             atLeast('basic'),
+            match_planning:      atLeast('pro') && arch !== 'private_coaching',
+            analytics_dashboard: atLeast('pro'),
+            player_assessments:  atLeast('pro'),
+            financials:          atLeast('elite'),
+            video_analysis:      false,
+            export_pdf:          atLeast('elite'),
+        };
+        sel.disabled = true;
+        const { error } = await supabase.from('clubs').update({
+            settings: { ...club.settings, tier: newTier, features: newFeatures }
+        }).eq('id', cId);
+        if (error) {
+            alert(`Failed to update tier: ${error.message}`);
+            sel.value = currentTier;
+        } else {
+            club.settings = { ...club.settings, tier: newTier, features: newFeatures };
+            showToast(`Tier updated to ${newTier.charAt(0).toUpperCase() + newTier.slice(1)}`, 'success');
+        }
+        sel.disabled = false;
+    });
+
+    // Role change per member
+    container.querySelectorAll('.member-role-select').forEach(sel => {
+        sel.addEventListener('change', async (e) => {
+            const userId = sel.dataset.userId;
+            const newRole = sel.value;
+            const userName = allProfiles.find(p => p.id === userId)?.full_name || 'this user';
+            sel.disabled = true;
+            const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+            if (error) {
+                alert(`Failed to update role: ${error.message}`);
+                sel.value = allProfiles.find(p => p.id === userId)?.role || 'coach';
+            } else {
+                const p = allProfiles.find(p => p.id === userId);
+                if (p) p.role = newRole;
+                showToast(`${userName} is now ${newRole}`, 'success');
+            }
+            sel.disabled = false;
+        });
+    });
+
     // Member click → show user activity
     container.querySelectorAll('.member-clickable').forEach(el => {
         el.addEventListener('click', () => {
             const userId = el.dataset.userId;
             const userClubId = el.dataset.clubId;
             showUserActivity(userId, userClubId);
-            // Highlight selected
-            container.querySelectorAll('.member-clickable').forEach(m => m.style.borderLeft = '');
-            el.style.borderLeft = '3px solid var(--plat-accent)';
+            container.querySelectorAll('.member-clickable').forEach(m => m.closest('.member-item').style.borderLeft = '');
+            el.closest('.member-item').style.borderLeft = '3px solid var(--plat-accent)';
         });
     });
 }
