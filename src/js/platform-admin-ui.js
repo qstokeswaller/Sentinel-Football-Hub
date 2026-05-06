@@ -91,6 +91,8 @@ function renderClubCards(filter = '') {
         const archetype = (club.settings?.archetype || 'academy').replace(/_/g, ' ');
         const plan = club.settings?.plan || 'trial';
         const status = club.settings?.status || 'active';
+        const paymentMethod = club.settings?.payment_method || 'bank_eft';
+        const paymentLabel = paymentMethod === 'in_app' ? 'In-App' : 'Bank/EFT';
         const created = new Date(club.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
         const avatarContent = logoUrl
@@ -113,9 +115,10 @@ function renderClubCards(filter = '') {
                     <div class="club-metric"><strong>${clubDrills.length}</strong> drills</div>
                 </div>
                 <div class="club-card-footer">
-                    <div style="display:flex;align-items:center;gap:10px;">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                         <span class="club-status ${status}"><span class="dot"></span> ${capitalize(status)}</span>
                         <span class="club-plan-tag ${plan}">${plan.toUpperCase()}</span>
+                        <span style="font-size:0.68rem;font-weight:600;padding:2px 8px;border-radius:6px;background:${paymentMethod === 'in_app' ? 'rgba(99,102,241,0.18)' : 'rgba(100,116,139,0.18)'};color:${paymentMethod === 'in_app' ? '#818cf8' : '#94a3b8'};letter-spacing:0.03em;white-space:nowrap;"><i class="fas fa-${paymentMethod === 'in_app' ? 'credit-card' : 'university'}" style="margin-right:4px;"></i>${paymentLabel}</span>
                     </div>
                     <span class="club-card-enter"><i class="fas fa-arrow-right"></i> Enter</span>
                 </div>
@@ -149,6 +152,7 @@ function viewClubDetail(clubId) {
     const features = club.settings?.features || {};
     const currentTier = club.settings?.tier || 'free';
     const currentStatus = club.settings?.status || 'active';
+    const currentPaymentMethod = club.settings?.payment_method || 'bank_eft';
     const isPaused = currentStatus === 'paused';
     const initials = club.name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
     const logoUrl = club.settings?.branding?.logo_url;
@@ -174,11 +178,11 @@ function viewClubDetail(clubId) {
                     </div>
                     <div style="display:flex;align-items:center;gap:6px;">
                         <select class="member-role-select" data-no-custom data-user-id="${u.id}" data-original-role="${u.role}"
-                            style="font-size:0.75rem;padding:5px 8px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);cursor:pointer;font-family:inherit;">
-                            <option value="admin"   ${u.role === 'admin'   ? 'selected' : ''}>Admin</option>
-                            <option value="coach"   ${u.role === 'coach'   ? 'selected' : ''}>Coach</option>
-                            <option value="viewer"  ${u.role === 'viewer'  ? 'selected' : ''}>Viewer</option>
-                            <option value="scout"   ${u.role === 'scout'   ? 'selected' : ''}>Scout</option>
+                            style="font-size:0.75rem;padding:5px 8px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);cursor:pointer;font-family:inherit;color-scheme:dark;">
+                            <option value="admin"   ${u.role === 'admin'   ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Admin</option>
+                            <option value="coach"   ${u.role === 'coach'   ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Coach</option>
+                            <option value="viewer"  ${u.role === 'viewer'  ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Viewer</option>
+                            <option value="scout"   ${u.role === 'scout'   ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Scout</option>
                         </select>
                         <button class="member-role-save" data-user-id="${u.id}"
                             style="font-size:0.7rem;padding:5px 10px;border-radius:8px;background:var(--plat-accent);color:#000;font-weight:700;border:none;cursor:pointer;white-space:nowrap;">
@@ -263,11 +267,11 @@ function viewClubDetail(clubId) {
                         <div>
                             <div style="font-size:0.72rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Tier</div>
                             <select id="clubTierSelect" data-no-custom data-club-id="${club.id}"
-                                style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.85rem;cursor:pointer;font-family:inherit;">
-                                <option value="free"  ${currentTier === 'free'  ? 'selected' : ''}>Free</option>
-                                <option value="basic" ${currentTier === 'basic' ? 'selected' : ''}>Basic</option>
-                                <option value="pro"   ${currentTier === 'pro'   ? 'selected' : ''}>Pro</option>
-                                <option value="elite" ${currentTier === 'elite' ? 'selected' : ''}>Elite</option>
+                                style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.85rem;cursor:pointer;font-family:inherit;color-scheme:dark;">
+                                <option value="free"  ${currentTier === 'free'  ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Free</option>
+                                <option value="basic" ${currentTier === 'basic' ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Basic</option>
+                                <option value="pro"   ${currentTier === 'pro'   ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Pro</option>
+                                <option value="elite" ${currentTier === 'elite' ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Elite</option>
                             </select>
                         </div>
                         <div>
@@ -292,13 +296,55 @@ function viewClubDetail(clubId) {
                             style="width:100%;padding:10px;border-radius:10px;background:var(--plat-accent);color:#000;font-size:0.85rem;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;">
                             <i class="fas fa-save"></i> Save Subscription Changes
                         </button>
+                        <div>
+                            <div style="font-size:0.72rem;font-weight:600;color:var(--plat-text-dim);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Payment Method</div>
+                            <select id="clubPaymentSelect" data-no-custom data-club-id="${club.id}"
+                                style="width:100%;padding:8px 12px;border-radius:10px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.85rem;cursor:pointer;font-family:inherit;color-scheme:dark;">
+                                <option value="bank_eft" ${currentPaymentMethod === 'bank_eft' ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">Bank / EFT Transfer</option>
+                                <option value="in_app"   ${currentPaymentMethod === 'in_app'   ? 'selected' : ''} style="background:#1e293b;color:#f1f5f9">In-App Payment</option>
+                            </select>
+                        </div>
                         <p id="subSaveConfirm" style="font-size:0.75rem;color:#10b981;text-align:center;display:none;"><i class="fas fa-check-circle"></i> Saved successfully</p>
                     </div>
                 </div>
                 <div class="detail-block">
-                    <h3><i class="fas fa-users"></i> Team Members (${clubUsers.length})</h3>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                        <h3 style="margin:0;"><i class="fas fa-users"></i> Team Members (${clubUsers.length})</h3>
+                        <button id="btnShowAddMember" data-club-id="${club.id}"
+                            style="font-size:0.75rem;padding:5px 12px;border-radius:8px;background:var(--plat-accent);color:#000;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;">
+                            <i class="fas fa-user-plus"></i> Add Member
+                        </button>
+                    </div>
                     <p style="font-size:0.75rem;color:var(--plat-text-dim);margin-bottom:10px;">Select a new role and click Save to update a member.</p>
                     <div class="members-list">${membersHTML}</div>
+                    <div id="addMemberForm" style="display:none;margin-top:14px;padding:14px;border-radius:12px;border:1.5px solid var(--plat-border);background:rgba(255,255,255,0.03);">
+                        <div style="font-size:0.8rem;font-weight:700;color:var(--plat-text);margin-bottom:12px;letter-spacing:0.02em;">Add New Member to Club</div>
+                        <div style="display:grid;gap:8px;">
+                            <input id="newMemberName" type="text" placeholder="Full Name" autocomplete="off"
+                                style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.82rem;font-family:inherit;box-sizing:border-box;outline:none;">
+                            <input id="newMemberEmail" type="email" placeholder="Email Address" autocomplete="off"
+                                style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.82rem;font-family:inherit;box-sizing:border-box;outline:none;">
+                            <input id="newMemberPassword" type="password" placeholder="Password (min 8 characters)" autocomplete="new-password"
+                                style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.82rem;font-family:inherit;box-sizing:border-box;outline:none;">
+                            <select id="newMemberRole" data-no-custom style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--plat-border);background:var(--plat-card);color:var(--plat-text);font-size:0.82rem;font-family:inherit;cursor:pointer;color-scheme:dark;">
+                                <option value="admin"  style="background:#1e293b;color:#f1f5f9">Admin</option>
+                                <option value="coach"  style="background:#1e293b;color:#f1f5f9" selected>Coach</option>
+                                <option value="viewer" style="background:#1e293b;color:#f1f5f9">Viewer</option>
+                                <option value="scout"  style="background:#1e293b;color:#f1f5f9">Scout</option>
+                            </select>
+                            <div id="addMemberError" style="font-size:0.75rem;color:#f87171;display:none;"></div>
+                            <div style="display:flex;gap:8px;margin-top:4px;">
+                                <button id="btnSubmitAddMember" data-club-id="${club.id}"
+                                    style="flex:1;padding:8px 12px;border-radius:8px;background:var(--plat-accent);color:#000;font-size:0.82rem;font-weight:700;border:none;cursor:pointer;">
+                                    <i class="fas fa-user-plus"></i> Create User
+                                </button>
+                                <button id="btnCancelAddMember"
+                                    style="padding:8px 16px;border-radius:8px;background:transparent;color:var(--plat-text-dim);font-size:0.82rem;font-weight:600;border:1.5px solid var(--plat-border);cursor:pointer;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="detail-block">
                     <h3><i class="fas fa-sliders-h"></i> Feature Flags</h3>
@@ -387,6 +433,7 @@ function viewClubDetail(clubId) {
         const cId = btn.dataset.clubId;
         const newTier = document.getElementById('clubTierSelect').value;
         const newStatus = _pendingStatus;
+        const newPaymentMethod = document.getElementById('clubPaymentSelect').value;
         const tierOrder = ['free', 'basic', 'pro', 'elite'];
         const idx = tierOrder.indexOf(newTier);
         const atLeast = (t) => idx >= tierOrder.indexOf(t);
@@ -405,14 +452,14 @@ function viewClubDetail(clubId) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         const { error } = await supabase.from('clubs').update({
-            settings: { ...club.settings, tier: newTier, status: newStatus, features: newFeatures }
+            settings: { ...club.settings, tier: newTier, status: newStatus, features: newFeatures, payment_method: newPaymentMethod }
         }).eq('id', cId);
         if (error) {
             alert(`Failed to save: ${error.message}`);
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-save"></i> Save Subscription Changes';
         } else {
-            club.settings = { ...club.settings, tier: newTier, status: newStatus, features: newFeatures };
+            club.settings = { ...club.settings, tier: newTier, status: newStatus, features: newFeatures, payment_method: newPaymentMethod };
             btn.innerHTML = '<i class="fas fa-check"></i> Saved';
             btn.style.background = '#10b981';
             const confirm = document.getElementById('subSaveConfirm');
@@ -448,6 +495,58 @@ function viewClubDetail(clubId) {
                 showToast(`${userName} is now ${newRole}`, 'success');
             }
         });
+    });
+
+    // Add Member toggle
+    document.getElementById('btnShowAddMember')?.addEventListener('click', () => {
+        const form = document.getElementById('addMemberForm');
+        if (form) { form.style.display = form.style.display === 'none' ? '' : 'none'; }
+    });
+    document.getElementById('btnCancelAddMember')?.addEventListener('click', () => {
+        const form = document.getElementById('addMemberForm');
+        if (form) form.style.display = 'none';
+        document.getElementById('addMemberError').style.display = 'none';
+    });
+
+    document.getElementById('btnSubmitAddMember')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const cId = btn.dataset.clubId;
+        const name = document.getElementById('newMemberName').value.trim();
+        const email = document.getElementById('newMemberEmail').value.trim();
+        const password = document.getElementById('newMemberPassword').value;
+        const role = document.getElementById('newMemberRole').value;
+        const errEl = document.getElementById('addMemberError');
+
+        errEl.style.display = 'none';
+        if (!name || !email || !password) { errEl.textContent = 'Name, email, and password are required.'; errEl.style.display = ''; return; }
+        if (password.length < 8) { errEl.textContent = 'Password must be at least 8 characters.'; errEl.style.display = ''; return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const resp = await fetch(`https://ocfycodijzcwupafrpzv.supabase.co/functions/v1/add-club-member`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                body: JSON.stringify({ clubId: cId, email, fullName: name, password, role }),
+            });
+            const result = await resp.json();
+            if (!resp.ok) throw new Error(result.error || 'Failed to create user');
+
+            showToast(`${name} added to club as ${role}`, 'success');
+            document.getElementById('addMemberForm').style.display = 'none';
+            document.getElementById('newMemberName').value = '';
+            document.getElementById('newMemberEmail').value = '';
+            document.getElementById('newMemberPassword').value = '';
+            // Reload detail view to show new member
+            viewClubDetail(cId);
+        } catch (err) {
+            errEl.textContent = err.message;
+            errEl.style.display = '';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> Create User';
+        }
     });
 
     // Member click → show user activity

@@ -8,7 +8,8 @@ import matchManager from '../managers/match-manager.js';
 import { showToast } from '../toast.js';
 import { createYearPicker } from './year-picker.js';
 import { REPORT_SECTIONS, REPORT_SCALE_LABELS } from './report-sections.js';
-import { hasFeature } from '../tier.js';
+import { hasFeature, tierAtLeast } from '../tier.js';
+import { uploadToR2, isStoredVideo } from './r2-upload.js';
 
 console.log('Player Profile UI: Script Loaded');
 
@@ -1910,19 +1911,47 @@ async function saveProfileInfo() {
     }
 }// --- Player Analysis Logic ---
 function setupAnalysisTab() {
-    // Global functions for buttons in HTML onclick handlers
     window.openHighlightModal = () => {
         document.getElementById('modalAddHighlight').classList.add('active');
     };
-
     window.openAnalysisVideoModal = () => {
         document.getElementById('modalAddAnalysisVideo').classList.add('active');
     };
-
     window.closeModal = (id) => {
         document.getElementById(id).classList.remove('active');
     };
-    // Rendering is lazy — triggered in setupTabs when analysis tab is clicked
+
+    // Wire drag-and-drop for both video drop zones
+    _setupDropZone('highlightDropZone', 'highlightFileInput', 'highlightDropLabel');
+    _setupDropZone('analysisDropZone', 'analysisFileInput', 'analysisDropLabel');
+}
+
+function _setupDropZone(zoneId, inputId, labelId) {
+    const zone = document.getElementById(zoneId);
+    const input = document.getElementById(inputId);
+    const label = document.getElementById(labelId);
+    if (!zone || !input) return;
+
+    input.addEventListener('change', () => {
+        const f = input.files?.[0];
+        if (f && label) label.textContent = f.name;
+    });
+
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const f = e.dataTransfer?.files?.[0];
+        if (f && f.type.startsWith('video/')) {
+            const dt = new DataTransfer();
+            dt.items.add(f);
+            input.files = dt.files;
+            if (label) label.textContent = f.name;
+        } else if (f) {
+            showToast('Please drop a video file', 'error');
+        }
+    });
 }
 
 function setupMediaTab() {
@@ -1983,61 +2012,6 @@ function setupMediaTab() {
 
     // Show/hide remove button
     if (btnMediaRemove) btnMediaRemove.style.display = currentPlayer?.profileImageUrl ? '' : 'none';
-
-    // Pro+: single highlight
-    if (hasFeature('media_tabs')) {
-        const highlights = typeof currentPlayer.highlights === 'string'
-            ? JSON.parse(currentPlayer.highlights || '[]')
-            : (currentPlayer.highlights || []);
-        const h = highlights[0];
-
-        const titleEl = document.getElementById('mediaHighlightTitle');
-        const urlEl = document.getElementById('mediaHighlightUrl');
-        if (titleEl) titleEl.value = h?.title || '';
-        if (urlEl) urlEl.value = h?.url || '';
-
-        const preview = document.getElementById('mediaHighlightPreview');
-        const previewTitle = document.getElementById('mediaHighlightPreviewTitle');
-        const previewUrl = document.getElementById('mediaHighlightPreviewUrl');
-        if (preview) preview.style.display = h ? '' : 'none';
-        if (previewTitle) previewTitle.textContent = h?.title || '';
-        if (previewUrl) { previewUrl.textContent = h?.url || ''; previewUrl.href = h?.url || '#'; }
-
-        const btnSave = document.getElementById('btnSaveMediaHighlight');
-        if (btnSave && !btnSave._wired) {
-            btnSave._wired = true;
-            btnSave.addEventListener('click', async () => {
-                const title = document.getElementById('mediaHighlightTitle')?.value?.trim();
-                const url = document.getElementById('mediaHighlightUrl')?.value?.trim();
-                if (!title || !url) { showToast('Title and URL are required', 'error'); return; }
-                const allHighlights = typeof currentPlayer.highlights === 'string'
-                    ? JSON.parse(currentPlayer.highlights || '[]')
-                    : (currentPlayer.highlights || []);
-                allHighlights[0] = { title, url, timestamp: new Date().toISOString() };
-                const ok = await squadManager.updatePlayer(currentPlayerId, { highlights: JSON.stringify(allHighlights) });
-                if (ok) {
-                    currentPlayer.highlights = allHighlights;
-                    setupMediaTab();
-                    showToast('Highlight saved', 'success');
-                }
-            });
-        }
-
-        const btnClear = document.getElementById('btnClearMediaHighlight');
-        if (btnClear && !btnClear._wired) {
-            btnClear._wired = true;
-            btnClear.addEventListener('click', async () => {
-                const ok = await squadManager.updatePlayer(currentPlayerId, { highlights: '[]' });
-                if (ok) {
-                    currentPlayer.highlights = [];
-                    if (document.getElementById('mediaHighlightTitle')) document.getElementById('mediaHighlightTitle').value = '';
-                    if (document.getElementById('mediaHighlightUrl')) document.getElementById('mediaHighlightUrl').value = '';
-                    setupMediaTab();
-                    showToast('Highlight cleared', 'success');
-                }
-            });
-        }
-    }
 
     // ── Gallery Photos ─────────────────────────────────────────────────────
     renderGalleryPhotos();
@@ -3093,25 +3067,28 @@ async function renderHighlights() {
     grid.style.display = 'grid';
     emptyState.style.display = 'none';
 
-    grid.innerHTML = highlights.map((h, index) => `
-        <div class="dash-card" style="padding: 0; overflow: hidden; position: relative;">
-            <div style="background: #f1f5f9; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative;">
-                <i class="fas fa-play-circle" style="font-size: 3rem; color: var(--blue-accent); opacity: 0.8;"></i>
-                <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
-                    <button class="dash-btn sm" onclick="deleteHighlight(${index})" style="background: rgba(239, 68, 68, 0.9); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+    grid.innerHTML = highlights.map((h, index) => {
+        const stored = isStoredVideo(h.url);
+        const mediaPart = stored
+            ? `<video src="${h.url}" controls preload="metadata" style="width:100%;aspect-ratio:16/9;background:#000;display:block;"></video>`
+            : `<div style="background:#f1f5f9;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;">
+                 <i class="fas fa-play-circle" style="font-size:3rem;color:var(--blue-accent);opacity:0.8;"></i>
+               </div>`;
+        return `
+        <div class="dash-card" style="padding:0;overflow:hidden;position:relative;">
+            <div style="position:relative;">
+                ${mediaPart}
+                <button onclick="deleteHighlight(${index})" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.9);color:#fff;border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:0.75rem;z-index:1;">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
-            <div style="padding: 16px;">
-                <h5 style="margin: 0 0 8px 0; font-size: 1rem; color: var(--navy-dark);">${h.title}</h5>
-                <p style="margin: 0 0 16px 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">${h.description || 'No description provided.'}</p>
-                <a href="${h.url}" target="_blank" class="dash-btn outline sm" style="width: 100%; text-align: center; display: block; text-decoration: none;">
-                    <i class="fas fa-external-link-alt"></i> View Highlight
-                </a>
+            <div style="padding:14px 16px;">
+                <h5 style="margin:0 0 6px;font-size:0.95rem;color:var(--navy-dark);">${h.title}</h5>
+                ${h.description ? `<p style="margin:0 0 10px;font-size:0.82rem;color:var(--text-secondary);line-height:1.4;">${h.description}</p>` : ''}
+                ${!stored ? `<a href="${h.url}" target="_blank" rel="noopener" class="dash-btn outline sm" style="width:100%;text-align:center;display:block;text-decoration:none;"><i class="fas fa-external-link-alt"></i> View Highlight</a>` : ''}
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 async function renderAnalysisVideos() {
@@ -3132,94 +3109,161 @@ async function renderAnalysisVideos() {
     grid.style.display = 'grid';
     emptyState.style.display = 'none';
 
-    grid.innerHTML = videos.map((v, index) => `
-        <div class="dash-card" style="padding: 0; overflow: hidden; position: relative;">
-            <div style="background: #f1f5f9; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; position: relative;">
-                <i class="fas fa-film" style="font-size: 3rem; color: var(--blue-accent); opacity: 0.8;"></i>
-                <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
-                    <button class="dash-btn sm" onclick="deleteAnalysisVideo(${index})" style="background: rgba(239, 68, 68, 0.9); color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+    grid.innerHTML = videos.map((v, index) => {
+        const stored = isStoredVideo(v.url);
+        const mediaPart = stored
+            ? `<video src="${v.url}" controls preload="metadata" style="width:100%;aspect-ratio:16/9;background:#000;display:block;"></video>`
+            : `<div style="background:#f1f5f9;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;">
+                 <i class="fas fa-film" style="font-size:3rem;color:var(--blue-accent);opacity:0.8;"></i>
+               </div>`;
+        return `
+        <div class="dash-card" style="padding:0;overflow:hidden;position:relative;">
+            <div style="position:relative;">
+                ${mediaPart}
+                <button onclick="deleteAnalysisVideo(${index})" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.9);color:#fff;border:none;padding:4px 8px;border-radius:6px;cursor:pointer;font-size:0.75rem;z-index:1;">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
-            <div style="padding: 16px;">
-                <h5 style="margin: 0 0 8px 0; font-size: 1rem; color: var(--navy-dark);">${v.title}</h5>
-                <p style="margin: 0 0 16px 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">${v.notes || 'No notes provided.'}</p>
-                <a href="${v.url}" target="_blank" class="dash-btn outline sm" style="width: 100%; text-align: center; display: block; text-decoration: none;">
-                    <i class="fas fa-video"></i> Watch Video
-                </a>
+            <div style="padding:14px 16px;">
+                <h5 style="margin:0 0 6px;font-size:0.95rem;color:var(--navy-dark);">${v.title}</h5>
+                ${v.notes ? `<p style="margin:0 0 10px;font-size:0.82rem;color:var(--text-secondary);line-height:1.4;">${v.notes}</p>` : ''}
+                ${!stored ? `<a href="${v.url}" target="_blank" rel="noopener" class="dash-btn outline sm" style="width:100%;text-align:center;display:block;text-decoration:none;"><i class="fas fa-video"></i> Watch Video</a>` : ''}
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 window.saveHighlight = async () => {
-    const title = document.getElementById('highlightTitle').value;
-    const url = document.getElementById('highlightUrl').value;
-    const description = document.getElementById('highlightDescription').value;
+    const title = document.getElementById('highlightTitle').value.trim();
+    const fileInput = document.getElementById('highlightFileInput');
+    const urlInput = document.getElementById('highlightUrl').value.trim();
+    const description = document.getElementById('highlightDescription').value.trim();
+    const file = fileInput?.files?.[0];
 
-    if (!title || !url) {
-        showToast('Please provide a title and URL.', 'warning');
-        return;
-    }
+    if (!title) { showToast('Please provide a title.', 'warning'); return; }
+    if (!file && !urlInput) { showToast('Upload a video file or paste a link.', 'warning'); return; }
 
-    const currentHighlights = typeof currentPlayer.highlights === 'string'
-        ? JSON.parse(currentPlayer.highlights || '[]')
-        : (currentPlayer.highlights || []);
+    const btn = document.getElementById('btnSaveHighlight');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; }
 
-    const newHighlight = { title, url, description, timestamp: new Date().toISOString() };
-    const updatedHighlights = [...currentHighlights, newHighlight];
+    try {
+        let videoUrl = urlInput;
 
-    const success = await squadManager.updatePlayer(currentPlayerId, {
-        highlights: JSON.stringify(updatedHighlights)
-    });
+        if (file) {
+            const progressEl = document.getElementById('highlightUploadProgress');
+            const progressBar = document.getElementById('highlightProgressBar');
+            const progressLabel = document.getElementById('highlightProgressLabel');
+            if (progressEl) progressEl.style.display = '';
+            videoUrl = await uploadToR2(file, 'player_highlight', currentPlayerId, (pct) => {
+                if (progressBar) progressBar.style.width = pct + '%';
+                if (progressLabel) progressLabel.textContent = pct < 100 ? 'Uploading to R2…' : 'Processing…';
+            });
+            if (progressEl) progressEl.style.display = 'none';
+        }
 
-    if (success) {
-        currentPlayer.highlights = updatedHighlights;
-        renderHighlights();
-        closeModal('modalAddHighlight');
-        // Clear inputs
-        document.getElementById('highlightTitle').value = '';
-        document.getElementById('highlightUrl').value = '';
-        document.getElementById('highlightDescription').value = '';
-        showToast('Highlight added successfully', 'success');
-    } else {
-        showToast('Failed to save highlight.', 'error');
+        const currentHighlights = typeof currentPlayer.highlights === 'string'
+            ? JSON.parse(currentPlayer.highlights || '[]')
+            : (currentPlayer.highlights || []);
+
+        const newHighlight = { title, url: videoUrl, description, timestamp: new Date().toISOString() };
+        let updatedHighlights;
+
+        if (!tierAtLeast('elite') && currentHighlights.length >= 1) {
+            const confirmed = await profileConfirm(
+                'Replace Existing Highlight',
+                'Your plan allows 1 highlight per player. This will replace the current one. Upgrade to Elite for unlimited highlights.',
+                'Replace'
+            );
+            if (!confirmed) return;
+            updatedHighlights = [newHighlight];
+        } else {
+            updatedHighlights = [...currentHighlights, newHighlight];
+        }
+
+        const success = await squadManager.updatePlayer(currentPlayerId, { highlights: JSON.stringify(updatedHighlights) });
+        if (success) {
+            currentPlayer.highlights = updatedHighlights;
+            renderHighlights();
+            closeModal('modalAddHighlight');
+            document.getElementById('highlightTitle').value = '';
+            document.getElementById('highlightUrl').value = '';
+            document.getElementById('highlightDescription').value = '';
+            if (fileInput) { fileInput.value = ''; document.getElementById('highlightDropLabel').textContent = 'Drag video here or click to browse'; }
+            showToast('Highlight added', 'success');
+        } else {
+            showToast('Failed to save highlight.', 'error');
+        }
+    } catch (err) {
+        showToast(err.message || 'Upload failed', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Add Highlight'; }
     }
 };
 
 window.saveAnalysisVideo = async () => {
-    const title = document.getElementById('analysisVideoTitle').value;
-    const url = document.getElementById('analysisVideoUrl').value;
-    const notes = document.getElementById('analysisVideoNotes').value;
+    const title = document.getElementById('analysisVideoTitle').value.trim();
+    const fileInput = document.getElementById('analysisFileInput');
+    const urlInput = document.getElementById('analysisVideoUrl').value.trim();
+    const notes = document.getElementById('analysisVideoNotes').value.trim();
+    const file = fileInput?.files?.[0];
 
-    if (!title || !url) {
-        showToast('Please provide a title and URL.', 'warning');
-        return;
-    }
+    if (!title) { showToast('Please provide a title.', 'warning'); return; }
+    if (!file && !urlInput) { showToast('Upload a video file or paste a link.', 'warning'); return; }
 
-    const currentVideos = typeof currentPlayer.analysisVideos === 'string'
-        ? JSON.parse(currentPlayer.analysisVideos || '[]')
-        : (currentPlayer.analysisVideos || []);
+    const btn = document.getElementById('btnSaveAnalysisVideo');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…'; }
 
-    const newVideo = { title, url, notes, timestamp: new Date().toISOString() };
-    const updatedVideos = [...currentVideos, newVideo];
+    try {
+        let videoUrl = urlInput;
 
-    const success = await squadManager.updatePlayer(currentPlayerId, {
-        analysisVideos: JSON.stringify(updatedVideos)
-    });
+        if (file) {
+            const progressEl = document.getElementById('analysisUploadProgress');
+            const progressBar = document.getElementById('analysisProgressBar');
+            const progressLabel = document.getElementById('analysisProgressLabel');
+            if (progressEl) progressEl.style.display = '';
+            videoUrl = await uploadToR2(file, 'player_analysis', currentPlayerId, (pct) => {
+                if (progressBar) progressBar.style.width = pct + '%';
+                if (progressLabel) progressLabel.textContent = pct < 100 ? 'Uploading to R2…' : 'Processing…';
+            });
+            if (progressEl) progressEl.style.display = 'none';
+        }
 
-    if (success) {
-        currentPlayer.analysisVideos = updatedVideos;
-        renderAnalysisVideos();
-        closeModal('modalAddAnalysisVideo');
-        // Clear inputs
-        document.getElementById('analysisVideoTitle').value = '';
-        document.getElementById('analysisVideoUrl').value = '';
-        document.getElementById('analysisVideoNotes').value = '';
-        showToast('Analysis video added successfully', 'success');
-    } else {
-        showToast('Failed to save video.', 'error');
+        const currentVideos = typeof currentPlayer.analysisVideos === 'string'
+            ? JSON.parse(currentPlayer.analysisVideos || '[]')
+            : (currentPlayer.analysisVideos || []);
+
+        const newVideo = { title, url: videoUrl, notes, timestamp: new Date().toISOString() };
+        let updatedVideos;
+
+        if (!tierAtLeast('elite') && currentVideos.length >= 1) {
+            const confirmed = await profileConfirm(
+                'Replace Existing Video',
+                'Your plan allows 1 analysis video per player. This will replace the current one. Upgrade to Elite for unlimited videos.',
+                'Replace'
+            );
+            if (!confirmed) return;
+            updatedVideos = [newVideo];
+        } else {
+            updatedVideos = [...currentVideos, newVideo];
+        }
+
+        const success = await squadManager.updatePlayer(currentPlayerId, { analysisVideos: JSON.stringify(updatedVideos) });
+        if (success) {
+            currentPlayer.analysisVideos = updatedVideos;
+            renderAnalysisVideos();
+            closeModal('modalAddAnalysisVideo');
+            document.getElementById('analysisVideoTitle').value = '';
+            document.getElementById('analysisVideoUrl').value = '';
+            document.getElementById('analysisVideoNotes').value = '';
+            if (fileInput) { fileInput.value = ''; document.getElementById('analysisDropLabel').textContent = 'Drag video here or click to browse'; }
+            showToast('Analysis video added', 'success');
+        } else {
+            showToast('Failed to save video.', 'error');
+        }
+    } catch (err) {
+        showToast(err.message || 'Upload failed', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Add Video'; }
     }
 };
 

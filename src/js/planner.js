@@ -4,6 +4,7 @@
  */
 import '../css/planner.css';
 import supabase from '../supabase.js';
+import { uploadToR2 } from './r2-upload.js';
 import squadManager from '../managers/squad-manager.js';
 import { showToast } from '../toast.js';
 import { getProfile } from '../auth.js';
@@ -696,16 +697,11 @@ async function uploadVideoFile(id, fileInput) {
 
     if (progressFill) progressFill.style.width = '40%';
 
-    const { data, error } = await supabase.storage
-      .from('drill-videos')
-      .upload(fileName, file, { cacheControl: '3600', upsert: false });
-
-    if (error) throw error;
+    const publicUrl = await uploadToR2(file, 'drill', null, (pct) => {
+      if (progressFill) progressFill.style.width = (30 + pct * 0.5) + '%';
+    });
 
     if (progressFill) progressFill.style.width = '80%';
-
-    const { data: urlData } = supabase.storage.from('drill-videos').getPublicUrl(fileName);
-    const publicUrl = urlData?.publicUrl;
 
     if (publicUrl) {
       const urlInput = document.getElementById(`vurl-${id}`);

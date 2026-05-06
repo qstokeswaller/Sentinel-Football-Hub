@@ -6,6 +6,7 @@ import squadManager from '../managers/squad-manager.js';
 import matchManager from '../managers/match-manager.js';
 import { showToast, showConfirm } from '../toast.js';
 import { hasFeature, showUpgradeToast } from '../tier.js';
+import { uploadToR2 } from './r2-upload.js';
 
 let _currentMdTab = 'details';
 
@@ -1971,18 +1972,15 @@ async function uploadAnalysisVideoFile(input) {
     if (label) label.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading…';
 
     try {
-        const ext = file.name.split('.').pop();
-        const path = `matches/${match.id}/videos/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error } = await supabase.storage.from('drill-videos').upload(path, file, { upsert: false });
-        if (error) throw error;
-        const { data: { publicUrl } } = supabase.storage.from('drill-videos').getPublicUrl(path);
-
+        const publicUrl = await uploadToR2(file, 'match', match.id, (pct) => {
+            if (label) label.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${pct < 100 ? pct + '%' : 'Processing…'}`;
+        });
         const list = document.getElementById('editVideosList');
         if (list) _appendAnalysisChip(list, publicUrl, file.name, 'Video');
-        showToast('Video uploaded', 'success');
+        showToast('Video uploaded to R2', 'success');
     } catch (e) {
         console.error('Video upload failed:', e);
-        showToast('Video upload failed', 'error');
+        showToast(e.message || 'Video upload failed', 'error');
     } finally {
         if (label) label.innerHTML = '<i class="fas fa-upload"></i> Upload File';
         input.value = '';

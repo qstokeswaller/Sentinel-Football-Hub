@@ -693,49 +693,6 @@
                         </div>
                     </div>
 
-                    <!-- Pro: Single Highlight Video -->
-                    <div id="mediaSingleHighlight" class="section-card" style="display:none; margin-bottom:24px; padding:24px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-                            <h4 style="margin:0; font-size:1.1rem; color:var(--navy-dark); display:flex; align-items:center; gap:8px;">
-                                <i class="fas fa-star" style="color:#f59e0b;"></i> Feature Highlight
-                            </h4>
-                            <span style="font-size:0.7rem; background:#e0f2fe; color:#0284c7; border-radius:6px; padding:3px 8px; font-weight:700;">PRO</span>
-                        </div>
-                        <p style="font-size:0.82rem; color:#64748b; margin:0 0 16px;">Pin one standout highlight video for this player.</p>
-                        <div class="form-group-bubble" style="margin-bottom:12px;">
-                            <label>Video Title</label>
-                            <input type="text" id="mediaHighlightTitle" class="form-control-bubble" placeholder="e.g. Solo Goal vs United">
-                        </div>
-                        <div class="form-group-bubble" style="margin-bottom:12px;">
-                            <label>Video URL</label>
-                            <input type="url" id="mediaHighlightUrl" class="form-control-bubble" placeholder="YouTube, Vimeo or direct link">
-                        </div>
-                        <div style="display:flex; justify-content:flex-end;">
-                            <button id="btnSaveMediaHighlight" class="dash-btn primary sm" data-min-role="coach"><i class="fas fa-save"></i> Save Highlight</button>
-                        </div>
-                        <div id="mediaHighlightPreview" style="display:none; margin-top:16px; padding:12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <i class="fas fa-play-circle" style="font-size:1.5rem; color:var(--blue-accent);"></i>
-                                    <div>
-                                        <div id="mediaHighlightPreviewTitle" style="font-weight:600; font-size:0.88rem; color:var(--navy-dark);"></div>
-                                        <a id="mediaHighlightPreviewUrl" href="#" target="_blank" style="font-size:0.75rem; color:var(--blue-accent);">Open Video</a>
-                                    </div>
-                                </div>
-                                <button id="btnClearMediaHighlight" class="dash-btn sm" style="background:#fee2e2; color:#ef4444; border:1px solid #fca5a5; padding:4px 10px;" data-min-role="coach"><i class="fas fa-times"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Base: no highlights message -->
-                    <div id="mediaBaseMessage" style="display:none;">
-                        <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:32px; text-align:center; color:#94a3b8;">
-                            <i class="fas fa-star" style="font-size:2rem; margin-bottom:12px; display:block;"></i>
-                            <p style="margin:0; font-weight:600; color:#64748b;">Highlights available on Pro plan</p>
-                            <p style="font-size:0.8rem; margin-top:4px;">Upgrade to add highlight videos per player.</p>
-                        </div>
-                    </div>
-
                     <!-- Player Gallery Photos -->
                     <div class="section-card" style="padding:24px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
@@ -934,7 +891,7 @@
                                 <i class="fas fa-film" style="color:var(--blue-accent);"></i> Analysis Videos
                             </h4>
                             <button class="dash-btn primary sm" data-min-role="coach" onclick="openAnalysisVideoModal()">
-                                <i class="fas fa-upload"></i> Add Video Link
+                                <i class="fas fa-plus"></i> Add Video
                             </button>
                         </div>
                         <div id="analysisVideosGrid" class="analysis-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px;"></div>
@@ -978,7 +935,7 @@
     </div>
 
     <div class="modal-overlay" id="modalAddHighlight">
-        <div class="modal-container" style="max-width:500px;">
+        <div class="modal-container" style="max-width:520px;">
             <div class="modal-header">
                 <h2>Add Player Highlight</h2>
                 <button class="btn-close-modal" onclick="closeModal('modalAddHighlight')"><i class="fas fa-times"></i></button>
@@ -989,23 +946,42 @@
                     <input type="text" id="highlightTitle" class="form-control-bubble" placeholder="e.g., Solo Run Goal vs United">
                 </div>
                 <div class="form-group-bubble">
-                    <label>Video Link / URL</label>
-                    <input type="text" id="highlightUrl" class="form-control-bubble" placeholder="YouTube, Vimeo or direct video link">
+                    <label>Upload Video File</label>
+                    <div id="highlightDropZone" class="upload-drop-zone" style="padding:28px 20px; text-align:center; cursor:pointer; flex-direction:column; gap:4px;" onclick="document.getElementById('highlightFileInput').click()">
+                        <i class="fas fa-cloud-upload-alt" style="font-size:2rem; color:#cbd5e1; display:block; margin-bottom:6px;"></i>
+                        <p id="highlightDropLabel" style="margin:0; font-size:0.85rem; color:#64748b; font-weight:600;">Drag video here or click to browse</p>
+                        <p style="margin:4px 0 0; font-size:0.72rem; color:#94a3b8;">MP4, MOV, WebM · Max 500MB</p>
+                        <input type="file" id="highlightFileInput" accept="video/*" style="display:none;">
+                    </div>
+                    <div id="highlightUploadProgress" style="display:none; margin-top:8px;">
+                        <div style="background:#e2e8f0; border-radius:99px; height:5px; overflow:hidden;">
+                            <div id="highlightProgressBar" style="height:100%; background:var(--blue-accent); width:0%; transition:width 0.3s;"></div>
+                        </div>
+                        <p id="highlightProgressLabel" style="font-size:0.72rem; color:#64748b; margin:4px 0 0; text-align:center;">Uploading to R2…</p>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; margin:4px 0 12px;">
+                    <div style="flex:1; height:1px; background:#e2e8f0;"></div>
+                    <span style="font-size:0.72rem; color:#94a3b8; font-weight:700; letter-spacing:0.05em; white-space:nowrap;">OR PASTE A LINK</span>
+                    <div style="flex:1; height:1px; background:#e2e8f0;"></div>
+                </div>
+                <div class="form-group-bubble">
+                    <input type="url" id="highlightUrl" class="form-control-bubble" placeholder="YouTube, Vimeo or direct video link">
                 </div>
                 <div class="form-group-bubble">
                     <label>Description (Optional)</label>
-                    <textarea id="highlightDescription" class="form-control-bubble" style="border-radius:16px; min-height:100px; padding:14px 18px;" placeholder="Briefly describe the key moment..."></textarea>
+                    <textarea id="highlightDescription" class="form-control-bubble" style="border-radius:16px; min-height:80px; padding:14px 18px;" placeholder="Briefly describe the key moment…"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="dash-btn outline" onclick="closeModal('modalAddHighlight')">Cancel</button>
-                <button class="dash-btn primary" onclick="saveHighlight()">Add Highlight</button>
+                <button class="dash-btn primary" id="btnSaveHighlight" onclick="saveHighlight()"><i class="fas fa-plus"></i> Add Highlight</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="modalAddAnalysisVideo">
-        <div class="modal-container" style="max-width:500px;">
+        <div class="modal-container" style="max-width:520px;">
             <div class="modal-header">
                 <h2>Add Analysis Video</h2>
                 <button class="btn-close-modal" onclick="closeModal('modalAddAnalysisVideo')"><i class="fas fa-times"></i></button>
@@ -1013,20 +989,39 @@
             <div class="modal-body" style="padding:24px;">
                 <div class="form-group-bubble">
                     <label>Video Title</label>
-                    <input type="text" id="analysisVideoTitle" class="form-control-bubble" placeholder="e.g., Performance Analysis - Match 5">
+                    <input type="text" id="analysisVideoTitle" class="form-control-bubble" placeholder="e.g., Performance Analysis — Match 5">
                 </div>
                 <div class="form-group-bubble">
-                    <label>Video Link / URL</label>
-                    <input type="text" id="analysisVideoUrl" class="form-control-bubble" placeholder="YouTube, Vimeo or direct video link">
+                    <label>Upload Video File</label>
+                    <div id="analysisDropZone" class="upload-drop-zone" style="padding:28px 20px; text-align:center; cursor:pointer; flex-direction:column; gap:4px;" onclick="document.getElementById('analysisFileInput').click()">
+                        <i class="fas fa-cloud-upload-alt" style="font-size:2rem; color:#cbd5e1; display:block; margin-bottom:6px;"></i>
+                        <p id="analysisDropLabel" style="margin:0; font-size:0.85rem; color:#64748b; font-weight:600;">Drag video here or click to browse</p>
+                        <p style="margin:4px 0 0; font-size:0.72rem; color:#94a3b8;">MP4, MOV, WebM · Max 500MB</p>
+                        <input type="file" id="analysisFileInput" accept="video/*" style="display:none;">
+                    </div>
+                    <div id="analysisUploadProgress" style="display:none; margin-top:8px;">
+                        <div style="background:#e2e8f0; border-radius:99px; height:5px; overflow:hidden;">
+                            <div id="analysisProgressBar" style="height:100%; background:var(--blue-accent); width:0%; transition:width 0.3s;"></div>
+                        </div>
+                        <p id="analysisProgressLabel" style="font-size:0.72rem; color:#64748b; margin:4px 0 0; text-align:center;">Uploading to R2…</p>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; margin:4px 0 12px;">
+                    <div style="flex:1; height:1px; background:#e2e8f0;"></div>
+                    <span style="font-size:0.72rem; color:#94a3b8; font-weight:700; letter-spacing:0.05em; white-space:nowrap;">OR PASTE A LINK</span>
+                    <div style="flex:1; height:1px; background:#e2e8f0;"></div>
+                </div>
+                <div class="form-group-bubble">
+                    <input type="url" id="analysisVideoUrl" class="form-control-bubble" placeholder="YouTube, Vimeo or direct video link">
                 </div>
                 <div class="form-group-bubble">
                     <label>Notes (Optional)</label>
-                    <textarea id="analysisVideoNotes" class="form-control-bubble" style="border-radius:16px; min-height:100px; padding:14px 18px;" placeholder="Specific tactical notes or observations..."></textarea>
+                    <textarea id="analysisVideoNotes" class="form-control-bubble" style="border-radius:16px; min-height:80px; padding:14px 18px;" placeholder="Tactical notes or observations…"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="dash-btn outline" onclick="closeModal('modalAddAnalysisVideo')">Cancel</button>
-                <button class="dash-btn primary" onclick="saveAnalysisVideo()">Add Video</button>
+                <button class="dash-btn primary" id="btnSaveAnalysisVideo" onclick="saveAnalysisVideo()"><i class="fas fa-plus"></i> Add Video</button>
             </div>
         </div>
     </div>
