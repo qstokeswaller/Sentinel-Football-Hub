@@ -40,7 +40,8 @@
         .fin-modal-box h3 { margin:0 0 20px; font-size:1.1rem; color:var(--text-primary); }
         .fin-form-group { margin-bottom:14px; }
         .fin-form-group label { display:block; font-size:0.78rem; font-weight:600; color:var(--text-secondary); margin-bottom:4px; }
-        .fin-form-group input, .fin-form-group select, .fin-form-group textarea { width:100%; padding:10px 14px; border:1px solid var(--border-light); border-radius:8px; font-family:inherit; font-size:0.85rem; background:var(--bg-body); color:var(--text-primary); box-sizing:border-box; }
+        .fin-form-group input, .fin-form-group select, .fin-form-group textarea { width:100%; padding:10px 14px; border:1px solid var(--border-light); border-radius:8px; font-family:inherit; font-size:0.85rem; background:var(--bg-body); color:var(--text-primary); box-sizing:border-box; transition:border-color 0.15s, box-shadow 0.15s; }
+        .fin-form-group input:focus, .fin-form-group select:focus, .fin-form-group textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(0,196,154,0.12); }
         .fin-form-group textarea { min-height:60px; resize:vertical; }
         .fin-modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; }
 
@@ -60,7 +61,8 @@
         .fin-chevron.open { transform:rotate(180deg); }
 
         .fin-player-detail { padding:0 18px 18px; border-top:1px solid var(--border-light); }
-        .fin-line-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:0.82rem; }
+        .fin-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .fin-line-table { width:100%; border-collapse:collapse; margin-top:12px; font-size:0.82rem; min-width:480px; }
         .fin-line-table th { text-align:left; font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); padding:6px 8px; border-bottom:1px solid var(--border-light); }
         .fin-line-table td { padding:8px; border-bottom:1px solid var(--border-light); color:var(--text-primary); }
         .fin-line-row.discount td { color:#10b981; }
@@ -82,7 +84,7 @@
         .fin-month-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
         .fin-month-header h3 { margin:0; font-size:0.95rem; color:var(--text-primary); }
         .fin-month-summary { font-size:0.78rem; color:var(--text-muted); }
-        .fin-history-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+        .fin-history-table { width:100%; border-collapse:collapse; font-size:0.82rem; min-width:540px; }
         .fin-history-table th { text-align:left; font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); padding:8px; border-bottom:1px solid var(--border-light); }
         .fin-history-table td { padding:10px 8px; border-bottom:1px solid var(--border-light); color:var(--text-primary); }
         .fin-actions-cell { display:flex; align-items:center; gap:6px; }

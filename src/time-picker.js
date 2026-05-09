@@ -34,13 +34,13 @@ function injectTheme() {
         .flatpickr-time input:hover,
         .flatpickr-time input:focus,
         .flatpickr-time .flatpickr-am-pm:hover {
-            background: rgba(59, 130, 246, 0.06) !important;
+            background: rgba(0, 196, 154, 0.07) !important;
         }
         .flatpickr-time .numInputWrapper span.arrowUp::after {
-            border-bottom-color: #3b82f6 !important;
+            border-bottom-color: #00C49A !important;
         }
         .flatpickr-time .numInputWrapper span.arrowDown::after {
-            border-top-color: #3b82f6 !important;
+            border-top-color: #00C49A !important;
         }
         .flatpickr-time .flatpickr-time-separator {
             color: #64748b !important;
@@ -61,9 +61,9 @@ function injectTheme() {
             transition: border 0.2s, box-shadow 0.2s !important;
         }
         input.flatpickr-input[data-tp-upgraded]:focus {
-            border-color: var(--primary, #3b82f6) !important;
+            border-color: var(--primary, #00C49A) !important;
             outline: none !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(0, 196, 154, 0.12) !important;
         }
     `;
     document.head.appendChild(s);

@@ -4,7 +4,7 @@
  */
 import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 
 let _clubId = null;
 let _userId = null;
@@ -237,7 +237,7 @@ async function saveRule(e) {
     } else {
         ({ error } = await supabase.from('pricing_rules').insert(row));
     }
-    if (error) { showToast('Failed to save rule: ' + error.message, 'error'); return; }
+    if (error) { showToast(friendlyError(error), 'error'); return; }
     closeRuleModal();
     showToast(id ? 'Rule updated' : 'Rule added', 'success');
     loadPricingRules();
@@ -518,6 +518,7 @@ function renderPlayerPreviewCard(pd, idx, month) {
                 </select>
                 <span class="fin-tier-auto">${pd.rateInfo ? `Auto: ${esc(pd.rateInfo.tierName)}` : ''}</span>
             </div>
+            <div class="fin-table-scroll">
             <table class="fin-line-table">
                 <thead><tr><th>Date</th><th>Description</th><th>Amount</th><th></th></tr></thead>
                 <tbody id="lineItems-${idx}">
@@ -530,6 +531,7 @@ function renderPlayerPreviewCard(pd, idx, month) {
                     </tr>`).join('')}
                 </tbody>
             </table>
+            </div>
             <div class="fin-adjust-bar">
                 <button class="dash-btn sm" onclick="addPenalty(${idx})"><i class="fas fa-exclamation-triangle"></i> Add Penalty</button>
                 <button class="dash-btn sm" onclick="addDiscount(${idx})"><i class="fas fa-tag"></i> Add Discount</button>
@@ -695,7 +697,7 @@ window.generateSingleInvoice = async function(idx, month) {
     };
 
     const { error } = await supabase.from('invoices').upsert(row, { onConflict: 'club_id,player_id,month' });
-    if (error) { showToast('Failed to save invoice: ' + error.message, 'error'); return; }
+    if (error) { showToast(friendlyError(error), 'error'); return; }
     showToast(`Invoice for ${pd.player.name} saved`, 'success');
     pd.existingInvoice = { status: 'draft' };
     renderInvoicePreviews(month);
@@ -720,7 +722,7 @@ async function generateAllInvoices() {
     }));
 
     const { error } = await supabase.from('invoices').upsert(rows, { onConflict: 'club_id,player_id,month' });
-    if (error) { showToast('Failed to generate invoices: ' + error.message, 'error'); return; }
+    if (error) { showToast(friendlyError(error), 'error'); return; }
     showToast(`${rows.length} invoices generated`, 'success');
     _playerInvoiceData.forEach(pd => { pd.existingInvoice = { status: 'draft' }; });
     renderInvoicePreviews(month);

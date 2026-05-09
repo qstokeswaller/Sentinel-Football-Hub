@@ -9,358 +9,875 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #00a882 0%, #00C49A 50%, #00a882 100%);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #e2e8f0;
+            padding: 24px 16px;
+            /* Background — replace this later with a cooler image/video */
+            background: linear-gradient(135deg, #0a1628 0%, #0f2040 40%, #0d3330 100%);
         }
-        .login-container {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 48px 40px;
+
+        /* ── AUTH WRAPPER ─────────────────────────────────────── */
+        .auth-wrapper {
+            position: relative;
+            display: flex;
             width: 100%;
-            max-width: 420px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+            max-width: 960px;
+            min-height: 580px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
         }
-        .login-logo {
-            text-align: center;
-            margin-bottom: 32px;
+
+        /* ── FORM PANELS ──────────────────────────────────────── */
+        .form-panel {
+            flex: 0 0 50%;
+            padding: 52px 44px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #fff;
         }
-        .login-logo img {
-            width: 64px;
-            height: 64px;
-            object-fit: contain;
-            margin-bottom: 12px;
+
+        .panel-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 6px;
         }
-        .login-logo i {
-            font-size: 48px;
-            color: #00C49A;
-            margin-bottom: 12px;
+        .panel-subtitle {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 28px;
         }
-        .login-logo h1 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #f1f5f9;
-        }
-        .login-logo p {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-top: 4px;
-        }
+
+        /* ── INVITE BANNER ────────────────────────────────────── */
         .invite-banner {
-            background: #065f4633;
-            border: 1px solid #047857;
-            color: #6ee7b7;
-            padding: 12px 14px;
-            border-radius: 8px;
-            font-size: 13px;
+            background: #ecfdf5;
+            border: 1px solid #6ee7b7;
+            color: #065f46;
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
             margin-bottom: 20px;
-            text-align: center;
+            line-height: 1.5;
             display: none;
         }
         .invite-banner.show { display: block; }
-        .form-group {
-            margin-bottom: 20px;
+
+        /* ── ERROR / SUCCESS ──────────────────────────────────── */
+        .auth-msg {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            margin-bottom: 16px;
+            display: none;
+            line-height: 1.5;
         }
-        .form-group label {
+        .auth-msg.error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+        .auth-msg.success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            text-align: center;
+            padding: 20px 16px;
+        }
+
+        /* ── FORM FIELDS ──────────────────────────────────────── */
+        .field-group {
+            margin-bottom: 16px;
+        }
+        .field-group label {
             display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
             margin-bottom: 6px;
         }
-        .form-group input {
+        .field-group input {
             width: 100%;
-            padding: 12px 14px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #e2e8f0;
-            font-size: 14px;
+            padding: 11px 14px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            color: #0f172a;
+            font-size: 0.9rem;
             font-family: 'Inter', sans-serif;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .form-group input:focus {
+        .field-group input:focus {
             outline: none;
             border-color: #00C49A;
+            box-shadow: 0 0 0 3px rgba(0, 196, 154, 0.12);
+            background: #fff;
+        }
+        .field-group input:read-only {
+            opacity: 0.65;
+            cursor: not-allowed;
         }
         .name-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-        .name-row .form-group {
-            flex: 1;
+
+        /* ── FORGOT PASSWORD ──────────────────────────────────── */
+        .forgot-link {
+            display: block;
+            text-align: right;
+            font-size: 0.78rem;
+            color: #00C49A;
+            margin-top: -10px;
+            margin-bottom: 18px;
+            cursor: pointer;
+            text-decoration: none;
         }
-        .btn-login {
+        .forgot-link:hover { text-decoration: underline; }
+
+        /* ── TIER SELECTOR ────────────────────────────────────── */
+        .tier-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 10px;
+        }
+        .tier-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tier-chip {
+            position: relative;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: left;
+        }
+        .tier-chip:hover {
+            border-color: #00C49A;
+            background: #f0fdf9;
+        }
+        .tier-chip.selected {
+            border-color: #00C49A;
+            background: #ecfdf5;
+        }
+        .tier-chip-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #0f172a;
+            display: block;
+        }
+        .tier-chip-price {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .tier-chip.selected .tier-chip-price { color: #047857; }
+        .tier-popular {
+            position: absolute;
+            top: -1px;
+            right: 6px;
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            background: #00C49A;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 0 0 5px 5px;
+        }
+        .tier-chip-check {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 16px;
+            height: 16px;
+            background: #00C49A;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .tier-chip-check i { font-size: 0.5rem; color: #fff; }
+        .tier-chip.selected .tier-chip-check { display: flex; }
+
+        /* ── SUBMIT BUTTON ────────────────────────────────────── */
+        .btn-submit {
             width: 100%;
             padding: 13px;
             background: #00C49A;
-            color: white;
+            color: #fff;
             border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: 600;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 700;
             font-family: 'Inter', sans-serif;
             cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 8px;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 4px;
+            letter-spacing: 0.2px;
         }
-        .btn-login:hover { background: #00a882; }
-        .btn-login:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .toggle-mode {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 13px;
-            color: #94a3b8;
-        }
-        .toggle-mode a {
-            color: #00C49A;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .toggle-mode a:hover { text-decoration: underline; }
-        .error-msg {
-            background: #7f1d1d33;
-            border: 1px solid #991b1b;
-            color: #fca5a5;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            margin-bottom: 16px;
-            display: none;
-        }
-        .signup-fields { display: none; }
-        .signup-fields.show { display: block; }
+        .btn-submit:hover:not(:disabled) { background: #00a882; }
+        .btn-submit:active:not(:disabled) { transform: scale(0.99); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* ── MOBILE ── */
-        @media (max-width: 480px) {
-            body {
-                min-height: 100dvh;
-                padding: 16px;
-                align-items: flex-start;
-                padding-top: 40px;
-            }
-            .login-container {
-                padding: 32px 24px;
-                border-radius: 12px;
-                max-width: 100%;
-            }
-            .login-logo {
-                margin-bottom: 24px;
-            }
-            .login-logo img {
-                width: 48px;
-                height: 48px;
-            }
-            .login-logo h1 {
-                font-size: 18px;
-            }
-            .login-logo p {
-                font-size: 12px;
-            }
-            .form-group {
-                margin-bottom: 16px;
-            }
-            .form-group input {
-                padding: 12px;
-                font-size: 16px; /* prevent iOS zoom */
-            }
-            .name-row {
+        /* ── DIVIDER ──────────────────────────────────────────── */
+        .form-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 16px;
+            color: #cbd5e1;
+            font-size: 0.75rem;
+        }
+        .form-divider::before,
+        .form-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        /* ── OVERLAY PANEL (teal, slides) ─────────────────────── */
+        .overlay-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(150deg, #008f72 0%, #00C49A 55%, #00d9a8 100%);
+            z-index: 20;
+            transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Sign-up mode: overlay slides from right to left */
+        .auth-wrapper.signup-active .overlay-panel {
+            transform: translateX(-100%);
+        }
+
+        /* Subtle pattern overlay */
+        .overlay-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .overlay-content {
+            position: absolute;
+            width: 100%;
+            padding: 48px 40px;
+            text-align: center;
+            color: #fff;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .overlay-content.oc-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+        }
+
+        .ov-icon {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            opacity: 0.9;
+        }
+        .ov-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+        .ov-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .btn-overlay {
+            display: inline-block;
+            padding: 11px 28px;
+            border: 2px solid rgba(255,255,255,0.7);
+            border-radius: 9999px;
+            color: #fff;
+            font-size: 0.875rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            background: transparent;
+            transition: background 0.2s, border-color 0.2s;
+            letter-spacing: 0.2px;
+        }
+        .btn-overlay:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: #fff;
+        }
+
+        .ov-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .ov-brand i { font-size: 1.5rem; opacity: 0.9; }
+        .ov-brand-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            opacity: 0.85;
+            letter-spacing: 0.2px;
+        }
+
+        /* ── PROCESSING / MAGIC LINK STATE ───────────────────── */
+        .auth-processing {
+            padding: 52px 44px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 300px;
+            width: 100%;
+        }
+        .auth-processing .proc-icon {
+            font-size: 3rem;
+            color: #00C49A;
+            margin-bottom: 16px;
+        }
+        .auth-processing h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+        .auth-processing p {
+            font-size: 0.85rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        /* ── RESPONSIVE ───────────────────────────────────────── */
+        @media (max-width: 768px) {
+            body { padding: 0; align-items: flex-start; background: #f8fafc; }
+
+            .auth-wrapper {
                 flex-direction: column;
-                gap: 0;
+                border-radius: 0;
+                min-height: 100dvh;
+                box-shadow: none;
             }
-            .btn-login {
-                padding: 14px;
-                font-size: 15px;
-                min-height: 48px;
+
+            /* On mobile, overlay becomes a top brand bar - no sliding */
+            .overlay-panel {
+                position: relative;
+                width: 100%;
+                height: auto;
+                min-height: 120px;
+                padding: 28px 24px;
+                transform: none !important;
+                transition: none;
+                order: -1; /* brand bar always on top */
+                flex-direction: column;
             }
-            .toggle-mode {
-                margin-top: 16px;
+
+            .overlay-content {
+                position: relative;
+                padding: 0;
+                transform: none !important;
             }
+            .overlay-content.oc-hidden {
+                opacity: 0;
+                height: 0;
+                overflow: hidden;
+                pointer-events: none;
+            }
+
+            .ov-title { font-size: 1.1rem; margin-bottom: 4px; }
+            .ov-subtitle { font-size: 0.8rem; margin-bottom: 16px; }
+            .ov-icon { font-size: 1.6rem; margin-bottom: 8px; }
+            .btn-overlay { padding: 8px 20px; font-size: 0.8rem; }
+
+            .form-panel {
+                flex: none;
+                width: 100%;
+                padding: 28px 24px 40px;
+            }
+
+            .panel-title { font-size: 1.3rem; }
+        }
+
+        @media (max-width: 480px) {
+            .name-row { grid-template-columns: 1fr; }
+            .tier-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 380px) {
+            .form-panel { padding: 20px 16px 32px; }
+            .tier-grid { grid-template-columns: 1fr; }
+            .tier-chip { padding: 8px 10px; }
+            .panel-title { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-logo">
-            <i class="fas fa-shield-alt" style="font-size:48px; color:#00C49A; display:block; margin-bottom:12px;"></i>
-            <h1>Sentinel Football Hub</h1>
-            <p id="loginSubtitle">Sign in to your coaching dashboard</p>
-        </div>
 
-        <div class="invite-banner" id="inviteBanner">
-            <i class="fas fa-envelope-open-text"></i>&nbsp; You've been invited! Create your account below.
-        </div>
+<div class="auth-wrapper" id="authWrapper">
 
-        <div class="error-msg" id="errorMsg"></div>
+    <!-- ── SIGN IN PANEL (always left) ── -->
+    <div class="form-panel" id="signinPanel">
+        <div id="signinContent">
+            <h1 class="panel-title">Sign In</h1>
+            <p class="panel-subtitle">Welcome back to your coaching dashboard</p>
 
-        <form id="authForm">
-            <div class="signup-fields" id="signupFields">
-                <div class="name-row">
-                    <div class="form-group">
-                        <label>First Name *</label>
-                        <input type="text" id="firstName" placeholder="First name">
-                    </div>
-                    <div class="form-group">
-                        <label>Surname</label>
-                        <input type="text" id="surname" placeholder="Surname">
-                    </div>
+            <div class="invite-banner" id="signinInviteBanner"></div>
+            <div class="auth-msg error" id="signinError"></div>
+
+            <form id="signinForm" novalidate>
+                <div class="field-group">
+                    <label>Email Address</label>
+                    <input type="email" id="siEmail" placeholder="coach@club.com" autocomplete="email" required>
                 </div>
-            </div>
-
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="email" placeholder="coach@club.com" required>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" placeholder="Your password" required minlength="6">
-            </div>
-
-            <div class="signup-fields" id="confirmPasswordGroup">
-                <div class="form-group">
-                    <label>Confirm Password *</label>
-                    <input type="password" id="confirmPassword" placeholder="Confirm your password" minlength="6">
+                <div class="field-group">
+                    <label>Password</label>
+                    <input type="password" id="siPassword" placeholder="Your password" autocomplete="current-password" required>
                 </div>
+
+                <a class="forgot-link" id="forgotLink" tabindex="0">Forgot your password?</a>
+
+                <button type="submit" class="btn-submit" id="signinBtn">
+                    <i class="fas fa-sign-in-alt" style="margin-right:8px;"></i>Sign In
+                </button>
+
+                <input type="hidden" id="inviteToken">
+            </form>
+
+            <div class="form-divider" style="margin-top:20px;">
+                <span style="white-space:nowrap;color:#94a3b8;">Don't have an account?</span>
             </div>
-
-            <input type="hidden" id="inviteToken">
-
-            <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
-        </form>
-
-        <div class="toggle-mode" id="toggleMode">
-            <span id="toggleText">Don't have an account?</span>
-            <a id="toggleLink">Sign Up</a>
+            <button class="btn-overlay" onclick="switchToSignup()"
+                style="width:100%;background:transparent;border:2px solid #e2e8f0;color:#475569;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;cursor:pointer;font-weight:600;font-size:0.875rem;transition:border-color 0.2s,color 0.2s;"
+                onmouseover="this.style.borderColor='#00C49A';this.style.color='#00C49A'"
+                onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569'">
+                Create an account
+            </button>
         </div>
     </div>
 
-    <script type="module">
-        import supabase from '../supabase.js';
-        import '../analytics.js';
+    <!-- ── SIGN UP PANEL (always right) ── -->
+    <div class="form-panel" id="signupPanel">
+        <div id="signupContent">
+            <h1 class="panel-title">Create Account</h1>
+            <p class="panel-subtitle">Start managing your club smarter today</p>
 
-        let isSignup = false;
-        let isInviteMode = false;
-        let inviteInfo = null; // { club_id, club_name, role, email } from RPC
-        const roleLabels = { admin: 'Admin', coach: 'Coach', viewer: 'Viewer' };
-        const form = document.getElementById('authForm');
-        const errorMsg = document.getElementById('errorMsg');
-        const submitBtn = document.getElementById('submitBtn');
-        const toggleLink = document.getElementById('toggleLink');
-        const toggleText = document.getElementById('toggleText');
-        const toggleMode = document.getElementById('toggleMode');
-        const signupFields = document.getElementById('signupFields');
-        const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
-        const inviteBanner = document.getElementById('inviteBanner');
-        const loginSubtitle = document.getElementById('loginSubtitle');
+            <div class="auth-msg error" id="signupError"></div>
 
-        function setSignupMode(on) {
-            isSignup = on;
-            signupFields.classList.toggle('show', on);
-            confirmPasswordGroup.classList.toggle('show', on);
-            submitBtn.textContent = on ? 'Create Account' : 'Sign In';
-            if (!isInviteMode) {
-                toggleText.textContent = on ? 'Already have an account?' : "Don't have an account?";
-                toggleLink.textContent = on ? 'Sign In' : 'Sign Up';
-            }
-            if (!isInviteMode) {
-                loginSubtitle.textContent = on ? 'Create your account' : 'Sign in to your coaching dashboard';
-            }
-            errorMsg.style.display = 'none';
+            <form id="signupForm" novalidate>
+                <div class="name-row">
+                    <div class="field-group">
+                        <label>First Name *</label>
+                        <input type="text" id="suFirstName" placeholder="First name" autocomplete="given-name" required>
+                    </div>
+                    <div class="field-group">
+                        <label>Surname *</label>
+                        <input type="text" id="suSurname" placeholder="Surname" autocomplete="family-name" required>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Email Address *</label>
+                    <input type="email" id="suEmail" placeholder="coach@club.com" autocomplete="email" required>
+                </div>
+
+                <div class="name-row">
+                    <div class="field-group">
+                        <label>Password *</label>
+                        <input type="password" id="suPassword" placeholder="Min 8 characters" autocomplete="new-password" minlength="8" required>
+                    </div>
+                    <div class="field-group">
+                        <label>Confirm Password *</label>
+                        <input type="password" id="suConfirmPassword" placeholder="Repeat password" autocomplete="new-password" minlength="8" required>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label>Club / Organisation Name *</label>
+                    <input type="text" id="suClubName" placeholder="e.g. Northside FC" autocomplete="organization" required>
+                </div>
+
+                <!-- Tier Selector -->
+                <!-- Prices are placeholder ZAR — update when Paystack plans are created -->
+                <div class="tier-label"><i class="fas fa-layer-group" style="margin-right:5px;color:#00C49A;"></i>Choose your plan</div>
+                <div class="tier-grid" id="tierGrid">
+                    <div class="tier-chip" data-tier="free" onclick="selectTier('free')">
+                        <span class="tier-chip-name">Free</span>
+                        <span class="tier-chip-price">R0/month</span>
+                        <div class="tier-chip-check"><i class="fas fa-check"></i></div>
+                    </div>
+                    <div class="tier-chip selected" data-tier="basic" onclick="selectTier('basic')">
+                        <span class="tier-popular">Popular</span>
+                        <span class="tier-chip-name">Basic</span>
+                        <span class="tier-chip-price">R249/month</span>
+                        <div class="tier-chip-check"><i class="fas fa-check"></i></div>
+                    </div>
+                    <div class="tier-chip" data-tier="pro" onclick="selectTier('pro')">
+                        <span class="tier-chip-name">Pro</span>
+                        <span class="tier-chip-price">R499/month</span>
+                        <div class="tier-chip-check"><i class="fas fa-check"></i></div>
+                    </div>
+                    <div class="tier-chip" data-tier="elite" onclick="selectTier('elite')">
+                        <span class="tier-chip-name">Elite</span>
+                        <span class="tier-chip-price">R899/month</span>
+                        <div class="tier-chip-check"><i class="fas fa-check"></i></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="signupBtn">
+                    <i class="fas fa-shield-alt" style="margin-right:8px;"></i>Create Account
+                </button>
+            </form>
+
+            <div class="form-divider" style="margin-top:20px;">
+                <span style="white-space:nowrap;color:#94a3b8;">Already have an account?</span>
+            </div>
+            <button class="btn-overlay" onclick="switchToSignin()"
+                style="width:100%;background:transparent;border:2px solid #e2e8f0;color:#475569;border-radius:10px;padding:10px;font-family:'Inter',sans-serif;cursor:pointer;font-weight:600;font-size:0.875rem;transition:border-color 0.2s,color 0.2s;"
+                onmouseover="this.style.borderColor='#00C49A';this.style.color='#00C49A'"
+                onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#475569'">
+                Sign in instead
+            </button>
+        </div>
+    </div>
+
+    <!-- ── SLIDING OVERLAY (teal panel) ── -->
+    <div class="overlay-panel" id="overlayPanel">
+
+        <!-- Shown when overlay is on RIGHT (sign-in mode) -->
+        <div class="overlay-content" id="ocSignin">
+            <div class="ov-brand">
+                <i class="fas fa-shield-alt"></i>
+                <span class="ov-brand-name">Sentinel Football Hub</span>
+            </div>
+            <div class="ov-icon"><i class="fas fa-users"></i></div>
+            <h2 class="ov-title">Hey There!</h2>
+            <p class="ov-subtitle">
+                Begin your journey by creating an account.<br>
+                Manage your squads, matches, and more — all in one place.
+            </p>
+            <button class="btn-overlay" onclick="switchToSignup()">
+                Get Started <i class="fas fa-arrow-right" style="margin-left:6px;font-size:0.8em;"></i>
+            </button>
+        </div>
+
+        <!-- Shown when overlay is on LEFT (sign-up mode) -->
+        <div class="overlay-content oc-hidden" id="ocSignup">
+            <div class="ov-brand">
+                <i class="fas fa-shield-alt"></i>
+                <span class="ov-brand-name">Sentinel Football Hub</span>
+            </div>
+            <div class="ov-icon"><i class="fas fa-shield-alt"></i></div>
+            <h2 class="ov-title">Welcome Back!</h2>
+            <p class="ov-subtitle">
+                Stay connected by signing in with your credentials and continue your coaching journey.
+            </p>
+            <button class="btn-overlay" onclick="switchToSignin()">
+                Sign In <i class="fas fa-arrow-right" style="margin-left:6px;font-size:0.8em;"></i>
+            </button>
+        </div>
+
+    </div>
+
+</div><!-- /.auth-wrapper -->
+
+<script>
+    // ── Tier selection ─────────────────────────────────────────────────────────
+    let _selectedTier = 'basic';
+
+    function selectTier(tier) {
+        _selectedTier = tier;
+        document.querySelectorAll('.tier-chip').forEach(chip => {
+            chip.classList.toggle('selected', chip.dataset.tier === tier);
+        });
+    }
+
+    // ── Panel switching ────────────────────────────────────────────────────────
+    const wrapper = document.getElementById('authWrapper');
+    const ocSignin = document.getElementById('ocSignin');
+    const ocSignup = document.getElementById('ocSignup');
+    const SWITCH_DELAY = 300; // ms — halfway through the slide
+
+    function switchToSignup() {
+        wrapper.classList.add('signup-active');
+        setTimeout(() => {
+            ocSignin.classList.add('oc-hidden');
+            ocSignup.classList.remove('oc-hidden');
+        }, SWITCH_DELAY);
+        // On mobile: immediately swap content (no sliding)
+        if (window.innerWidth <= 768) {
+            document.getElementById('signinPanel').style.display = 'none';
+            document.getElementById('signupPanel').style.display = 'flex';
         }
+    }
 
-        // ── Magic link / invite email callback handling ──
-        // When a user clicks a Supabase invite email or magic link, they're redirected
-        // here with auth tokens in the URL hash (#access_token=...&type=invite).
-        // Supabase JS auto-exchanges these for a session.
-        let _magicLinkHandled = false;
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const hashType = hashParams.get('type');
-        if (hashType === 'invite' || hashType === 'magiclink' || hashType === 'signup' || hashType === 'recovery') {
-            _magicLinkHandled = true;
-            // Supabase is processing the token — wait for it
-            form.style.display = 'none';
-            toggleMode.style.display = 'none';
-            loginSubtitle.textContent = 'Setting up your account...';
-            errorMsg.style.display = 'block';
-            errorMsg.style.background = '#065f4633';
-            errorMsg.style.borderColor = '#047857';
-            errorMsg.style.color = '#6ee7b7';
-            errorMsg.style.textAlign = 'center';
-            errorMsg.style.padding = '20px 16px';
-            errorMsg.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size:24px;display:block;margin-bottom:10px;"></i>Verifying your account...';
+    function switchToSignin() {
+        wrapper.classList.remove('signup-active');
+        setTimeout(() => {
+            ocSignup.classList.add('oc-hidden');
+            ocSignin.classList.remove('oc-hidden');
+        }, SWITCH_DELAY);
+        if (window.innerWidth <= 768) {
+            document.getElementById('signupPanel').style.display = 'none';
+            document.getElementById('signinPanel').style.display = 'flex';
+        }
+    }
 
-            // Listen for the auth state change (Supabase auto-exchanges the hash tokens)
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN' && session?.user) {
-                    const u = session.user;
-                    // Check if profile exists, if not create from user metadata
-                    const { data: existingProfile } = await supabase
-                        .from('profiles')
-                        .select('id, role, club_id, clubs(name, settings)')
-                        .eq('id', u.id)
-                        .single();
+    // ── Forgot password ────────────────────────────────────────────────────────
+    document.getElementById('forgotLink').addEventListener('click', () => {
+        const emailVal = document.getElementById('siEmail').value.trim();
+        if (!emailVal) {
+            showSigninError('Enter your email address first, then click Forgot Password.');
+            return;
+        }
+        handleForgotPassword(emailVal);
+    });
+</script>
 
-                    if (!existingProfile && u.user_metadata) {
-                        // Profile was pre-created by the Edge Function, but if it wasn't, create it now
-                        await supabase.from('profiles').upsert({
-                            id: u.id,
-                            full_name: u.user_metadata.full_name || u.email?.split('@')[0] || 'User',
-                            club_id: u.user_metadata.club_id || null,
-                            role: u.user_metadata.role || 'coach',
-                            email: u.email,
-                        }, { onConflict: 'id' });
-                    }
+<script type="module">
+    import supabase from '../supabase.js';
+    import { friendlyError } from '../toast.js';
+    import '../analytics.js';
 
-                    const prof = existingProfile || { role: u.user_metadata?.role, club_id: u.user_metadata?.club_id };
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function showSigninError(msg) {
+        const el = document.getElementById('signinError');
+        el.textContent = msg;
+        el.className = 'auth-msg error';
+        el.style.display = 'block';
+    }
+    function clearSigninError() {
+        document.getElementById('signinError').style.display = 'none';
+    }
+    function showSignupError(msg) {
+        const el = document.getElementById('signupError');
+        el.textContent = msg;
+        el.className = 'auth-msg error';
+        el.style.display = 'block';
+    }
+    function clearSignupError() {
+        document.getElementById('signupError').style.display = 'none';
+    }
+    function showSuccessState(panelId, html) {
+        const panel = document.getElementById(panelId);
+        panel.innerHTML = `
+            <div style="padding:20px 0;text-align:center;">
+                <div style="font-size:3rem;color:#00C49A;margin-bottom:16px;"><i class="fas fa-check-circle"></i></div>
+                ${html}
+            </div>`;
+    }
 
-                    // Pre-cache sidebar branding
-                    if (existingProfile?.clubs?.settings?.branding) {
-                        const b = existingProfile.clubs.settings.branding;
-                        localStorage.setItem('sidebar-branding', JSON.stringify({
-                            logo_url: b.logo_url || null,
-                            display_name: b.club_display_name || existingProfile.clubs.name || 'Football Hub',
-                        }));
-                    }
-
-                    errorMsg.innerHTML = `
-                        <i class="fas fa-check-circle" style="font-size:28px;display:block;margin-bottom:10px;color:#00C49A;"></i>
-                        <strong>Welcome!</strong> Your account is ready.<br>Redirecting to your dashboard...
-                    `;
-
-                    // Clean hash from URL
-                    window.history.replaceState({}, '', window.location.pathname);
-
-                    setTimeout(() => {
-                        if (prof?.role === 'super_admin' && !prof?.club_id) {
-                            window.location.href = '/src/pages/platform-admin.html';
-                        } else {
-                            window.location.href = '/src/pages/dashboard.html';
-                        }
-                    }, 1500);
-                }
+    // Expose globally for forgotLink handler (non-module scope)
+    window.handleForgotPassword = async function(email) {
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/src/pages/login.html`,
             });
+            if (error) throw error;
+            const el = document.getElementById('signinError');
+            el.innerHTML = '<i class="fas fa-envelope" style="color:#00C49A;margin-right:6px;"></i>Password reset email sent — check your inbox.';
+            el.className = 'auth-msg success';
+            el.style.display = 'block';
+        } catch (err) {
+            showSigninError(friendlyError(err));
         }
+    };
 
-        // Skip normal login page init if magic link is being processed
-        if (_magicLinkHandled) { /* waiting for onAuthStateChange callback above */ }
-        else {
+    // ── Magic link / invite email callback ─────────────────────────────────────
+    // Supabase redirects back here with auth tokens in the URL hash after email confirm
+    let _magicLinkHandled = false;
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const hashType = hashParams.get('type');
 
-        // Check if already logged in — redirect platform admins to platform admin page
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: prof } = await supabase.from('profiles').select('role, club_id, clubs(name, settings)').eq('id', user.id).single();
-            // Pre-cache sidebar branding
+    if (hashType === 'invite' || hashType === 'magiclink' || hashType === 'signup' || hashType === 'recovery') {
+        _magicLinkHandled = true;
+
+        // Replace the whole wrapper with a centered processing state
+        document.getElementById('authWrapper').outerHTML = `
+            <div class="auth-wrapper" style="max-width:480px;">
+                <div class="auth-processing" id="processingState">
+                    <div class="proc-icon"><i class="fas fa-spinner fa-spin"></i></div>
+                    <h3>Verifying your account…</h3>
+                    <p>Please wait a moment while we confirm your details.</p>
+                </div>
+            </div>`;
+
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+                const u = session.user;
+                const proc = document.getElementById('processingState');
+
+                // Ensure profile exists (edge function should have created it; this is a fallback)
+                const { data: existingProfile } = await supabase
+                    .from('profiles')
+                    .select('id, role, club_id, clubs(name, settings)')
+                    .eq('id', u.id)
+                    .single();
+
+                if (!existingProfile) {
+                    const pendingTier = u.user_metadata?.pending_tier || 'free';
+                    await supabase.from('profiles').upsert({
+                        id: u.id,
+                        full_name: u.user_metadata?.full_name || u.email?.split('@')[0] || 'Coach',
+                        club_id: u.user_metadata?.club_id || null,
+                        role: u.user_metadata?.role || 'admin',
+                        email: u.email,
+                    }, { onConflict: 'id' });
+                }
+
+                // Pre-cache sidebar branding
+                if (existingProfile?.clubs?.settings?.branding) {
+                    const b = existingProfile.clubs.settings.branding;
+                    localStorage.setItem('sidebar-branding', JSON.stringify({
+                        logo_url: b.logo_url || null,
+                        display_name: b.club_display_name || existingProfile.clubs.name || 'Football Hub',
+                    }));
+                }
+
+                window.history.replaceState({}, '', window.location.pathname);
+
+                const pendingTier = u.user_metadata?.pending_tier;
+                const isPaid = pendingTier && pendingTier !== 'free';
+
+                if (proc) {
+                    proc.innerHTML = `
+                        <div class="proc-icon"><i class="fas fa-check-circle"></i></div>
+                        <h3>Account confirmed!</h3>
+                        <p style="margin-bottom:4px;">${isPaid ? `Redirecting to billing to complete your <strong>${pendingTier}</strong> plan setup…` : 'Redirecting to your dashboard…'}</p>`;
+                }
+
+                setTimeout(() => {
+                    const prof = existingProfile || {};
+                    if (prof.role === 'super_admin' && !prof.club_id) {
+                        window.location.href = '/src/pages/platform-admin.html';
+                    } else if (isPaid) {
+                        window.location.href = '/src/pages/settings.html#billing';
+                    } else {
+                        window.location.href = '/src/pages/dashboard.html';
+                    }
+                }, 1800);
+            }
+        });
+    }
+
+    if (!_magicLinkHandled) {
+
+    // ── Already logged in → redirect ──────────────────────────────────────────
+    const { data: { user: existingUser } } = await supabase.auth.getUser();
+    if (existingUser) {
+        const { data: prof } = await supabase
+            .from('profiles')
+            .select('role, club_id, clubs(name, settings)')
+            .eq('id', existingUser.id)
+            .single();
+        if (prof?.clubs?.settings?.branding) {
+            const b = prof.clubs.settings.branding;
+            localStorage.setItem('sidebar-branding', JSON.stringify({
+                logo_url: b.logo_url || null,
+                display_name: b.club_display_name || prof.clubs.name || 'Football Hub',
+            }));
+        }
+        window.location.href = (prof?.role === 'super_admin' && !prof?.club_id)
+            ? '/src/pages/platform-admin.html'
+            : '/src/pages/dashboard.html';
+    }
+
+    // ── URL params: invite token + mode ───────────────────────────────────────
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenValue = urlParams.get('invite') || urlParams.get('token');
+    const modeParam = urlParams.get('mode');
+    let isInviteMode = false;
+    let inviteInfo = null;
+
+    if (tokenValue) {
+        // Invite flow — switch to signup, hide the toggle, lock email
+        isInviteMode = true;
+        document.getElementById('inviteToken').value = tokenValue;
+        switchToSignup();
+
+        const { data: inv } = await supabase.rpc('validate_invite', { invite_token: tokenValue });
+        const roleLabels = { admin: 'Admin', coach: 'Coach', viewer: 'Viewer' };
+
+        if (inv) {
+            inviteInfo = inv;
+            const banner = document.getElementById('signinInviteBanner');
+            banner.innerHTML = `<i class="fas fa-envelope-open-text" style="margin-right:6px;color:#00C49A;"></i>
+                You've been invited to join <strong>${inv.club_name}</strong> as <strong>${roleLabels[inv.role] || inv.role}</strong>.`;
+            banner.classList.add('show');
+            if (inv.email) {
+                document.getElementById('suEmail').value = inv.email;
+                document.getElementById('suEmail').readOnly = true;
+            }
+            // Hide club name field — already determined by invite
+            const clubField = document.getElementById('suClubName');
+            if (clubField) {
+                clubField.value = inv.club_name;
+                clubField.closest('.field-group').style.display = 'none';
+            }
+            // Hide tier selector — determined by club's existing tier
+            document.getElementById('tierGrid').style.display = 'none';
+            document.querySelector('.tier-label').style.display = 'none';
+        } else {
+            showSignupError('This invite link is invalid or has expired. Contact your administrator for a new one.');
+            document.getElementById('signupBtn').disabled = true;
+        }
+    } else if (modeParam === 'signup') {
+        switchToSignup();
+    }
+
+    // ── Sign In form submission ────────────────────────────────────────────────
+    document.getElementById('signinForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearSigninError();
+        const btn = document.getElementById('signinBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Signing In…';
+
+        const email = document.getElementById('siEmail').value.trim();
+        const password = document.getElementById('siPassword').value;
+
+        try {
+            if (!email || !password) throw new Error('Email and password are required.');
+
+            const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+
+            const { data: prof } = await supabase
+                .from('profiles')
+                .select('role, club_id, clubs(name, settings)')
+                .eq('id', signInData.user.id)
+                .single();
+
+            // Pre-cache sidebar branding for zero-flicker first load
             if (prof?.clubs?.settings?.branding) {
                 const b = prof.clubs.settings.branding;
                 localStorage.setItem('sidebar-branding', JSON.stringify({
@@ -368,181 +885,145 @@
                     display_name: b.club_display_name || prof.clubs.name || 'Football Hub',
                 }));
             }
+
+            // Check if user signed up with a paid tier but hasn't paid yet
+            const pendingTier = signInData.user.user_metadata?.pending_tier;
+            const needsBilling = pendingTier && pendingTier !== 'free' && !prof?.clubs?.settings?.tier;
+
             if (prof?.role === 'super_admin' && !prof?.club_id) {
                 window.location.href = '/src/pages/platform-admin.html';
+            } else if (needsBilling) {
+                window.location.href = '/src/pages/settings.html#billing';
             } else {
                 window.location.href = '/src/pages/dashboard.html';
             }
+        } catch (err) {
+            showSigninError(friendlyError(err));
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt" style="margin-right:8px;"></i>Sign In';
         }
+    });
 
-        // Check for invite token from URL (?invite= or ?token= for backwards compat)
-        const params = new URLSearchParams(window.location.search);
-        const tokenValue = params.get('invite') || params.get('token');
-        const modeParam = params.get('mode');
+    // ── Sign Up form submission ────────────────────────────────────────────────
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearSignupError();
+        const btn = document.getElementById('signupBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i>Creating Account…';
 
-        if (tokenValue) {
-            document.getElementById('inviteToken').value = tokenValue;
-            isInviteMode = true;
-            toggleMode.style.display = 'none';
-            setSignupMode(true);
+        const firstName = document.getElementById('suFirstName').value.trim();
+        const surname = document.getElementById('suSurname').value.trim();
+        const email = document.getElementById('suEmail').value.trim();
+        const password = document.getElementById('suPassword').value;
+        const confirmPassword = document.getElementById('suConfirmPassword').value;
+        const clubName = document.getElementById('suClubName').value.trim();
+        const inviteToken = document.getElementById('inviteToken').value.trim();
+        const selectedTier = window._selectedTier || 'basic';
 
-            // Validate invite via RPC and show club context
-            const { data: inv } = await supabase.rpc('validate_invite', { invite_token: tokenValue });
-            if (inv) {
-                inviteInfo = inv;
-                const roleName = roleLabels[inv.role] || inv.role;
-                loginSubtitle.textContent = `Create your profile for ${inv.club_name}`;
-                inviteBanner.innerHTML = `<i class="fas fa-shield-alt"></i>&nbsp; You've been invited to join <strong></strong> as <strong></strong>. Create your account below.`;
-                inviteBanner.querySelectorAll('strong')[0].textContent = inv.club_name;
-                inviteBanner.querySelectorAll('strong')[1].textContent = roleName;
-                if (inv.email) {
-                    document.getElementById('email').value = inv.email;
-                    document.getElementById('email').readOnly = true;
-                    document.getElementById('email').style.opacity = '0.7';
+        try {
+            if (!firstName) throw new Error('First name is required.');
+            if (!surname) throw new Error('Surname is required.');
+            if (!email) throw new Error('Email address is required.');
+            if (password.length < 8) throw new Error('Password must be at least 8 characters.');
+            if (password !== confirmPassword) throw new Error('Passwords do not match.');
+            if (!clubName && !isInviteMode) throw new Error('Club or organisation name is required.');
+
+            const fullName = `${firstName} ${surname}`.trim();
+            const roleLabels = { admin: 'Admin', coach: 'Coach', viewer: 'Viewer' };
+
+            // Invite validation
+            let clubId = null;
+            let role = 'admin';
+            let resolvedClubName = clubName;
+
+            if (inviteToken) {
+                const { data: inv } = await supabase.rpc('validate_invite', { invite_token: inviteToken });
+                if (!inv) throw new Error('Invalid or expired invite link. Contact your administrator.');
+                clubId = inv.club_id;
+                role = inv.role;
+                resolvedClubName = inv.club_name;
+            }
+
+            // Sign up via Supabase Auth
+            // pending_tier stored in metadata — used post-email-confirmation to route to billing
+            const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        club_id: clubId,
+                        club_name: resolvedClubName,
+                        role,
+                        pending_tier: inviteToken ? null : selectedTier,
+                    }
                 }
+            });
+
+            if (error) throw error;
+
+            // Mark invite as used
+            if (inviteToken) {
+                await supabase.rpc('use_invite', { invite_token: inviteToken });
+            }
+
+            // Show success state
+            const panel = document.getElementById('signupContent');
+            const tierLabel = { free: 'Free', basic: 'Basic', pro: 'Pro', elite: 'Elite' }[selectedTier] || selectedTier;
+            const isPaid = !inviteToken && selectedTier !== 'free';
+
+            if (data.user && !data.session) {
+                // Email confirmation required (standard Supabase flow)
+                panel.innerHTML = `
+                    <div style="text-align:center;padding:20px 0;">
+                        <div style="font-size:3rem;color:#00C49A;margin-bottom:16px;"><i class="fas fa-envelope-open-text"></i></div>
+                        <h3 style="font-size:1.1rem;font-weight:800;color:#0f172a;margin-bottom:10px;">Check your inbox!</h3>
+                        <p style="font-size:0.85rem;color:#475569;line-height:1.7;margin-bottom:16px;">
+                            We sent a confirmation email to <strong>${email}</strong>.<br>
+                            Click the link to verify your account.
+                        </p>
+                        ${isPaid ? `
+                        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;font-size:0.8rem;color:#92400e;text-align:left;margin-bottom:16px;">
+                            <i class="fas fa-info-circle" style="margin-right:6px;color:#f59e0b;"></i>
+                            After confirming your email, you'll be guided to set up your <strong>${tierLabel}</strong> plan billing.
+                        </div>` : ''}
+                        <button onclick="switchToSignin()"
+                            style="padding:10px 24px;background:#00C49A;color:#fff;border:none;border-radius:10px;font-size:0.875rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;">
+                            Back to Sign In
+                        </button>
+                    </div>`;
             } else {
-                inviteBanner.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#fca5a5;"></i>&nbsp; <span style="color:#fca5a5;">This invite link is invalid or has expired. Please contact your administrator for a new invite.</span>`;
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.4';
+                // Auto-confirmed (dev env / email confirmations disabled)
+                panel.innerHTML = `
+                    <div style="text-align:center;padding:20px 0;">
+                        <div style="font-size:3rem;color:#00C49A;margin-bottom:16px;"><i class="fas fa-check-circle"></i></div>
+                        <h3 style="font-size:1.1rem;font-weight:800;color:#0f172a;margin-bottom:8px;">Welcome, ${firstName}!</h3>
+                        <p style="font-size:0.85rem;color:#475569;">Redirecting you now…</p>
+                    </div>`;
+                setTimeout(() => {
+                    window.location.href = isPaid
+                        ? '/src/pages/settings.html#billing'
+                        : '/src/pages/dashboard.html';
+                }, 1500);
             }
-            inviteBanner.classList.add('show');
-        } else if (modeParam === 'signup') {
-            setSignupMode(true);
+
+        } catch (err) {
+            showSignupError(
+                friendlyError(err)
+            );
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-shield-alt" style="margin-right:8px;"></i>Create Account';
         }
+    });
 
-        toggleLink.addEventListener('click', () => {
-            if (isInviteMode) return;
-            setSignupMode(!isSignup);
-        });
+    } // end !_magicLinkHandled
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMsg.style.display = 'none';
-            submitBtn.disabled = true;
-            submitBtn.textContent = isSignup ? 'Creating Account...' : 'Signing In...';
-
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-
-            try {
-                if (isSignup) {
-                    const firstName = document.getElementById('firstName').value.trim();
-                    const surname = document.getElementById('surname').value.trim();
-                    const confirmPassword = document.getElementById('confirmPassword').value;
-                    const inviteToken = document.getElementById('inviteToken').value.trim();
-
-                    if (!firstName) throw new Error('First name is required');
-                    if (password !== confirmPassword) throw new Error('Passwords do not match');
-
-                    const fullName = surname ? `${firstName} ${surname}` : firstName;
-
-                    // Validate invite via RPC (bypasses RLS)
-                    let clubId = null;
-                    let role = 'coach';
-                    let clubName = '';
-                    if (inviteToken) {
-                        const { data: inv } = await supabase.rpc('validate_invite', { invite_token: inviteToken });
-                        if (!inv) throw new Error('Invalid or expired invite link. Please contact your administrator for a new invite.');
-                        clubId = inv.club_id;
-                        role = inv.role;
-                        clubName = inv.club_name;
-                    }
-
-                    const { data, error } = await supabase.auth.signUp({
-                        email,
-                        password,
-                        options: {
-                            data: {
-                                full_name: fullName,
-                                club_id: clubId,
-                                role: role
-                            }
-                        }
-                    });
-
-                    if (error) throw error;
-
-                    // Mark invite as used via RPC (bypasses RLS)
-                    if (inviteToken) {
-                        await supabase.rpc('use_invite', { invite_token: inviteToken });
-                    }
-
-                    // Build success message
-                    const roleName = roleLabels[role] || role;
-                    const clubMsg = clubName ? ` You've been added to <strong>${clubName}</strong> as <strong>${roleName}</strong>.` : '';
-
-                    // Hide the form and show success
-                    form.style.display = 'none';
-                    inviteBanner.style.display = 'none';
-                    toggleMode.style.display = 'none';
-                    loginSubtitle.textContent = '';
-
-                    errorMsg.style.display = 'block';
-                    errorMsg.style.background = '#065f4633';
-                    errorMsg.style.borderColor = '#047857';
-                    errorMsg.style.color = '#6ee7b7';
-                    errorMsg.style.textAlign = 'center';
-                    errorMsg.style.padding = '20px 16px';
-                    errorMsg.style.fontSize = '14px';
-                    errorMsg.style.lineHeight = '1.6';
-
-                    if (data.user && !data.session) {
-                        // Email confirmation required
-                        errorMsg.innerHTML = `
-                            <i class="fas fa-check-circle" style="font-size:28px;display:block;margin-bottom:10px;color:#00C49A;"></i>
-                            <strong>Account created!</strong>${clubMsg}<br><br>
-                            Check your email to confirm your account, then come back and sign in with your email and password.
-                        `;
-                    } else {
-                        // Auto-confirmed — pre-cache branding then redirect
-                        if (clubId) {
-                            try {
-                                const { data: club } = await supabase.from('clubs').select('name, settings').eq('id', clubId).single();
-                                const b = club?.settings?.branding;
-                                if (b) {
-                                    localStorage.setItem('sidebar-branding', JSON.stringify({
-                                        logo_url: b.logo_url || null,
-                                        display_name: b.club_display_name || club.name || 'Football Hub',
-                                    }));
-                                }
-                            } catch (e) { /* proceed without cache */ }
-                        }
-                        errorMsg.innerHTML = `
-                            <i class="fas fa-check-circle" style="font-size:28px;display:block;margin-bottom:10px;color:#00C49A;"></i>
-                            <strong>Welcome to ${clubName || 'Sentinel Football Hub'}!</strong>${clubMsg}<br><br>
-                            Redirecting to your dashboard...
-                        `;
-                        setTimeout(() => { window.location.href = '/src/pages/dashboard.html'; }, 2000);
-                    }
-                } else {
-                    const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                    const { data: prof } = await supabase.from('profiles').select('role, club_id, clubs(name, settings)').eq('id', signInData.user.id).single();
-
-                    // Pre-cache sidebar branding so first page load has zero flicker
-                    if (prof?.clubs?.settings?.branding) {
-                        const b = prof.clubs.settings.branding;
-                        localStorage.setItem('sidebar-branding', JSON.stringify({
-                            logo_url: b.logo_url || null,
-                            display_name: b.club_display_name || prof.clubs.name || 'Football Hub',
-                        }));
-                    }
-
-                    if (prof?.role === 'super_admin' && !prof?.club_id) {
-                        window.location.href = '/src/pages/platform-admin.html';
-                    } else {
-                        window.location.href = '/src/pages/dashboard.html';
-                    }
-                }
-            } catch (err) {
-                errorMsg.textContent = err.message;
-                errorMsg.style.display = 'block';
-                submitBtn.disabled = false;
-                submitBtn.textContent = isSignup ? 'Create Account' : 'Sign In';
-            }
-        });
-
-        } // end else (_magicLinkHandled)
-    </script>
+    // Expose for inline handlers (module scope isolation)
+    window._selectedTier = 'basic';
+    document.querySelectorAll('.tier-chip').forEach(chip => {
+        chip.addEventListener('click', () => { window._selectedTier = chip.dataset.tier; });
+    });
+</script>
 </body>
 </html>

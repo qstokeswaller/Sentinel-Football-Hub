@@ -1,7 +1,7 @@
 import scoutingManager from '../managers/scouting-manager.js';
 import squadManager from '../managers/squad-manager.js';
 import supabase from '../supabase.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 import { canManage } from '../rbac.js';
 import { SCOUTING_STATUSES, SCOUTING_VERDICTS, QUICK_REPORT_SECTIONS, POSITION_OPTIONS, FOOT_OPTIONS } from './scouting-constants.js';
 import { REPORT_SECTIONS } from './report-sections.js';
@@ -109,7 +109,7 @@ function renderStatusBar() {
                 showToast(`Status changed to ${SCOUTING_STATUSES[btn.dataset.status].label}`, 'success');
                 renderStatusBar();
             } catch (err) {
-                showToast('Failed: ' + err.message, 'error');
+                showToast(friendlyError(err), 'error');
             }
         });
     });
@@ -244,7 +244,7 @@ function renderReports() {
                 renderRadarChart();
                 showToast('Report deleted', 'success');
             } catch (err) {
-                showToast('Failed: ' + err.message, 'error');
+                showToast(friendlyError(err), 'error');
             }
         });
     });
@@ -312,7 +312,7 @@ function renderVideos() {
                 renderVideos();
                 showToast('Video deleted', 'success');
             } catch (err) {
-                showToast('Failed: ' + err.message, 'error');
+                showToast(friendlyError(err), 'error');
             }
         });
     });
@@ -404,7 +404,7 @@ async function saveEditPlayer() {
         document.getElementById('editPlayerModal').classList.remove('active');
         renderHeader();
     } catch (err) {
-        showToast('Save failed: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
     }
 }
 
@@ -429,7 +429,7 @@ function wireEvents() {
             _player = await scoutingManager.updatePlayer(_playerId, { notes: notesEl.value.trim() });
             showToast('Notes saved', 'success');
         } catch (err) {
-            showToast('Failed: ' + err.message, 'error');
+            showToast(friendlyError(err), 'error');
         }
     });
 
@@ -474,7 +474,7 @@ function wireEvents() {
             showToast('Player deleted', 'success');
             window.location.href = '/src/pages/scouting.html';
         } catch (err) {
-            showToast('Failed: ' + err.message, 'error');
+            showToast(friendlyError(err), 'error');
         }
     });
 }
@@ -569,7 +569,7 @@ async function saveReport(type) {
         renderReports();
         renderRadarChart();
     } catch (err) {
-        showToast('Save failed: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
     }
 }
 
@@ -594,7 +594,7 @@ async function saveVideo() {
         document.getElementById('videoModal').classList.remove('active');
         showToast('Video added', 'success');
     } catch (err) {
-        showToast('Failed: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
     }
 }
 
@@ -621,7 +621,7 @@ async function confirmPromote() {
         _player = scoutingManager.getPlayer(_playerId);
         renderStatusBar();
     } catch (err) {
-        showToast('Promote failed: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
     }
 }
 

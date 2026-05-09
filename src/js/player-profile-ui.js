@@ -5,7 +5,7 @@
 import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
 import matchManager from '../managers/match-manager.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 import { createYearPicker } from './year-picker.js';
 import { REPORT_SECTIONS, REPORT_SCALE_LABELS } from './report-sections.js';
 import { hasFeature, tierAtLeast } from '../tier.js';
@@ -3043,7 +3043,7 @@ window.saveEditMatchStat = async (matchId) => {
         loadCareerStats(currentPlayerId);
     } catch (err) {
         console.error('Error saving match stat:', err);
-        showToast('Failed to save — ' + (err.message || 'unknown error'), 'error');
+        showToast(friendlyError(err), 'error');
         btn.innerHTML = '<i class="fas fa-save"></i> Save';
         btn.disabled = false;
     }
@@ -3194,7 +3194,7 @@ window.saveHighlight = async () => {
             showToast('Failed to save highlight.', 'error');
         }
     } catch (err) {
-        showToast(err.message || 'Upload failed', 'error');
+        showToast(friendlyError(err), 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Add Highlight'; }
     }
@@ -3261,7 +3261,7 @@ window.saveAnalysisVideo = async () => {
             showToast('Failed to save video.', 'error');
         }
     } catch (err) {
-        showToast(err.message || 'Upload failed', 'error');
+        showToast(friendlyError(err), 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-plus"></i> Add Video'; }
     }

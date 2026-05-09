@@ -7,7 +7,7 @@
  */
 import supabase from '../supabase.js';
 import { startImpersonation } from '../auth.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 
 let allClubs = [];
 let allProfiles = [];
@@ -406,7 +406,7 @@ function viewClubDetail(clubId) {
             renderClubCards();
         } catch (err) {
             console.error('Delete club error:', err);
-            alert(`Failed to delete club: ${err.message}`);
+            showToast(friendlyError(err), 'error');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-trash"></i> Delete Club';
         }
@@ -455,7 +455,7 @@ function viewClubDetail(clubId) {
             settings: { ...club.settings, tier: newTier, status: newStatus, features: newFeatures, payment_method: newPaymentMethod }
         }).eq('id', cId);
         if (error) {
-            alert(`Failed to save: ${error.message}`);
+            showToast(friendlyError(error), 'error');
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-save"></i> Save Subscription Changes';
         } else {
@@ -493,7 +493,7 @@ function viewClubDetail(clubId) {
             btn.textContent = '...';
             const { error } = await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
             if (error) {
-                alert(`Failed to update role: ${error.message}`);
+                showToast(friendlyError(error), 'error');
                 sel.value = sel.dataset.originalRole;
             } else {
                 const p = allProfiles.find(p => p.id === userId);
@@ -552,7 +552,7 @@ function viewClubDetail(clubId) {
             // Reload detail view to show new member
             viewClubDetail(cId);
         } catch (err) {
-            errEl.textContent = err.message;
+            errEl.textContent = friendlyError(err);
             errEl.style.display = '';
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-user-plus"></i> Create User';
@@ -735,7 +735,7 @@ function setupEventListeners(profile) {
             renderClubCards();
         } catch (err) {
             console.error('Create club error:', err);
-            alert(`Failed to create club: ${err.message}`);
+            showToast(friendlyError(err), 'error');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<i class="fas fa-plus"></i> Create Club';

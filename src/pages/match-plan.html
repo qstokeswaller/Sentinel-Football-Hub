@@ -448,9 +448,9 @@
             .squad-picker { grid-template-columns: 1fr !important; }
             .sp-grid { grid-template-columns: 1fr; }
             .sub-row { grid-template-columns: 1fr; }
-            /* Portrait pitch on mobile — take up ~70% of viewport */
-            .squad-pitch-wrap { min-height: 70vh; }
-            #squadPitchCanvas { min-height: 70vh; }
+            /* Portrait pitch on mobile — take up ~70% of viewport (dvh respects browser chrome) */
+            .squad-pitch-wrap { min-height: 70dvh; }
+            #squadPitchCanvas { min-height: 70dvh; }
             .squad-subs-bar { gap: 6px; }
             .sub-chip { font-size: 0.72rem; padding: 3px 8px 3px 3px; }
             .sub-chip-avatar { width: 20px; height: 20px; font-size: 0.55rem; }

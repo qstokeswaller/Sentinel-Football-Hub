@@ -5,7 +5,7 @@
 import Konva from 'konva';
 import supabase from '../supabase.js';
 import { getProfile } from '../auth.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 import { uploadToR2 } from './r2-upload.js';
 
 // ═══════════════════════════════════════════════════════════
@@ -1941,6 +1941,10 @@ async function exportVideo() {
     recCanvas.width = CANVAS_W;
     recCanvas.height = CANVAS_H;
     const recCtx = recCanvas.getContext('2d');
+    if (!recCtx) {
+        showToast('Canvas recording not supported in this browser.', 'error');
+        return;
+    }
     // 60fps capture stream for smoother playback
     const stream = recCanvas.captureStream(60);
     // Try VP9 first (better quality), fallback to VP8
@@ -2067,7 +2071,8 @@ async function saveAnimation() {
     stage.width(CANVAS_W);
     stage.height(CANVAS_H);
     stage.batchDraw();
-    const thumbnail = stage.toDataURL({ pixelRatio: 0.3 });
+    let thumbnail = null;
+    try { thumbnail = stage.toDataURL({ pixelRatio: 0.3 }); } catch (e) { /* non-fatal — thumbnail optional */ }
     stage.scale({ x: prevSX, y: prevSY });
     stage.width(prevW);
     stage.height(prevH);
@@ -2143,7 +2148,7 @@ async function saveAnimation() {
         showToast('Animation saved!', 'success');
     } catch (err) {
         console.error('Save animation error:', err);
-        showToast('Failed to save animation: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
     } finally {
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save'; }
     }
@@ -2265,8 +2270,16 @@ async function loadAnimation(id) {
     if (slider) slider.value = frameDuration;
     if (label) label.textContent = (frameDuration / 1000).toFixed(1) + 's';
 
-    // Restore frames
-    frames = data.frames && data.frames.length > 0 ? data.frames : [{ objects: [], drawings: [] }];
+    // Restore frames — validate structure to prevent crash on corrupted data
+    const rawFrames = data.frames;
+    if (Array.isArray(rawFrames) && rawFrames.length > 0) {
+        frames = rawFrames.map(f => ({
+            objects: Array.isArray(f?.objects) ? f.objects : [],
+            drawings: Array.isArray(f?.drawings) ? f.drawings : [],
+        }));
+    } else {
+        frames = [{ objects: [], drawings: [] }];
+    }
     currentFrameIdx = 0;
     restoreFrameState(frames[0]);
     renderFrameStrip();
@@ -2423,7 +2436,7 @@ async function uploadAnimVideoFile(fileInput) {
         showToast('Video uploaded', 'success');
     } catch (err) {
         console.error('Upload error:', err);
-        showToast('Upload failed: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
         if (progressWrap) progressWrap.style.display = 'none';
     }
     fileInput.value = '';
@@ -2547,7 +2560,8 @@ export function initAnimationBuilder() {
         const wrap = document.getElementById('animBuilderWrap');
         if (!wrap) return;
         wrap.classList.add('anim-mobile-fs');
-        document.getElementById('animMobileFsExit').style.display = '';
+        const fsExit = document.getElementById('animMobileFsExit');
+        if (fsExit) fsExit.style.display = '';
         document.body.style.overflow = 'hidden';
         // Try to lock orientation to landscape
         try { screen.orientation?.lock('landscape').catch(() => {}); } catch (e) {}
@@ -2558,7 +2572,8 @@ export function initAnimationBuilder() {
         const wrap = document.getElementById('animBuilderWrap');
         if (!wrap) return;
         wrap.classList.remove('anim-mobile-fs');
-        document.getElementById('animMobileFsExit').style.display = 'none';
+        const fsExit = document.getElementById('animMobileFsExit');
+        if (fsExit) fsExit.style.display = 'none';
         document.body.style.overflow = '';
         try { screen.orientation?.unlock(); } catch (e) {}
         setTimeout(resizeCanvas, 50);
@@ -2656,10 +2671,10 @@ export function completeAnimEdit() {
         if (doneBtn) doneBtn.style.display = 'none';
     };
 
-    if (!_currentAnimationId) {
-        // Auto-save before completing
-        saveAnimation().then(finish);
-    } else {
-        saveAnimation().then(finish);
-    }
+    saveAnimation()
+        .then(finish)
+        .catch(err => {
+            showToast('Failed to save animation.', 'error');
+            finish();
+        });
 }

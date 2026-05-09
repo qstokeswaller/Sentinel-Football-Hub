@@ -154,7 +154,7 @@
         .settings-form-group textarea:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 3px rgba(0, 196, 154, 0.12);
         }
 
         .settings-form-group input:disabled {
@@ -390,7 +390,7 @@
         }
         .settings-form-group select:focus,
         .settings-modal select:focus {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232563eb' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300C49A' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
         }
 
         /* ── Date inputs: tint the calendar picker indicator ── */
@@ -410,7 +410,7 @@
         input[type="date"]::-webkit-calendar-picker-indicator:hover,
         input[type="time"]::-webkit-calendar-picker-indicator:hover {
             opacity: 1;
-            background-color: rgba(37, 99, 235, 0.1);
+            background-color: rgba(0, 196, 154, 0.12);
         }
         input[type="date"]:focus::-webkit-calendar-picker-indicator,
         input[type="time"]:focus::-webkit-calendar-picker-indicator {
@@ -1265,7 +1265,7 @@
 
     <script type="module">
         import { initPage, supabase, getProfile } from '../page-init.js';
-        import { showToast } from '../toast.js';
+        import { showToast, friendlyError } from '../toast.js';
         import { logout } from '../auth.js';
         import { getAvailableWalkthroughs, startWalkthrough, resetWalkthroughs } from '../js/walkthrough.js';
         import { assignableRoles, roleLabel, canManage, isSuperAdmin } from '../rbac.js';
@@ -1500,7 +1500,7 @@
                     loadDeletedItems();
                 } catch (e) {
                     console.error('Restore error:', e);
-                    showToast('Failed to restore: ' + (e.message || ''), 'error');
+                    showToast(friendlyError(e), 'error');
                 }
             };
 
@@ -1533,7 +1533,7 @@
 
                 const { error } = await supabase.auth.updateUser({ password: newPw });
                 if (error) {
-                    showToast('Failed to update password: ' + error.message, 'error');
+                    showToast(friendlyError(error), 'error');
                 } else {
                     showToast('Password updated', 'success');
                     document.getElementById('settingsNewPassword').value = '';
@@ -1598,7 +1598,7 @@
                     showToast('Club settings saved', 'success');
                 } catch (err) {
                     console.error('Save club error:', err);
-                    showToast('Failed to save: ' + (err.message || 'unknown error'), 'error');
+                    showToast(friendlyError(err), 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-save"></i> Save Club Settings';
@@ -1643,7 +1643,7 @@
                     profile.clubs.settings = currentSettings;
                     showToast('About saved', 'success');
                 } catch (err) {
-                    showToast('Failed to save: ' + err.message, 'error');
+                    showToast(friendlyError(err), 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-save"></i> Save About';
@@ -1670,7 +1670,7 @@
                     profile.clubs.settings = currentSettings;
                     showToast('Social media links saved', 'success');
                 } catch (err) {
-                    showToast('Failed to save: ' + err.message, 'error');
+                    showToast(friendlyError(err), 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-save"></i> Save Social Media';
@@ -1695,7 +1695,7 @@
                     profile.clubs.settings = currentSettings;
                     showToast('Web links saved', 'success');
                 } catch (err) {
-                    showToast('Failed to save: ' + err.message, 'error');
+                    showToast(friendlyError(err), 'error');
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-save"></i> Save Links';
@@ -1766,7 +1766,7 @@
                     document.getElementById('inviteModal').classList.remove('active');
                     await loadTeamMembers(sessionStorage.getItem('impersonating_club_id') || profile.club_id);
                 } catch (e) {
-                    showToast('Failed: ' + e.message, 'error');
+                    showToast(friendlyError(e), 'error');
                 }
             });
 
@@ -1811,7 +1811,7 @@
                     await loadSquadsAndCoaches(sessionStorage.getItem('impersonating_club_id') || profile.club_id);
                     await loadTeamMembers(sessionStorage.getItem('impersonating_club_id') || profile.club_id);
                 } catch (e) {
-                    showToast('Failed to update assignments: ' + e.message, 'error');
+                    showToast(friendlyError(e), 'error');
                 }
             });
 
@@ -2244,7 +2244,7 @@
                 document.getElementById('memberProfileModal').classList.remove('active');
                 await loadTeamMembers(clubId);
             } catch (e) {
-                showToast('Failed to save: ' + e.message, 'error');
+                showToast(friendlyError(e), 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
@@ -2607,7 +2607,7 @@
                 document.getElementById('staffModal').classList.remove('active');
                 await loadStaff(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
             } catch (e) {
-                showToast('Error: ' + e.message, 'error');
+                showToast(friendlyError(e), 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save"></i> Save';
@@ -2625,7 +2625,7 @@
         window.deleteStaff = async function(id, name) {
             if (!await platformConfirm(`Permanently delete ${name}? This cannot be undone.`, 'Delete Staff Member', 'Delete')) return;
             const { error } = await supabase.from('staff').delete().eq('id', id);
-            if (error) { showToast('Failed to delete: ' + error.message, 'error'); return; }
+            if (error) { showToast(friendlyError(error), 'error'); return; }
             showToast(`${name} deleted`, 'success');
             await loadStaff(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
         };
@@ -2731,7 +2731,7 @@
                 document.getElementById('seasonModal').classList.remove('active');
                 await loadSeasons(sessionStorage.getItem('impersonating_club_id') || currentProfile.club_id);
             } catch (e) {
-                showToast('Error: ' + e.message, 'error');
+                showToast(friendlyError(e), 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save"></i> Save Season';

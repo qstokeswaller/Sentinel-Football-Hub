@@ -136,7 +136,6 @@
 
     // Inline bg prevents FOUC: sidebar colour visible before style.css parses
     var sidebarBg = (savedTheme === 'dark') ? '#0A1218' : '#0D1B2A';
-
     // Render tier badge from cache so the footer layout is stable on first paint.
     // sidebar.js will silently correct the tier if the cache was stale.
     var tierBadgeHTML = cachedTierRaw

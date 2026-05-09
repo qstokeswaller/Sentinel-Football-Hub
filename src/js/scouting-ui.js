@@ -1,7 +1,7 @@
 import scoutingManager from '../managers/scouting-manager.js';
 import squadManager from '../managers/squad-manager.js';
 import supabase from '../supabase.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 // canManage not needed on list page — edit/delete is on player profile
 import {
     SCOUTING_VERDICTS, QUICK_REPORT_SECTIONS,
@@ -357,7 +357,7 @@ async function savePlayer() {
         document.getElementById('playerModal').classList.remove('active');
         render();
     } catch (err) {
-        showToast('Save failed: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
     }
 }
 
@@ -458,7 +458,7 @@ async function saveReport(type) {
         document.getElementById(`${type === 'quick' ? 'quickReportModal' : 'fullReportModal'}`).classList.remove('active');
         render();
     } catch (err) {
-        showToast('Save failed: ' + err.message, 'error');
+        showToast(friendlyError(err), 'error');
     }
 }
 

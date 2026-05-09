@@ -4,7 +4,7 @@
 import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
 import matchManager from '../managers/match-manager.js';
-import { showToast, showConfirm } from '../toast.js';
+import { showToast, showConfirm, friendlyError } from '../toast.js';
 import { hasFeature, showUpgradeToast } from '../tier.js';
 import { uploadToR2 } from './r2-upload.js';
 
@@ -1980,7 +1980,7 @@ async function uploadAnalysisVideoFile(input) {
         showToast('Video uploaded to R2', 'success');
     } catch (e) {
         console.error('Video upload failed:', e);
-        showToast(e.message || 'Video upload failed', 'error');
+        showToast(friendlyError(e), 'error');
     } finally {
         if (label) label.innerHTML = '<i class="fas fa-upload"></i> Upload File';
         input.value = '';

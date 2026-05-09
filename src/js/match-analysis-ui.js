@@ -4,7 +4,7 @@
  */
 import supabase from '../supabase.js';
 import matchManager from '../managers/match-manager.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 
 let matchId = null;
 let matchData = null;
@@ -255,7 +255,7 @@ async function uploadVideoFile() {
         showToast('Video uploaded — remember to save', 'success');
     } catch (err) {
         console.error('Video upload failed:', err);
-        showToast('Upload failed: ' + (err.message || 'Unknown error'), 'error');
+        showToast(friendlyError(err), 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-upload"></i> Upload';
@@ -290,7 +290,7 @@ async function uploadDocFile() {
         showToast('Document uploaded — remember to save', 'success');
     } catch (err) {
         console.error('Document upload failed:', err);
-        showToast('Upload failed: ' + (err.message || 'Unknown error'), 'error');
+        showToast(friendlyError(err), 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-upload"></i> Upload';

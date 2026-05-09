@@ -6,7 +6,7 @@ import '../css/planner.css';
 import supabase from '../supabase.js';
 import { uploadToR2 } from './r2-upload.js';
 import squadManager from '../managers/squad-manager.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 import { getProfile } from '../auth.js';
 import { initCanvas, setPT, drawAll, toggleOrientation, setTokenSize, setEquipColor } from './drill-builder.js';
 
@@ -715,7 +715,7 @@ async function uploadVideoFile(id, fileInput) {
     setTimeout(() => { if (progressWrap) progressWrap.style.display = 'none'; }, 1200);
   } catch (e) {
     console.error('Video upload failed:', e);
-    showToast('Upload failed — check storage bucket exists', 'error');
+    showToast('Upload failed. Please check your connection and try again.', 'error');
     if (progressWrap) progressWrap.style.display = 'none';
   }
   fileInput.value = '';
@@ -1088,7 +1088,7 @@ async function saveDrillAlone(id, e) {
       showToast('Drill saved to library', 'success');
     } else {
       console.error('saveDrillAlone error:', error);
-      showToast('Failed to save drill: ' + (error?.message || 'unknown error'), 'error');
+      showToast(friendlyError(error), 'error');
     }
   } catch (e) {
     console.error('saveDrillAlone exception:', e);
@@ -1183,7 +1183,7 @@ async function saveSession() {
 
     if (insertError) {
       console.error('saveSession insert error:', insertError);
-      showToast('Failed to save session: ' + (insertError.message || ''), 'error');
+      showToast(friendlyError(insertError), 'error');
       return;
     }
 
@@ -1231,7 +1231,7 @@ async function saveSession() {
         const { error: drillError } = await supabase.from('drills').insert(toInsert.map(cleanRow));
         if (drillError) {
           console.error('saveSession drill insert error:', drillError);
-          showToast('Session saved but drills failed: ' + (drillError.message || ''), 'error');
+          showToast('Your session was saved, but some drills failed to save. Please try saving again.', 'error');
           return;
         }
       }
@@ -1241,7 +1241,7 @@ async function saveSession() {
     localStorage.removeItem('up_planner_autosave');
   } catch (e) {
     console.error('saveSession exception:', e);
-    showToast('Error saving session: ' + (e.message || ''), 'error');
+    showToast(friendlyError(e), 'error');
   }
 }
 window.saveSession = saveSession;
@@ -2168,7 +2168,7 @@ async function saveAsTemplate() {
     showToast('Template saved!', 'success');
   } catch (e) {
     console.error('saveAsTemplate error:', e);
-    showToast('Failed to save template: ' + (e.message || ''), 'error');
+    showToast(friendlyError(e), 'error');
   }
 }
 window.saveAsTemplate = saveAsTemplate;

@@ -781,7 +781,7 @@
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     background: #0f172a;
     /* Dark background for focus */
     z-index: 99999;
@@ -811,8 +811,8 @@
 .drill-canvas-wrap.is-fullscreen .canvas-el canvas {
     max-width: 95%;
     /* Increased from 100% to fill more viewport considering padding */
-    max-height: 90vh;
-    /* Allow taking up to 90% of screen height */
+    max-height: 90dvh;
+    /* Allow taking up to 90% of screen height — dvh accounts for mobile browser chrome */
     width: auto;
     height: auto;
     object-fit: contain;
@@ -1306,7 +1306,7 @@
     border-radius: 16px;
     width: 90%;
     max-width: 600px;
-    max-height: 80vh;
+    max-height: min(80dvh, 80vh);
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     display: flex;

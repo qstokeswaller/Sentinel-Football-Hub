@@ -9,7 +9,7 @@
  */
 import supabase from '../supabase.js';
 import squadManager from '../managers/squad-manager.js';
-import { showToast } from '../toast.js';
+import { showToast, friendlyError } from '../toast.js';
 import { upgradeTimePickers } from '../time-picker.js';
 
 let _modalInjected = false;
@@ -497,7 +497,7 @@ window._saveQuickSession = async function() {
         if (_onComplete) _onComplete();
     } catch (e) {
         console.error('Quick session error:', e);
-        showToast('Failed to save: ' + (e.message || ''), 'error');
+        showToast(friendlyError(e), 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-save" style="margin-right:6px;"></i>Save Session & Attendance';
