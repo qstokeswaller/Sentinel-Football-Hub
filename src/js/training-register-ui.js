@@ -44,7 +44,8 @@ async function loadCompletedSessions() {
     try {
         const { data } = await supabase
             .from('training_attendance')
-            .select('session_id');
+            .select('session_id')
+            .limit(2000);
         _completedSessionIds = new Set((data || []).map(r => r.session_id));
     } catch (e) {
         console.error('Failed to load completed sessions:', e);

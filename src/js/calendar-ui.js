@@ -242,12 +242,8 @@ async function fetchClubId() {
     if (_clubId) return _clubId;
     const imp = sessionStorage.getItem('impersonating_club_id');
     if (imp) { _clubId = imp; return imp; }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        const { data: profile } = await supabase
-            .from('profiles').select('club_id').eq('id', user.id).single();
-        _clubId = profile?.club_id || null;
-    }
+    // page-init sets window._profile before any page script runs
+    _clubId = window._profile?.club_id || null;
     return _clubId;
 }
 

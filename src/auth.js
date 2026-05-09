@@ -105,11 +105,14 @@ export async function getProfile() {
         } catch {}
     }
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*, clubs(*)')
-        .eq('id', user.id)
-        .single();
+    // When impersonating, fetch the impersonated club in parallel with the profile
+    // since we already know the club_id from sessionStorage
+    const profileQ = supabase.from('profiles').select('*, clubs(*)').eq('id', user.id).single();
+    const clubQ = isImpersonating
+        ? supabase.from('clubs').select('*').eq('id', impClubId).single()
+        : Promise.resolve({ data: null });
+
+    const [{ data, error }, { data: impClub }] = await Promise.all([profileQ, clubQ]);
 
     if (error) {
         console.error('Error fetching profile:', error);
@@ -117,18 +120,11 @@ export async function getProfile() {
     }
     _cachedProfile = { ...data, email: user.email };
 
-    // Impersonation overlay
-    if (isImpersonating && _cachedProfile.role === 'super_admin' && !_cachedProfile.club_id) {
-        const { data: club } = await supabase
-            .from('clubs')
-            .select('*')
-            .eq('id', impClubId)
-            .single();
-        if (club) {
-            _cachedProfile.club_id = club.id;
-            _cachedProfile.clubs = club;
-            _cachedProfile._impersonating = true;
-        }
+    // Impersonation overlay — use already-fetched club data
+    if (isImpersonating && _cachedProfile.role === 'super_admin' && !_cachedProfile.club_id && impClub) {
+        _cachedProfile.club_id = impClub.id;
+        _cachedProfile.clubs = impClub;
+        _cachedProfile._impersonating = true;
     }
 
     // Write to sessionStorage for instant access on subsequent page navigations

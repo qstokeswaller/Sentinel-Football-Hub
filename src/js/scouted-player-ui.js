@@ -545,8 +545,6 @@ async function saveReport(type) {
         recommendation: document.getElementById(`${prefix}Recommendation`).value.trim(),
     };
 
-    const { data: { user } } = await supabase.auth.getUser();
-
     const reportData = {
         scouted_player_id: _playerId,
         report_type: type,
@@ -555,7 +553,7 @@ async function saveReport(type) {
         verdict,
         match_context: document.getElementById(`${prefix}MatchContext`).value.trim() || null,
         scout_name: _profile?.full_name || _profile?.email || null,
-        created_by: user?.id || null,
+        created_by: window._profile?.id || null,
         date: document.getElementById(`${prefix}Date`).value || new Date().toISOString().slice(0, 10),
     };
 
@@ -585,12 +583,11 @@ async function saveVideo() {
     }
 
     try {
-        const { data: { user } } = await supabase.auth.getUser();
         const video = await scoutingManager.addVideo({
             scouted_player_id: _playerId,
             title,
             url,
-            created_by: user?.id || null,
+            created_by: window._profile?.id || null,
         });
         _videos.unshift(video);
         renderVideos();

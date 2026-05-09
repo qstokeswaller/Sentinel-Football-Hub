@@ -508,21 +508,22 @@
     </div>
 
     <script type="module">
-        import { initSidebar } from '../sidebar.js';
-        import { requireAuth, getProfile } from '../auth.js';
+        import { initPage, getProfile } from '../page-init.js';
         import '../analytics.js';
         import { initScoutedPlayerUI } from '../js/scouted-player-ui.js';
         import { initCustomSelects, enableAutoInit } from '../js/custom-select.js';
+        import { hasFeature, renderUpgradeCard } from '../tier.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            initSidebar('scouting');
-            const user = await requireAuth();
+            const user = await initPage('scouting', { squad: true });
             if (!user) return;
+            if (!hasFeature('scouting')) {
+                const mc = document.querySelector('.main-content');
+                if (mc) renderUpgradeCard(mc, { label: 'Scouting', description: 'Track and evaluate opposition and prospective players. Available on Basic and above.', requiredTier: 'basic' });
+                return;
+            }
             const profile = await getProfile();
-            if (!profile) return;
             initScoutedPlayerUI(profile);
-            const mc = document.querySelector('.main-content');
-            if (mc) mc.classList.add('page-ready');
             initCustomSelects();
             enableAutoInit();
         });

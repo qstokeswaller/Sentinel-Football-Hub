@@ -346,42 +346,25 @@
     </div>
 
     <script type="module">
-        import { requireAuth, getProfile } from '../auth.js';
-        import { initSidebar } from '../sidebar.js';
-        import '../toast.js';
-        import supabase from '../supabase.js';
-        import '../analytics.js';
+        import { initPage } from '../page-init.js';
         import { initTrainingRegisterUI } from '../js/training-register-ui.js';
         import { openQuickSession } from '../js/quick-session.js';
-        import { initCustomSelects, enableAutoInit } from '../js/custom-select.js';
+        import { hasFeature, renderUpgradeCard } from '../tier.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            initSidebar('training-register');
-
-            const user = await requireAuth();
+            const user = await initPage('training-register', { squad: true });
             if (!user) return;
-            const profile = await getProfile();
-            if (profile) window._profile = profile;
+            if (!hasFeature('training')) {
+                const mc = document.querySelector('.main-content');
+                if (mc) renderUpgradeCard(mc, { label: 'Training Register', description: 'Session planning, attendance tracking, and training reports. Available on Basic and above.', requiredTier: 'basic' });
+                return;
+            }
             initTrainingRegisterUI();
-            initCustomSelects();
-            enableAutoInit();
 
             // Wire quick session button — refresh calendar after save
             window._openQuickSession = () => openQuickSession(() => {
-                // Reload the page to refresh calendar badges
                 window.location.reload();
             });
-            const mc = document.querySelector('.main-content');
-            if (mc) mc.classList.add('page-ready');
-
-            // Walkthrough
-            try {
-                const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('../js/walkthrough.js');
-                await initWalkthroughs(user?.id, supabase);
-                const urlP = new URLSearchParams(window.location.search);
-                if (urlP.get('walkthrough') === '1') { startWalkthrough('training-register', true); window.history.replaceState({}, '', window.location.pathname); }
-                else autoWalkthrough('training-register');
-            } catch (e) {}
         });
     </script>
 </body>

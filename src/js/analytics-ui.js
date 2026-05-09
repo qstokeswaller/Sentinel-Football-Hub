@@ -495,7 +495,7 @@ async function onSquadChange() {
 
 async function loadPlayerFilter(squadId) {
     try {
-        let query = scopePlayerQuery(supabase.from('players').select('id, name').order('name'));
+        let query = scopePlayerQuery(supabase.from('players').select('id, name').order('name').limit(2000));
         if (squadId && squadId !== 'all') {
             query = query.eq('squad_id', squadId);
         } else if (window._coachSquadIds) {
@@ -541,7 +541,7 @@ async function refreshPerformanceMatrix() {
 
     try {
         // 1. Fetch players
-        let playerQuery = scopePlayerQuery(supabase.from('players').select('id, name, position, squad_id'));
+        let playerQuery = scopePlayerQuery(supabase.from('players').select('id, name, position, squad_id').limit(2000));
         if (squadId !== 'all') playerQuery = playerQuery.eq('squad_id', squadId);
         if (playerId !== 'all') playerQuery = playerQuery.eq('id', playerId);
         const { data: rawPlayers, error: pErr } = await playerQuery;
@@ -555,7 +555,7 @@ async function refreshPerformanceMatrix() {
 
         // 2. Fetch assessments for those players
         const playerIds = rawPlayers.map(p => p.id);
-        let assessQuery = supabase.from('assessments').select('*').in('player_id', playerIds);
+        let assessQuery = supabase.from('assessments').select('*').in('player_id', playerIds).limit(5000);
         if (perfMonth !== 'all') {
             const m = String(perfMonth).padStart(2, '0');
             const datePrefix = `${perfYear}-${m}`;
@@ -569,7 +569,8 @@ async function refreshPerformanceMatrix() {
             .from('match_player_stats')
             .select('*')
             .in('player_id', playerIds)
-            .eq('appeared', true);
+            .eq('appeared', true)
+            .limit(5000);
         if (msErr) console.error('Error fetching match player stats:', msErr);
 
         // Group match stats by player_id
@@ -838,7 +839,7 @@ async function refreshSquadStats() {
 
     try {
         // 1. Fetch players for squad
-        let playerQuery = scopePlayerQuery(supabase.from('players').select('id, name, position, squad_id'));
+        let playerQuery = scopePlayerQuery(supabase.from('players').select('id, name, position, squad_id').limit(2000));
         if (squadId !== 'all') playerQuery = playerQuery.eq('squad_id', squadId);
         const { data: rawPlayers, error: pErr } = await playerQuery;
         if (pErr) throw pErr;
@@ -857,7 +858,8 @@ async function refreshSquadStats() {
         const { data: allStatsRaw, error: msErr } = await supabase
             .from('match_player_stats')
             .select('*')
-            .in('player_id', playerIds);
+            .in('player_id', playerIds)
+            .limit(10000);
         if (msErr) throw msErr;
 
         // Separate appeared stats (for performance) and all stats (for squad tracking)
@@ -866,7 +868,7 @@ async function refreshSquadStats() {
 
         // 3. Fetch ALL past matches for total season minutes calculation
         const clubId = getActiveClubId();
-        let seasonMatchQuery = supabase.from('matches').select('id, date, home_score, away_score, our_side, is_past');
+        let seasonMatchQuery = supabase.from('matches').select('id, date, home_score, away_score, our_side, is_past').limit(1000);
         if (clubId) seasonMatchQuery = seasonMatchQuery.eq('club_id', clubId);
         seasonMatchQuery = seasonMatchQuery.eq('is_past', true);
         const { data: allSeasonMatches, error: smErr } = await seasonMatchQuery;
@@ -1223,8 +1225,8 @@ async function refreshAttendance() {
 
     try {
         // 1. Fetch reports AND training_attendance, optionally filtered by month/year
-        let reportQuery = supabase.from('reports').select('id, session_id, absent_player_ids');
-        let attendanceQuery = supabase.from('training_attendance').select('id, session_id, absent_player_ids');
+        let reportQuery = supabase.from('reports').select('id, session_id, absent_player_ids').limit(2000);
+        let attendanceQuery = supabase.from('training_attendance').select('id, session_id, absent_player_ids').limit(2000);
         if (month && month !== 'all') {
             const m = String(month).padStart(2, '0');
             const datePrefix = `${year}-${m}`;
@@ -1249,7 +1251,7 @@ async function refreshAttendance() {
         });
 
         // 2. Fetch players
-        let playerQuery = scopePlayerQuery(supabase.from('players').select('id, name, position, squad_id'));
+        let playerQuery = scopePlayerQuery(supabase.from('players').select('id, name, position, squad_id').limit(2000));
         if (squadId !== 'all') playerQuery = playerQuery.eq('squad_id', squadId);
         if (playerId !== 'all') playerQuery = playerQuery.eq('id', playerId);
         const { data: rawPlayers, error: pErr } = await playerQuery;
@@ -1436,7 +1438,7 @@ function escHtml(str) {
 
 async function populateH2HSelects() {
     const squadId = document.getElementById('filterSquad').value;
-    let q = scopePlayerQuery(supabase.from('players').select('id, name, position'));
+    let q = scopePlayerQuery(supabase.from('players').select('id, name, position').limit(2000));
     if (squadId !== 'all') q = q.eq('squad_id', squadId);
     const { data: players } = await q;
 
@@ -1460,10 +1462,12 @@ window.compareHeadToHead = async function() {
         return;
     }
 
-    // Fetch stats for both players
-    const { data: statsA } = await supabase.from('match_player_stats').select('*').eq('player_id', idA).eq('appeared', true);
-    const { data: statsB } = await supabase.from('match_player_stats').select('*').eq('player_id', idB).eq('appeared', true);
-    const { data: playersData } = await scopePlayerQuery(supabase.from('players').select('id, name')).in('id', [idA, idB]);
+    // Fetch stats for both players in parallel
+    const [{ data: statsA }, { data: statsB }, { data: playersData }] = await Promise.all([
+        supabase.from('match_player_stats').select('*').eq('player_id', idA).eq('appeared', true).limit(1000),
+        supabase.from('match_player_stats').select('*').eq('player_id', idB).eq('appeared', true).limit(1000),
+        scopePlayerQuery(supabase.from('players').select('id, name')).in('id', [idA, idB]),
+    ]);
 
     const nameMap = {};
     (playersData || []).forEach(p => { nameMap[p.id] = p.name; });
@@ -1616,7 +1620,7 @@ async function loadTeamAttendance() {
             dateTo = `${year}-12-31`;
         }
 
-        // Fetch attendance records
+        // Build attendance query
         let attQ = supabase.from('training_attendance')
             .select('id, session_id, date, absent_player_ids, attendance_count, attendance_total, squad_id')
             .limit(120);
@@ -1624,21 +1628,20 @@ async function loadTeamAttendance() {
         if (squadId && squadId !== 'all') attQ = attQ.eq('squad_id', squadId);
         if (dateFrom) attQ = attQ.gte('date', dateFrom).lte('date', dateTo);
 
-        const { data: attData, error: attErr } = await attQ;
+        // Players query is independent — run in parallel with attendance
+        const playersQ = (squadId && squadId !== 'all')
+            ? supabase.from('players').select('id, name').eq('squad_id', squadId).limit(2000)
+            : Promise.resolve({ data: [] });
+
+        const [{ data: attData, error: attErr }, { data: playersRaw }] = await Promise.all([attQ, playersQ]);
         if (attErr) throw attErr;
+
+        _teamAttPlayerMap = {};
+        (playersRaw || []).forEach(p => { _teamAttPlayerMap[p.id] = p.name; });
 
         const attRecords = (attData || []).sort((a, b) => (b.date || '') > (a.date || '') ? 1 : -1);
 
-        // Fetch player names for the selected squad
-        _teamAttPlayerMap = {};
-        if (squadId && squadId !== 'all') {
-            const { data: players } = await supabase.from('players')
-                .select('id, name')
-                .eq('squad_id', squadId);
-            (players || []).forEach(p => { _teamAttPlayerMap[p.id] = p.name; });
-        }
-
-        // Fetch session titles
+        // Sessions need attRecords IDs first — unavoidable serial step
         const sessionIds = [...new Set(attRecords.map(r => r.session_id).filter(Boolean))];
         let sessionMap = {};
         if (sessionIds.length > 0) {

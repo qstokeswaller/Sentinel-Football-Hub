@@ -422,10 +422,16 @@
         import { initPage } from '../page-init.js';
         import { initPlanner } from '../js/planner.js';
         import { upgradeTimePickers } from '../time-picker.js';
+        import { hasFeature, renderUpgradeCard } from '../tier.js';
 
         document.addEventListener('DOMContentLoaded', async () => {
             const user = await initPage('planner');
             if (!user) return;
+            if (!hasFeature('training')) {
+                const mc = document.querySelector('.main-content');
+                if (mc) renderUpgradeCard(mc, { label: 'Session Planner', description: 'Build and manage training sessions with drill sequences and time scheduling. Available on Basic and above.', requiredTier: 'basic' });
+                return;
+            }
             upgradeTimePickers();
             initPlanner();
         });

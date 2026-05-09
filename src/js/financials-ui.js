@@ -89,7 +89,8 @@ async function loadPricingRules() {
         .from('pricing_rules')
         .select('*')
         .eq('club_id', _clubId)
-        .order('sort_order', { ascending: true });
+        .order('sort_order', { ascending: true })
+        .limit(200);
     if (error) { console.error('pricing rules error:', error); return; }
     _pricingRules = data || [];
     renderPricingRules();
@@ -277,9 +278,9 @@ async function loadMonthData() {
 
     // Fetch sessions, rules, existing invoices in parallel first
     const [sessRes, rulesRes, existingRes] = await Promise.all([
-        supabase.from('sessions').select('id, title, date, team, player_ids').eq('club_id', _clubId).gte('date', startDate).lte('date', endDate).order('date'),
-        supabase.from('pricing_rules').select('*').eq('club_id', _clubId).eq('is_active', true).order('sort_order'),
-        supabase.from('invoices').select('id, player_id, status').eq('club_id', _clubId).eq('month', month),
+        supabase.from('sessions').select('id, title, date, team, player_ids').eq('club_id', _clubId).gte('date', startDate).lte('date', endDate).order('date').limit(500),
+        supabase.from('pricing_rules').select('*').eq('club_id', _clubId).eq('is_active', true).order('sort_order').limit(200),
+        supabase.from('invoices').select('id, player_id, status').eq('club_id', _clubId).eq('month', month).limit(5000),
     ]);
 
     _monthSessions = sessRes.data || [];

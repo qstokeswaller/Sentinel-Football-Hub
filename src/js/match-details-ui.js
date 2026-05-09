@@ -2155,9 +2155,10 @@ async function _savePwInlineAssessment(matchId, playerId, date) {
         const author = window._profile?.full_name || 'Coach';
 
         if (existing?.id) {
-            await supabase.from('assessments').update({ ratings, author, date }).eq('id', existing.id);
+            const { error } = await supabase.from('assessments').update({ ratings, author, date }).eq('id', existing.id);
+            if (error) throw error;
         } else {
-            await supabase.from('assessments').insert({
+            const { error } = await supabase.from('assessments').insert({
                 club_id: matchManager.clubId,
                 player_id: playerId,
                 match_id: matchId,
@@ -2166,6 +2167,7 @@ async function _savePwInlineAssessment(matchId, playerId, date) {
                 author,
                 type: 'match'
             });
+            if (error) throw error;
         }
     } catch (e) {
         console.error('Failed to save player_watch assessment:', e);

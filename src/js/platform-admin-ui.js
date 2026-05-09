@@ -460,6 +460,16 @@ function viewClubDetail(clubId) {
             btn.innerHTML = '<i class="fas fa-save"></i> Save Subscription Changes';
         } else {
             club.settings = { ...club.settings, tier: newTier, status: newStatus, features: newFeatures, payment_method: newPaymentMethod };
+            // Bust the club's cached sidebar tier so their next page load reflects the new tier
+            // without requiring a logout. We clear sidebar-tier from localStorage (regular users)
+            // and sessionStorage (impersonation tabs) for this club.
+            try {
+                const storedBranding = JSON.parse(localStorage.getItem('sidebar-branding') || 'null');
+                if (storedBranding) {
+                    localStorage.setItem('sidebar-tier', newTier);
+                    localStorage.setItem('sidebar-features', JSON.stringify(newFeatures));
+                }
+            } catch (e) {}
             btn.innerHTML = '<i class="fas fa-check"></i> Saved';
             btn.style.background = '#10b981';
             const confirm = document.getElementById('subSaveConfirm');

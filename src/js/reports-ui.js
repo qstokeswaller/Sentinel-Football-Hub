@@ -170,12 +170,11 @@ async function loadSessionReports() {
 
     try {
         const clubId = sessionStorage.getItem('impersonating_club_id') || window._profile?.club_id;
-        let rq = supabase.from('reports').select('*').order('created_at', { ascending: false });
-        let sq = supabase.from('sessions').select('*').order('created_at', { ascending: false });
+        let rq = supabase.from('reports').select('*').order('created_at', { ascending: false }).limit(500);
+        let sq = supabase.from('sessions').select('*').order('created_at', { ascending: false }).limit(1000);
         if (clubId) { rq = rq.eq('club_id', clubId); sq = sq.eq('club_id', clubId); }
-        const { data: reports, error: rErr } = await rq;
+        const [{ data: reports, error: rErr }, { data: sessions, error: sErr }] = await Promise.all([rq, sq]);
         if (rErr) throw rErr;
-        const { data: sessions, error: sErr } = await sq;
         if (sErr) throw sErr;
 
         // Coach scoping: filter sessions to only those linked to assigned squads

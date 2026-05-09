@@ -66,13 +66,15 @@ async function loadAll() {
             .from('sessions')
             .select('*, drills(*)')
             .order('created_at', { ascending: false })
-            .not('purpose', 'in', '("Quick Session","Recurring Session")');
+            .not('purpose', 'in', '("Quick Session","Recurring Session")')
+            .limit(500);
         if (clubId) sq = sq.eq('club_id', clubId);
 
         let dq = supabase
             .from('drills')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(2000);
         if (clubId) dq = dq.eq('club_id', clubId);
 
         const [sessionsRes, drillsRes] = await Promise.all([sq, dq]);

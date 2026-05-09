@@ -350,8 +350,7 @@ async function savePlayer() {
             showToast('Player updated', 'success');
         } else {
             data.scouting_status = 'watching';
-            const { data: { user } } = await supabase.auth.getUser();
-            data.created_by = user?.id || null;
+            data.created_by = window._profile?.id || null;
             await scoutingManager.addPlayer(data);
             showToast('Player added', 'success');
         }
@@ -441,8 +440,6 @@ async function saveReport(type) {
         recommendation: document.getElementById(`${prefix}Recommendation`).value.trim(),
     };
 
-    const { data: { user } } = await supabase.auth.getUser();
-
     const reportData = {
         scouted_player_id: playerId,
         report_type: type,
@@ -451,7 +448,7 @@ async function saveReport(type) {
         verdict,
         match_context: document.getElementById(`${prefix}MatchContext`).value.trim() || null,
         scout_name: _profile?.full_name || _profile?.email || null,
-        created_by: user?.id || null,
+        created_by: window._profile?.id || null,
         date: document.getElementById(`${prefix}Date`).value || new Date().toISOString().slice(0, 10),
     };
 

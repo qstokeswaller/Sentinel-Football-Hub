@@ -376,7 +376,8 @@ async function onSquadChange() {
             .from('players')
             .select('*')
             .eq('squad_id', squadId)
-            .order('name', { ascending: true });
+            .order('name', { ascending: true })
+            .limit(500);
 
         if (error) throw error;
 

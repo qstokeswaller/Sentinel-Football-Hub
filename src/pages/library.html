@@ -928,9 +928,15 @@
   <script type="module">
       import { initPage } from '../page-init.js';
       import { initLibraryUI } from '../js/library-ui.js';
+      import { hasFeature, renderUpgradeCard } from '../tier.js';
       document.addEventListener('DOMContentLoaded', async () => {
           const user = await initPage('library');
           if (!user) return;
+          if (!hasFeature('library')) {
+              const mc = document.querySelector('.main-content');
+              if (mc) renderUpgradeCard(mc, { label: 'Drill Library', description: 'Access and manage your drill and session library. Available on Basic and above.', requiredTier: 'basic' });
+              return;
+          }
           initLibraryUI();
       });
   </script>
