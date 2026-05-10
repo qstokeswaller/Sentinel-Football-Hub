@@ -251,15 +251,36 @@
     .cta-section > .container > p { font-size: 17px; color: var(--text-2); max-width: 480px; margin: 0 auto 40px; line-height: 1.7; position: relative; z-index: 1; }
     .cta-actions { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; position: relative; z-index: 1; }
 
-    /* Footer */
-    footer { background: var(--bg); border-top: 1px solid var(--border); padding: 48px 0; }
-    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
-    .footer-logo { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-2); }
-    .footer-logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #000; }
-    .footer-links { display: flex; align-items: center; gap: 28px; list-style: none; }
-    .footer-links a { font-size: 13px; color: var(--text-3); transition: color 0.2s; }
-    .footer-links a:hover { color: var(--text-2); }
-    .footer-copy { font-size: 12px; color: var(--text-3); }
+    /* ── Footer ── */
+    .site-footer { background: linear-gradient(150deg, #008f72 0%, #00C49A 55%, #00d9a8 100%); color: rgba(10,22,40,0.72); font-family: 'Inter', sans-serif; position: relative; overflow: hidden; }
+    .site-footer::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); pointer-events: none; z-index: 0; }
+    .site-footer::after { content: ''; position: absolute; width: 520px; height: 520px; border-radius: 50%; background: rgba(255,255,255,0.08); top: -200px; right: -140px; pointer-events: none; z-index: 0; filter: blur(48px); }
+    .footer-top { padding: 64px 0 48px; border-bottom: 1px solid rgba(10,22,40,0.12); position: relative; z-index: 1; }
+    .footer-top::before { content: ''; position: absolute; width: 380px; height: 380px; border-radius: 50%; background: rgba(0,0,0,0.07); bottom: -160px; left: -120px; pointer-events: none; z-index: 0; filter: blur(56px); }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 48px; position: relative; z-index: 1; }
+    .footer-brand-col {}
+    .footer-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; text-decoration: none; }
+    .footer-logo-mark { width: 36px; height: 36px; background: rgba(10,22,40,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #fff; flex-shrink: 0; }
+    .footer-logo-text { display: flex; flex-direction: column; line-height: 1; }
+    .footer-logo-name { font-size: 14px; font-weight: 700; color: #0a1628; }
+    .footer-logo-sub { font-size: 10.5px; color: rgba(10,22,40,0.65); font-weight: 500; margin-top: 2px; letter-spacing: 0.02em; }
+    .footer-tagline { font-size: 13px; line-height: 1.65; color: rgba(10,22,40,0.7); margin-bottom: 24px; max-width: 280px; }
+    .footer-social { display: flex; gap: 10px; }
+    .footer-social-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(10,22,40,0.2); background: rgba(10,22,40,0.08); color: rgba(10,22,40,0.65); display: flex; align-items: center; justify-content: center; font-size: 13px; text-decoration: none; transition: all 0.2s; }
+    .footer-social-btn:hover { border-color: rgba(10,22,40,0.4); background: rgba(10,22,40,0.15); color: #0a1628; }
+    .footer-col-heading { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #0a1628; margin: 0 0 16px; }
+    .footer-col-links { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col-links a { font-size: 13px; color: rgba(10,22,40,0.68); text-decoration: none; transition: color 0.2s; display: flex; align-items: center; gap: 6px; }
+    .footer-col-links a:hover:not(.footer-link-soon) { color: #0a1628; }
+    .footer-link-soon { opacity: 0.55; pointer-events: none; cursor: default; }
+    .footer-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(10,22,40,0.12); color: rgba(10,22,40,0.7); padding: 1px 5px; border-radius: 4px; flex-shrink: 0; }
+    .footer-bottom { padding: 20px 0; position: relative; z-index: 1; }
+    .footer-bottom-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .footer-copy, .footer-made, .footer-reg { font-size: 12px; color: rgba(10,22,40,0.55); margin: 0; }
+    .footer-made i { color: rgba(10,22,40,0.7); }
+    @media (max-width: 1024px) { .footer-grid { grid-template-columns: 1fr 1fr 1fr; gap: 36px; } .footer-brand-col { grid-column: 1 / -1; } .footer-tagline { max-width: 100%; } }
+    @media (max-width: 640px) { .footer-top { padding: 40px 0 32px; } .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; } .footer-brand-col { grid-column: 1 / -1; } .footer-bottom-inner { flex-direction: column; align-items: center; text-align: center; gap: 4px; } }
+    @media (max-width: 400px) { .footer-grid { grid-template-columns: 1fr; } }
 
     /* Responsive */
     @media (max-width: 1024px) {
@@ -279,8 +300,9 @@
       .pricing-grid { grid-template-columns: 1fr; }
       .comparison-table-wrap { overflow-x: auto; }
       table { min-width: 600px; }
-      .footer-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
-      .footer-links { flex-wrap: wrap; gap: 16px; }
+      .footer-grid { grid-template-columns: 1fr 1fr 1fr; gap: 36px; }
+      .footer-brand-col { grid-column: 1 / -1; }
+      .footer-tagline { max-width: 100%; }
       .hero-trust { flex-direction: column; gap: 12px; }
       .nav-cta .btn-primary { display: none; }
     }
@@ -292,6 +314,13 @@
       .tier-amount { font-size: 34px; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
+    @media (max-width: 640px) {
+      .footer-top { padding: 40px 0 32px; }
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+      .footer-brand-col { grid-column: 1 / -1; }
+      .footer-bottom-inner { flex-direction: column; align-items: center; text-align: center; gap: 4px; }
+    }
+    @media (max-width: 400px) { .footer-grid { grid-template-columns: 1fr; } }
     @media (hover: none) {
       .flip-card:hover:not(.flipped) .flip-card-inner { transform: none; }
     }
@@ -913,19 +942,80 @@
     </div>
   </section>
 
-  <footer>
-    <div class="container">
-      <div class="footer-inner">
-        <div class="footer-logo"><div class="footer-logo-icon"><i class="fas fa-futbol"></i></div> Sentinel Football Hub</div>
-        <ul class="footer-links">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="clubs.html">For Clubs</a></li>
-          <li><a href="players.html">For Players</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#contact">Contact</a></li>
-          <li><a href="/src/pages/login.html">Sign in</a></li>
-        </ul>
-        <p class="footer-copy">© 2026 Sentinel SportsTech. All rights reserved.</p>
+  <footer class="site-footer">
+    <div class="footer-top">
+      <div class="container">
+        <div class="footer-grid">
+          <!-- Brand -->
+          <div class="footer-brand-col">
+            <div class="footer-logo">
+              <div class="footer-logo-mark"><i class="fas fa-futbol"></i></div>
+              <div class="footer-logo-text">
+                <span class="footer-logo-name">Sentinel Football Hub</span>
+                <span class="footer-logo-sub">by Sentinel SportsTech</span>
+              </div>
+            </div>
+            <p class="footer-tagline">Purpose-built club management and expert player analysis for South African football — from grassroots to semi-professional.</p>
+            <div class="footer-social">
+              <a href="#" class="footer-social-btn" aria-label="Twitter/X"><i class="fab fa-x-twitter"></i></a>
+              <a href="#" class="footer-social-btn" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+              <a href="#" class="footer-social-btn" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+              <a href="https://wa.me/27000000000" class="footer-social-btn" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+          <!-- Product -->
+          <div class="footer-col">
+            <h4 class="footer-col-heading">Product</h4>
+            <ul class="footer-col-links">
+              <li><a href="index.html">Home</a></li>
+              <li><a href="players.html">For Players</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+              <li><a href="/src/pages/login.html?mode=signup">Get Started</a></li>
+              <li><a href="/src/pages/login.html">Sign In</a></li>
+            </ul>
+          </div>
+          <!-- Platform -->
+          <div class="footer-col">
+            <h4 class="footer-col-heading">Platform</h4>
+            <ul class="footer-col-links">
+              <li><a href="#features">Squad Management</a></li>
+              <li><a href="#features">Match Analysis</a></li>
+              <li><a href="#features">Training Planner</a></li>
+              <li><a href="#features">Analytics</a></li>
+              <li><a href="#features">Player Dossiers</a></li>
+            </ul>
+          </div>
+          <!-- Support -->
+          <div class="footer-col">
+            <h4 class="footer-col-heading">Support</h4>
+            <ul class="footer-col-links">
+              <li><a href="#contact">Contact Us</a></li>
+              <li><a href="mailto:stokeswallerq@gmail.com?subject=Sentinel%20Help">Email Support</a></li>
+              <li><a href="mailto:stokeswallerq@gmail.com?subject=Bug%20Report">Report a Bug</a></li>
+              <li><a href="mailto:stokeswallerq@gmail.com?subject=Feature%20Request">Feature Request</a></li>
+              <li><a class="footer-link-soon">Help Centre <span class="footer-badge">Soon</span></a></li>
+            </ul>
+          </div>
+          <!-- Legal -->
+          <div class="footer-col">
+            <h4 class="footer-col-heading">Legal</h4>
+            <ul class="footer-col-links">
+              <li><a class="footer-link-soon">Privacy Policy <span class="footer-badge">Soon</span></a></li>
+              <li><a class="footer-link-soon">Terms of Service <span class="footer-badge">Soon</span></a></li>
+              <li><a class="footer-link-soon">Cookie Policy <span class="footer-badge">Soon</span></a></li>
+              <li><a class="footer-link-soon">Data Processing <span class="footer-badge">Soon</span></a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <div class="footer-bottom-inner">
+          <p class="footer-copy">© 2026 Sentinel SportsTech (Pty) Ltd. All rights reserved.</p>
+          <p class="footer-made">Made for SA football <i class="fas fa-heart"></i></p>
+          <p class="footer-reg">Registered in South Africa</p>
+        </div>
       </div>
     </div>
   </footer>
