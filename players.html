@@ -334,6 +334,17 @@
       .hero-badge-dot { animation: none; }
       .flip-card-inner { transition: none; }
     }
+
+    /* ── Custom Package Banner ── */
+    .custom-pkg { margin-top: 24px; background: linear-gradient(135deg, rgba(245,158,11,0.07) 0%, rgba(245,158,11,0.02) 100%); border: 1px solid rgba(245,158,11,0.28); border-radius: var(--radius); padding: 36px 40px; display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center; position: relative; overflow: hidden; }
+    .custom-pkg::before { content: ''; position: absolute; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%); top: -80px; right: -60px; pointer-events: none; }
+    .custom-pkg-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .custom-pkg h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .custom-pkg-desc { font-size: 14px; color: var(--text-2); line-height: 1.7; margin-bottom: 20px; max-width: 580px; }
+    .custom-pkg-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .custom-pkg-tag { font-size: 12px; font-weight: 500; color: var(--accent); background: var(--accent-dim); border: 1px solid rgba(245,158,11,0.22); padding: 4px 12px; border-radius: 100px; }
+    .custom-pkg-actions { display: flex; flex-direction: column; gap: 10px; min-width: 200px; flex-shrink: 0; }
+    @media (max-width: 768px) { .custom-pkg { grid-template-columns: 1fr; padding: 28px 24px; } .custom-pkg-actions { flex-direction: row; flex-wrap: wrap; min-width: 0; } }
   </style>
 </head>
 <body>
@@ -775,6 +786,29 @@
         </div>
 
       </div>
+
+      <!-- Custom Package -->
+      <div class="custom-pkg fade-up">
+        <div>
+          <div class="custom-pkg-label"><i class="fas fa-sliders"></i> Custom Package</div>
+          <h3>Don't see exactly what you need?</h3>
+          <p class="custom-pkg-desc">Every player's situation is different. Academy players, professional trialists, coaches building a player's profile for a move, or families looking at long-term development — if none of the standard packages fit your specific situation, message us. We'll put something together around exactly what you need.</p>
+          <div class="custom-pkg-tags">
+            <span class="custom-pkg-tag">Group or team analysis</span>
+            <span class="custom-pkg-tag">U-age group bundles</span>
+            <span class="custom-pkg-tag">Academy season programme</span>
+            <span class="custom-pkg-tag">Trial preparation package</span>
+            <span class="custom-pkg-tag">Coach-player collaboration</span>
+            <span class="custom-pkg-tag">Custom report formats</span>
+            <span class="custom-pkg-tag">Extended match volume</span>
+          </div>
+        </div>
+        <div class="custom-pkg-actions">
+          <a href="https://wa.me/27000000000?text=Hi%2C%20I%27d%20like%20to%20discuss%20a%20custom%20analysis%20package" class="btn-hero-primary" target="_blank" rel="noopener noreferrer" style="font-size:14px;padding:12px 20px;white-space:nowrap;"><i class="fab fa-whatsapp"></i> WhatsApp Us</a>
+          <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel%20Football%20Hub%20%E2%80%94%20Custom%20Package%20Enquiry" class="btn-hero-secondary" style="font-size:14px;padding:12px 20px;white-space:nowrap;"><i class="fas fa-envelope"></i> Email Us</a>
+        </div>
+      </div>
+
     </div>
   </section>
 

@@ -354,6 +354,35 @@
     .signup-success i { font-size: 48px; color: var(--accent); margin-bottom: 16px; display: block; }
     .signup-success h3 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
     .signup-success p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+
+    /* ── Custom Tier Banner ── */
+    .custom-tier { margin-top: 24px; background: linear-gradient(135deg, rgba(0,196,154,0.07) 0%, rgba(0,196,154,0.02) 100%); border: 1px solid rgba(0,196,154,0.28); border-radius: var(--radius); padding: 36px 40px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 32px; align-items: center; position: relative; overflow: hidden; }
+    .custom-tier::before { content: ''; position: absolute; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(0,196,154,0.08) 0%, transparent 70%); top: -100px; right: -80px; pointer-events: none; }
+    .custom-tier-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .custom-tier h3 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+    .custom-tier-desc { font-size: 14px; color: var(--text-2); line-height: 1.7; }
+    .custom-tier-features { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .custom-tier-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: var(--text-2); }
+    .custom-tier-features li i { color: var(--accent); font-size: 11px; margin-top: 4px; flex-shrink: 0; }
+    .custom-tier-actions { display: flex; flex-direction: column; gap: 10px; min-width: 188px; }
+    @media (max-width: 1024px) { .custom-tier { grid-template-columns: 1fr 1fr; } .custom-tier-actions { grid-column: 1 / -1; flex-direction: row; } }
+    @media (max-width: 640px) { .custom-tier { grid-template-columns: 1fr; padding: 28px 24px; } .custom-tier-actions { flex-direction: row; flex-wrap: wrap; } }
+
+    /* ── Custom Development Section ── */
+    .custom-dev { background: var(--surface); }
+    .custom-dev-intro { max-width: 640px; margin-bottom: 56px; }
+    .custom-dev-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .custom-dev-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; transition: border-color 0.2s, transform 0.2s; }
+    .custom-dev-card:hover { border-color: rgba(0,196,154,0.3); transform: translateY(-2px); }
+    .custom-dev-icon { width: 42px; height: 42px; background: var(--accent-dim); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 17px; margin-bottom: 18px; }
+    .custom-dev-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .custom-dev-card p { font-size: 13px; color: var(--text-2); line-height: 1.7; }
+    .custom-dev-cta-block { margin-top: 32px; background: linear-gradient(135deg, rgba(0,196,154,0.06) 0%, rgba(0,196,154,0.02) 100%); border: 1px solid rgba(0,196,154,0.22); border-radius: var(--radius); padding: 36px 40px; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+    .custom-dev-cta-block h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .custom-dev-cta-block p { font-size: 14px; color: var(--text-2); line-height: 1.7; max-width: 520px; }
+    .custom-dev-cta-actions { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; min-width: 200px; }
+    @media (max-width: 1024px) { .custom-dev-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .custom-dev-grid { grid-template-columns: 1fr; } .custom-dev-cta-block { flex-direction: column; align-items: flex-start; padding: 28px 24px; } .custom-dev-cta-actions { flex-direction: row; flex-wrap: wrap; min-width: 0; } }
   </style>
 </head>
 <body>
@@ -886,6 +915,26 @@
           <button class="btn-tier outline" onclick="openSignup('elite')">Get Elite <i class="fas fa-arrow-right"></i></button>
         </div>
       </div>
+
+      <!-- Custom / Enterprise -->
+      <div class="custom-tier fade-up">
+        <div>
+          <div class="custom-tier-label"><i class="fas fa-sliders"></i> Custom Plan</div>
+          <h3>Not every club fits a fixed tier.</h3>
+          <p class="custom-tier-desc">If you only need certain modules, have a non-standard setup, or simply want to avoid paying for features you won't use — we'll put together a plan around exactly what your club needs, at a price that reflects that.</p>
+        </div>
+        <ul class="custom-tier-features">
+          <li><i class="fas fa-check"></i> Choose only the modules your club actually uses</li>
+          <li><i class="fas fa-check"></i> Priced based on your specific feature selection</li>
+          <li><i class="fas fa-check"></i> Scale features up or down as your club grows</li>
+          <li><i class="fas fa-check"></i> Same platform and support — no trade-offs on quality</li>
+        </ul>
+        <div class="custom-tier-actions">
+          <a href="https://wa.me/27000000000?text=Hi%2C%20I%27d%20like%20to%20discuss%20a%20custom%20plan%20for%20my%20club" class="btn-hero-primary" target="_blank" rel="noopener noreferrer" style="font-size:14px;padding:12px 20px;white-space:nowrap;"><i class="fab fa-whatsapp"></i> WhatsApp Us</a>
+          <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel%20Football%20Hub%20%E2%80%94%20Custom%20Plan%20Enquiry" class="btn-hero-secondary" style="font-size:14px;padding:12px 20px;white-space:nowrap;"><i class="fas fa-envelope"></i> Email Us</a>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -924,6 +973,59 @@
       </div>
       <p class="comparison-scroll-hint"><i class="fas fa-arrows-left-right"></i> Scroll to compare all tiers</p>
       <p class="comparison-note fade-up">All pricing in ZAR. Free tier requires no payment details. Paid tiers activated from your club settings.</p>
+    </div>
+  </section>
+
+  <!-- Custom Development -->
+  <section class="custom-dev" id="custom-dev">
+    <div class="container">
+      <div class="custom-dev-intro fade-up">
+        <div class="section-label"><i class="fas fa-code"></i> Custom Development</div>
+        <h2 class="section-heading">Beyond the platform —<br>we build for you.</h2>
+        <p class="section-sub">The standard platform covers the needs of most clubs. But if you have a specific workflow, a custom integration requirement, or a feature that simply doesn't exist yet — we take on custom development work for clubs that need something built to their exact specifications. Your platform, extended your way, for a one-off development fee.</p>
+      </div>
+      <div class="custom-dev-grid">
+        <div class="custom-dev-card fade-up stagger-1">
+          <div class="custom-dev-icon"><i class="fas fa-puzzle-piece"></i></div>
+          <h3>Club-Specific Features</h3>
+          <p>Have a workflow or operational tool that's unique to how your club runs? We design and build it directly into your platform — fully integrated, not bolted on. From scoping and design to delivery, we handle the entire process.</p>
+        </div>
+        <div class="custom-dev-card fade-up stagger-2">
+          <div class="custom-dev-icon"><i class="fas fa-link"></i></div>
+          <h3>System Integrations</h3>
+          <p>Connect Sentinel to your existing infrastructure — GPS tracking devices, biometric systems, federation databases, or external data sources. If it has an API or a structured data format, we can build the bridge into your platform.</p>
+        </div>
+        <div class="custom-dev-card fade-up stagger-3">
+          <div class="custom-dev-icon"><i class="fas fa-chart-column"></i></div>
+          <h3>Custom Reports &amp; Exports</h3>
+          <p>Need data produced in a specific format for federation reporting, sponsor presentations, or board-level summaries? We build custom report templates and automated export pipelines shaped exactly around what your organisation needs to produce.</p>
+        </div>
+        <div class="custom-dev-card fade-up stagger-4">
+          <div class="custom-dev-icon"><i class="fas fa-palette"></i></div>
+          <h3>Club Branding &amp; White-Label</h3>
+          <p>Full visual alignment with your club's identity — branded dashboards, your colour system, your logo throughout every interface. For academies and professional clubs that need the platform to feel entirely theirs, not a third-party tool.</p>
+        </div>
+        <div class="custom-dev-card fade-up stagger-5">
+          <div class="custom-dev-icon"><i class="fas fa-sitemap"></i></div>
+          <h3>Multi-Club &amp; Academy Infrastructure</h3>
+          <p>Managing multiple affiliated clubs, age groups, or partner organisations? We build the cross-club management layer your setup requires — shared scouting pipelines, consolidated reporting, and custom access structures across your whole organisation.</p>
+        </div>
+        <div class="custom-dev-card fade-up stagger-6">
+          <div class="custom-dev-icon"><i class="fas fa-chart-line"></i></div>
+          <h3>Advanced Analytics Pipelines</h3>
+          <p>Need custom KPI dashboards, automated data delivery to coaching staff, or a reporting layer built around your specific game model? We design the analytical infrastructure behind the decisions your club needs to make — calibrated to your methodology.</p>
+        </div>
+      </div>
+      <div class="custom-dev-cta-block fade-up">
+        <div>
+          <h3>Have something in mind?</h3>
+          <p>Tell us what you need. We'll scope it, give you a development fee, and build it directly into your platform. Most custom work is delivered within 2–4 weeks depending on complexity. No vague estimates — you'll know exactly what you're getting and what it costs before any work begins.</p>
+        </div>
+        <div class="custom-dev-cta-actions">
+          <a href="https://wa.me/27000000000?text=Hi%2C%20I%27d%20like%20to%20discuss%20custom%20development%20for%20my%20club" class="btn-hero-primary" target="_blank" rel="noopener noreferrer" style="font-size:14px;padding:12px 20px;white-space:nowrap;"><i class="fab fa-whatsapp"></i> Discuss on WhatsApp</a>
+          <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel%20Football%20Hub%20%E2%80%94%20Custom%20Development%20Enquiry" class="btn-hero-secondary" style="font-size:14px;padding:12px 20px;white-space:nowrap;"><i class="fas fa-envelope"></i> Email Us a Brief</a>
+        </div>
+      </div>
     </div>
   </section>
 
