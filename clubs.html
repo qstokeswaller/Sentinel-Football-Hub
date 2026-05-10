@@ -243,6 +243,48 @@
     .comparison-scroll-hint { display: none; text-align: center; font-size: 12px; color: var(--text-3); margin-top: 10px; }
     @media (max-width: 640px) { .comparison-scroll-hint { display: block; } }
 
+    /* ── GET THE APP ── */
+    .get-app { background: var(--bg); border-top: 1px solid var(--border); }
+    .get-app-header { text-align: center; margin-bottom: 56px; }
+    .get-app-header .section-sub { margin: 0 auto; }
+    .get-app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
+    .app-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 36px 32px; display: flex; flex-direction: column;
+    }
+    .app-card-icon {
+      width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; margin-bottom: 20px;
+      background: var(--accent-dim); color: var(--accent);
+    }
+    .app-card-icon.ios { background: rgba(120,120,140,0.12); color: #a0aec0; }
+    .app-card-icon.desktop { background: rgba(99,179,237,0.10); color: #63b3ed; }
+    .app-card-platform { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+    .app-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+    .app-card > p { font-size: 14px; color: var(--text-2); line-height: 1.65; margin-bottom: 24px; flex: 1; }
+    .app-install-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 20px; background: var(--accent); color: #080B0F;
+      font-size: 14px; font-weight: 600; border: none; border-radius: 8px;
+      cursor: pointer; transition: opacity 0.2s; width: 100%;
+    }
+    .app-install-btn:hover:not(:disabled) { opacity: 0.88; }
+    .app-install-btn:disabled { background: rgba(255,255,255,0.06); color: var(--text-3); cursor: default; border: 1px solid var(--border); }
+    .app-install-note { font-size: 12px; color: var(--text-3); text-align: center; margin-top: 10px; line-height: 1.5; }
+    .ios-steps { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+    .ios-steps li { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--text-2); line-height: 1.4; }
+    .ios-steps li .step-num {
+      width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2);
+      border: 1px solid var(--border-2); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--text-3); flex-shrink: 0;
+    }
+    .ios-steps li i { color: var(--accent); width: 14px; flex-shrink: 0; font-size: 13px; }
+    .get-app-badges { display: flex; align-items: center; justify-content: center; gap: 28px; flex-wrap: wrap; }
+    .get-app-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-3); }
+    .get-app-badge i { color: var(--accent); }
+    @media (max-width: 900px) { .get-app-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 560px) { .get-app-grid { grid-template-columns: 1fr; } }
+
     /* CTA */
     .cta-section { background: var(--surface); padding: 112px 0; text-align: center; position: relative; overflow: hidden; }
     .cta-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 700px; height: 400px; background: radial-gradient(ellipse, rgba(0,196,154,0.08) 0%, transparent 70%); pointer-events: none; }
@@ -1029,6 +1071,71 @@
     </div>
   </section>
 
+  <!-- Get the App -->
+  <section class="get-app" id="download">
+    <div class="container">
+      <div class="get-app-header">
+        <div class="section-label fade-up"><i class="fas fa-download"></i> Get the App</div>
+        <h2 class="section-heading fade-up">Manage your club from anywhere.</h2>
+        <p class="section-sub fade-up">Football Hub installs directly to your phone or desktop — no app store, no fees. The full platform in your pocket, ready in seconds.</p>
+      </div>
+      <div class="get-app-grid">
+
+        <!-- Android -->
+        <div class="app-card fade-up stagger-1">
+          <div class="app-card-icon"><i class="fab fa-android"></i></div>
+          <div class="app-card-platform">Android</div>
+          <h3>Chrome on Android</h3>
+          <p>Tap the install prompt that appears in Chrome, or open the browser menu and tap "Add to Home Screen". Opens fullscreen like a native app.</p>
+          <button class="app-install-btn" id="android-install-btn" disabled>
+            <i class="fas fa-download"></i> Install Now
+          </button>
+          <p class="app-install-note" id="android-note">Open this page in Chrome on your Android device</p>
+        </div>
+
+        <!-- iOS -->
+        <div class="app-card fade-up stagger-2">
+          <div class="app-card-icon ios"><i class="fab fa-apple"></i></div>
+          <div class="app-card-platform">iPhone &amp; iPad</div>
+          <h3>Safari on iOS</h3>
+          <p>Open in Safari and follow these three steps to add Football Hub to your home screen in under 10 seconds.</p>
+          <ol class="ios-steps">
+            <li>
+              <span class="step-num">1</span>
+              Tap the <i class="fas fa-arrow-up-from-bracket"></i> <strong>Share</strong> button at the bottom
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              Scroll down and tap <strong>Add to Home Screen</strong>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              Tap <strong>Add</strong> — it's on your home screen
+            </li>
+          </ol>
+        </div>
+
+        <!-- Desktop -->
+        <div class="app-card fade-up stagger-3">
+          <div class="app-card-icon desktop"><i class="fas fa-display"></i></div>
+          <div class="app-card-platform">Desktop</div>
+          <h3>Chrome or Edge on PC / Mac</h3>
+          <p>Install as a desktop app that opens in its own window with no browser chrome. Lives in your taskbar for instant access to squad, matches and sessions.</p>
+          <button class="app-install-btn" id="desktop-install-btn" disabled>
+            <i class="fas fa-download"></i> Install Now
+          </button>
+          <p class="app-install-note" id="desktop-note">Open this page in Chrome or Edge on your desktop</p>
+        </div>
+      </div>
+      <div class="get-app-badges fade-up">
+        <div class="get-app-badge"><i class="fas fa-circle-check"></i> No app store required</div>
+        <div class="get-app-badge"><i class="fas fa-circle-check"></i> Free to install</div>
+        <div class="get-app-badge"><i class="fas fa-circle-check"></i> Updates automatically</div>
+        <div class="get-app-badge"><i class="fas fa-circle-check"></i> Works offline</div>
+      </div>
+    </div>
+  </section>
+
   <!-- CTA -->
   <section class="cta-section" id="contact">
     <div class="cta-glow" aria-hidden="true"></div>
@@ -1141,6 +1248,37 @@
       card.addEventListener('click', toggle);
       card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     });
+
+    // Get the App section — activate install buttons when browser signals PWA is installable
+    (function() {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const androidBtn = document.getElementById('android-install-btn');
+      const desktopBtn = document.getElementById('desktop-install-btn');
+      const androidNote = document.getElementById('android-note');
+      const desktopNote = document.getElementById('desktop-note');
+      function activateBtn(btn, note) {
+        if (!btn) return;
+        btn.disabled = false;
+        if (note) note.style.display = 'none';
+        btn.onclick = async () => {
+          const accepted = await window.triggerPWAInstall?.();
+          if (accepted) {
+            btn.innerHTML = '<i class="fas fa-circle-check"></i> Installed successfully';
+            btn.disabled = true;
+            if (note) { note.textContent = 'Check your home screen or taskbar'; note.style.display = 'block'; }
+          }
+        };
+      }
+      document.addEventListener('pwa-installable', () => {
+        if (window.isPWAInstalled?.()) return;
+        activateBtn(isMobile ? androidBtn : desktopBtn, isMobile ? androidNote : desktopNote);
+      });
+      if (window.isPWAInstalled?.()) {
+        [androidBtn, desktopBtn].forEach(btn => {
+          if (btn) { btn.innerHTML = '<i class="fas fa-circle-check"></i> Already installed'; btn.disabled = true; }
+        });
+      }
+    })();
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
