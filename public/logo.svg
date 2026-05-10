@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Green rounded background -->
+  <rect width="512" height="512" rx="96" fill="#00C49A"/>
+  <!-- White ball -->
+  <circle cx="256" cy="256" r="160" fill="white"/>
+  <!-- Central pentagon (dark) -->
+  <polygon points="256,178 330,232 302,322 210,322 182,232" fill="#0D1B2A"/>
+  <!-- Seam lines from each vertex to ball edge -->
+  <line x1="256" y1="178" x2="256" y2="97" stroke="#0D1B2A" stroke-width="11" stroke-linecap="round"/>
+  <line x1="330" y1="232" x2="406" y2="184" stroke="#0D1B2A" stroke-width="11" stroke-linecap="round"/>
+  <line x1="302" y1="322" x2="367" y2="386" stroke="#0D1B2A" stroke-width="11" stroke-linecap="round"/>
+  <line x1="210" y1="322" x2="145" y2="386" stroke="#0D1B2A" stroke-width="11" stroke-linecap="round"/>
+  <line x1="182" y1="232" x2="106" y2="184" stroke="#0D1B2A" stroke-width="11" stroke-linecap="round"/>
+</svg>

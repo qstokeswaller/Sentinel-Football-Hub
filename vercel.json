@@ -11,6 +11,20 @@
       }
     },
     {
+      "src": "/sw.js",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Service-Worker-Allowed": "/"
+      }
+    },
+    {
+      "src": "/manifest.webmanifest",
+      "headers": {
+        "Content-Type": "application/manifest+json",
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      }
+    },
+    {
       "src": "/(.*)",
       "headers": {
         "Cache-Control": "public, max-age=0, must-revalidate"

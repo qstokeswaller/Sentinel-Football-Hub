@@ -1,10 +1,8 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { VitePWA } from 'vite-plugin-pwa';
 
-// Sidebar HTML skeleton injected into every page at serve/build time.
-// Sidebar shell: just a dark background placeholder — no branding text or icons.
-// The preload script renders the real branded sidebar within milliseconds.
-// This shell prevents a white flash in the sidebar area during that gap.
+// Sidebar HTML skeleton injected into every app page at serve/build time.
 const sidebarShellHTML = `
 <style>
   .sidebar-shell {
@@ -19,7 +17,6 @@ const sidebarShellHTML = `
 </style>
 `;
 
-// Nav items matching sidebar.js exactly
 const shellNavItems = [
     { href: '/src/pages/dashboard.html', icon: 'fa-th-large', label: 'Dashboard', id: 'dashboard' },
     { href: '/src/pages/planner.html', icon: 'fa-clipboard-list', label: 'Session Planner', id: 'planner' },
@@ -32,14 +29,19 @@ const shellNavItems = [
     { href: '/src/pages/financials.html', icon: 'fa-file-invoice-dollar', label: 'Financials', id: 'financials' },
 ];
 
+// Pages that should NOT receive the sidebar shell injection
+const NO_SIDEBAR_PAGES = [
+    'login.html', 'platform-admin.html', 'session-share.html',
+    'player-dossier.html', 'squad-dossier.html',
+    'privacy-policy.html', 'terms-of-service.html',
+    'cookie-policy.html', 'data-processing.html',
+];
+
 function buildSidebarShellBody() {
-    // Just a dark background placeholder — no text, no icons, no branding.
-    // Prevents white flash; preload script replaces this with the real sidebar.
     return '<div class="sidebar-shell" aria-hidden="true"></div>';
 }
 
 function sidebarPlugin() {
-    // Map filenames to page IDs for active highlighting
     const pageMap = {
         'dashboard.html': 'dashboard',
         'planner.html': 'planner',
@@ -64,11 +66,10 @@ function sidebarPlugin() {
     return {
         name: 'inject-sidebar-shell',
         transformIndexHtml(html, ctx) {
-            // Don't inject on login, root redirect, or platform admin (standalone shell)
-            if (ctx.path?.includes('login.html') || ctx.path?.includes('platform-admin.html') || ctx.path?.includes('session-share.html') || ctx.path?.includes('player-dossier.html') || ctx.path?.includes('squad-dossier.html') || ctx.path === '/index.html' || ctx.path === '/') {
+            const isNoSidebar = NO_SIDEBAR_PAGES.some(p => ctx.path?.includes(p));
+            if (isNoSidebar || ctx.path === '/index.html' || ctx.path === '/') {
                 return html;
             }
-            // Detect active page from the file path
             const filename = ctx.path?.split('/').pop() || '';
             const activePage = pageMap[filename] || '';
 
@@ -79,9 +80,66 @@ function sidebarPlugin() {
     };
 }
 
+// Injects Apple PWA meta tags + pwa-register.js into every processed HTML page
+function pwaMetaPlugin() {
+    const tags = `
+  <meta name="theme-color" content="#00C49A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Football Hub">
+  <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
+  <script type="module" src="/pwa-register.js"></script>`;
+
+    return {
+        name: 'inject-pwa-meta',
+        transformIndexHtml(html) {
+            return html.replace('</head>', tags + '\n</head>');
+        }
+    };
+}
+
 export default defineConfig({
     root: '.',
-    plugins: [sidebarPlugin()],
+    define: {
+        __APP_VERSION__: JSON.stringify(Date.now()),
+    },
+    plugins: [
+        sidebarPlugin(),
+        pwaMetaPlugin(),
+        VitePWA({
+            registerType: 'prompt',
+            injectRegister: null,       // pwa-register.js handles SW registration
+            strategies: 'injectManifest',
+            srcDir: 'public',
+            filename: 'sw.js',
+            manifest: {
+                name: 'Sentinel Football Hub',
+                short_name: 'Football Hub',
+                description: 'Club management platform for football coaches',
+                start_url: '/src/pages/dashboard.html',
+                scope: '/',
+                display: 'standalone',
+                orientation: 'any',
+                background_color: '#080B0F',
+                theme_color: '#00C49A',
+                lang: 'en-ZA',
+                categories: ['sports', 'productivity'],
+                icons: [
+                    { src: '/pwa-64x64.png', sizes: '64x64', type: 'image/png' },
+                    { src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+                    { src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+                    { src: '/maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+                ],
+            },
+            workbox: {
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+                globIgnores: ['**/node_modules/**'],
+            },
+            devOptions: {
+                enabled: false,         // don't run SW in dev — breaks HMR
+            },
+        }),
+    ],
     build: {
         target: 'esnext',
         outDir: 'dist',
@@ -110,6 +168,10 @@ export default defineConfig({
                 financials: resolve(__dirname, 'src/pages/financials.html'),
                 playerDossier: resolve(__dirname, 'src/pages/player-dossier.html'),
                 squadDossier: resolve(__dirname, 'src/pages/squad-dossier.html'),
+                privacyPolicy: resolve(__dirname, 'src/pages/privacy-policy.html'),
+                termsOfService: resolve(__dirname, 'src/pages/terms-of-service.html'),
+                cookiePolicy: resolve(__dirname, 'src/pages/cookie-policy.html'),
+                dataProcessing: resolve(__dirname, 'src/pages/data-processing.html'),
             }
         }
     },

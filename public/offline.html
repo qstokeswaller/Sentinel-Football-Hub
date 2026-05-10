@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Offline — Football Hub</title>
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/logo.svg" sizes="any" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
+  <meta name="theme-color" content="#00C49A">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #080B0F;
+      color: #f8fafc;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      background: #0D1B2A;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+    .icon svg { width: 40px; height: 40px; fill: #00C49A; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+    p { color: #94a3b8; font-size: 0.95rem; line-height: 1.6; max-width: 340px; }
+    .retry-btn {
+      margin-top: 2rem;
+      padding: 0.65rem 1.5rem;
+      background: #00C49A;
+      color: #080B0F;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .retry-btn:hover { background: #00a884; }
+  </style>
+</head>
+<body>
+  <div class="icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4zm7 12.08V7.92L14 11v8.08L8 18.08zm6 1L9 16v-4.08l5 3V19.08zM2 7.08L7 5v12L2 19.08V7.08zm18 10l-5 3V8l5-3v12z"/>
+    </svg>
+  </div>
+  <h1>You're offline</h1>
+  <p>Check your connection and try again. Pages you've visited recently may still be available.</p>
+  <button class="retry-btn" onclick="window.location.reload()">Try again</button>
+</body>
+</html>
