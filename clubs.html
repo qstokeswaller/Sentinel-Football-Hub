@@ -1161,7 +1161,7 @@
 
         document.getElementById('signupForm').style.display = 'none';
         document.getElementById('signupSuccessMsg').textContent =
-          `Check your inbox at ${adminEmail} — we've sent an invite link to activate your account and access ${data.clubName}.`;
+          data.message || `Check your inbox at ${adminEmail} — we've sent an invite link to activate your account and access ${data.clubName}.`;
         document.getElementById('signupSuccess').style.display = 'block';
       } catch (err) {
         errEl.textContent = 'Network error — please check your connection and try again.';
