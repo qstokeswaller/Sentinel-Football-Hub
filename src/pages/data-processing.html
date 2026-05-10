@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Processing Agreement | Sentinel Football Hub</title>
+  <meta name="description" content="Sentinel Football Hub Data Processing Agreement — POPIA Operator Agreement for club subscribers.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg:        #080B0F;
+      --surface:   #0f172a;
+      --surface-2: #1e293b;
+      --border:    rgba(255,255,255,0.07);
+      --border-2:  rgba(255,255,255,0.12);
+      --green:     #00C49A;
+      --green-dim: rgba(0,196,154,0.10);
+      --amber:     #f59e0b;
+      --amber-dim: rgba(245,158,11,0.10);
+      --text:      #f8fafc;
+      --text-2:    #94a3b8;
+      --text-3:    #475569;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --max-w:     1160px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(8,11,15,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 64px; display: flex; align-items: center; }
+    .nav > .container { max-width: var(--max-w); display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    .nav-logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #000; }
+    .nav-back { font-size: 13px; font-weight: 500; color: var(--text-2); display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-2); transition: all 0.2s; }
+    .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .hero { padding: 120px 0 60px; border-bottom: 1px solid var(--border); }
+    .legal-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); background: var(--green-dim); border: 1px solid rgba(0,196,154,0.2); padding: 5px 12px; border-radius: 100px; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .hero-meta { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
+    .hero-note { font-size: 14px; color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 20px; max-width: 680px; }
+    .hero-note strong { color: var(--text); }
+
+    .parties-block { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 40px 0; }
+    .party-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+    .party-role { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green); margin-bottom: 8px; }
+    .party-name { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .party-desc { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+    @media (max-width: 600px) { .parties-block { grid-template-columns: 1fr; } }
+
+    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; margin: 0 0 40px; }
+    .toc h2 { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 16px; }
+    .toc ol { padding-left: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; }
+    .toc li { font-size: 14px; }
+    .toc a { color: var(--text-2); transition: color 0.2s; }
+    .toc a:hover { color: var(--green); }
+    @media (max-width: 600px) { .toc ol { grid-template-columns: 1fr; } }
+
+    .legal-content { padding: 20px 0 80px; }
+    .legal-section { margin-bottom: 56px; }
+    .legal-section h2 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .legal-section h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 10px; }
+    .legal-section p { font-size: 15px; color: var(--text-2); margin-bottom: 14px; line-height: 1.75; }
+    .legal-section ul, .legal-section ol { padding-left: 22px; margin-bottom: 14px; }
+    .legal-section li { font-size: 15px; color: var(--text-2); margin-bottom: 8px; line-height: 1.7; }
+    .legal-section li strong { color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--radius-sm); padding: 16px 20px; margin: 20px 0; }
+    .callout.amber { border-left-color: var(--amber); background: var(--amber-dim); }
+    .callout p { margin: 0; }
+    .highlight-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+    .highlight-table th { text-align: left; padding: 10px 14px; background: var(--surface); color: var(--text-2); font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .highlight-table td { padding: 12px 14px; color: var(--text-2); border-bottom: 1px solid var(--border); vertical-align: top; }
+    .highlight-table tr:last-child td { border-bottom: none; }
+    .highlight-table td:first-child { color: var(--text); font-weight: 500; }
+
+    .legal-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 0; text-align: center; }
+    .legal-footer p { font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
+    .legal-footer a { color: var(--text-2); transition: color 0.2s; }
+    .legal-footer a:hover { color: var(--green); }
+    .legal-footer .footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container" style="max-width:var(--max-w)">
+      <a href="../../index.html" class="nav-logo">
+        <div class="nav-logo-icon"><i class="fas fa-futbol"></i></div>
+        Sentinel Football Hub
+      </a>
+      <a href="../../index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to home</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <div class="legal-badge"><i class="fas fa-handshake"></i> Legal</div>
+      <h1>Data Processing Agreement</h1>
+      <p class="hero-meta">Last updated: 10 May 2026 &nbsp;·&nbsp; Effective: 10 May 2026</p>
+      <p class="hero-meta">POPIA Operator Agreement — applies to all club subscribers</p>
+      <div class="hero-note">
+        <strong>This agreement is part of your subscription.</strong> POPIA Sections 20-21 require that an Operator (data processor) processing personal information on behalf of a Responsible Party must do so under a written agreement. By accepting Sentinel's Terms of Service, the Club agrees to this Data Processing Agreement. No separate signature is required.
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+
+    <div class="parties-block">
+      <div class="party-card">
+        <div class="party-role"><i class="fas fa-server"></i> &nbsp; Operator (Processor)</div>
+        <div class="party-name">Sentinel SportsTech (Pty) Ltd</div>
+        <div class="party-desc">Processes personal information on the Club's instruction to provide the Sentinel Football Hub platform. Registered in South Africa.</div>
+      </div>
+      <div class="party-card">
+        <div class="party-role" style="color:var(--amber)"><i class="fas fa-building"></i> &nbsp; Responsible Party (Controller)</div>
+        <div class="party-name">The Club (Subscriber)</div>
+        <div class="party-desc">The registered club that has accepted Sentinel's Terms of Service. Determines the purpose and means of processing player and club data.</div>
+      </div>
+    </div>
+
+    <nav class="toc">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#s1">Definitions</a></li>
+        <li><a href="#s2">Scope of processing</a></li>
+        <li><a href="#s3">Sentinel's obligations as Operator</a></li>
+        <li><a href="#s4">Club's obligations as Responsible Party</a></li>
+        <li><a href="#s5">Sub-processors</a></li>
+        <li><a href="#s6">Security measures</a></li>
+        <li><a href="#s7">Data subject rights</a></li>
+        <li><a href="#s8">Breach notification</a></li>
+        <li><a href="#s9">Data retention &amp; deletion</a></li>
+        <li><a href="#s10">Cross-border transfers</a></li>
+      </ol>
+    </nav>
+
+    <div class="legal-content">
+
+      <!-- 1 -->
+      <div class="legal-section" id="s1">
+        <h2>1. Definitions</h2>
+        <p>In this Data Processing Agreement ("DPA"), the following terms have the meanings assigned in POPIA unless otherwise specified:</p>
+        <ul>
+          <li><strong>"Personal Information"</strong> — information relating to an identifiable, living, natural person or juristic person, as defined in POPIA Section 1</li>
+          <li><strong>"Processing"</strong> — any operation performed on Personal Information, including collection, receipt, recording, organisation, storage, updating, retrieval, use, distribution, deletion, or destruction</li>
+          <li><strong>"Responsible Party"</strong> — the Club; the entity that determines the purpose and means of processing Personal Information</li>
+          <li><strong>"Operator"</strong> — Sentinel SportsTech (Pty) Ltd; processes Personal Information on behalf of the Responsible Party</li>
+          <li><strong>"Data Subject"</strong> — a player, coach, administrator, or other natural person whose Personal Information is processed via the Platform</li>
+          <li><strong>"Sub-processor"</strong> — a third party engaged by Sentinel to process Personal Information in connection with providing the Platform</li>
+          <li><strong>"Security Incident"</strong> — any accidental or unlawful destruction, loss, alteration, or unauthorised disclosure of or access to Personal Information</li>
+        </ul>
+      </div>
+
+      <!-- 2 -->
+      <div class="legal-section" id="s2">
+        <h2>2. Scope of Processing</h2>
+        <h3>2.1 Subject matter</h3>
+        <p>This DPA governs Sentinel's processing of Personal Information on behalf of the Club in connection with providing the Sentinel Football Hub platform under the Terms of Service.</p>
+        <h3>2.2 Categories of Personal Information processed</h3>
+        <ul>
+          <li>Player personal information: names, dates of birth, position, physical metrics, performance data, attendance records, coaching notes and ratings</li>
+          <li>Coach and administrator personal information: names, email addresses, contact numbers, role assignments</li>
+          <li>Media files: player profile images and video footage uploaded by the Club</li>
+          <li>Match and session data associated with identified individuals</li>
+        </ul>
+        <h3>2.3 Categories of Data Subjects</h3>
+        <ul>
+          <li>Players registered in the Club's squad (including minor players)</li>
+          <li>Coaches and staff accounts created by the Club Admin</li>
+          <li>Scouted players added to the Club's scouting database</li>
+        </ul>
+        <h3>2.4 Purpose of processing</h3>
+        <p>Sentinel processes Personal Information solely for the purpose of providing the Platform to the Club, including: storing and displaying squad data, generating match and training reports, providing analytics features, and delivering all other platform features included in the Club's subscription tier.</p>
+        <h3>2.5 Duration</h3>
+        <p>This DPA remains in effect for the duration of the Club's subscription. On termination or expiry of the subscription, it remains in effect until all Personal Information has been deleted or returned in accordance with Section 9.</p>
+      </div>
+
+      <!-- 3 -->
+      <div class="legal-section" id="s3">
+        <h2>3. Sentinel's Obligations as Operator</h2>
+        <p>Sentinel will, in its capacity as Operator:</p>
+        <ul>
+          <li><strong>Process only on instruction:</strong> Process Personal Information only in accordance with the Club's documented instructions (which include these Terms and normal use of the Platform). If Sentinel is required by law to process data in any other way, it will inform the Club unless legally prohibited from doing so.</li>
+          <li><strong>Confidentiality:</strong> Ensure that authorised personnel who have access to Personal Information are under appropriate confidentiality obligations and receive relevant data protection awareness training.</li>
+          <li><strong>Security:</strong> Implement the technical and organisational security measures described in Section 6.</li>
+          <li><strong>Sub-processors:</strong> Only engage sub-processors in accordance with Section 5, and remain liable for sub-processor acts and omissions to the same extent as if Sentinel performed the processing itself.</li>
+          <li><strong>Data subject rights:</strong> Assist the Club in responding to data subject rights requests in accordance with Section 7.</li>
+          <li><strong>Security incidents:</strong> Notify the Club in accordance with Section 8 in the event of a Security Incident.</li>
+          <li><strong>Deletion:</strong> Delete or return all Personal Information in accordance with Section 9 at the end of the DPA term.</li>
+          <li><strong>Audit assistance:</strong> Provide the Club with reasonable information necessary to demonstrate compliance with this DPA, and cooperate with audits conducted by the Club or its mandated auditor, subject to reasonable notice and confidentiality obligations.</li>
+        </ul>
+      </div>
+
+      <!-- 4 -->
+      <div class="legal-section" id="s4">
+        <h2>4. Club's Obligations as Responsible Party</h2>
+        <p>The Club confirms that it will, in its capacity as Responsible Party:</p>
+        <ul>
+          <li>Ensure there is a lawful basis for processing all Personal Information entered into the Platform, including obtaining all necessary consents from data subjects or their "competent persons" (parents/guardians for players under 18)</li>
+          <li>Inform data subjects about the processing of their Personal Information in accordance with POPIA's openness and transparency conditions</li>
+          <li>Ensure the Personal Information provided to Sentinel for processing is accurate and, where necessary, kept up to date</li>
+          <li>Respond to requests from data subjects for access, correction, or deletion of their Personal Information within 30 days</li>
+          <li>Comply with all applicable data protection laws in its capacity as Responsible Party</li>
+          <li>Register its own Information Officer with the SA Information Regulator if required</li>
+          <li>Notify Sentinel promptly if the Club becomes aware of a Security Incident affecting data processed via the Platform</li>
+        </ul>
+        <div class="callout amber">
+          <p><strong>The Club bears full responsibility</strong> for the lawfulness of the processing it instructs Sentinel to perform. Sentinel is not responsible for determining whether the Club has obtained appropriate consents from players, parents, or guardians. If Sentinel processes data on an instruction that is later found to be unlawful, the Club indemnifies Sentinel against any resulting liability.</p>
+        </div>
+      </div>
+
+      <!-- 5 -->
+      <div class="legal-section" id="s5">
+        <h2>5. Sub-processors</h2>
+        <p>The Club authorises Sentinel to engage the following sub-processors:</p>
+        <table class="highlight-table">
+          <thead><tr><th>Sub-processor</th><th>Location</th><th>Processing activity</th></tr></thead>
+          <tbody>
+            <tr><td>Supabase Inc</td><td>European Union (eu-west-1)</td><td>Database storage, authentication, edge function execution, file storage</td></tr>
+            <tr><td>Vercel Inc</td><td>United States / CDN</td><td>Static asset hosting, page delivery, CDN caching</td></tr>
+            <tr><td>Cloudflare Inc</td><td>United States / CDN</td><td>CDN delivery of Font Awesome assets (no personal data transmitted)</td></tr>
+          </tbody>
+        </table>
+        <p>Sentinel will provide at least 14 days' notice to the Club before engaging any new sub-processor or making material changes to an existing sub-processor's role. The Club may object to a new sub-processor within 14 days of notice; if the objection cannot be resolved, either party may terminate the subscription without penalty.</p>
+        <p>Sentinel requires each sub-processor to agree to data protection obligations that are equivalent to those in this DPA. Sentinel remains fully liable for the acts and omissions of its sub-processors as if Sentinel had performed those acts and omissions directly.</p>
+      </div>
+
+      <!-- 6 -->
+      <div class="legal-section" id="s6">
+        <h2>6. Security Measures</h2>
+        <p>Sentinel implements and maintains the following technical and organisational security measures, appropriate to the risks presented by the processing:</p>
+        <h3>Technical measures</h3>
+        <ul>
+          <li><strong>Encryption in transit:</strong> All data is transmitted over TLS 1.2 or higher. All API endpoints enforce HTTPS.</li>
+          <li><strong>Encryption at rest:</strong> Database data and file storage are encrypted at rest using AES-256.</li>
+          <li><strong>Authentication:</strong> Platform authentication uses Supabase Auth with secure JWT tokens. Passwords are hashed using bcrypt and never stored in plaintext.</li>
+          <li><strong>Data isolation:</strong> Row-level security (RLS) policies on all database tables ensure each club can only access its own data.</li>
+          <li><strong>Access control:</strong> Production database and infrastructure access is restricted to authorised Sentinel personnel. Access is reviewed regularly.</li>
+          <li><strong>File access:</strong> Uploaded files are served via signed URLs that expire after a configurable period. Direct public access to storage buckets is disabled.</li>
+          <li><strong>Security headers:</strong> The Platform implements security headers including Content-Security-Policy, X-Frame-Options, and Strict-Transport-Security.</li>
+        </ul>
+        <h3>Organisational measures</h3>
+        <ul>
+          <li>Data protection awareness for all personnel with access to personal information</li>
+          <li>Principle of least privilege — access is granted only as necessary for the role</li>
+          <li>Regular security reviews of codebase and infrastructure configuration</li>
+          <li>Incident response procedure for Security Incidents (see Section 8)</li>
+        </ul>
+      </div>
+
+      <!-- 7 -->
+      <div class="legal-section" id="s7">
+        <h2>7. Data Subject Rights</h2>
+        <p>POPIA grants data subjects rights including access, correction, deletion, and objection. Because the Club is the Responsible Party for player data, data subjects (players, parents, coaches) should direct their rights requests to the Club in the first instance.</p>
+        <h3>Sentinel's assistance obligations</h3>
+        <p>Sentinel will provide reasonable technical assistance to the Club to fulfil data subject rights requests, including:</p>
+        <ul>
+          <li>Confirming whether specific personal information is held on the platform</li>
+          <li>Providing a data export in a commonly used format when requested</li>
+          <li>Deleting personal information for a specific data subject on the Club's documented instruction</li>
+          <li>Correcting inaccurate personal information on the Club's documented instruction</li>
+        </ul>
+        <p>Sentinel will respond to Club requests for data subject assistance within 15 business days. For requests requiring significant data extraction or processing, we may request a reasonable additional period of up to 15 further business days with notice to the Club.</p>
+        <h3>Requests directed directly to Sentinel</h3>
+        <p>If a data subject contacts Sentinel directly with a rights request regarding club-managed player data, Sentinel will redirect the data subject to the Club and notify the Club of the request within 5 business days, without processing the request directly unless instructed by the Club.</p>
+      </div>
+
+      <!-- 8 -->
+      <div class="legal-section" id="s8">
+        <h2>8. Breach Notification</h2>
+        <h3>8.1 Sentinel's notification obligations</h3>
+        <p>In the event of a Security Incident involving Personal Information processed under this DPA, Sentinel will:</p>
+        <ul>
+          <li>Notify the Club without undue delay and in any event within 48 hours of becoming aware of the Security Incident</li>
+          <li>Provide, to the extent known at the time of notification: a description of the nature of the incident; the categories and approximate number of data subjects affected; the categories and approximate number of personal information records affected; the likely consequences of the incident; and the measures taken or proposed to address it</li>
+          <li>Cooperate with the Club's investigation and remediation efforts</li>
+          <li>Implement all reasonable measures to contain the incident and prevent recurrence</li>
+        </ul>
+        <h3>8.2 Club's notification obligations</h3>
+        <p>As the Responsible Party, the Club is legally responsible for notifying:</p>
+        <ul>
+          <li><strong>The South African Information Regulator</strong> — via the eServices Portal (Form SCN1) within 72 hours of becoming aware of a breach that is likely to result in real risk of harm (as required by POPIA and the April 2025 Information Regulator Guidance)</li>
+          <li><strong>Affected data subjects</strong> — as soon as reasonably practicable after notifying the Regulator</li>
+        </ul>
+        <p>Sentinel will provide the Club with all information reasonably necessary to fulfil these notification obligations. If required by law, Sentinel may notify the Information Regulator independently and will inform the Club of such notification.</p>
+      </div>
+
+      <!-- 9 -->
+      <div class="legal-section" id="s9">
+        <h2>9. Data Retention &amp; Deletion</h2>
+        <h3>9.1 During the subscription</h3>
+        <p>Sentinel retains all Personal Information for the duration of the Club's active subscription. Data is retained in an accessible state for as long as the subscription remains active.</p>
+        <h3>9.2 On termination</h3>
+        <p>Within 30 days of subscription termination or cancellation:</p>
+        <ul>
+          <li>The Club may request a full data export (in JSON or CSV format) via <a href="mailto:stokeswallerq@gmail.com?subject=Data%20Export%20Request%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a></li>
+          <li>After 30 days, all Personal Information associated with the Club's account will be permanently and irreversibly deleted from all systems, including backups</li>
+          <li>Sentinel will provide written confirmation of deletion on request</li>
+        </ul>
+        <h3>9.3 Exceptions</h3>
+        <p>Notwithstanding the above, Sentinel may retain certain data after the deletion date where required by law, including:</p>
+        <ul>
+          <li>Billing records and financial transaction data (5 years under Tax Administration Act)</li>
+          <li>Security logs and incident records (12 months, legitimate security interest)</li>
+          <li>Data subject to a lawful hold order from a court or regulatory authority</li>
+        </ul>
+        <p>Any retained data will be held in a restricted access environment and processed only for the specific legal purpose.</p>
+      </div>
+
+      <!-- 10 -->
+      <div class="legal-section" id="s10">
+        <h2>10. Cross-Border Transfers</h2>
+        <p>As described in Sentinel's Privacy Policy, the Platform's database infrastructure is hosted by Supabase in the European Union. This constitutes a cross-border transfer of Personal Information under POPIA Section 72.</p>
+        <h3>Transfer mechanisms</h3>
+        <p>Sentinel relies on the following mechanisms for this transfer:</p>
+        <ul>
+          <li><strong>Equivalent protection:</strong> The EU's GDPR imposes data protection obligations on Supabase that are equivalent to POPIA requirements in all material respects</li>
+          <li><strong>Supabase DPA:</strong> Sentinel maintains a binding Data Processing Agreement with Supabase under GDPR Article 28, which governs Supabase's processing of Personal Information and ensures adequate protection</li>
+          <li><strong>Informed consent:</strong> By accepting these Terms and this DPA, the Club consents to cross-border processing of its data by Supabase in the EU under POPIA s72(1)(b)(ii), having been informed of this transfer and its nature</li>
+        </ul>
+        <div class="callout amber">
+          <p><strong>Regulatory note:</strong> South Africa has not issued a formal adequacy determination for the EU under POPIA. The transfer mechanisms above represent our assessment of the most appropriate available grounds. We recommend that clubs with heightened data localisation requirements (e.g. those subject to additional sector-specific regulations) seek independent legal advice.</p>
+        </div>
+        <h3>Changes to sub-processors or data locations</h3>
+        <p>If Sentinel changes its primary database provider or data hosting location, it will notify the Club in advance as part of the sub-processor notification process described in Section 5, giving the Club the opportunity to review the new transfer arrangements.</p>
+
+        <div class="callout" style="margin-top:40px">
+          <p><strong>Questions about this DPA?</strong> Contact our Information Officer at <a href="mailto:stokeswallerq@gmail.com?subject=DPA%20Enquiry%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a>. We can provide additional documentation, answer questions about our sub-processor agreements, and assist with your own POPIA compliance obligations.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="legal-footer">
+    <div class="container">
+      <p>© 2026 Sentinel SportsTech (Pty) Ltd. All rights reserved. Registered in South Africa.</p>
+      <p>POPIA Operator Agreement — incorporated by reference into the Sentinel Football Hub Terms of Service.</p>
+      <div class="footer-links">
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms-of-service.html">Terms of Service</a>
+        <a href="cookie-policy.html">Cookie Policy</a>
+        <a href="../../index.html">Home</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service | Sentinel Football Hub</title>
+  <meta name="description" content="Sentinel Football Hub Terms of Service — governing club subscriptions and player analysis services.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg:        #080B0F;
+      --surface:   #0f172a;
+      --surface-2: #1e293b;
+      --border:    rgba(255,255,255,0.07);
+      --border-2:  rgba(255,255,255,0.12);
+      --green:     #00C49A;
+      --green-dim: rgba(0,196,154,0.10);
+      --amber:     #f59e0b;
+      --amber-dim: rgba(245,158,11,0.10);
+      --text:      #f8fafc;
+      --text-2:    #94a3b8;
+      --text-3:    #475569;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --max-w:     1160px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(8,11,15,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 64px; display: flex; align-items: center; }
+    .nav > .container { max-width: var(--max-w); display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    .nav-logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #000; }
+    .nav-back { font-size: 13px; font-weight: 500; color: var(--text-2); display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-2); transition: all 0.2s; }
+    .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .hero { padding: 120px 0 60px; border-bottom: 1px solid var(--border); }
+    .legal-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); background: var(--green-dim); border: 1px solid rgba(0,196,154,0.2); padding: 5px 12px; border-radius: 100px; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .hero-meta { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
+    .hero-note { font-size: 14px; color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 20px; max-width: 660px; }
+    .hero-note strong { color: var(--text); }
+
+    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; margin: 40px 0; }
+    .toc h2 { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 16px; }
+    .toc ol { padding-left: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; }
+    .toc li { font-size: 14px; }
+    .toc a { color: var(--text-2); transition: color 0.2s; }
+    .toc a:hover { color: var(--green); }
+    @media (max-width: 600px) { .toc ol { grid-template-columns: 1fr; } }
+
+    .legal-content { padding: 20px 0 80px; }
+    .legal-section { margin-bottom: 56px; }
+    .legal-section h2 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .legal-section h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 10px; }
+    .legal-section p { font-size: 15px; color: var(--text-2); margin-bottom: 14px; line-height: 1.75; }
+    .legal-section ul, .legal-section ol { padding-left: 22px; margin-bottom: 14px; }
+    .legal-section li { font-size: 15px; color: var(--text-2); margin-bottom: 8px; line-height: 1.7; }
+    .legal-section li strong { color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--radius-sm); padding: 16px 20px; margin: 20px 0; }
+    .callout.amber { border-left-color: var(--amber); background: var(--amber-dim); }
+    .callout p { margin: 0; }
+    .highlight-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+    .highlight-table th { text-align: left; padding: 10px 14px; background: var(--surface); color: var(--text-2); font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .highlight-table td { padding: 12px 14px; color: var(--text-2); border-bottom: 1px solid var(--border); vertical-align: top; }
+    .highlight-table tr:last-child td { border-bottom: none; }
+    .highlight-table td:first-child { color: var(--text); font-weight: 500; }
+    .section-divider { text-align: center; padding: 20px 0; color: var(--text-3); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; border-top: 1px solid var(--border); margin: 40px 0 0; }
+
+    .legal-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 0; text-align: center; }
+    .legal-footer p { font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
+    .legal-footer a { color: var(--text-2); transition: color 0.2s; }
+    .legal-footer a:hover { color: var(--green); }
+    .legal-footer .footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container" style="max-width:var(--max-w)">
+      <a href="../../index.html" class="nav-logo">
+        <div class="nav-logo-icon"><i class="fas fa-futbol"></i></div>
+        Sentinel Football Hub
+      </a>
+      <a href="../../index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to home</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <div class="legal-badge"><i class="fas fa-file-contract"></i> Legal</div>
+      <h1>Terms of Service</h1>
+      <p class="hero-meta">Last updated: 10 May 2026 &nbsp;·&nbsp; Effective: 10 May 2026</p>
+      <p class="hero-meta">Applies to: club subscriptions and the player analysis service</p>
+      <div class="hero-note">
+        <strong>Please read carefully.</strong> These Terms of Service ("Terms") form a binding agreement between you and Sentinel SportsTech (Pty) Ltd. By registering a club, subscribing to a plan, or purchasing a player analysis package, you accept these Terms in full. Governed by South African law.
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <nav class="toc">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#s1">Definitions</a></li>
+        <li><a href="#s2">The platform — what we provide</a></li>
+        <li><a href="#s3">Club registration &amp; accounts</a></li>
+        <li><a href="#s4">Subscription plans &amp; pricing</a></li>
+        <li><a href="#s5">Payment &amp; billing</a></li>
+        <li><a href="#s6">Free tier &amp; cancellation</a></li>
+        <li><a href="#s7">Club obligations &amp; player data</a></li>
+        <li><a href="#s8">Minor player data</a></li>
+        <li><a href="#s9">Player analysis service</a></li>
+        <li><a href="#s10">Intellectual property &amp; data ownership</a></li>
+        <li><a href="#s11">Limitation of liability</a></li>
+        <li><a href="#s12">Dispute resolution</a></li>
+        <li><a href="#s13">Changes to these Terms</a></li>
+      </ol>
+    </nav>
+
+    <div class="legal-content">
+
+      <!-- 1 -->
+      <div class="legal-section" id="s1">
+        <h2>1. Definitions</h2>
+        <table class="highlight-table">
+          <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>"Sentinel", "we", "us"</td><td>Sentinel SportsTech (Pty) Ltd, registered in South Africa</td></tr>
+            <tr><td>"Platform"</td><td>The Sentinel Football Hub web application, APIs, edge functions, and related services</td></tr>
+            <tr><td>"Club"</td><td>A registered club subscriber — the legal entity or person who registers a club account</td></tr>
+            <tr><td>"Club Admin"</td><td>The person designated as administrator for a club account</td></tr>
+            <tr><td>"Subscription"</td><td>A paid or free access plan granting the Club use of the Platform</td></tr>
+            <tr><td>"Player Data"</td><td>Personal information about players entered into the Platform by the Club</td></tr>
+            <tr><td>"Analysis Service"</td><td>The PFSA-certified player analysis and dossier service available to individual players/parents</td></tr>
+            <tr><td>"POPIA"</td><td>The Protection of Personal Information Act 4 of 2013</td></tr>
+            <tr><td>"CPA"</td><td>The Consumer Protection Act 68 of 2008</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 2 -->
+      <div class="legal-section" id="s2">
+        <h2>2. The Platform — What We Provide</h2>
+        <p>Sentinel Football Hub is a cloud-based club management and player development platform built for South African football clubs at grassroots, amateur, and semi-professional levels. Depending on your subscription tier, the platform may include:</p>
+        <ul>
+          <li>Squad management, player profiles, and performance tracking</li>
+          <li>Match planning, analysis, and reporting tools</li>
+          <li>Training session management and attendance tracking</li>
+          <li>Financial management and invoicing tools</li>
+          <li>Scouting and recruitment workflow tools</li>
+          <li>Analytics dashboards and club reporting</li>
+          <li>Media library and video reference management</li>
+        </ul>
+        <p>Feature availability is determined by your active subscription tier. Tier features are described on our <a href="../../clubs.html" style="color:var(--green)">club plans page</a> and are subject to change with reasonable notice.</p>
+        <p>We provide the Platform on an "as-is" basis with commercially reasonable availability. We target 99.5% uptime but do not guarantee uninterrupted service. Planned maintenance will be communicated in advance where possible.</p>
+      </div>
+
+      <!-- 3 -->
+      <div class="legal-section" id="s3">
+        <h2>3. Club Registration &amp; Accounts</h2>
+        <h3>3.1 Registration</h3>
+        <p>To register a club, you must provide accurate information including club name, club type, and an email address for the Club Admin. By registering, you confirm that:</p>
+        <ul>
+          <li>The information you provide is accurate and up to date</li>
+          <li>You are authorised to register the club (as owner, director, or designated administrator)</li>
+          <li>You are at least 18 years of age</li>
+          <li>You have read and accept these Terms and our Privacy Policy</li>
+        </ul>
+        <h3>3.2 Account security</h3>
+        <p>You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account. You must notify us immediately at <a href="mailto:stokeswallerq@gmail.com?subject=Account%20Security%20Issue%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a> if you suspect unauthorised access to your account.</p>
+        <h3>3.3 Account types and roles</h3>
+        <p>Club accounts support three role levels: Admin, Coach, and Viewer. Role permissions are defined within the platform. The Club Admin is responsible for all activity by all users under the club account.</p>
+        <h3>3.4 One club per email</h3>
+        <p>Each email address may be used for one club registration. If you wish to register multiple clubs, each requires a separate admin email address. Contact us to discuss multi-club arrangements.</p>
+      </div>
+
+      <!-- 4 -->
+      <div class="legal-section" id="s4">
+        <h2>4. Subscription Plans &amp; Pricing</h2>
+        <h3>4.1 Tier structure</h3>
+        <p>We offer four standard tiers: Free, Basic, Pro, and Elite. All new registrations start on the Free tier regardless of which tier was selected during registration. Paid tier activation occurs after payment is confirmed and processed by our team.</p>
+        <h3>4.2 Custom plans</h3>
+        <p>We offer custom module packages and custom development engagements for clubs with specific needs. Custom pricing is agreed individually and documented in a separate Order Form or statement of work.</p>
+        <h3>4.3 Price changes</h3>
+        <p>We may change subscription pricing at any time. For existing subscribers on paid plans, we will provide at least 30 days' written notice (by email to the Club Admin) before any price increase takes effect. You may cancel before the change takes effect without penalty.</p>
+        <h3>4.4 Fair use</h3>
+        <p>Each tier is subject to reasonable fair use limits on storage, API calls, and user accounts as described on the pricing page. We reserve the right to contact clubs that materially exceed reasonable use for their tier.</p>
+      </div>
+
+      <!-- 5 -->
+      <div class="legal-section" id="s5">
+        <h2>5. Payment &amp; Billing</h2>
+        <h3>5.1 Payment processor</h3>
+        <p>Payments are processed by <strong>Paystack</strong>, a South African payment gateway. By providing payment details, you agree to Paystack's terms of service and privacy policy. We do not store your payment card details. All transactions are in South African Rand (ZAR) unless otherwise specified.</p>
+        <h3>5.2 Billing cycle</h3>
+        <p>Paid subscriptions are billed monthly or annually as selected. Annual plans are billed upfront for the full 12 months. Billing begins on the date your paid plan is activated.</p>
+        <h3>5.3 Failed payments</h3>
+        <p>If a payment fails, we will notify you by email. We will retry the payment up to three times over seven days. If payment cannot be collected, your account will be downgraded to the Free tier and access to paid features will be suspended until payment is received.</p>
+        <h3>5.4 Refunds</h3>
+        <p>Paid subscription fees are non-refundable except as required by law. If you cancel a paid annual plan within 7 days of the billing date and have not materially used the paid features during that period, you may request a pro-rata refund for the unused months. This does not affect your rights under the Consumer Protection Act or ECT Act cooling-off provisions (see Section 6).</p>
+        <h3>5.5 Taxes</h3>
+        <p>All prices are exclusive of VAT. If VAT applies to your subscription, it will be displayed on your invoice and charged at the applicable rate.</p>
+      </div>
+
+      <!-- 6 -->
+      <div class="legal-section" id="s6">
+        <h2>6. Free Tier &amp; Cancellation</h2>
+        <h3>6.1 Free tier</h3>
+        <p>The Free tier is available indefinitely. There is no obligation to upgrade. We reserve the right to modify or discontinue the Free tier with 60 days' notice. Free tier accounts that have been inactive for 12 consecutive months may be archived and their data deleted after 30 days' notice to the Club Admin email on record.</p>
+        <h3>6.2 ECT Act cooling-off (online transactions)</h3>
+        <div class="callout">
+          <p>Under Section 44 of the Electronic Communications and Transactions Act 25 of 2002, you have the right to cancel an online purchase within 7 days of the transaction without reason, provided you have not used the paid service. To exercise this right, notify us in writing within 7 days at <a href="mailto:stokeswallerq@gmail.com?subject=Subscription%20Cancellation%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a>. We will refund the amount paid within 30 days of receiving the cancellation notice.</p>
+        </div>
+        <h3>6.3 Cancellation</h3>
+        <p>You may cancel your subscription at any time from within the platform settings or by contacting us. Cancellation takes effect at the end of the current billing period. You retain access to paid features until the end of the period you have paid for. Your data is retained for 30 days after cancellation, during which you may request an export. After 30 days, your data is permanently deleted.</p>
+        <h3>6.4 Termination by Sentinel</h3>
+        <p>We may suspend or terminate your account with 14 days' written notice for any reason, or immediately without notice if: (a) you materially breach these Terms; (b) you use the Platform for illegal purposes; (c) you provide false registration information; or (d) continued operation poses a risk to other users or our systems. We will refund any unused prepaid subscription fees if we terminate without cause.</p>
+      </div>
+
+      <!-- 7 -->
+      <div class="legal-section" id="s7">
+        <h2>7. Club Obligations &amp; Player Data</h2>
+        <h3>7.1 The club is the Responsible Party for player data</h3>
+        <p>Under POPIA, the Club is the Responsible Party for all player data it enters into the Platform. Sentinel processes player data as the Operator (data processor) on the Club's instruction. The Club is solely responsible for:</p>
+        <ul>
+          <li>Obtaining all necessary consents from players, parents, and guardians before entering their personal information</li>
+          <li>Informing players about how their data will be used</li>
+          <li>Ensuring player data is accurate and kept up to date</li>
+          <li>Responding to player requests for access, correction, or deletion of their data</li>
+          <li>Complying with all applicable data protection laws</li>
+        </ul>
+        <div class="callout amber">
+          <p><strong>Important:</strong> By accepting these Terms, the Club confirms that it has obtained or will obtain all necessary consents before entering player personal information into the Platform. Clubs that fail to obtain proper consent expose themselves to liability under POPIA. Sentinel accepts no liability for the Club's failure to obtain consent.</p>
+        </div>
+        <h3>7.2 Data Processing Agreement</h3>
+        <p>As an Operator processing personal information on your behalf, Sentinel provides a Data Processing Agreement as a separate document (available at <a href="data-processing.html" style="color:var(--green)">our DPA page</a>). Accepting these Terms also constitutes agreement to the DPA as required by POPIA Sections 20-21.</p>
+        <h3>7.3 Acceptable use</h3>
+        <p>You agree not to use the Platform to:</p>
+        <ul>
+          <li>Enter false, misleading, or fabricated player data</li>
+          <li>Share login credentials or grant unauthorised access to third parties</li>
+          <li>Upload material that infringes third-party intellectual property rights</li>
+          <li>Attempt to reverse-engineer, scrape, or extract data in bulk</li>
+          <li>Use the Platform in any manner that violates South African law</li>
+        </ul>
+        <h3>7.4 Data ownership</h3>
+        <p>The Club owns all player data and club data that it enters into the Platform. Sentinel does not claim any ownership right over your data. We will not use your club's or players' data for any purpose other than providing the Platform to you, unless we have your explicit consent or are required by law.</p>
+      </div>
+
+      <!-- 8 -->
+      <div class="legal-section" id="s8">
+        <h2>8. Minor Player Data</h2>
+        <p>Many South African football clubs include players under the age of 18. POPIA Sections 34 and 35 impose special obligations on the processing of children's personal information.</p>
+        <h3>8.1 Club obligations for minor players</h3>
+        <p>The Club must obtain consent from a "competent person" — a parent, legal guardian, or person with parental responsibility — before entering any player's personal information into the Platform if that player is under 18. This consent must be:</p>
+        <ul>
+          <li>Informed — the competent person must understand what data will be collected and how it will be used</li>
+          <li>Voluntary — not obtained under duress</li>
+          <li>Documented — the Club must be able to evidence that consent was given</li>
+        </ul>
+        <h3>8.2 Club confirmation</h3>
+        <p>By accepting these Terms, the Club confirms that it has a process in place to obtain and document parental consent for all minor players and that this process complies with POPIA. Sentinel may request evidence of consent practices during its standard compliance reviews.</p>
+        <h3>8.3 Our obligations</h3>
+        <p>As Operator, Sentinel will: process minor player data only on the Club's instruction; not use minor player data for any purpose other than providing the Platform; apply appropriate security measures to minor player data; and notify the Club promptly if we become aware of any breach involving minor player data.</p>
+      </div>
+
+      <!-- 9 -->
+      <div class="legal-section" id="s9">
+        <h2>9. Player Analysis Service</h2>
+        <h3>9.1 What the service is</h3>
+        <p>The player analysis service allows individuals (or parents/guardians on behalf of minor players) to purchase professional match analysis and player development reports produced by PFSA-certified analysts. Analysis is delivered as a PDF dossier within the agreed timeframe.</p>
+        <h3>9.2 Parental consent for minors</h3>
+        <p>If the player for whom analysis is being purchased is under 18, the purchaser confirms at the time of purchase that they are the player's parent or legal guardian and that they consent to the player's match footage and personal information being processed for the purpose of producing the analysis report.</p>
+        <h3>9.3 Footage submission</h3>
+        <p>By submitting match footage for analysis, you confirm that: (a) you have the right to share the footage; (b) the footage does not infringe the rights of any third party (including opposing clubs, broadcast rights holders, or other players); and (c) you consent to our analysts viewing and analysing the footage. We retain submitted footage for a maximum of 12 months from the date of order, then delete it.</p>
+        <h3>9.4 Nature of analysis</h3>
+        <div class="callout">
+          <p><strong>Important disclaimer:</strong> Player analysis reports are professional observations intended to support player development. They are not medical diagnoses, fitness certifications, or talent guarantees. Coaching and selection decisions remain entirely the responsibility of the coach, club, or parent/guardian. Sentinel and its analysts accept no liability for decisions made on the basis of a player analysis report.</p>
+        </div>
+        <h3>9.5 Delivery timeframes</h3>
+        <p>Standard analysis is delivered within the timeframe specified at the time of purchase. Delivery timeframes are estimates and may be affected by footage quality, footage length, and analyst capacity. We will notify you if delivery will be materially delayed.</p>
+        <h3>9.6 Refunds for analysis orders</h3>
+        <p>Once analysis work has commenced, orders are non-refundable. If we are unable to complete an order (e.g., footage is unusable), we will offer a full refund. The 7-day ECT Act cooling-off applies to orders where analysis work has not yet commenced.</p>
+      </div>
+
+      <!-- 10 -->
+      <div class="legal-section" id="s10">
+        <h2>10. Intellectual Property &amp; Data Ownership</h2>
+        <h3>10.1 Platform IP</h3>
+        <p>All software, design, branding, trade marks, and content comprising the Platform are the intellectual property of Sentinel SportsTech (Pty) Ltd or its licensors. These Terms do not grant you any ownership of Platform IP. You receive a limited, non-exclusive, non-transferable licence to use the Platform for your internal business purposes during your active subscription.</p>
+        <h3>10.2 Your data is yours</h3>
+        <p>You retain full ownership of all data you upload or create in the Platform, including player data, match reports, session records, and uploaded media. By uploading content, you grant Sentinel a limited licence to store, process, and display that content for the purpose of providing the Platform to you. This licence ends when you delete your account and all data has been purged.</p>
+        <h3>10.3 Analysis reports</h3>
+        <p>Player analysis reports produced under the Analysis Service are delivered to the purchasing customer for their personal and non-commercial use. Sentinel retains no ongoing claim over delivered reports. Reports may not be reproduced, redistributed, or sold to third parties without our written consent.</p>
+        <h3>10.4 Feedback</h3>
+        <p>If you provide feedback, suggestions, or feature requests, you grant Sentinel a perpetual, irrevocable, royalty-free licence to use that feedback to improve the Platform. We will not identify you publicly in connection with feedback without your consent.</p>
+      </div>
+
+      <!-- 11 -->
+      <div class="legal-section" id="s11">
+        <h2>11. Limitation of Liability</h2>
+        <h3>11.1 General limitation</h3>
+        <p>To the maximum extent permitted by South African law, Sentinel's total liability to you for any claim arising under or in connection with these Terms (whether in contract, delict, or otherwise) is limited to the total subscription fees you paid to Sentinel in the 12 months preceding the event giving rise to the claim.</p>
+        <h3>11.2 Exclusion of consequential loss</h3>
+        <p>We are not liable for: loss of profits; loss of revenue; loss of data; loss of goodwill; indirect, incidental, or consequential loss; or any loss arising from your reliance on the Platform for match selection, player development, or sporting performance outcomes.</p>
+        <h3>11.3 Sports decisions disclaimer</h3>
+        <div class="callout amber">
+          <p><strong>Sentinel accepts no liability for sporting decisions.</strong> All coaching decisions, player selection decisions, training programmes, and performance assessments are the sole responsibility of the club, coach, or parent/guardian. The Platform is a tool to assist decision-making — it does not make decisions. We expressly disclaim any liability for decisions or outcomes arising from use of player data, analysis reports, or any other output from the Platform.</p>
+        </div>
+        <h3>11.4 No warranty on platform availability</h3>
+        <p>The Platform is provided "as is". We make no warranty that it will be error-free, uninterrupted, or fit for any particular purpose beyond the general description of features provided at the time of your subscription. We are not liable for data loss resulting from platform outages, provided we have implemented reasonable backup and recovery procedures.</p>
+        <h3>11.5 Consumer protection</h3>
+        <p>Nothing in this section limits rights you may have under the Consumer Protection Act 68 of 2008, the ECT Act, or POPIA that cannot be waived by contract.</p>
+      </div>
+
+      <!-- 12 -->
+      <div class="legal-section" id="s12">
+        <h2>12. Dispute Resolution</h2>
+        <h3>12.1 Governing law</h3>
+        <p>These Terms are governed by the laws of South Africa. You consent to the jurisdiction of the South African courts for any dispute arising under these Terms.</p>
+        <h3>12.2 Informal resolution first</h3>
+        <p>Before initiating formal proceedings, you agree to contact us at <a href="mailto:stokeswallerq@gmail.com?subject=Dispute%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a> to attempt to resolve the dispute informally. We commit to responding within 10 business days. Many disputes can be resolved quickly and without cost through direct communication.</p>
+        <h3>12.3 Mediation and arbitration</h3>
+        <p>If informal resolution fails, either party may refer the dispute to mediation administered by the Arbitration Foundation of Southern Africa (AFSA) before proceeding to litigation. The parties will share mediation costs equally. Nothing in this clause prevents either party from seeking urgent interdict relief from a court.</p>
+        <h3>12.4 National Consumer Commission</h3>
+        <p>If you are a consumer as defined in the Consumer Protection Act, you also have the right to refer a dispute to the National Consumer Commission or a relevant consumer tribunal.</p>
+      </div>
+
+      <!-- 13 -->
+      <div class="legal-section" id="s13">
+        <h2>13. Changes to These Terms</h2>
+        <p>We may update these Terms from time to time to reflect changes in the Platform, changes in law, or for other legitimate business reasons. When we make material changes, we will:</p>
+        <ul>
+          <li>Send an email to the Club Admin email address on record at least 30 days before the changes take effect</li>
+          <li>Post a notice on the Platform</li>
+          <li>Update the "Last updated" date at the top of this page</li>
+        </ul>
+        <p>For non-material changes (e.g., clarifications that do not affect your rights), we may post a notice without 30 days' advance notice. Your continued use of the Platform after the effective date constitutes acceptance of the updated Terms. If you do not accept the changes, you may cancel your subscription before the effective date and receive a pro-rata refund for any unused prepaid period.</p>
+
+        <div class="callout">
+          <p>Questions about these Terms? Contact us at <a href="mailto:stokeswallerq@gmail.com?subject=Terms%20Question%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a> — we're happy to explain anything in plain language.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="legal-footer">
+    <div class="container">
+      <p>© 2026 Sentinel SportsTech (Pty) Ltd. All rights reserved. Registered in South Africa.</p>
+      <p>Governed by South African law. POPIA compliant.</p>
+      <div class="footer-links">
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="cookie-policy.html">Cookie Policy</a>
+        <a href="data-processing.html">Data Processing</a>
+        <a href="../../index.html">Home</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

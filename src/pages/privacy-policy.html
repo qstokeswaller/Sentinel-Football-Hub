@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy | Sentinel Football Hub</title>
+  <meta name="description" content="Sentinel Football Hub Privacy Policy — POPIA-compliant data protection statement for clubs and players.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg:        #080B0F;
+      --surface:   #0f172a;
+      --surface-2: #1e293b;
+      --border:    rgba(255,255,255,0.07);
+      --border-2:  rgba(255,255,255,0.12);
+      --green:     #00C49A;
+      --green-dim: rgba(0,196,154,0.10);
+      --amber:     #f59e0b;
+      --text:      #f8fafc;
+      --text-2:    #94a3b8;
+      --text-3:    #475569;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --max-w:     1160px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    /* NAV */
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(8,11,15,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 64px; display: flex; align-items: center; }
+    .nav > .container { max-width: var(--max-w); display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    .nav-logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #000; }
+    .nav-back { font-size: 13px; font-weight: 500; color: var(--text-2); display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-2); transition: all 0.2s; }
+    .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* HERO */
+    .hero { padding: 120px 0 60px; border-bottom: 1px solid var(--border); }
+    .legal-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); background: var(--green-dim); border: 1px solid rgba(0,196,154,0.2); padding: 5px 12px; border-radius: 100px; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .hero-meta { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
+    .hero-note { font-size: 14px; color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 20px; max-width: 640px; }
+    .hero-note strong { color: var(--text); }
+
+    /* TOC */
+    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; margin: 40px 0; }
+    .toc h2 { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 16px; }
+    .toc ol { padding-left: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; }
+    .toc li { font-size: 14px; }
+    .toc a { color: var(--text-2); transition: color 0.2s; }
+    .toc a:hover { color: var(--green); }
+    @media (max-width: 600px) { .toc ol { grid-template-columns: 1fr; } }
+
+    /* CONTENT */
+    .legal-content { padding: 20px 0 80px; }
+    .legal-section { margin-bottom: 56px; }
+    .legal-section h2 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .legal-section h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 10px; }
+    .legal-section p { font-size: 15px; color: var(--text-2); margin-bottom: 14px; line-height: 1.75; }
+    .legal-section ul, .legal-section ol { padding-left: 22px; margin-bottom: 14px; }
+    .legal-section li { font-size: 15px; color: var(--text-2); margin-bottom: 8px; line-height: 1.7; }
+    .legal-section li strong { color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--radius-sm); padding: 16px 20px; margin: 20px 0; }
+    .callout.amber { border-left-color: var(--amber); }
+    .callout p { margin: 0; }
+    .highlight-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+    .highlight-table th { text-align: left; padding: 10px 14px; background: var(--surface); color: var(--text-2); font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .highlight-table td { padding: 12px 14px; color: var(--text-2); border-bottom: 1px solid var(--border); vertical-align: top; }
+    .highlight-table tr:last-child td { border-bottom: none; }
+    .highlight-table td:first-child { color: var(--text); font-weight: 500; white-space: nowrap; }
+
+    /* FOOTER */
+    .legal-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 0; text-align: center; }
+    .legal-footer p { font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
+    .legal-footer a { color: var(--text-2); transition: color 0.2s; }
+    .legal-footer a:hover { color: var(--green); }
+    .legal-footer .footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container" style="max-width:var(--max-w)">
+      <a href="../../index.html" class="nav-logo">
+        <div class="nav-logo-icon"><i class="fas fa-futbol"></i></div>
+        Sentinel Football Hub
+      </a>
+      <a href="../../index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to home</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <div class="legal-badge"><i class="fas fa-shield-halved"></i> Legal</div>
+      <h1>Privacy Policy</h1>
+      <p class="hero-meta">Last updated: 10 May 2026 &nbsp;·&nbsp; Effective: 10 May 2026</p>
+      <p class="hero-meta">Applies to: Sentinel Football Hub platform (clubs and players)</p>
+      <div class="hero-note">
+        <strong>South African law applies.</strong> This policy is governed by the Protection of Personal Information Act 4 of 2013 (POPIA), the Electronic Communications and Transactions Act 25 of 2002 (ECT Act), and the Consumer Protection Act 68 of 2008 (CPA). Your rights and our obligations are set out below.
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <nav class="toc">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#s1">Who we are</a></li>
+        <li><a href="#s2">Information we collect</a></li>
+        <li><a href="#s3">Why we collect it</a></li>
+        <li><a href="#s4">Minor players (under 18)</a></li>
+        <li><a href="#s5">How we use your information</a></li>
+        <li><a href="#s6">Who we share it with</a></li>
+        <li><a href="#s7">Cross-border transfers</a></li>
+        <li><a href="#s8">How long we keep it</a></li>
+        <li><a href="#s9">Your rights under POPIA</a></li>
+        <li><a href="#s10">Cookies</a></li>
+        <li><a href="#s11">Security</a></li>
+        <li><a href="#s12">Contact &amp; complaints</a></li>
+      </ol>
+    </nav>
+
+    <div class="legal-content">
+
+      <!-- 1 -->
+      <div class="legal-section" id="s1">
+        <h2>1. Who We Are</h2>
+        <p>Sentinel SportsTech (Pty) Ltd ("<strong>Sentinel</strong>", "<strong>we</strong>", "<strong>us</strong>") operates the Sentinel Football Hub platform, accessible at <em>sentinel-football-hub.vercel.app</em> and any future custom domain. We are the Responsible Party for personal information processed in connection with the platform.</p>
+        <p>We operate in two capacities depending on the data involved:</p>
+        <table class="highlight-table">
+          <thead><tr><th>Data stream</th><th>Our role</th><th>What that means</th></tr></thead>
+          <tbody>
+            <tr><td>Club-subscriber data (admin accounts, coach accounts, billing)</td><td>Responsible Party</td><td>We decide why and how this data is processed</td></tr>
+            <tr><td>Player and squad data uploaded by clubs</td><td>Operator (Processor)</td><td>We process this on the club's instruction; the club is the Responsible Party</td></tr>
+            <tr><td>Player analysis service customers (players who buy dossiers directly)</td><td>Responsible Party</td><td>We decide why and how this data is processed</td></tr>
+          </tbody>
+        </table>
+        <p>Our designated Information Officer can be contacted at the details in Section 12. We are registering our Information Officer with the South African Information Regulator as required by POPIA Section 55.</p>
+      </div>
+
+      <!-- 2 -->
+      <div class="legal-section" id="s2">
+        <h2>2. Information We Collect</h2>
+        <h3>2.1 Club administrators and coaches</h3>
+        <ul>
+          <li>Full name, email address, contact number</li>
+          <li>Club name, club type (academy, private coaching)</li>
+          <li>Role within the club (admin, coach, viewer)</li>
+          <li>Subscription tier and billing contact information</li>
+          <li>Usage logs and feature interaction data</li>
+        </ul>
+        <h3>2.2 Player data entered by clubs</h3>
+        <ul>
+          <li>Player name, date of birth, position, squad number</li>
+          <li>Physical metrics (height, weight, fitness scores)</li>
+          <li>Match and training performance data</li>
+          <li>Attendance and session participation records</li>
+          <li>Notes, ratings, and coaching observations</li>
+          <li>Profile images uploaded by the club</li>
+        </ul>
+        <h3>2.3 Player analysis service customers</h3>
+        <ul>
+          <li>Player name, email address, age, position</li>
+          <li>Match footage submitted for analysis</li>
+          <li>Parent or guardian contact information (for players under 18)</li>
+          <li>Payment confirmation reference (no card details stored by us)</li>
+        </ul>
+        <h3>2.4 Automatically collected data</h3>
+        <ul>
+          <li>Browser type, device type, operating system</li>
+          <li>IP address (hashed for analytics, not stored in identifiable form)</li>
+          <li>Session tokens for authentication</li>
+          <li>Feature usage analytics (page visits, button interactions)</li>
+        </ul>
+        <div class="callout">
+          <p><strong>We do not collect</strong> payment card numbers, national identity numbers, passport numbers, or biometric data. Payments are processed by Paystack and governed by their privacy policy.</p>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="legal-section" id="s3">
+        <h2>3. Why We Collect It (Lawful Basis)</h2>
+        <p>POPIA requires us to have a lawful justification for every processing purpose. Our justifications are:</p>
+        <table class="highlight-table">
+          <thead><tr><th>Purpose</th><th>Lawful basis (POPIA)</th></tr></thead>
+          <tbody>
+            <tr><td>Providing the platform to club subscribers</td><td>Contractual necessity (s11(1)(b))</td></tr>
+            <tr><td>Processing club-uploaded player data</td><td>Operator instruction from the club (s21); club obtains consent from data subjects</td></tr>
+            <tr><td>Delivering player analysis reports</td><td>Contractual necessity (s11(1)(b)); parental consent for minors</td></tr>
+            <tr><td>Billing and subscription management</td><td>Contractual necessity; legal obligation (tax records)</td></tr>
+            <tr><td>Security and fraud prevention</td><td>Legitimate interest (s11(1)(f)); legal obligation</td></tr>
+            <tr><td>Platform improvement analytics</td><td>Legitimate interest (s11(1)(f)) — anonymised data only</td></tr>
+            <tr><td>Sending platform communications</td><td>Contractual necessity; opt-in consent for marketing</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4 -->
+      <div class="legal-section" id="s4">
+        <h2>4. Minor Players (Under 18)</h2>
+        <div class="callout amber">
+          <p><strong>Special protection applies.</strong> POPIA Sections 34 and 35 impose strict requirements on the processing of personal information of children (persons under 18). This section applies to all player data where the player is a minor.</p>
+        </div>
+        <h3>4.1 Club responsibility for minor player data</h3>
+        <p>When a club enters minor players into the platform, the club (as the Responsible Party) is legally required to obtain consent from a "<strong>competent person</strong>" — meaning a parent, legal guardian, or person who has parental responsibility for the minor — before entering that player's personal information. By accepting our Terms of Service, clubs confirm they have obtained this consent for every minor player they add to the platform.</p>
+        <h3>4.2 Player analysis service — minors</h3>
+        <p>When a parent or guardian purchases a player analysis dossier for a player under 18, we require explicit consent from the parent or guardian at the time of purchase. This consent is recorded with the order. We do not accept direct orders from persons who are themselves under 18.</p>
+        <h3>4.3 What we do with minor player data</h3>
+        <ul>
+          <li>We process it only on the club's instruction or the parent/guardian's instruction</li>
+          <li>We do not use minor player data for platform analytics or marketing</li>
+          <li>We do not share minor player data with third parties except as required to deliver the service (see Section 6)</li>
+          <li>We apply the same or stronger security standards to minor player data as to adult data</li>
+        </ul>
+        <h3>4.4 Retention of minor player data</h3>
+        <p>Club-held minor player data is deleted when the club subscriber cancels their account and all data is purged, subject to any legal retention obligations. Analysis reports for minor players are retained for 12 months following delivery, then deleted.</p>
+      </div>
+
+      <!-- 5 -->
+      <div class="legal-section" id="s5">
+        <h2>5. How We Use Your Information</h2>
+        <ul>
+          <li><strong>Platform operation:</strong> authenticating users, displaying squad data, generating reports, managing subscriptions</li>
+          <li><strong>Communication:</strong> account activation emails, password resets, subscription confirmations, important platform notices</li>
+          <li><strong>Analysis delivery:</strong> preparing and delivering player analysis dossiers for the player analysis service</li>
+          <li><strong>Security:</strong> detecting and preventing unauthorised access, fraud, and abuse</li>
+          <li><strong>Legal compliance:</strong> fulfilling obligations under POPIA, the Tax Administration Act, SARS requirements, and court orders if applicable</li>
+          <li><strong>Platform improvement:</strong> using anonymised, aggregated analytics to improve features — we do not build individual behavioural profiles</li>
+        </ul>
+        <p>We do not sell personal information to third parties. We do not use personal information for automated decision-making that produces legal effects on data subjects.</p>
+      </div>
+
+      <!-- 6 -->
+      <div class="legal-section" id="s6">
+        <h2>6. Who We Share Your Information With</h2>
+        <table class="highlight-table">
+          <thead><tr><th>Recipient</th><th>What is shared</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Supabase Inc (database &amp; auth)</td><td>All platform data</td><td>Core infrastructure — encrypted in transit and at rest</td></tr>
+            <tr><td>Paystack</td><td>Billing contact details, transaction amount</td><td>Payment processing — we do not store card data</td></tr>
+            <tr><td>Vercel Inc</td><td>Static assets, page requests</td><td>Hosting and CDN delivery</td></tr>
+            <tr><td>PFSA-certified analysts (contracted)</td><td>Match footage and player info for analysis orders</td><td>Delivery of analysis service — under confidentiality agreement</td></tr>
+            <tr><td>South African Revenue Service</td><td>Billing and transaction records</td><td>Legal obligation under Tax Administration Act</td></tr>
+            <tr><td>Law enforcement / courts</td><td>As required by lawful order</td><td>Legal obligation — we will notify you unless prohibited</td></tr>
+          </tbody>
+        </table>
+        <p>We require all service providers who process personal information on our behalf to agree to binding data processing agreements and to maintain security standards equivalent to our own.</p>
+      </div>
+
+      <!-- 7 -->
+      <div class="legal-section" id="s7">
+        <h2>7. Cross-Border Transfers</h2>
+        <p>Our database infrastructure is hosted by Supabase on servers located in the European Union (eu-west-1). POPIA Section 72 restricts the transfer of personal information to recipients outside South Africa unless adequate protections are in place.</p>
+        <p>We rely on the following transfer mechanisms for EU-hosted infrastructure:</p>
+        <ul>
+          <li><strong>Contractual necessity and consent:</strong> By registering for and using the platform, you acknowledge that your data is hosted in the EU and provide informed consent for this transfer under POPIA s72(1)(b)(ii)</li>
+          <li><strong>Equivalent protection:</strong> The European Union's GDPR (General Data Protection Regulation) imposes data protection obligations on Supabase that are equivalent to or stricter than POPIA requirements</li>
+          <li><strong>Supabase DPA:</strong> We maintain a Data Processing Agreement with Supabase that governs how your data is processed and protected</li>
+        </ul>
+        <div class="callout amber">
+          <p><strong>Note:</strong> South Africa has not made a formal adequacy determination for the European Union under POPIA. We are monitoring developments with the Information Regulator and will update our transfer mechanisms as the regulatory framework evolves. We recommend that club subscribers with heightened data localisation requirements consult a qualified SA privacy attorney.</p>
+        </div>
+      </div>
+
+      <!-- 8 -->
+      <div class="legal-section" id="s8">
+        <h2>8. How Long We Keep Your Information</h2>
+        <table class="highlight-table">
+          <thead><tr><th>Data category</th><th>Retention period</th><th>Legal basis</th></tr></thead>
+          <tbody>
+            <tr><td>Active club subscriber accounts</td><td>Duration of subscription</td><td>Contractual necessity</td></tr>
+            <tr><td>Player data in active club accounts</td><td>Duration of club subscription</td><td>Operator instruction</td></tr>
+            <tr><td>Data after account cancellation</td><td>30 days (then permanently deleted)</td><td>Reasonable period for recovery requests</td></tr>
+            <tr><td>Billing and transaction records</td><td>5 years from transaction date</td><td>Tax Administration Act; Companies Act</td></tr>
+            <tr><td>Analysis dossiers (player analysis service)</td><td>12 months from delivery</td><td>Reasonable service delivery period</td></tr>
+            <tr><td>Security logs (access, auth events)</td><td>12 months</td><td>Legitimate interest — fraud/security</td></tr>
+            <tr><td>Marketing consent records</td><td>3 years from last consent or withdrawal</td><td>Demonstrating compliance</td></tr>
+          </tbody>
+        </table>
+        <p>When the retention period expires, personal information is securely deleted or anonymised so it can no longer be attributed to an individual.</p>
+      </div>
+
+      <!-- 9 -->
+      <div class="legal-section" id="s9">
+        <h2>9. Your Rights Under POPIA</h2>
+        <p>POPIA grants the following rights to data subjects. These rights apply to personal information for which Sentinel is the Responsible Party. For club-uploaded player data, requests should be directed to the club in the first instance.</p>
+        <ul>
+          <li><strong>Right of access (s23):</strong> You may request confirmation of whether we hold your personal information and a copy of that information. We respond within 30 days, free of charge.</li>
+          <li><strong>Right to correction or deletion (s24):</strong> You may request that we correct inaccurate, incomplete, or out-of-date personal information, or delete personal information we are no longer entitled to retain.</li>
+          <li><strong>Right to object (s11(3)):</strong> You may object to the processing of your personal information on grounds relating to your particular situation where we rely on legitimate interest as our lawful basis.</li>
+          <li><strong>Right to object to direct marketing (s69):</strong> You may object at any time to the processing of your personal information for direct marketing purposes, free of charge.</li>
+          <li><strong>Right to complain:</strong> You may lodge a complaint with the South African Information Regulator (see Section 12).</li>
+        </ul>
+        <div class="callout">
+          <p>To exercise any of these rights, send a written request to <a href="mailto:stokeswallerq@gmail.com?subject=Data%20Rights%20Request%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a> (subject: "Data Rights Request") with sufficient information to identify yourself. We will respond within 30 days. We may request proof of identity before processing your request.</p>
+        </div>
+      </div>
+
+      <!-- 10 -->
+      <div class="legal-section" id="s10">
+        <h2>10. Cookies</h2>
+        <p>We use a minimal set of cookies and browser storage. See our <a href="cookie-policy.html" style="color:var(--green)">Cookie Policy</a> for full details. In summary:</p>
+        <ul>
+          <li><strong>Essential:</strong> Supabase authentication tokens stored in browser local storage — required for the platform to function. Cannot be disabled.</li>
+          <li><strong>Functional:</strong> Theme preference (dark/light mode) stored in local storage — no personal information.</li>
+          <li><strong>Analytics:</strong> Anonymised usage data — no individually identifiable information. You can opt out via browser settings.</li>
+        </ul>
+        <p>We do not use advertising cookies or third-party tracking cookies.</p>
+      </div>
+
+      <!-- 11 -->
+      <div class="legal-section" id="s11">
+        <h2>11. Security</h2>
+        <p>We implement the following technical and organisational measures to protect personal information:</p>
+        <ul>
+          <li>All data is encrypted in transit (TLS 1.2+) and at rest (AES-256)</li>
+          <li>Authentication uses Supabase Auth with secure token management</li>
+          <li>Row-level security policies ensure each club can only access their own data</li>
+          <li>Access to production systems is restricted to authorised personnel only</li>
+          <li>We conduct regular security reviews of our codebase and infrastructure</li>
+          <li>File uploads are stored in access-controlled object storage with signed URLs</li>
+        </ul>
+        <h3>Data breach notification</h3>
+        <p>In the event of a data breach that is likely to affect your rights, we will notify the South African Information Regulator via the eServices Portal (Form SCN1) within 72 hours of becoming aware of the breach, as required by POPIA and the April 2025 Information Regulator Guidance. We will notify affected data subjects as soon as reasonably practicable after notifying the Regulator.</p>
+      </div>
+
+      <!-- 12 -->
+      <div class="legal-section" id="s12">
+        <h2>12. Contact &amp; Complaints</h2>
+        <h3>Information Officer</h3>
+        <p>Quintin Stokes-Waller<br>
+        Information Officer, Sentinel SportsTech (Pty) Ltd<br>
+        Email: <a href="mailto:stokeswallerq@gmail.com?subject=Privacy%20Request%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a> (subject: "Privacy Request")<br>
+        WhatsApp: <a href="https://wa.me/27000000000" target="_blank" rel="noopener noreferrer" style="color:var(--green)">Available via WhatsApp</a></p>
+
+        <h3>General enquiries</h3>
+        <p>Email: <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel%20Football%20Hub%20Enquiry" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a><br>
+        Registered in South Africa</p>
+
+        <h3>Complaints — Information Regulator of South Africa</h3>
+        <p>If you are not satisfied with our response, you have the right to lodge a complaint with the Information Regulator:</p>
+        <ul>
+          <li>Website: <strong>www.inforegulator.org.za</strong></li>
+          <li>Email: <strong>inforeg@justice.gov.za</strong></li>
+          <li>Address: JD House, 27 Stiemens Street, Braamfontein, Johannesburg, 2001</li>
+        </ul>
+
+        <h3>Changes to this policy</h3>
+        <p>We may update this Privacy Policy from time to time. We will notify club subscribers by email and post a notice on the platform before material changes take effect. Continued use of the platform after the effective date constitutes acceptance of the updated policy. The "last updated" date at the top of this document will always reflect the most recent revision.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="legal-footer">
+    <div class="container">
+      <p>© 2026 Sentinel SportsTech (Pty) Ltd. All rights reserved. Registered in South Africa.</p>
+      <p>POPIA Responsible Party &amp; Information Officer registered with the SA Information Regulator.</p>
+      <div class="footer-links">
+        <a href="terms-of-service.html">Terms of Service</a>
+        <a href="cookie-policy.html">Cookie Policy</a>
+        <a href="data-processing.html">Data Processing</a>
+        <a href="../../index.html">Home</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

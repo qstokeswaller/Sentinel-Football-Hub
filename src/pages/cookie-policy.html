@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Policy | Sentinel Football Hub</title>
+  <meta name="description" content="Sentinel Football Hub Cookie Policy — what cookies we use and how to manage them.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg:        #080B0F;
+      --surface:   #0f172a;
+      --surface-2: #1e293b;
+      --border:    rgba(255,255,255,0.07);
+      --border-2:  rgba(255,255,255,0.12);
+      --green:     #00C49A;
+      --green-dim: rgba(0,196,154,0.10);
+      --amber:     #f59e0b;
+      --amber-dim: rgba(245,158,11,0.10);
+      --text:      #f8fafc;
+      --text-2:    #94a3b8;
+      --text-3:    #475569;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --max-w:     1160px;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(8,11,15,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); height: 64px; display: flex; align-items: center; }
+    .nav > .container { max-width: var(--max-w); display: flex; align-items: center; justify-content: space-between; width: 100%; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    .nav-logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #000; }
+    .nav-back { font-size: 13px; font-weight: 500; color: var(--text-2); display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-2); transition: all 0.2s; }
+    .nav-back:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .hero { padding: 120px 0 60px; border-bottom: 1px solid var(--border); }
+    .legal-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); background: var(--green-dim); border: 1px solid rgba(0,196,154,0.2); padding: 5px 12px; border-radius: 100px; margin-bottom: 20px; }
+    .hero h1 { font-size: clamp(28px, 4vw, 42px); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .hero-meta { font-size: 14px; color: var(--text-2); margin-bottom: 8px; }
+    .hero-note { font-size: 14px; color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 20px; max-width: 640px; }
+    .hero-note strong { color: var(--text); }
+
+    .toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px 32px; margin: 40px 0; }
+    .toc h2 { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); margin-bottom: 16px; }
+    .toc ol { padding-left: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px; }
+    .toc li { font-size: 14px; }
+    .toc a { color: var(--text-2); transition: color 0.2s; }
+    .toc a:hover { color: var(--green); }
+    @media (max-width: 600px) { .toc ol { grid-template-columns: 1fr; } }
+
+    .legal-content { padding: 20px 0 80px; }
+    .legal-section { margin-bottom: 56px; }
+    .legal-section h2 { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .legal-section h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 10px; }
+    .legal-section p { font-size: 15px; color: var(--text-2); margin-bottom: 14px; line-height: 1.75; }
+    .legal-section ul, .legal-section ol { padding-left: 22px; margin-bottom: 14px; }
+    .legal-section li { font-size: 15px; color: var(--text-2); margin-bottom: 8px; line-height: 1.7; }
+    .legal-section li strong { color: var(--text); }
+    .callout { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: var(--radius-sm); padding: 16px 20px; margin: 20px 0; }
+    .callout.amber { border-left-color: var(--amber); background: var(--amber-dim); }
+    .callout p { margin: 0; }
+    .cookie-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+    .cookie-table th { text-align: left; padding: 10px 14px; background: var(--surface); color: var(--text-2); font-weight: 600; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .cookie-table td { padding: 12px 14px; color: var(--text-2); border-bottom: 1px solid var(--border); vertical-align: top; font-size: 14px; }
+    .cookie-table tr:last-child td { border-bottom: none; }
+    .cookie-table td:first-child { color: var(--text); font-weight: 600; font-family: monospace; font-size: 13px; white-space: nowrap; }
+    .tag { display: inline-flex; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; }
+    .tag-essential { background: rgba(0,196,154,0.12); color: var(--green); }
+    .tag-functional { background: rgba(99,102,241,0.12); color: #818cf8; }
+    .tag-analytics { background: var(--amber-dim); color: var(--amber); }
+
+    .legal-footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 0; text-align: center; }
+    .legal-footer p { font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
+    .legal-footer a { color: var(--text-2); transition: color 0.2s; }
+    .legal-footer a:hover { color: var(--green); }
+    .legal-footer .footer-links { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 12px; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container" style="max-width:var(--max-w)">
+      <a href="../../index.html" class="nav-logo">
+        <div class="nav-logo-icon"><i class="fas fa-futbol"></i></div>
+        Sentinel Football Hub
+      </a>
+      <a href="../../index.html" class="nav-back"><i class="fas fa-arrow-left"></i> Back to home</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="container">
+      <div class="legal-badge"><i class="fas fa-cookie-bite"></i> Legal</div>
+      <h1>Cookie Policy</h1>
+      <p class="hero-meta">Last updated: 10 May 2026 &nbsp;·&nbsp; Effective: 10 May 2026</p>
+      <div class="hero-note">
+        <strong>We keep it minimal.</strong> Sentinel Football Hub uses only the cookies and browser storage necessary to run the platform, keep you signed in, and understand how the platform is used in aggregate. We do not use advertising cookies or third-party tracking networks.
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <nav class="toc">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#s1">What are cookies?</a></li>
+        <li><a href="#s2">Legal framework</a></li>
+        <li><a href="#s3">Cookies we use</a></li>
+        <li><a href="#s4">Third-party services</a></li>
+        <li><a href="#s5">How to manage cookies</a></li>
+        <li><a href="#s6">Changes &amp; contact</a></li>
+      </ol>
+    </nav>
+
+    <div class="legal-content">
+
+      <!-- 1 -->
+      <div class="legal-section" id="s1">
+        <h2>1. What Are Cookies?</h2>
+        <p>Cookies are small text files placed on your device when you visit a website. They allow the website to remember information about your visit — such as your login session — so you don't have to log in again on every page.</p>
+        <p>The Sentinel Football Hub platform uses a combination of:</p>
+        <ul>
+          <li><strong>Browser cookies</strong> — small files stored in your browser</li>
+          <li><strong>Local storage</strong> — browser-based key-value storage that persists until cleared (used for auth tokens and preferences)</li>
+          <li><strong>Session storage</strong> — similar to local storage but cleared when you close the browser tab</li>
+        </ul>
+        <p>All of these serve the same broad purpose: allowing the platform to function correctly and remember your preferences. This policy refers to all of them collectively as "cookies".</p>
+      </div>
+
+      <!-- 2 -->
+      <div class="legal-section" id="s2">
+        <h2>2. Legal Framework</h2>
+        <p>South Africa does not have a specific "cookie law" equivalent to the EU's ePrivacy Directive. However, the use of cookies that involve the processing of personal information is regulated by POPIA's openness and transparency conditions (Sections 13-14), which require us to notify you of how your information is processed.</p>
+        <p>Our cookie practices are designed to be consistent with both POPIA and the GDPR (General Data Protection Regulation), as our infrastructure provider Supabase is EU-based and we follow a GDPR-mirror approach as best practice.</p>
+        <div class="callout">
+          <p>Essential cookies (authentication and security) are necessary for the platform to function. They do not require your consent under either POPIA or GDPR. All other cookies are minimised or avoided entirely.</p>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="legal-section" id="s3">
+        <h2>3. Cookies We Use</h2>
+
+        <h3>Essential — authentication &amp; security</h3>
+        <p>These cookies are required for the platform to function. They cannot be disabled without breaking the platform.</p>
+        <table class="cookie-table">
+          <thead><tr><th>Name / key</th><th>Type</th><th>Purpose</th><th>Duration</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>sb-[project]-auth-token</td>
+              <td><span class="tag tag-essential">Essential</span></td>
+              <td>Supabase authentication token. Keeps you signed in and identifies your session to the server. Stored in local storage.</td>
+              <td>Until sign-out or token expiry (~1 hour for access token; refresh token up to 7 days)</td>
+            </tr>
+            <tr>
+              <td>sb-[project]-auth-token-code-verifier</td>
+              <td><span class="tag tag-essential">Essential</span></td>
+              <td>PKCE code verifier for secure OAuth-style auth flows. Deleted after use.</td>
+              <td>Session only</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Functional — preferences</h3>
+        <p>These store your settings and preferences. They do not contain personally identifiable information.</p>
+        <table class="cookie-table">
+          <thead><tr><th>Name / key</th><th>Type</th><th>Purpose</th><th>Duration</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>theme</td>
+              <td><span class="tag tag-functional">Functional</span></td>
+              <td>Stores your dark/light mode preference so the platform loads in your preferred theme instantly.</td>
+              <td>Persistent (until cleared)</td>
+            </tr>
+            <tr>
+              <td>sidebar-collapsed</td>
+              <td><span class="tag tag-functional">Functional</span></td>
+              <td>Remembers whether you prefer the sidebar expanded or collapsed.</td>
+              <td>Persistent (until cleared)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Analytics — usage data</h3>
+        <p>We collect anonymised usage data to understand how the platform is used and to improve it. No personally identifiable information is associated with analytics data.</p>
+        <table class="cookie-table">
+          <thead><tr><th>Name / key</th><th>Type</th><th>Purpose</th><th>Duration</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Page view data</td>
+              <td><span class="tag tag-analytics">Analytics</span></td>
+              <td>Anonymised page visits to understand which features are used most. No user ID or personal information is attached.</td>
+              <td>Aggregated daily; raw events deleted after 30 days</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <p>We do not use Google Analytics, Facebook Pixel, or any advertising network trackers. Analytics are internal to the platform and anonymised before storage.</p>
+        </div>
+      </div>
+
+      <!-- 4 -->
+      <div class="legal-section" id="s4">
+        <h2>4. Third-Party Services</h2>
+        <p>The following third-party services are integrated into the platform and may set their own cookies or use browser storage. These are the only third-party services we use:</p>
+
+        <h3>Supabase (database &amp; authentication)</h3>
+        <p>Supabase processes authentication and stores your platform data. Authentication tokens are managed in your browser's local storage by the Supabase JavaScript client library. Supabase is GDPR-compliant and maintains a data processing agreement with us. Their privacy policy is available at <strong>supabase.com/privacy</strong>.</p>
+
+        <h3>Google Fonts</h3>
+        <p>We load the Inter typeface from Google Fonts for visual consistency. Google Fonts serves fonts from Google's CDN and may log the request IP address for caching purposes. This is a one-time request to load the font file. Google's privacy policy applies to this service. No personal information from the Sentinel platform is shared with Google.</p>
+
+        <h3>Font Awesome (CDN)</h3>
+        <p>We load icon assets from the Font Awesome CDN (Cloudflare). This is a static asset request. Cloudflare's standard CDN privacy policy applies. No personal information is shared.</p>
+
+        <h3>Paystack (payment processing)</h3>
+        <p>Payment flows use Paystack's hosted checkout. When you interact with a payment form, Paystack's cookies and privacy policy govern that interaction. We do not handle or store payment card details. Paystack's privacy policy is available at <strong>paystack.com/privacy</strong>.</p>
+
+        <h3>Vercel (hosting)</h3>
+        <p>The platform is hosted on Vercel's infrastructure. Vercel may log standard web server request data (IP address, user-agent, request path) for security and performance purposes. Their privacy policy is available at <strong>vercel.com/legal/privacy-policy</strong>.</p>
+      </div>
+
+      <!-- 5 -->
+      <div class="legal-section" id="s5">
+        <h2>5. How to Manage Cookies</h2>
+        <h3>Browser settings</h3>
+        <p>You can control and delete cookies through your browser settings. All major browsers allow you to:</p>
+        <ul>
+          <li>View all cookies and local storage items stored by a site</li>
+          <li>Delete specific cookies or all cookies for a domain</li>
+          <li>Block all cookies (note: this will prevent login from working)</li>
+          <li>Set preferences for future cookie handling</li>
+        </ul>
+        <p>Instructions for common browsers:</p>
+        <ul>
+          <li><strong>Chrome:</strong> Settings → Privacy and security → Cookies and other site data</li>
+          <li><strong>Firefox:</strong> Settings → Privacy &amp; Security → Cookies and Site Data</li>
+          <li><strong>Safari:</strong> Preferences → Privacy → Manage Website Data</li>
+          <li><strong>Edge:</strong> Settings → Cookies and site permissions → Cookies and site data</li>
+        </ul>
+        <div class="callout amber">
+          <p><strong>Note:</strong> Deleting the <code style="background:rgba(255,255,255,0.06);padding:2px 6px;border-radius:4px;font-family:monospace">sb-[project]-auth-token</code> local storage item will sign you out of the platform immediately. You will need to sign in again.</p>
+        </div>
+        <h3>Analytics opt-out</h3>
+        <p>Our analytics are anonymised and do not use third-party tracking. If you prefer to exclude your usage from aggregate analytics entirely, contact us at <a href="mailto:stokeswallerq@gmail.com?subject=Analytics%20Opt-Out%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a> and we will opt out your account.</p>
+      </div>
+
+      <!-- 6 -->
+      <div class="legal-section" id="s6">
+        <h2>6. Changes &amp; Contact</h2>
+        <h3>Changes to this policy</h3>
+        <p>We may update this Cookie Policy from time to time. Changes will be reflected by updating the "Last updated" date at the top. Material changes will be notified to active subscribers by email.</p>
+        <h3>Contact</h3>
+        <p>Questions about our use of cookies or local storage? Contact our Information Officer:</p>
+        <ul>
+          <li>Email: <a href="mailto:stokeswallerq@gmail.com?subject=Cookie%20Policy%20Enquiry%20%E2%80%94%20Sentinel%20Football%20Hub" style="color:var(--green)"><strong>stokeswallerq@gmail.com</strong></a></li>
+          <li>Subject line: "Cookie Policy enquiry"</li>
+        </ul>
+        <p>For data protection complaints, see our <a href="privacy-policy.html" style="color:var(--green)">Privacy Policy</a> for Information Regulator contact details.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="legal-footer">
+    <div class="container">
+      <p>© 2026 Sentinel SportsTech (Pty) Ltd. All rights reserved. Registered in South Africa.</p>
+      <div class="footer-links">
+        <a href="privacy-policy.html">Privacy Policy</a>
+        <a href="terms-of-service.html">Terms of Service</a>
+        <a href="data-processing.html">Data Processing</a>
+        <a href="../../index.html">Home</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
