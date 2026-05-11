@@ -60,25 +60,25 @@
     /* ── NAV ── */
     .nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(8,11,15,0.80); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border); height: 64px;
-      display: flex; align-items: center;
+      background: linear-gradient(150deg, #008f72 0%, #00C49A 55%, #00d9a8 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.12); height: 64px;
+      display: flex; align-items: center; transition: box-shadow 0.3s;
     }
     .nav > .container { display: flex; align-items: center; justify-content: space-between; width: 100%; }
-    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
-    .nav-logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #000; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; color: #0a1628; }
+    .nav-logo-icon { width: 32px; height: 32px; background: rgba(10,22,40,0.18); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
     .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-2); transition: color 0.2s; }
-    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.72); transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: #0a1628; }
     .nav-actions { display: flex; align-items: center; gap: 12px; }
-    .btn-ghost { font-size: 14px; font-weight: 500; color: var(--text-2); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-2); transition: all 0.2s; }
-    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
-    .btn-primary { font-size: 14px; font-weight: 600; color: #000; background: var(--green); padding: 9px 18px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px; transition: opacity 0.2s; }
-    .btn-primary:hover { opacity: 0.88; }
-    .nav-hamburger { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 8px; }
-    .mobile-menu { display: none; flex-direction: column; gap: 0; position: fixed; top: 64px; left: 0; right: 0; background: var(--surface); border-bottom: 1px solid var(--border); z-index: 99; padding: 16px 24px; }
+    .btn-ghost { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.8); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid rgba(10,22,40,0.28); transition: all 0.2s; }
+    .btn-ghost:hover { color: #0a1628; border-color: rgba(10,22,40,0.55); }
+    .btn-primary { font-size: 14px; font-weight: 600; color: #f8fafc; background: #0a1628; padding: 9px 18px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .nav-hamburger { display: none; background: none; border: none; color: #0a1628; font-size: 20px; cursor: pointer; padding: 8px; }
+    .mobile-menu { display: none; flex-direction: column; gap: 0; position: fixed; top: 64px; left: 0; right: 0; background: #0a1628; border-top: 2px solid rgba(0,196,154,0.4); border-bottom: 1px solid rgba(0,0,0,0.3); z-index: 99; padding: 16px 24px; }
     .mobile-menu.open { display: flex; }
-    .mobile-menu a { padding: 12px 0; font-size: 15px; font-weight: 500; color: var(--text-2); border-bottom: 1px solid var(--border); }
+    .mobile-menu a { padding: 12px 0; font-size: 15px; font-weight: 500; color: rgba(221,229,238,0.9); border-bottom: 1px solid rgba(255,255,255,0.07); }
     .mobile-menu a:last-child { border-bottom: none; }
     @media (max-width: 768px) {
       .nav-links { display: none; }
@@ -696,7 +696,7 @@
 
     const nav = document.getElementById('nav');
     window.addEventListener('scroll', () => {
-      nav.style.background = window.scrollY > 40 ? 'rgba(8,11,15,0.96)' : 'rgba(8,11,15,0.8)';
+      nav.style.boxShadow = window.scrollY > 40 ? '0 2px 20px rgba(0,0,0,0.2)' : 'none';
     }, { passive: true });
   </script>
 </body>

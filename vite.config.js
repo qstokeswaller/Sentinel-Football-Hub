@@ -35,6 +35,7 @@ const NO_SIDEBAR_PAGES = [
     'player-dossier.html', 'squad-dossier.html',
     'privacy-policy.html', 'terms-of-service.html',
     'cookie-policy.html', 'data-processing.html',
+    'clubs.html', 'players.html',
 ];
 
 function buildSidebarShellBody() {
@@ -172,6 +173,8 @@ export default defineConfig({
                 termsOfService: resolve(__dirname, 'src/pages/terms-of-service.html'),
                 cookiePolicy: resolve(__dirname, 'src/pages/cookie-policy.html'),
                 dataProcessing: resolve(__dirname, 'src/pages/data-processing.html'),
+                clubsLanding: resolve(__dirname, 'clubs.html'),
+                playersLanding: resolve(__dirname, 'players.html'),
             }
         }
     },
