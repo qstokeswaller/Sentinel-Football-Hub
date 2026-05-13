@@ -39,6 +39,9 @@
         .badge-format { background: rgba(255,255,255,.12); color: #e2e8f0; }
         .badge-watch { background: rgba(251,191,36,.2); color: #fde68a; }
 
+        /* Tab dropdown — hidden on desktop, shown on mobile via media query */
+        .md-tab-dropdown { display: none; }
+
         /* Tabs */
         .md-tabs { display: flex; gap: 2px; background: #f1f5f9; padding: 4px; border-radius: 14px; margin-bottom: 20px; overflow-x: auto; scrollbar-width: none; }
         .md-tabs::-webkit-scrollbar { display: none; }
@@ -167,9 +170,29 @@
             .stats-grid-edit { grid-template-columns: 1fr; }
             .stats-grid-edit::after { display: none; }
             .match-info-grid { grid-template-columns: repeat(2, 1fr); }
+            /* Swap tabs → dropdown on mobile */
+            .md-tabs { display: none; }
+            .md-tab-dropdown {
+                display: block;
+                width: 100%;
+                padding: 10px 14px;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 10px;
+                background: #f1f5f9;
+                font-family: 'Inter', sans-serif;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #1e293b;
+                cursor: pointer;
+                margin-bottom: 20px;
+                appearance: none;
+                -webkit-appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 14px center;
+            }
         }
         @media (max-width: 480px) {
-            .md-tab-btn { padding: 8px 12px; font-size: .78rem; }
             .hero-teams { gap: 14px; }
         }
     </style>
@@ -215,7 +238,15 @@
             <div class="hero-badges" id="heroBadges"></div>
         </div>
 
-        <!-- Tab bar -->
+        <!-- Tab bar — select on mobile, pill tabs on desktop -->
+        <select class="md-tab-dropdown" id="mdTabDropdown">
+            <option value="details">Details</option>
+            <option value="lineup">Lineup</option>
+            <option value="stats">Stats</option>
+            <option value="report">Match Report</option>
+            <option value="analysis">Analysis</option>
+            <option value="media">Media</option>
+        </select>
         <div class="md-tabs" id="mdTabBar">
             <button class="md-tab-btn active" data-tab="details" onclick="switchMdTab('details')">
                 <i class="fas fa-id-card"></i> Details
@@ -775,6 +806,17 @@
         if (!user) return;
         applyTierGates();
         initMatchDetailsUI();
+
+        // Wire mobile dropdown → tab switcher, and sync dropdown when tabs switch
+        const mdDropdown = document.getElementById('mdTabDropdown');
+        if (mdDropdown) {
+            mdDropdown.addEventListener('change', e => switchMdTab(e.target.value));
+            const origSwitch = window.switchMdTab;
+            window.switchMdTab = function(tabId) {
+                origSwitch(tabId);
+                mdDropdown.value = tabId;
+            };
+        }
     });
 </script>
 </body>

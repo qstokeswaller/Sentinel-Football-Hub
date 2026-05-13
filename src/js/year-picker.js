@@ -423,6 +423,10 @@ export function createYearPicker(element, options = {}) {
 
     window.addEventListener('resize', () => { if (isOpen) positionDropdown(); });
 
+    // Close picker if user scrolls (fixed dropdown would otherwise float disconnected)
+    const onPageScroll = () => { if (isOpen) cancel(); };
+    window.addEventListener('scroll', onPageScroll, { passive: true, capture: true });
+
     // ── Public API ──
     function getValue() { return selectedYear; }
 
@@ -445,6 +449,7 @@ export function createYearPicker(element, options = {}) {
         trigger.remove();
         dropdown.remove();
         element.style.display = '';
+        window.removeEventListener('scroll', onPageScroll, { capture: true });
     }
 
     element._yearPicker = { getValue, setValue, destroy };

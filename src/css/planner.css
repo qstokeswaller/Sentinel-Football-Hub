@@ -1894,6 +1894,16 @@ video.video-embed {
 }
 
 /* Frame Timeline (above pitch) */
+/* Actions bar — above the timeline and canvas */
+.anim-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+}
+
 .anim-timeline {
     background: #1e293b;
     padding: 10px 16px;

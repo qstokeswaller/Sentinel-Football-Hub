@@ -82,6 +82,9 @@
             font-size: 0.8rem;
         }
 
+        /* Tab dropdown — hidden on desktop, shown on mobile via media query */
+        .profile-tab-dropdown { display: none; }
+
         /* ── Tabs ── */
         .profile-tabs {
             display: flex;
@@ -283,14 +286,30 @@
         @media screen and (max-width: 768px) {
             .profile-header { flex-wrap: wrap; gap: 10px; }
             .profile-header h2 { font-size: 1rem; }
-            .profile-tabs {
-                overflow-x: auto;
-                padding-bottom: 4px;
+            /* Swap tabs → dropdown on mobile */
+            .profile-tabs { display: none; }
+            .profile-tab-dropdown {
+                display: block;
+                width: 100%;
+                padding: 10px 14px;
+                border: 1.5px solid #e2e8f0;
                 border-radius: 10px;
-                scrollbar-width: none;
+                background: #f1f5f9;
+                font-family: 'Inter', sans-serif;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #1e293b;
+                cursor: pointer;
+                margin-bottom: 20px;
+                appearance: none;
+                -webkit-appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 14px center;
+                position: sticky;
+                top: 0;
+                z-index: 40;
             }
-            .profile-tabs::-webkit-scrollbar { display: none; }
-            .tab-btn { padding: 8px 10px; font-size: 0.78rem; flex-shrink: 0; }
             .bubble-grid-2, .pr-grid { grid-template-columns: 1fr !important; }
             .rating-row { flex-direction: column; align-items: stretch; gap: 10px; }
             .pr-attendance-options { flex-wrap: wrap; }
@@ -383,6 +402,14 @@
                 </div>
 
                 <!-- ══ TAB BAR ══ -->
+                <!-- Mobile dropdown (shown at ≤768px, tabs hidden) -->
+                <select class="profile-tab-dropdown" id="profileTabDropdown">
+                    <option value="details">Details</option>
+                    <option value="stats">Stats</option>
+                    <option value="media">Media</option>
+                    <option value="reports">Reports</option>
+                    <option value="analysis">Analysis</option>
+                </select>
                 <div class="profile-tabs" id="profileTabBar">
                     <button class="tab-btn active" data-tab="details"><i class="fas fa-id-card"></i> Details</button>
                     <button class="tab-btn" data-tab="stats"><i class="fas fa-chart-bar"></i> Stats</button>
@@ -462,7 +489,7 @@
                             <div class="profile-stats-grid">
                                 <div class="stat-box">
                                     <span class="label">Year of Birth</span>
-                                    <select id="editProfAge" class="form-control-bubble" style="padding:4px 8px; font-size:1rem; height:auto;"><option value="">Select Year</option></select>
+                                    <select id="editProfAge" class="form-control-bubble" data-no-custom style="padding:4px 8px; font-size:1rem; height:auto;"><option value="">Select Year</option></select>
                                 </div>
                                 <div class="stat-box">
                                     <span class="label">Nationality</span>
@@ -501,7 +528,7 @@
                                 </div>
                                 <div class="stat-box">
                                     <span class="label">Year Joined Club</span>
-                                    <select id="editProfYearJoined" class="form-control-bubble" style="padding:4px 8px; font-size:1rem; height:auto;"><option value="">Select Year</option></select>
+                                    <select id="editProfYearJoined" class="form-control-bubble" data-no-custom style="padding:4px 8px; font-size:1rem; height:auto;"><option value="">Select Year</option></select>
                                 </div>
                             </div>
                         </div>
@@ -1097,6 +1124,24 @@
             const user = await initPage('players', { match: true });
             if (!user) return;
             initPlayerProfileUI();
+
+            // Wire mobile dropdown → tab system
+            const tabDropdown = document.getElementById('profileTabDropdown');
+            if (tabDropdown) {
+                tabDropdown.addEventListener('change', e => {
+                    const btn = document.querySelector(`.tab-btn[data-tab="${e.target.value}"]`);
+                    if (btn) btn.click();
+                    else e.target.value = document.querySelector('.tab-btn.active')?.dataset.tab || 'details';
+                });
+
+                // Sync dropdown when tabs are activated via .click() anywhere in the JS
+                document.getElementById('profileTabBar')?.addEventListener('click', e => {
+                    const btn = e.target.closest('.tab-btn');
+                    if (btn && !btn.classList.contains('tier-locked')) {
+                        tabDropdown.value = btn.dataset.tab;
+                    }
+                }, true);
+            }
         });
 
         // ── Dossier share helpers ──

@@ -199,10 +199,10 @@ async function loadSessionReports() {
         const sel = document.getElementById('session-select');
         if (sel) {
             sel.innerHTML = '<option value="">-- Select a Session --</option>';
-            filteredSessions.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).forEach(s => {
+            filteredSessions.sort((a, b) => new Date(b.date || b.created_at) - new Date(a.date || a.created_at)).forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
-                const displayDate = s.date ? s.date : new Date(s.createdAt).toLocaleDateString();
+                const displayDate = s.date ? s.date : new Date(s.created_at).toLocaleDateString();
                 opt.textContent = `${s.title} (${displayDate})`;
                 sel.appendChild(opt);
             });
@@ -214,8 +214,8 @@ async function loadSessionReports() {
         }
 
         const validReports = filteredReports.filter(r => r.id && r.id !== 'null');
-        grid.innerHTML = validReports.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).map(r => {
-            const s = filteredSessions.find(sess => sess.id === r.sessionId);
+        grid.innerHTML = validReports.sort((a, b) => new Date(b.date || b.created_at) - new Date(a.date || a.created_at)).map(r => {
+            const s = filteredSessions.find(sess => sess.id === r.session_id);
             const title = s ? s.title : 'General Report';
             const dateShort = new Date(r.date || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
@@ -232,7 +232,7 @@ async function loadSessionReports() {
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border-light);">
                         <div style="font-size: 0.85rem;">${stars}</div>
                         <div style="display: flex; align-items: center; gap: 4px; font-size: 0.8rem; font-weight: 700; color: var(--primary);">
-                            <i class="fas fa-users"></i> ${r.attendanceCount || 0}/${r.attendanceTotal || 0}
+                            <i class="fas fa-users"></i> ${r.attendance_count || 0}/${r.attendance_total || 0}
                         </div>
                     </div>
                 </div>
@@ -259,20 +259,20 @@ async function openDailyReportDetails(id) {
         return;
     }
 
-    const s = _reportCache.sessions.find(sess => sess.id === r.sessionId) || null;
+    const s = _reportCache.sessions.find(sess => sess.id === r.session_id) || null;
     const dateStr = r.date ? new Date(r.date) : (s ? new Date(s.date) : new Date());
     const dateFormatted = isNaN(dateStr) ? 'No date' : dateStr.toLocaleDateString();
 
     let absentNames = 'None';
-    if (r.absentPlayerIds && Array.isArray(r.absentPlayerIds) && r.absentPlayerIds.length > 0) {
-        absentNames = r.absentPlayerIds.map(pid => {
+    if (r.absent_player_ids && Array.isArray(r.absent_player_ids) && r.absent_player_ids.length > 0) {
+        absentNames = r.absent_player_ids.map(pid => {
             const p = squadManager.players.find(player => player.id === pid);
             return p ? p.name : 'Unknown Player';
         }).join(', ');
     }
 
-    // drillNotes is already an object from GET /api/reports parsing
-    const drillNotes = (typeof r.drillNotes === 'string') ? JSON.parse(r.drillNotes || '{}') : (r.drillNotes || {});
+    // drill_notes is already an object from Supabase
+    const drillNotes = (typeof r.drill_notes === 'string') ? JSON.parse(r.drill_notes || '{}') : (r.drill_notes || {});
     const drillNotesEntries = Object.entries(drillNotes);
 
     content.innerHTML = `
@@ -280,9 +280,9 @@ async function openDailyReportDetails(id) {
             <h3 style="margin-top:0; color:var(--primary);">${s ? s.title : 'General Report'}</h3>
             <div style="display: flex; gap: 15px; font-size: 0.9rem; opacity: 0.8;">
                 <span><i class="far fa-calendar-alt"></i> ${dateFormatted}</span>
-                <span><i class="fas fa-users"></i> ${r.attendanceCount || 0}/${r.attendanceTotal || 0} Attendance</span>
+                <span><i class="fas fa-users"></i> ${r.attendance_count || 0}/${r.attendance_total || 0} Attendance</span>
             </div>
-            ${r.absentPlayerIds && r.absentPlayerIds.length > 0 ? `
+            ${r.absent_player_ids && r.absent_player_ids.length > 0 ? `
             <div style="margin-top:10px; font-size: 0.85rem; color: #e53e3e; font-weight: 600;">
                 <i class="fas fa-user-times"></i> Absent: ${absentNames}
             </div>` : ''}
@@ -299,11 +299,11 @@ async function openDailyReportDetails(id) {
             </div>
         </div>
 
-        ${r.absentPlayerIds && r.absentPlayerIds.length > 0 ? `
-            <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Absent Players (${r.absentPlayerIds.length})</h4>
+        ${r.absent_player_ids && r.absent_player_ids.length > 0 ? `
+            <h4 style="margin-bottom: 12px; color: var(--navy-dark);">Absent Players (${r.absent_player_ids.length})</h4>
             <div class="dash-card" style="padding: 12px; margin-bottom: 20px; background: #fff1f2; border: 1px solid #fecaca;">
                 <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                    ${r.absentPlayerIds.map(pid => {
+                    ${r.absent_player_ids.map(pid => {
         const p = squadManager.getPlayer(pid);
         return `<span style="background: white; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; border: 1px solid #fecaca; color: #b91c1c;">${p ? p.name : 'Unknown Player'}</span>`;
     }).join('')}
@@ -660,8 +660,8 @@ function renderDevStructureItems(items) {
     if (!items || items.length === 0) {
         return '<p style="padding: 24px; text-align: center; color: var(--text-light); font-size: 0.9rem;">No overall assessments found for this player.</p>';
     }
-    return items.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)).map(ds => {
-        const d = new Date(ds.date || ds.createdAt);
+    return items.sort((a, b) => new Date(b.date || b.created_at) - new Date(a.date || a.created_at)).map(ds => {
+        const d = new Date(ds.date || ds.created_at);
         const day = d.getDate();
         const month = d.toLocaleString('default', { month: 'short' });
 
@@ -703,7 +703,7 @@ async function viewDevStructureDetails(id) {
         if (dsErr) throw dsErr;
 
         const players = await squadManager.getPlayers();
-        const player = players.find(p => p.id == ds.playerId);
+        const player = players.find(p => p.id == ds.player_id);
         const titleEl = document.getElementById('viewPlayerAssessTitle');
         if (titleEl) titleEl.textContent = `${player ? player.name : 'Player'} - Overall Assessment`;
 
@@ -723,7 +723,7 @@ async function viewDevStructureDetails(id) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
                 <div class="dash-card" style="padding: 20px; border-left: 4px solid var(--green-accent);">
                     <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Assessment Date</div>
-                    <div style="font-weight: 800; color: var(--navy-dark); font-size: 1.1rem;">${new Date(ds.date || ds.createdAt).toLocaleDateString()}</div>
+                    <div style="font-weight: 800; color: var(--navy-dark); font-size: 1.1rem;">${new Date(ds.date || ds.created_at).toLocaleDateString()}</div>
                 </div>
                 <div class="dash-card" style="padding: 20px; border-left: 4px solid var(--green-accent);">
                     <div style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700; text-transform: uppercase; margin-bottom: 8px;">Type</div>
@@ -960,7 +960,7 @@ async function onSessionSelect() {
         const drillsEl = document.getElementById('sp-drills');
 
         if (titleEl) titleEl.textContent = s.title || 'Untitled Session';
-        if (metaEl) metaEl.textContent = `Created: ${s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'Unknown'}`;
+        if (metaEl) metaEl.textContent = `Created: ${s.created_at ? new Date(s.created_at).toLocaleDateString() : 'Unknown'}`;
         if (drillsEl) {
             drillsEl.innerHTML = (s.drills || []).length > 0
                 ? s.drills.map((d, i) => `<div class="sp-drill-item">${i + 1}. ${d.title}</div>`).join('')
@@ -998,8 +998,8 @@ async function onSessionSelect() {
 
         // Auto-populate Attendance Total from playersCount if not already set by team select
         const attTotal = document.getElementById('att-total');
-        if (attTotal && s.playersCount && (!reportTeamSelect || !reportTeamSelect.value)) {
-            attTotal.value = s.playersCount;
+        if (attTotal && s.players_count && (!reportTeamSelect || !reportTeamSelect.value)) {
+            attTotal.value = s.players_count;
             const attCountInput = document.getElementById('att-count');
             if (attCountInput) attCountInput.value = s.playersCount;
         }
@@ -1212,7 +1212,14 @@ async function saveReport() {
 
     const absentPlayerIds = Array.from(document.querySelectorAll('.player-chip.absent')).map(c => c.dataset.id);
 
+    const _clubId = sessionStorage.getItem('impersonating_club_id') || window._profile?.club_id;
+    if (!_clubId) {
+        showToast('Cannot save report — club not identified. Please refresh.', 'error');
+        return;
+    }
+
     const reportRow = {
+        club_id: _clubId,
         session_id: sessionId || null,
         date,
         attendance_count: parseInt(attendanceCount) || 0,

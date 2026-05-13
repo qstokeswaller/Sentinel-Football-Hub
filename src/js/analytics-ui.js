@@ -436,20 +436,22 @@ function initYearSelectors() {
     }
 
     document.getElementById('filterMonth').value = now.getMonth() + 1;
-    document.getElementById('filterPerfYear').style.display = 'none';
+    document.getElementById('filterPerfYear').style.visibility = 'hidden';
 }
 
 // ─── Month filter handlers ──────────────────────────────────────────────────
 
 function onPerfMonthChange() {
     const month = document.getElementById('filterPerfMonth').value;
-    document.getElementById('filterPerfYear').style.display = month === 'all' ? 'none' : '';
+    const perfYearSel = document.getElementById('filterPerfYear');
+    if (perfYearSel) perfYearSel.style.visibility = month === 'all' ? 'hidden' : 'visible';
     refreshPerformanceMatrix();
 }
 
 function onAttMonthChange() {
     const month = document.getElementById('filterMonth').value;
-    document.getElementById('filterYear').style.display = month === 'all' ? 'none' : '';
+    const yearSel = document.getElementById('filterYear');
+    if (yearSel) yearSel.style.visibility = month === 'all' ? 'hidden' : 'visible';
     const hdr = document.getElementById('attSessionsHeader');
     if (hdr) hdr.textContent = month === 'all' ? 'Total Sessions' : 'Sessions This Month';
     refreshAttendance();
@@ -1223,32 +1225,42 @@ async function refreshAttendance() {
     tbody.innerHTML = '<tr><td colspan="6" class="table-loading"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
     mobileCards.innerHTML = '<div style="padding:30px;text-align:center;color:#94a3b8;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
 
+    const archetype = window._profile?.clubs?.settings?.archetype;
+    const isPrivateCoaching = archetype === 'private_coaching';
+
     try {
-        // 1. Fetch reports AND training_attendance, optionally filtered by month/year
-        let reportQuery = supabase.from('reports').select('id, session_id, absent_player_ids').limit(2000);
+        // 1. Fetch training_attendance (primary source)
         let attendanceQuery = supabase.from('training_attendance').select('id, session_id, absent_player_ids').limit(2000);
-        if (month && month !== 'all') {
-            const m = String(month).padStart(2, '0');
-            const datePrefix = `${year}-${m}`;
-            reportQuery = reportQuery.like('date', `${datePrefix}%`);
-            attendanceQuery = attendanceQuery.like('date', `${datePrefix}%`);
-        }
-        const [{ data: reports, error: rErr }, { data: attendance, error: aErr }] = await Promise.all([reportQuery, attendanceQuery]);
-        if (rErr) throw rErr;
+        const dateFilter = (month && month !== 'all') ? `${year}-${String(month).padStart(2, '0')}` : null;
+        if (dateFilter) attendanceQuery = attendanceQuery.like('date', `${dateFilter}%`);
+        const { data: attendance, error: aErr } = await attendanceQuery;
         if (aErr) throw aErr;
 
-        // Merge: deduplicate by session_id, prefer training_attendance over reports
-        const merged = [];
-        const seenSessionIds = new Set();
-        (attendance || []).forEach(r => {
-            if (r.session_id) seenSessionIds.add(r.session_id);
-            merged.push(r);
-        });
-        (reports || []).forEach(r => {
-            if (!r.session_id || !seenSessionIds.has(r.session_id)) {
-                merged.push(r);
+        // For non-Orion: also merge in reports as a fallback for older data
+        let merged = [...(attendance || [])];
+        if (!isPrivateCoaching) {
+            let reportQuery = supabase.from('reports').select('id, session_id, absent_player_ids').limit(2000);
+            if (dateFilter) reportQuery = reportQuery.like('date', `${dateFilter}%`);
+            const { data: reports } = await reportQuery; // intentionally non-throwing — fallback only
+            const seenSessionIds = new Set((attendance || []).map(r => r.session_id).filter(Boolean));
+            (reports || []).forEach(r => {
+                if (!r.session_id || !seenSessionIds.has(r.session_id)) merged.push(r);
+            });
+        }
+
+        // For Orion: fetch sessions with player_ids to compute per-player totals correctly
+        let sessionPlayerMap = null; // session_id → Set of player IDs selected
+        if (isPrivateCoaching) {
+            const sessionIds = merged.map(r => r.session_id).filter(Boolean);
+            if (sessionIds.length > 0) {
+                const { data: sessData } = await supabase.from('sessions')
+                    .select('id, player_ids').in('id', sessionIds).limit(2000);
+                sessionPlayerMap = {};
+                (sessData || []).forEach(s => {
+                    sessionPlayerMap[s.id] = new Set(Array.isArray(s.player_ids) ? s.player_ids : []);
+                });
             }
-        });
+        }
 
         // 2. Fetch players
         let playerQuery = scopePlayerQuery(supabase.from('players').select('id, name, position, squad_id').limit(2000));
@@ -1264,14 +1276,25 @@ async function refreshAttendance() {
         }
 
         // 3. Compute attendance per player
-        const totalSessions = merged.length;
         const players = rawPlayers.map(p => {
-            let missed = 0;
-            merged.forEach(r => {
-                let absentIds = [];
-                try { absentIds = typeof r.absent_player_ids === 'string' ? JSON.parse(r.absent_player_ids) : (r.absent_player_ids || []); } catch (e) { /* ignore */ }
-                if (Array.isArray(absentIds) && absentIds.includes(p.id)) missed++;
-            });
+            let totalSessions, missed = 0;
+            if (isPrivateCoaching && sessionPlayerMap) {
+                // Orion: only count sessions where this player was selected
+                const relevantRecords = merged.filter(r => sessionPlayerMap[r.session_id]?.has(p.id));
+                totalSessions = relevantRecords.length;
+                relevantRecords.forEach(r => {
+                    let absentIds = [];
+                    try { absentIds = typeof r.absent_player_ids === 'string' ? JSON.parse(r.absent_player_ids) : (r.absent_player_ids || []); } catch (e) { /* ignore */ }
+                    if (Array.isArray(absentIds) && absentIds.includes(p.id)) missed++;
+                });
+            } else {
+                totalSessions = merged.length;
+                merged.forEach(r => {
+                    let absentIds = [];
+                    try { absentIds = typeof r.absent_player_ids === 'string' ? JSON.parse(r.absent_player_ids) : (r.absent_player_ids || []); } catch (e) { /* ignore */ }
+                    if (Array.isArray(absentIds) && absentIds.includes(p.id)) missed++;
+                });
+            }
             const attended = totalSessions - missed;
             const pct = totalSessions > 0 ? Math.round((attended / totalSessions) * 100) : null;
             return { id: p.id, name: p.name, position: p.position || '-', totalSessions, attendedSessions: attended, missedSessions: missed, attendancePct: pct };

@@ -2527,17 +2527,19 @@ export function initAnimationBuilder() {
         const canvasArea = container.parentElement;
 
         if (isMobileFs && canvasArea) {
-            // In mobile fullscreen: fill the canvas area (between toolbar and palette)
-            const areaW = canvasArea.clientWidth;
-            const areaH = canvasArea.clientHeight;
-            const scaleX = areaW / CANVAS_W;
-            const scaleY = areaH / CANVAS_H;
+            const style = getComputedStyle(canvasArea);
+            const padH = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+            const padV = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+            const scaleX = (canvasArea.clientWidth - padH) / CANVAS_W;
+            const scaleY = (canvasArea.clientHeight - padV) / CANVAS_H;
             const scale = Math.min(scaleX, scaleY, 1);
             stage.width(CANVAS_W * scale);
             stage.height(CANVAS_H * scale);
             stage.scale({ x: scale, y: scale });
         } else {
-            const cw = canvasArea?.clientWidth || CANVAS_W;
+            const style = canvasArea ? getComputedStyle(canvasArea) : null;
+            const padH = style ? parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) : 0;
+            const cw = (canvasArea?.clientWidth || CANVAS_W) - padH;
             const scale = Math.min(1, cw / CANVAS_W);
             stage.width(CANVAS_W * scale);
             stage.height(CANVAS_H * scale);
@@ -2609,14 +2611,19 @@ export function resizeAnimCanvas() {
     const isMobileFs = wrap?.classList.contains('anim-mobile-fs');
 
     if (isMobileFs && canvasArea) {
-        const scaleX = canvasArea.clientWidth / CANVAS_W;
-        const scaleY = canvasArea.clientHeight / CANVAS_H;
+        const style = getComputedStyle(canvasArea);
+        const padH = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+        const padV = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+        const scaleX = (canvasArea.clientWidth - padH) / CANVAS_W;
+        const scaleY = (canvasArea.clientHeight - padV) / CANVAS_H;
         const scale = Math.min(scaleX, scaleY, 1);
         stage.width(CANVAS_W * scale);
         stage.height(CANVAS_H * scale);
         stage.scale({ x: scale, y: scale });
     } else {
-        const cw = canvasArea?.clientWidth || CANVAS_W;
+        const style = canvasArea ? getComputedStyle(canvasArea) : null;
+        const padH = style ? parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) : 0;
+        const cw = (canvasArea?.clientWidth || CANVAS_W) - padH;
         const scale = Math.min(1, cw / CANVAS_W);
         stage.width(CANVAS_W * scale);
         stage.height(CANVAS_H * scale);

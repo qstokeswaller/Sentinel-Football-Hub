@@ -464,11 +464,10 @@ window._saveQuickSession = async function() {
                 // One attendance row per squad per session
                 for (const sess of pastSessions) {
                     for (const [sqId, sqPlayerIds] of Object.entries(playerSquadMap)) {
-                        const totalInSquad = squadManager.getPlayers({ squadId: sqId }).length;
                         attRows.push({
                             club_id: clubId, session_id: sess.id, squad_id: sqId, date: sess.date,
                             absent_player_ids: [], attendance_count: sqPlayerIds.length,
-                            attendance_total: totalInSquad, notes: '', updated_at: new Date().toISOString(),
+                            attendance_total: sqPlayerIds.length, notes: '', updated_at: new Date().toISOString(),
                         });
                     }
                 }

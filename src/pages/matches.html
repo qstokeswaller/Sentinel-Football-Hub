@@ -96,20 +96,26 @@
                 gap: 20px !important;
             }
 
-            /* Matches page tabs — scrollable strip so all tabs stay on one row */
-            .matches-tabs {
+            /* Matches page — dropdown replaces tab strip on mobile */
+            .matches-tabs { display: none; }
+            .matches-tab-dropdown {
+                display: block;
                 width: 100%;
-                overflow-x: auto;
-                padding-bottom: 4px;
-                scrollbar-width: none;
-                border-radius: 14px;
-            }
-            .matches-tabs::-webkit-scrollbar { display: none; }
-            .matches-tab-btn {
-                flex-shrink: 0;
-                white-space: nowrap;
-                padding: 10px 18px;
-                font-size: 0.85rem;
+                padding: 10px 14px;
+                border: 1.5px solid #e2e8f0;
+                border-radius: 10px;
+                background: #f1f5f9;
+                font-family: 'Inter', sans-serif;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #1e293b;
+                cursor: pointer;
+                margin-bottom: 20px;
+                appearance: none;
+                -webkit-appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 14px center;
             }
 
             /* Add match modal inner tabs */
@@ -138,6 +144,9 @@
                 transform: translateY(0);
             }
         }
+
+        /* Tab dropdown — hidden on desktop, shown on mobile via media query */
+        .matches-tab-dropdown { display: none; }
 
         /* Matches Page Tabs */
         .matches-tabs {
@@ -314,7 +323,12 @@
                 </div>
             </header>
 
-            <!-- Page Tabs -->
+            <!-- Page Tabs — select on mobile, pill tabs on desktop -->
+            <select class="matches-tab-dropdown" id="matchesTabDropdown">
+                <option value="fixtures">Fixtures</option>
+                <option value="results">Results</option>
+                <option value="planning">Match Planning</option>
+            </select>
             <div class="matches-tabs">
                 <button class="matches-tab-btn active" data-tab="fixtures" onclick="switchMatchesTab('fixtures')">
                     <i class="far fa-calendar-alt"></i> Fixtures
@@ -645,6 +659,25 @@
             }
 
             initMatchUI();
+
+            // Wrap switchMatchesTab to also sync the mobile dropdown
+            const _origSwitch = window.switchMatchesTab;
+            window.switchMatchesTab = function(tabName) {
+                if (tabName === 'planning' && !hasFeature('match_planning')) {
+                    showUpgradeToast('pro', 'Match Planning');
+                    const sel = document.getElementById('matchesTabDropdown');
+                    if (sel) sel.value = document.querySelector('.matches-tab-btn.active')?.dataset.tab || 'fixtures';
+                    return;
+                }
+                _origSwitch(tabName);
+                const sel = document.getElementById('matchesTabDropdown');
+                if (sel) sel.value = tabName;
+            };
+
+            // Wire dropdown to tab switcher
+            document.getElementById('matchesTabDropdown')?.addEventListener('change', e => {
+                switchMatchesTab(e.target.value);
+            });
 
             // Restore tab from URL param (e.g. matches.html?tab=results)
             const urlTab = new URLSearchParams(window.location.search).get('tab');
