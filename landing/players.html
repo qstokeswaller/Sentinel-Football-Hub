@@ -27,11 +27,12 @@
       --max-w:       1160px;
     }
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    html { scroll-behavior: smooth; overflow-x: hidden; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden; max-width: 100%; }
     a { text-decoration: none; color: inherit; }
 
     .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+    section { overflow: hidden; }
     section { padding: 96px 0; scroll-margin-top: 64px; }
 
     .section-label {
@@ -64,15 +65,15 @@
     .nav-logo-icon { width: 30px; height: 30px; background: rgba(10,22,40,0.18); border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
     .nav-logo span { color: #0a1628; }
     .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.72); transition: color 0.2s; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.72); transition: all 0.2s; padding: 5px 10px; border-radius: 20px; }
     .nav-links a:hover { color: #0a1628; }
-    .nav-links a.active { color: #0a1628; font-weight: 600; }
+    .nav-links a.active { color: #00C49A; background: #0a1628; font-weight: 600; }
     .nav-links .divider { width: 1px; height: 16px; background: rgba(10,22,40,0.2); }
     .nav-cta { display: flex; align-items: center; gap: 12px; }
-    .btn-ghost { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.8); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid rgba(10,22,40,0.28); background: transparent; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
-    .btn-ghost:hover { color: #0a1628; border-color: rgba(10,22,40,0.55); }
-    .btn-primary { font-size: 14px; font-weight: 600; color: #f8fafc; background: #0a1628; padding: 9px 20px; border-radius: var(--radius-sm); border: none; cursor: pointer; transition: opacity 0.2s, transform 0.15s; display: inline-flex; align-items: center; gap: 7px; }
-    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-ghost { font-size: 14px; font-weight: 600; color: #00C49A; background: #0a1628; padding: 8px 18px; border-radius: 20px; border: none; white-space: nowrap; cursor: pointer; transition: opacity 0.2s; }
+    .btn-ghost:hover { opacity: 0.82; }
+    .btn-primary { font-size: 14px; font-weight: 600; color: #fff; background: #0a1628; padding: 8px 18px; border-radius: 20px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.82; }
     .nav-hamburger { display: none; background: none; border: none; color: #0a1628; font-size: 20px; cursor: pointer; }
     .mobile-menu { display: none; position: fixed; top: 64px; left: 0; right: 0; background: #0a1628; border-top: 2px solid rgba(0,196,154,0.4); border-bottom: 1px solid rgba(0,0,0,0.3); padding: 24px; flex-direction: column; gap: 4px; z-index: 99; }
     .mobile-menu.open { display: flex; }
@@ -350,20 +351,18 @@
 
   <!-- Nav -->
   <nav class="nav" id="nav" role="navigation" aria-label="Main">
-    <a href="index.html" class="nav-logo">
+    <a href="/" class="nav-logo">
       <div class="nav-logo-icon"><i class="fas fa-futbol"></i></div>
       Sentinel <span>Football Hub</span>
     </a>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="clubs.html">For Clubs</a></li>
-      <li><a href="players.html" class="active">For Players</a></li>
-      <li class="divider" aria-hidden="true"></li>
-      <li><a href="#packages">Packages</a></li>
+      <li><a href="/">Home</a></li>
+      <li><a href="/landing/clubs.html">For Clubs</a></li>
+      <li><a href="/landing/players.html" class="active">For Players</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
     <div class="nav-cta">
-      <a href="/src/pages/login.html" class="btn-ghost">Sign In</a>
+      <a href="/src/pages/login.html" class="btn-ghost">Sign in</a>
       <a href="#packages" class="btn-primary"><i class="fas fa-star"></i> Get Analysed</a>
     </div>
     <button class="nav-hamburger" id="hamburgerBtn" aria-label="Open menu" aria-expanded="false">
@@ -373,9 +372,9 @@
 
   <!-- Mobile Menu -->
   <div class="mobile-menu" id="mobileMenu" role="navigation" aria-label="Mobile menu">
-    <a href="index.html">Home</a>
-    <a href="clubs.html">For Clubs</a>
-    <a href="players.html" style="color:var(--accent);">For Players</a>
+    <a href="/">Home</a>
+    <a href="/landing/clubs.html">For Clubs</a>
+    <a href="/landing/players.html" style="color:var(--accent);">For Players</a>
     <a href="#packages">Packages &amp; Pricing</a>
     <a href="#how-it-works">How It Works</a>
     <a href="#faq">FAQ</a>
@@ -932,7 +931,7 @@
       <div class="cta-actions fade-up">
         <a href="https://wa.me/27000000000?text=Hi%2C%20I%27d%20like%20to%20find%20out%20more%20about%20player%20analysis%20packages" class="btn-hero-primary" target="_blank" rel="noopener noreferrer"><i class="fab fa-whatsapp"></i> WhatsApp Us</a>
         <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel Football Hub — Player Analysis Enquiry" class="btn-hero-secondary"><i class="fas fa-envelope"></i> Email Us</a>
-        <a href="clubs.html" class="btn-hero-secondary"><i class="fas fa-building"></i> For Clubs</a>
+        <a href="/landing/clubs.html" class="btn-hero-secondary"><i class="fas fa-building"></i> For Clubs</a>
       </div>
     </div>
   </section>
@@ -965,16 +964,16 @@
               <li><a href="#packages">View Packages</a></li>
               <li><a href="#how-it-works">How It Works</a></li>
               <li><a href="#contact">Request Analysis</a></li>
-              <li><a href="clubs.html">For Clubs</a></li>
-              <li><a href="index.html">Home</a></li>
+              <li><a href="/landing/clubs.html">For Clubs</a></li>
+              <li><a href="/">Home</a></li>
             </ul>
           </div>
           <!-- Platform -->
           <div class="footer-col">
             <h4 class="footer-col-heading">Platform</h4>
             <ul class="footer-col-links">
-              <li><a href="clubs.html#features">Club Management</a></li>
-              <li><a href="clubs.html#pricing">Pricing</a></li>
+              <li><a href="/landing/clubs.html#features">Club Management</a></li>
+              <li><a href="/landing/clubs.html#pricing">Pricing</a></li>
               <li><a href="/src/pages/login.html?mode=signup">Get Started</a></li>
               <li><a href="/src/pages/login.html">Sign In</a></li>
             </ul>

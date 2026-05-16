@@ -86,6 +86,7 @@ const TIER_LABELS = { free: 'Free', basic: 'Basic', pro: 'Pro', elite: 'Elite' }
 // ── Tier resolution ──
 
 export function getTier() {
+  if (window._profile?.role === 'super_admin') return 'elite';
   const settings = window._profile?.clubs?.settings;
   const raw = (settings?.tier || settings?.plan || 'free').toLowerCase();
   return TIER_ORDER.includes(raw) ? raw : 'free';
@@ -190,9 +191,14 @@ export function applyTierGates() {
 export function injectSidebarTierBadge(profile) {
   const footer = document.querySelector('.sidebar-footer');
   if (!footer) return;
-  const settings = profile?.clubs?.settings;
-  const raw = (settings?.tier || settings?.plan || 'free').toLowerCase();
-  const tier = ['free', 'basic', 'pro', 'elite'].includes(raw) ? raw : 'free';
+  let tier;
+  if (profile?.role === 'super_admin') {
+    tier = 'elite';
+  } else {
+    const settings = profile?.clubs?.settings;
+    const raw = (settings?.tier || settings?.plan || 'free').toLowerCase();
+    tier = ['free', 'basic', 'pro', 'elite'].includes(raw) ? raw : 'free';
+  }
   const existing = document.getElementById('sidebarTierBadge');
   if (existing) {
     // Preload already rendered the badge — silently correct it if tier changed

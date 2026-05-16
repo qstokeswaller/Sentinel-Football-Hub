@@ -443,6 +443,9 @@
         @media (max-width: 768px) {
             .plan-stepper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
             .plan-step { min-width: 80px; font-size: 0.65rem; padding: 8px 6px; }
+            /* Plan title row — stack on mobile so title gets full width */
+            .plan-title-row { flex-direction: column !important; align-items: stretch !important; }
+            .plan-title-row select { min-width: 0 !important; width: 100% !important; }
             /* Opponent Intel: stack columns on mobile */
             #step-1 .dash-card > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
             .squad-picker { grid-template-columns: 1fr !important; }
@@ -488,7 +491,7 @@
 
             <!-- Title Input -->
             <div class="dash-card" style="padding: 16px 20px; margin-bottom: 16px;">
-                <div style="display: flex; gap: 16px; align-items: center;">
+                <div class="plan-title-row" style="display: flex; gap: 16px; align-items: center;">
                     <div style="flex: 1;">
                         <label class="form-label" style="font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; display: block;">Plan Title</label>
                         <input type="text" id="planTitle" class="form-input" placeholder="e.g. League Match vs Sundowns U17" style="width: 100%; padding: 10px 14px; border-radius: 10px;">

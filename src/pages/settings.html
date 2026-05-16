@@ -1864,11 +1864,13 @@
                 if (staffNav) staffNav.style.display = '';
                 const seasonsNav = document.getElementById('seasonsNavBtn');
                 if (seasonsNav) seasonsNav.style.display = '';
-                await Promise.all([
-                    loadSquadsAndCoaches(effectiveClubId),
-                    loadTeamMembers(effectiveClubId),
-                    loadSeasons(effectiveClubId),
-                ]);
+                if (effectiveClubId) {
+                    await Promise.all([
+                        loadSquadsAndCoaches(effectiveClubId),
+                        loadTeamMembers(effectiveClubId),
+                        loadSeasons(effectiveClubId),
+                    ]);
+                }
             }
 
             // Handle URL params: ?panel=X&view=ID (e.g. from squad staff chip links)

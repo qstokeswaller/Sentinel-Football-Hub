@@ -109,10 +109,8 @@ export default defineConfig({
         pwaMetaPlugin(),
         VitePWA({
             registerType: 'prompt',
-            injectRegister: null,       // pwa-register.js handles SW registration
-            strategies: 'injectManifest',
-            srcDir: 'public',
-            filename: 'sw.js',
+            injectRegister: null,       // pwa-register.js handles unregistration
+            selfDestroying: true,       // generated SW unregisters itself — no caching
             manifest: {
                 name: 'Sentinel Football Hub',
                 short_name: 'Football Hub',
@@ -132,12 +130,8 @@ export default defineConfig({
                     { src: '/maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
                 ],
             },
-            workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
-                globIgnores: ['**/node_modules/**'],
-            },
             devOptions: {
-                enabled: false,         // don't run SW in dev — breaks HMR
+                enabled: false,
             },
         }),
     ],
@@ -173,8 +167,8 @@ export default defineConfig({
                 termsOfService: resolve(__dirname, 'src/pages/terms-of-service.html'),
                 cookiePolicy: resolve(__dirname, 'src/pages/cookie-policy.html'),
                 dataProcessing: resolve(__dirname, 'src/pages/data-processing.html'),
-                clubsLanding: resolve(__dirname, 'clubs.html'),
-                playersLanding: resolve(__dirname, 'players.html'),
+                clubsLanding: resolve(__dirname, 'landing/clubs.html'),
+                playersLanding: resolve(__dirname, 'landing/players.html'),
             }
         }
     },

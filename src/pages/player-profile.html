@@ -286,6 +286,8 @@
         @media screen and (max-width: 768px) {
             .profile-header { flex-wrap: wrap; gap: 10px; }
             .profile-header h2 { font-size: 1rem; }
+            /* Share + status drop to their own row so long names never get cramped */
+            .profile-header-actions { width: 100%; justify-content: flex-start; margin-top: 2px; }
             /* Swap tabs → dropdown on mobile */
             .profile-tabs { display: none; }
             .profile-tab-dropdown {
@@ -300,6 +302,7 @@
                 font-weight: 600;
                 color: #1e293b;
                 cursor: pointer;
+                margin-top: 8px;
                 margin-bottom: 20px;
                 appearance: none;
                 -webkit-appearance: none;
@@ -385,7 +388,7 @@
                             <p class="subtitle"><span id="profPosition">—</span> &middot; <span id="profSquad">Squad</span></p>
                         </div>
                     </div>
-                    <div style="flex-shrink:0; align-self:center; display:flex; align-items:center; gap:8px;">
+                    <div class="profile-header-actions" style="flex-shrink:0; align-self:center; display:flex; align-items:center; gap:8px;">
                         <button class="dash-btn outline" id="btnShareDossier" onclick="window.openDossierShare()" title="Share player dossier">
                             <i class="fas fa-share-nodes"></i> Share
                         </button>

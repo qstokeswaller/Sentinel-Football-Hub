@@ -68,13 +68,14 @@
     .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; color: #0a1628; }
     .nav-logo-icon { width: 32px; height: 32px; background: rgba(10,22,40,0.18); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; }
     .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
-    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.72); transition: color 0.2s; }
-    .nav-links a:hover, .nav-links a.active { color: #0a1628; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.72); transition: all 0.2s; padding: 5px 10px; border-radius: 20px; }
+    .nav-links a:hover { color: #0a1628; }
+    .nav-links a.active { color: #00C49A; background: #0a1628; font-weight: 600; }
     .nav-actions { display: flex; align-items: center; gap: 12px; }
-    .btn-ghost { font-size: 14px; font-weight: 500; color: rgba(10,22,40,0.8); padding: 8px 16px; border-radius: var(--radius-sm); border: 1px solid rgba(10,22,40,0.28); transition: all 0.2s; }
-    .btn-ghost:hover { color: #0a1628; border-color: rgba(10,22,40,0.55); }
-    .btn-primary { font-size: 14px; font-weight: 600; color: #f8fafc; background: #0a1628; padding: 9px 18px; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px; transition: opacity 0.2s; }
-    .btn-primary:hover { opacity: 0.85; }
+    .btn-ghost { font-size: 14px; font-weight: 600; color: #00C49A; background: #0a1628; padding: 8px 18px; border-radius: 20px; border: none; white-space: nowrap; transition: opacity 0.2s; }
+    .btn-ghost:hover { opacity: 0.82; }
+    .btn-primary { font-size: 14px; font-weight: 600; color: #fff; background: #0a1628; padding: 8px 18px; border-radius: 20px; border: none; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; transition: opacity 0.2s; }
+    .btn-primary:hover { opacity: 0.82; }
     .nav-hamburger { display: none; background: none; border: none; color: #0a1628; font-size: 20px; cursor: pointer; padding: 8px; }
     .mobile-menu { display: none; flex-direction: column; gap: 0; position: fixed; top: 64px; left: 0; right: 0; background: #0a1628; border-top: 2px solid rgba(0,196,154,0.4); border-bottom: 1px solid rgba(0,0,0,0.3); z-index: 99; padding: 16px 24px; }
     .mobile-menu.open { display: flex; }
@@ -86,6 +87,66 @@
     }
     @media (max-width: 768px) {
       .nav-actions .btn-primary { display: none; }
+    }
+
+    /* ── CLUBS STRIP ── */
+    .clubs-carousel {
+      padding: 28px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,196,154,0.03);
+    }
+    .clubs-carousel-label {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-2);
+      margin-bottom: 20px;
+    }
+    .clubs-track {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 32px;
+      flex-wrap: wrap;
+      padding: 0 16px;
+    }
+    .club-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .club-badge {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #00C49A;
+      border: 2px solid rgba(0,196,154,0.25);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .club-badge img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 5px;
+    }
+    .club-item-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-align: center;
+      max-width: 90px;
+      line-height: 1.3;
     }
 
     /* ── HERO ── */
@@ -328,9 +389,8 @@
       </a>
       <ul class="nav-links">
         <li><a href="index.html" class="active">Home</a></li>
-        <li><a href="clubs.html">For Clubs</a></li>
-        <li><a href="players.html">For Players</a></li>
-        <li><a href="#download">Get the App</a></li>
+        <li><a href="/landing/clubs.html">For Clubs</a></li>
+        <li><a href="/landing/players.html">For Players</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
       <div class="nav-actions">
@@ -346,8 +406,8 @@
   <!-- Mobile menu -->
   <div class="mobile-menu" id="mobileMenu">
     <a href="index.html">Home</a>
-    <a href="clubs.html">For Clubs</a>
-    <a href="players.html">For Players</a>
+    <a href="/landing/clubs.html">For Clubs</a>
+    <a href="/landing/players.html">For Players</a>
     <a href="#download">Get the App</a>
     <a href="#contact">Contact</a>
     <a href="/src/pages/login.html">Sign in</a>
@@ -365,14 +425,14 @@
       <h1 class="fade-up stagger-2">The tools SA football<br>has been waiting for.</h1>
       <p class="hero-sub fade-up stagger-3">Purpose-built club management software and expert player analysis — designed for every level of the game, from grassroots to semi-professional.</p>
       <div class="hero-pathways fade-up stagger-4">
-        <a href="clubs.html" class="hero-pathway green">
+        <a href="/landing/clubs.html" class="hero-pathway green">
           <div class="pathway-icon green"><i class="fas fa-shield-halved"></i></div>
           <div class="pathway-label green">For Clubs</div>
           <div class="pathway-title">Club Management Platform</div>
           <div class="pathway-desc">Run your entire operation from one connected system.</div>
           <div class="pathway-cta green">Explore the platform <i class="fas fa-arrow-right"></i></div>
         </a>
-        <a href="players.html" class="hero-pathway amber">
+        <a href="/landing/players.html" class="hero-pathway amber">
           <div class="pathway-icon amber"><i class="fas fa-user-check"></i></div>
           <div class="pathway-label amber">For Players</div>
           <div class="pathway-title">Player Analysis Service</div>
@@ -382,6 +442,16 @@
       </div>
     </div>
   </section>
+
+  <!-- Clubs Carousel -->
+  <div class="clubs-carousel">
+    <p class="clubs-carousel-label">Clubs on the platform</p>
+    <div class="clubs-track">
+      <div class="club-item"><div class="club-badge"><img src="https://ocfycodijzcwupafrpzv.supabase.co/storage/v1/object/public/avatars/clubs/tuks-fc/logo.png" alt="Tuks FC" onerror="this.parentNode.textContent='TF'"></div><div class="club-item-name">Tuks FC</div></div>
+      <div class="club-item"><div class="club-badge"><img src="https://ocfycodijzcwupafrpzv.supabase.co/storage/v1/object/public/avatars/clubs/orion-football-program/logo.png" alt="Orion Football Program" onerror="this.parentNode.textContent='OF'"></div><div class="club-item-name">Orion Football Program</div></div>
+      <div class="club-item"><div class="club-badge"><img src="https://ocfycodijzcwupafrpzv.supabase.co/storage/v1/object/public/avatars/clubs/pending_1777973569169/logo.png" alt="Mamelodi Sundowns FC" onerror="this.parentNode.textContent='MS'"></div><div class="club-item-name">Mamelodi Sundowns FC</div></div>
+    </div>
+  </div>
 
   <!-- Stats -->
   <div class="stats">
@@ -441,7 +511,7 @@
       <div class="pathways-grid">
 
         <!-- Clubs -->
-        <a href="clubs.html" class="pathway-card green fade-up stagger-1">
+        <a href="/landing/clubs.html" class="pathway-card green fade-up stagger-1">
           <div class="pathway-card-glow" aria-hidden="true"></div>
           <div class="pathway-card-tag green"><i class="fas fa-shield-halved"></i> For Clubs</div>
           <h3>Run your entire club from one connected system.</h3>
@@ -451,7 +521,7 @@
         </a>
 
         <!-- Players -->
-        <a href="players.html" class="pathway-card amber fade-up stagger-2">
+        <a href="/landing/players.html" class="pathway-card amber fade-up stagger-2">
           <div class="pathway-card-glow" aria-hidden="true"></div>
           <div class="pathway-card-tag amber"><i class="fas fa-user-check"></i> For Players</div>
           <h3>Know exactly what to work on. Improve faster.</h3>
@@ -557,8 +627,8 @@
       <h2 class="fade-up">Ready to get started?</h2>
       <p class="fade-up">Whether you're a club looking to modernise your operation or a player serious about improvement — we're here.</p>
       <div class="cta-buttons fade-up">
-        <a href="clubs.html" class="btn-cta-primary"><i class="fas fa-shield-halved"></i> For Clubs</a>
-        <a href="players.html" class="btn-cta-secondary"><i class="fas fa-user-check"></i> For Players</a>
+        <a href="/landing/clubs.html" class="btn-cta-primary"><i class="fas fa-shield-halved"></i> For Clubs</a>
+        <a href="/landing/players.html" class="btn-cta-secondary"><i class="fas fa-user-check"></i> For Players</a>
         <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel Football Hub Enquiry" class="btn-cta-secondary"><i class="fas fa-envelope"></i> Email Us</a>
       </div>
     </div>
@@ -590,9 +660,9 @@
           <div class="footer-col">
             <h4 class="footer-col-heading">Product</h4>
             <ul class="footer-col-links">
-              <li><a href="clubs.html">For Clubs</a></li>
-              <li><a href="players.html">For Players</a></li>
-              <li><a href="clubs.html#pricing">Pricing</a></li>
+              <li><a href="/landing/clubs.html">For Clubs</a></li>
+              <li><a href="/landing/players.html">For Players</a></li>
+              <li><a href="/landing/clubs.html#pricing">Pricing</a></li>
               <li><a href="/src/pages/login.html?mode=signup">Get Started</a></li>
               <li><a href="/src/pages/login.html">Sign In</a></li>
             </ul>
@@ -601,11 +671,11 @@
           <div class="footer-col">
             <h4 class="footer-col-heading">Platform</h4>
             <ul class="footer-col-links">
-              <li><a href="clubs.html#features">Squad Management</a></li>
-              <li><a href="clubs.html#features">Match Analysis</a></li>
-              <li><a href="clubs.html#features">Training Planner</a></li>
-              <li><a href="clubs.html#features">Analytics</a></li>
-              <li><a href="clubs.html#features">Player Dossiers</a></li>
+              <li><a href="/landing/clubs.html#features">Squad Management</a></li>
+              <li><a href="/landing/clubs.html#features">Match Analysis</a></li>
+              <li><a href="/landing/clubs.html#features">Training Planner</a></li>
+              <li><a href="/landing/clubs.html#features">Analytics</a></li>
+              <li><a href="/landing/clubs.html#features">Player Dossiers</a></li>
             </ul>
           </div>
           <!-- Support -->
