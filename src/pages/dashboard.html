@@ -223,7 +223,7 @@
             </header>
 
             <!-- Global Search -->
-            <div style="padding:0 24px 16px;position:relative;" id="dashSearchWrap">
+            <div style="padding:0 24px 16px;position:relative;" id="dashSearchWrap" data-tour="dash-search">
                 <div style="position:relative;max-width:480px;">
                     <i class="fas fa-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.8rem;pointer-events:none;"></i>
                     <input type="text" id="globalSearchInput" placeholder="Search players, matches, squads..." autocomplete="off"
@@ -268,7 +268,7 @@
                             <button class="cal-mode-tab active" data-mode="calendar" onclick="window._switchCalMode('calendar')">
                                 <i class="fas fa-calendar-alt"></i> Calendar
                             </button>
-                            <button class="cal-mode-tab" data-mode="attendance" onclick="window._switchCalMode('attendance')">
+                            <button class="cal-mode-tab" data-mode="attendance" data-tour="dash-attendance" onclick="window._switchCalMode('attendance')">
                                 <i class="fas fa-clipboard-check"></i> Attendance
                             </button>
                         </div>
@@ -277,7 +277,7 @@
                         <button class="btn-ghost" onclick="window._changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
                         <span id="calendar-month-year" style="font-weight: 700; min-width: 140px; text-align: center; display: inline-block;">Month Year</span>
                         <button class="btn-ghost" onclick="window._changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                        <div data-min-role="coach" style="position:relative;margin-left:12px;" id="calAddDropdown">
+                        <div data-min-role="coach" style="position:relative;margin-left:12px;" id="calAddDropdown" data-tour="dash-add">
                             <button class="dash-btn primary" onclick="document.getElementById('calAddMenu').classList.toggle('show')" style="border-radius:9999px;padding:8px 18px;font-size:0.85rem;display:flex;align-items:center;gap:6px;">
                                 <i class="fas fa-plus"></i> Add <i class="fas fa-caret-down" style="font-size:0.7rem;margin-left:2px;"></i>
                             </button>
@@ -297,7 +297,7 @@
                     <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
                     Click a <strong>session</strong> on the calendar to mark attendance. Sessions with <i class="fas fa-check-circle" style="color:#10b981;"></i> already have recorded attendance.
                 </div>
-                <div id="calendar-container" class="calendar-grid-container">
+                <div id="calendar-container" class="calendar-grid-container" data-tour="dash-calendar">
                     <!-- Calendar injected by JS -->
                 </div>
             </div>
@@ -1105,13 +1105,13 @@
                 document.addEventListener('click', (e) => { if (!document.getElementById('dashSearchWrap')?.contains(e.target)) _searchResults.style.display = 'none'; });
             }
 
-            // Walkthrough
+            // Walkthrough — L1 welcome (first dashboard visit) + L2 dashboard tour
             try {
-                const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('../js/walkthrough.js');
-                await initWalkthroughs(user?.id, supabase);
-                const _wp = new URLSearchParams(window.location.search);
-                if (_wp.get('walkthrough') === '1') { startWalkthrough('dashboard', true); window.history.replaceState({}, '', window.location.pathname); }
-                else autoWalkthrough('dashboard');
+                const { maybeAutoStart, startWalkthrough, initWalkthroughs } = await import('../js/walkthrough.js');
+                await initWalkthroughs(user?.id, supabase, user);
+                const _wp = new URLSearchParams(window.location.search).get('walkthrough');
+                if (_wp) { startWalkthrough(_wp === '1' ? 'dashboard' : _wp, true); window.history.replaceState({}, '', window.location.pathname); }
+                else maybeAutoStart('dashboard');
             } catch (e) {}
 
             // Load recent activity (scoped to current club)

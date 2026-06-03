@@ -148,13 +148,13 @@
                 '<div class="sidebar-logo">' + logoHTML + '</div>' +
                 '<div class="brand-text"><h3>' + name + '</h3><p>Sentinel Football Hub</p></div>' +
             '</div>' +
-            '<nav class="sidebar-nav"><ul>' + navHTML + '</ul></nav>' +
+            '<nav class="sidebar-nav" data-tour="sidebar-nav"><ul>' + navHTML + '</ul></nav>' +
             '<div class="sidebar-footer">' +
                 (cachedSeason && cachedSeason.name
                     ? '<div class="sidebar-season-chip" id="sidebarSeasonChip"><i class="fas fa-calendar-alt"></i><span>' + cachedSeason.name + '</span></div>'
                     : '<div class="sidebar-season-chip" id="sidebarSeasonChip" style="display:none;"><i class="fas fa-calendar-alt"></i><span></span></div>') +
                 tierBadgeHTML +
-                '<a href="/src/pages/settings.html" class="sidebar-user-info" title="Settings">' +
+                '<a href="/src/pages/settings.html" class="sidebar-user-info" title="Settings" data-tour="settings-button">' +
                     '<div class="sidebar-user-avatar" id="sidebarUserAvatar">' + userInitials + '</div>' +
                     '<div class="sidebar-user-details">' +
                         '<span class="sidebar-user-name" id="sidebarUserName">' + userName + '</span>' +

@@ -99,15 +99,17 @@ export async function initPage(pageName, opts = {}) {
     enableAutoInit();
 
     try {
-        const { autoWalkthrough, startWalkthrough, initWalkthroughs } = await import('./js/walkthrough.js');
+        const { maybeAutoStart, startWalkthrough, initWalkthroughs } = await import('./js/walkthrough.js');
         // Pass user object so initWalkthroughs skips a redundant getUser() network call
         await initWalkthroughs(user?.id, supabase, user);
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('walkthrough') === '1') {
-            startWalkthrough(pageName, true);
+        // ?walkthrough=<pageId|welcome|1> force-starts a specific tour (Settings replay).
+        // 1 = legacy alias for "this page". Otherwise auto-decide (welcome vs page tour).
+        const wtParam = new URLSearchParams(window.location.search).get('walkthrough');
+        if (wtParam) {
+            startWalkthrough(wtParam === '1' ? pageName : wtParam, true);
             window.history.replaceState({}, '', window.location.pathname);
         } else {
-            autoWalkthrough(pageName);
+            maybeAutoStart(pageName);
         }
     } catch (e) { /* walkthrough module load failed — non-fatal */ }
 

@@ -558,7 +558,7 @@
                     <button class="settings-nav-item" data-panel="deleted">
                         <i class="fas fa-trash-restore"></i> Recently Deleted
                     </button>
-                    <button class="settings-nav-item" data-panel="walkthrough">
+                    <button class="settings-nav-item" data-panel="walkthrough" data-tour="settings-walkthrough-nav">
                         <i class="fas fa-graduation-cap"></i> Walkthrough
                     </button>
                 </div>
@@ -835,9 +835,11 @@
                     <!-- Walkthrough Panel -->
                     <div class="settings-panel" id="panel-walkthrough">
                         <div class="settings-card">
-                            <h3><i class="fas fa-graduation-cap" style="margin-right:8px;color:var(--primary);"></i>Page Walkthroughs</h3>
-                            <p>Guided tours that show you how to use each part of the platform. Click any page below to start its walkthrough.</p>
-                            <div id="walkthroughList" style="margin-top:16px;"></div>
+                            <h3><i class="fas fa-graduation-cap" style="margin-right:8px;color:var(--primary);"></i>Walkthroughs</h3>
+                            <p>Guided tours that show you how to use each part of the platform. Replay the welcome tour, or start any page's walkthrough below — it opens that page and runs the tour.</p>
+                            <div id="walkthroughWelcome" style="margin-top:16px;"></div>
+                            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin:20px 0 10px;">Pages &amp; hubs</div>
+                            <div id="walkthroughList"></div>
                             <div style="margin-top:16px;display:flex;gap:8px;">
                                 <button class="dash-btn" id="btnResetWalkthroughs" style="font-size:0.8rem;">
                                     <i class="fas fa-redo"></i> Reset All (show walkthroughs again)
@@ -1267,7 +1269,7 @@
         import { initPage, supabase, getProfile } from '../page-init.js';
         import { showToast, friendlyError } from '../toast.js';
         import { logout } from '../auth.js';
-        import { getAvailableWalkthroughs, startWalkthrough, resetWalkthroughs } from '../js/walkthrough.js';
+        import { getAvailableWalkthroughs, startWalkthrough, resetWalkthroughs, replayWelcome } from '../js/walkthrough.js';
         import { assignableRoles, roleLabel, canManage, isSuperAdmin } from '../rbac.js';
 
         let currentProfile = null;
@@ -1414,16 +1416,40 @@
                     if (btn.dataset.panel === 'seasons') loadSeasons(sessionStorage.getItem('impersonating_club_id') || currentProfile?.club_id);
                     // Populate walkthrough list
                     if (btn.dataset.panel === 'walkthrough') {
+                        const { welcome, pages } = getAvailableWalkthroughs();
+                        const statusMeta = (s) => s === 'completed'
+                            ? '<i class="fas fa-check-circle" style="color:#10b981;margin-right:4px;"></i>Completed'
+                            : s === 'skipped'
+                                ? '<i class="fas fa-minus-circle" style="color:#94a3b8;margin-right:4px;"></i>Skipped'
+                                : '<i class="far fa-circle" style="color:#cbd5e1;margin-right:4px;"></i>Not started';
+
+                        // Welcome tour — gradient replay card
+                        const welcomeEl = document.getElementById('walkthroughWelcome');
+                        welcomeEl.innerHTML = `
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px;border-radius:14px;
+                                background:linear-gradient(135deg,#0D1B2A 0%,#0f766e 60%,#00C49A 100%);color:#fff;">
+                                <div>
+                                    <div style="font-weight:700;font-size:0.95rem;display:flex;align-items:center;gap:8px;">
+                                        <i class="fas fa-sparkles"></i> Welcome tour
+                                    </div>
+                                    <div style="font-size:0.76rem;opacity:0.9;margin-top:3px;">The first-login walkthrough — navigation, calendar, search, theme and where Settings lives. ${statusMeta(welcome.status).replace(/color:#[0-9a-f]+/g,'color:#fff')}</div>
+                                </div>
+                                <button id="btnReplayWelcome" class="dash-btn sm" style="flex-shrink:0;background:#fff;color:#0D1B2A;border:none;font-weight:700;">
+                                    <i class="fas fa-play"></i> Replay
+                                </button>
+                            </div>`;
+                        document.getElementById('btnReplayWelcome')?.addEventListener('click', () => replayWelcome());
+
+                        // Page tours
                         const list = document.getElementById('walkthroughList');
-                        const pages = getAvailableWalkthroughs();
                         list.innerHTML = pages.map(p => `
                             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;border:1px solid var(--border-light);border-radius:10px;margin-bottom:8px;">
                                 <div>
                                     <div style="font-weight:600;font-size:0.88rem;color:var(--text-primary);">${p.label}</div>
-                                    <div style="font-size:0.72rem;color:var(--text-muted);">${p.steps} steps &middot; ${p.completed ? '<i class="fas fa-check-circle" style="color:#10b981;margin-right:4px;"></i>Completed' : 'Not started'}</div>
+                                    <div style="font-size:0.72rem;color:var(--text-muted);">${p.steps} steps &middot; ${statusMeta(p.status)}</div>
                                 </div>
-                                <a href="/src/pages/${p.id}.html?walkthrough=1" class="dash-btn sm primary" style="flex-shrink:0;">
-                                    <i class="fas fa-play"></i> Start
+                                <a href="/src/pages/${p.id}.html?walkthrough=${p.id}" class="dash-btn sm primary" style="flex-shrink:0;">
+                                    <i class="fas fa-play"></i> ${p.status === 'pending' ? 'Start' : 'Restart'}
                                 </a>
                             </div>
                         `).join('');
@@ -1827,6 +1853,8 @@
             document.getElementById('btnResetWalkthroughs')?.addEventListener('click', () => {
                 resetWalkthroughs();
                 showToast('Walkthroughs reset — they will show again on each page', 'success');
+                // Refresh the panel so statuses update immediately
+                document.querySelector('.settings-nav-item[data-panel="walkthrough"]')?.click();
             });
 
             // Delete account

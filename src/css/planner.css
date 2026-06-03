@@ -759,6 +759,7 @@
 
 /* Mini Toolbar (Drill Builder) */
 .mini-toolbar {
+    touch-action: auto; /* Override parent drill-canvas-wrap touch-action:none — allows select/buttons to work on Android */
     background: #fff;
     border: 1px solid var(--border-light);
     border-radius: 16px;
@@ -1944,6 +1945,8 @@ video.video-embed {
     gap: 6px;
     overflow-x: auto;
     padding: 4px 0;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
 .anim-frame-thumb {
@@ -2155,6 +2158,18 @@ video.video-embed {
     font-size: 0.8rem; cursor: pointer; display: flex;
     align-items: center; justify-content: center;
 }
+
+/* Palette toggle button (shown in fullscreen, hides/shows the palette row) */
+.anim-fs-palette-btn {
+    position: absolute; top: 6px; right: 44px; z-index: 10001;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(0,196,154,0.9); color: #fff; border: none;
+    font-size: 0.8rem; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+}
+
+/* Hide palette when toggled off in fullscreen */
+.anim-mobile-fs.hide-anim-palette .anim-palette { display: none; }
 
 /* Rotate overlay — shown when portrait in animation fullscreen */
 .anim-rotate-overlay {

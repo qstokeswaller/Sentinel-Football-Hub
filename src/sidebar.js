@@ -67,11 +67,11 @@ export function initSidebar(activePage = '') {
                         <p>Sentinel Football Hub</p>
                     </div>
                 </div>
-                <nav class="sidebar-nav">
+                <nav class="sidebar-nav" data-tour="sidebar-nav">
                     <ul>${navHTML}</ul>
                 </nav>
                 <div class="sidebar-footer">
-                    <a href="/src/pages/settings.html" class="sidebar-user-info" title="Settings">
+                    <a href="/src/pages/settings.html" class="sidebar-user-info" title="Settings" data-tour="settings-button">
                         <div class="sidebar-user-avatar" id="sidebarUserAvatar">${cachedUser?.initials || ''}</div>
                         <div class="sidebar-user-details">
                             <span class="sidebar-user-name" id="sidebarUserName">${cachedUser?.name || ''}</span>

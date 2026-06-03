@@ -6,7 +6,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Squad & Players | Sentinel Football Hub</title>
-    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -402,7 +401,7 @@
                     </div>
 
                     <div style="display:flex;gap:8px;align-items:center;">
-                        <button id="btnAddPlayer" class="dash-btn primary" data-min-role="coach"
+                        <button id="btnAddPlayer" class="dash-btn primary" data-min-role="coach" data-tour="squad-add"
                             style="border-radius: 0.75rem; height: 44px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
                             <i class="fas fa-plus"></i> Add New Player
                         </button>
@@ -417,7 +416,7 @@
             </header>
 
             <!-- Tab Bar -->
-            <div class="squad-page-tabs cal-mode-tabs" style="margin-top: 16px;">
+            <div class="squad-page-tabs cal-mode-tabs" style="margin-top: 16px;" data-tour="squad-tabs">
                 <button class="cal-mode-tab active" data-tab="squads">Squads</button>
                 <button class="cal-mode-tab" data-tab="players">All Players</button>
             </div>

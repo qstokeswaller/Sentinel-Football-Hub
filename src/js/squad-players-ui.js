@@ -187,9 +187,9 @@ function ensurePlayerCardStyles() {
         .sd-back-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
         .sd-layout {
             display:grid;
-            grid-template-columns:minmax(0,1fr) minmax(0,2fr);
+            grid-template-columns:minmax(0,2fr) minmax(0,1fr);
             grid-template-rows:auto 1fr;
-            grid-template-areas:"details players" "analytics players";
+            grid-template-areas:"players details" "players analytics";
             gap:20px;
             align-items:start;
         }

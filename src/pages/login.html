@@ -718,7 +718,52 @@
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const hashType = hashParams.get('type');
 
-    if (hashType === 'invite' || hashType === 'magiclink' || hashType === 'signup' || hashType === 'recovery') {
+    // ── Password recovery: show a "set new password" form (guide §12.4) ─────────
+    // Supabase establishes a short-lived recovery session from the email link.
+    // Instead of signing the user straight in, prompt them to choose a new
+    // password and commit it with updateUser().
+    if (hashType === 'recovery') {
+        _magicLinkHandled = true;
+        document.getElementById('authWrapper').outerHTML = `
+            <div class="auth-wrapper" style="max-width:440px;">
+                <div style="background:var(--bg-card,#fff);border:1px solid var(--border-light,#e2e8f0);border-radius:16px;padding:30px 28px;box-shadow:0 12px 40px rgba(0,0,0,0.12);">
+                    <h2 style="margin:0 0 6px;font-size:1.3rem;color:var(--text-primary,#0f172a);">Set a new password</h2>
+                    <p style="margin:0 0 18px;font-size:0.88rem;color:var(--text-secondary,#64748b);">Choose a new password for your account. You'll be signed in once it's saved.</p>
+                    <div id="recoveryMsg" class="auth-msg" style="display:none;"></div>
+                    <form id="recoveryForm">
+                        <input type="password" id="recoveryPassword" placeholder="New password (min 8 characters)" minlength="8" required
+                            style="width:100%;box-sizing:border-box;padding:12px 14px;margin-bottom:12px;border:1px solid var(--border-light,#e2e8f0);border-radius:10px;font-family:inherit;font-size:0.9rem;background:var(--bg-body,#f8fafc);color:var(--text-primary,#0f172a);outline:none;">
+                        <input type="password" id="recoveryConfirm" placeholder="Confirm new password" minlength="8" required
+                            style="width:100%;box-sizing:border-box;padding:12px 14px;margin-bottom:16px;border:1px solid var(--border-light,#e2e8f0);border-radius:10px;font-family:inherit;font-size:0.9rem;background:var(--bg-body,#f8fafc);color:var(--text-primary,#0f172a);outline:none;">
+                        <button type="submit" style="width:100%;padding:12px;border:none;border-radius:10px;background:var(--primary,#00C49A);color:#fff;font-family:inherit;font-weight:700;font-size:0.92rem;cursor:pointer;">Update password</button>
+                    </form>
+                </div>
+            </div>`;
+        const rForm = document.getElementById('recoveryForm');
+        const rMsg = document.getElementById('recoveryMsg');
+        const showRMsg = (t, cls) => { rMsg.textContent = t; rMsg.className = 'auth-msg ' + cls; rMsg.style.display = 'block'; };
+        rForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            rMsg.style.display = 'none';
+            const pw = document.getElementById('recoveryPassword').value;
+            const cf = document.getElementById('recoveryConfirm').value;
+            if (pw.length < 8) { showRMsg('Password must be at least 8 characters.', 'error'); return; }
+            if (pw !== cf) { showRMsg('Passwords do not match.', 'error'); return; }
+            const btn = rForm.querySelector('button');
+            btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Updating…';
+            try {
+                const { error } = await supabase.auth.updateUser({ password: pw });
+                if (error) throw error;
+                showRMsg('Password updated — redirecting to your dashboard…', 'success');
+                setTimeout(() => { window.location.href = '/src/pages/dashboard.html'; }, 1500);
+            } catch (err) {
+                showRMsg(friendlyError(err), 'error');
+                btn.disabled = false; btn.textContent = orig;
+            }
+        });
+    }
+
+    if (hashType === 'invite' || hashType === 'magiclink' || hashType === 'signup') {
         _magicLinkHandled = true;
 
         // Replace the whole wrapper with a centered processing state

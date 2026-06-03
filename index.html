@@ -629,8 +629,133 @@
       <div class="cta-buttons fade-up">
         <a href="/landing/clubs.html" class="btn-cta-primary"><i class="fas fa-shield-halved"></i> For Clubs</a>
         <a href="/landing/players.html" class="btn-cta-secondary"><i class="fas fa-user-check"></i> For Players</a>
-        <a href="mailto:stokeswallerq@gmail.com?subject=Sentinel Football Hub Enquiry" class="btn-cta-secondary"><i class="fas fa-envelope"></i> Email Us</a>
+        <a href="#contactForm" class="btn-cta-secondary"><i class="fas fa-envelope"></i> Send a message</a>
       </div>
+
+      <!-- Contact form (wired to /api/contact — Resend) -->
+      <style>
+        .cf-card { max-width: 560px; margin: 48px auto 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.10); border-radius: 18px; padding: 28px 26px; text-align: left; }
+        .cf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .cf-field { margin-bottom: 14px; }
+        .cf-field.full { grid-column: 1 / -1; }
+        .cf-label { display: block; font-size: 12px; font-weight: 600; color: #9fb0c3; margin-bottom: 6px; letter-spacing: 0.01em; }
+        .cf-input, .cf-select, .cf-textarea {
+          width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.12); background: rgba(10,18,30,0.6); color: #e8eef5;
+          font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.15s;
+        }
+        .cf-input:focus, .cf-select:focus, .cf-textarea:focus { border-color: #00C49A; }
+        .cf-input::placeholder, .cf-textarea::placeholder { color: #5b6b7d; }
+        .cf-textarea { resize: vertical; min-height: 110px; }
+        .cf-select option { color: #0f172a; }
+        .cf-submit {
+          width: 100%; margin-top: 4px; padding: 13px 20px; border: none; border-radius: 10px; cursor: pointer;
+          background: linear-gradient(135deg, #0D1B2A 0%, #0f766e 55%, #00C49A 100%); color: #fff;
+          font-family: inherit; font-weight: 700; font-size: 15px; transition: filter 0.15s, opacity 0.15s;
+        }
+        .cf-submit:hover { filter: brightness(1.08); }
+        .cf-submit:disabled { opacity: 0.6; cursor: default; }
+        .cf-msg { margin: 0 0 14px; padding: 11px 14px; border-radius: 10px; font-size: 13.5px; line-height: 1.5; display: none; }
+        .cf-msg.error { display: block; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #fca5a5; }
+        .cf-success { display: none; text-align: center; padding: 24px 8px; }
+        .cf-success .cf-success-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(0,196,154,0.15); color: #00C49A; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; font-size: 22px; }
+        .cf-success h3 { margin: 0 0 6px; color: #e8eef5; font-size: 18px; }
+        .cf-success p { margin: 0; color: #9fb0c3; font-size: 14px; }
+        @media (max-width: 560px) { .cf-row { grid-template-columns: 1fr; } }
+      </style>
+      <form id="contactForm" class="cf-card fade-up" novalidate>
+        <p id="cfError" class="cf-msg error"></p>
+        <div class="cf-field">
+          <label class="cf-label" for="cfSubject">What can we help with?</label>
+          <select id="cfSubject" class="cf-select" required>
+            <option value="sales">Sales / Pilot enquiry</option>
+            <option value="support">Support request</option>
+            <option value="bug">Report a bug</option>
+            <option value="feature">Feature request</option>
+          </select>
+        </div>
+        <div class="cf-row">
+          <div class="cf-field">
+            <label class="cf-label" for="cfName">Your name</label>
+            <input id="cfName" class="cf-input" type="text" placeholder="Quintin Stokes-Waller" required>
+          </div>
+          <div class="cf-field">
+            <label class="cf-label" for="cfEmail">Email</label>
+            <input id="cfEmail" class="cf-input" type="email" placeholder="you@club.com" required>
+          </div>
+        </div>
+        <div class="cf-field">
+          <label class="cf-label" for="cfOrg">Club / organisation <span style="color:#5b6b7d;font-weight:400;">(optional)</span></label>
+          <input id="cfOrg" class="cf-input" type="text" placeholder="Tuks FC">
+        </div>
+        <div class="cf-field full">
+          <label class="cf-label" for="cfMessage">Message</label>
+          <textarea id="cfMessage" class="cf-textarea" maxlength="5000" placeholder="Tell us a little about your club and what you're looking for…" required></textarea>
+        </div>
+        <button type="submit" id="cfSubmit" class="cf-submit">Send message</button>
+      </form>
+      <div id="cfSuccess" class="cf-success cf-card">
+        <div class="cf-success-icon"><i class="fas fa-check"></i></div>
+        <h3>Thanks — message sent</h3>
+        <p>We've got your message and will be in touch shortly.</p>
+      </div>
+      <script>
+        (function () {
+          var form = document.getElementById('contactForm');
+          if (!form) return;
+          var errEl = document.getElementById('cfError');
+          var btn = document.getElementById('cfSubmit');
+          var success = document.getElementById('cfSuccess');
+          var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+          form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            errEl.style.display = 'none';
+
+            var payload = {
+              subject: document.getElementById('cfSubject').value,
+              name: document.getElementById('cfName').value.trim(),
+              email: document.getElementById('cfEmail').value.trim(),
+              organisation: document.getElementById('cfOrg').value.trim(),
+              message: document.getElementById('cfMessage').value.trim(),
+            };
+
+            if (!payload.name || !payload.email || !payload.message) {
+              errEl.textContent = 'Please fill in your name, email and message.';
+              errEl.style.display = 'block'; return;
+            }
+            if (!emailRe.test(payload.email)) {
+              errEl.textContent = 'Please enter a valid email address.';
+              errEl.style.display = 'block'; return;
+            }
+
+            btn.disabled = true;
+            var original = btn.textContent;
+            btn.textContent = 'Sending…';
+            try {
+              var res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              var data = await res.json().catch(function () { return {}; });
+              if (res.ok) {
+                form.style.display = 'none';
+                success.style.display = 'block';
+              } else {
+                errEl.textContent = data.error || 'Something went wrong. Please try again.';
+                errEl.style.display = 'block';
+              }
+            } catch (err) {
+              errEl.textContent = 'Network error — please try again, or email us directly.';
+              errEl.style.display = 'block';
+            } finally {
+              btn.disabled = false;
+              btn.textContent = original;
+            }
+          });
+        })();
+      </script>
     </div>
   </section>
 

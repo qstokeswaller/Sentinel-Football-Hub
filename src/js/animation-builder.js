@@ -1258,6 +1258,10 @@ function renderFrameStrip() {
             goToFrame(parseInt(el.dataset.idx));
         });
     });
+
+    // Scroll active frame into view so it's always visible when navigating
+    const activeThumb = strip.querySelector('.anim-frame-thumb.active');
+    if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2463,6 +2467,9 @@ export function initAnimationBuilder() {
     const container = document.getElementById('animCanvasContainer');
     if (!container) return;
 
+    // 6px drag threshold prevents accidental drags from small finger tremor on touch
+    Konva.dragDistance = 6;
+
     stage = new Konva.Stage({
         container: 'animCanvasContainer',
         width: CANVAS_W,
@@ -2564,8 +2571,11 @@ export function initAnimationBuilder() {
         wrap.classList.add('anim-mobile-fs');
         const fsExit = document.getElementById('animMobileFsExit');
         if (fsExit) fsExit.style.display = '';
+        const fsPaletteBtn = document.getElementById('animFsPaletteBtn');
+        if (fsPaletteBtn) fsPaletteBtn.style.display = '';
+        const fsBtn = document.getElementById('animBtnFullscreen');
+        if (fsBtn) fsBtn.querySelector('i').className = 'fas fa-compress';
         document.body.style.overflow = 'hidden';
-        // Try to lock orientation to landscape
         try { screen.orientation?.lock('landscape').catch(() => {}); } catch (e) {}
         setTimeout(resizeCanvas, 50);
     }
@@ -2574,8 +2584,13 @@ export function initAnimationBuilder() {
         const wrap = document.getElementById('animBuilderWrap');
         if (!wrap) return;
         wrap.classList.remove('anim-mobile-fs');
+        wrap.classList.remove('hide-anim-palette');
         const fsExit = document.getElementById('animMobileFsExit');
         if (fsExit) fsExit.style.display = 'none';
+        const fsPaletteBtn = document.getElementById('animFsPaletteBtn');
+        if (fsPaletteBtn) { fsPaletteBtn.style.display = 'none'; fsPaletteBtn.querySelector('i').className = 'fas fa-palette'; fsPaletteBtn.title = 'Hide Palette'; }
+        const fsBtn = document.getElementById('animBtnFullscreen');
+        if (fsBtn) fsBtn.querySelector('i').className = 'fas fa-expand';
         document.body.style.overflow = '';
         try { screen.orientation?.unlock(); } catch (e) {}
         setTimeout(resizeCanvas, 50);
@@ -2583,6 +2598,29 @@ export function initAnimationBuilder() {
 
     window._exitAnimMobileFs = exitAnimMobileFs;
     window._enterAnimMobileFs = enterAnimMobileFs;
+
+    window._toggleAnimPalette = function() {
+        const wrap = document.getElementById('animBuilderWrap');
+        if (!wrap) return;
+        wrap.classList.toggle('hide-anim-palette');
+        const btn = document.getElementById('animFsPaletteBtn');
+        if (btn) {
+            const hidden = wrap.classList.contains('hide-anim-palette');
+            btn.title = hidden ? 'Show Palette' : 'Hide Palette';
+            btn.querySelector('i').className = hidden ? 'fas fa-eye-slash' : 'fas fa-palette';
+        }
+        setTimeout(resizeCanvas, 50);
+    };
+
+    // Wire fullscreen button (all devices)
+    const _fsBtn = document.getElementById('animBtnFullscreen');
+    if (_fsBtn) {
+        _fsBtn.addEventListener('click', () => {
+            const wrap = document.getElementById('animBuilderWrap');
+            if (wrap?.classList.contains('anim-mobile-fs')) exitAnimMobileFs();
+            else enterAnimMobileFs();
+        });
+    }
 
     // Auto-enter fullscreen on mobile when animation tab is shown
     if (_isMobile) {

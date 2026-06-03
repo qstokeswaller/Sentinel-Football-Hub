@@ -88,6 +88,8 @@ function pwaMetaPlugin() {
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Football Hub">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png">
   <script type="module" src="/pwa-register.js"></script>`;
 

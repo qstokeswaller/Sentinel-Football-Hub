@@ -18,9 +18,11 @@
     "@vercel/speed-insights": "^2.0.0",
     "better-sqlite3": "^12.6.2",
     "cors": "^2.8.6",
+    "driver.js": "^1.4.0",
     "express": "^5.2.1",
     "flatpickr": "^4.6.13",
     "konva": "^10.2.3",
+    "resend": "^6.12.4",
     "sqlite3": "^6.0.1"
   },
   "devDependencies": {
