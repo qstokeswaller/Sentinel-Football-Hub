@@ -1,0 +1,188 @@
+        /* ── Calendar Mode Tabs ── */
+        .cal-mode-tabs {
+            display: inline-flex;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .cal-mode-tab {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: #64748b;
+            background: transparent;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cal-mode-tab:hover { color: #0f172a; }
+        .cal-mode-tab.active {
+            background: white;
+            color: #0f172a;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .cal-mode-tab[data-mode="attendance"].active {
+            background: var(--primary, #00C49A);
+            color: white;
+        }
+
+        /* ── Attendance Panel ── */
+        .attendance-panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 24px;
+            scroll-margin-top: 80px;
+            animation: attFadeIn 0.25s ease;
+        }
+        @keyframes attFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .session-info-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .session-info-bar .info-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.85rem; color: #475569;
+        }
+        .session-info-bar .info-item i { color: #00C49A; width: 16px; text-align: center; }
+        .session-info-bar .info-item strong { color: #0f172a; }
+
+        /* ── Player Chips ── */
+        .register-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+        .reg-chip {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 14px; border-radius: 10px;
+            border: 2px solid #d1fae5; background: #ecfdf5;
+            cursor: pointer; transition: all 0.15s ease;
+            font-size: 0.85rem; font-weight: 600; color: #065f46;
+            user-select: none;
+        }
+        .reg-chip:hover { filter: brightness(0.96); }
+        .reg-chip .chip-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #a7f3d0; color: #065f46;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800;
+        }
+        .reg-chip .chip-pos {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            color: #6ee7b7; letter-spacing: 0.3px;
+        }
+        .reg-chip .chip-status { font-size: 0.75rem; margin-left: auto; }
+
+        /* Absent state */
+        .reg-chip.absent { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+        .reg-chip.absent .chip-avatar { background: #fca5a5; color: #991b1b; }
+        .reg-chip.absent .chip-pos { color: #fca5a5; }
+        .reg-chip.absent .chip-name { text-decoration: line-through; }
+
+        /* ── Counter ── */
+        .attendance-counter {
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 16px; background: #f0fdf4;
+            border: 1px solid #bbf7d0; border-radius: 10px;
+            margin-top: 16px; font-weight: 700; font-size: 0.9rem;
+        }
+        .attendance-counter .present-count { color: #166534; }
+        .attendance-counter .absent-count { color: #dc2626; }
+        .attendance-counter .separator { color: #94a3b8; }
+
+        /* ── Completed badge on calendar bubbles ── */
+        .calendar-bubble .att-check {
+            display: inline-block; margin-left: 4px;
+            font-size: 0.6rem; color: #fff; opacity: 0.85;
+        }
+        .mcal-detail-row .att-check {
+            color: #10b981; font-size: 0.85rem; flex-shrink: 0; margin-left: auto;
+        }
+
+        /* ── Squad selector row ── */
+        .squad-selector-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+        }
+        .squad-selector-row label {
+            font-size: 0.8rem; font-weight: 700; color: #475569;
+            text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .squad-selector-row select {
+            padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0;
+            font-size: 0.85rem; font-weight: 600; background: white; min-width: 180px;
+        }
+
+        /* ── Notes + Save row ── */
+        .save-row { margin-top: 20px; }
+        .save-row .notes-wrap label {
+            font-size: 0.75rem; font-weight: 700; color: #64748b;
+            text-transform: uppercase; letter-spacing: 0.3px;
+            display: block; margin-bottom: 6px;
+        }
+        .save-row .input-row {
+            display: flex; align-items: stretch; gap: 16px;
+        }
+        .save-row textarea {
+            flex: 1; padding: 10px 14px; border-radius: 10px;
+            border: 1px solid #e2e8f0; font-family: 'Inter', sans-serif;
+            font-size: 0.85rem; resize: vertical; min-height: 44px; max-height: 100px;
+            box-sizing: border-box;
+        }
+        .save-row #btnSaveAttendance {
+            white-space: nowrap;
+            border-radius: 10px;
+            padding: 0 24px;
+            height: auto;
+            display: inline-flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* ── Add Player Search Results ── */
+        .add-player-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; cursor: pointer; border-radius: 8px;
+            font-size: 0.84rem; transition: background 0.1s;
+        }
+        .add-player-item:hover { background: #f0fdf4; }
+        .add-player-item .api-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            background: #e2e8f0; color: #475569; font-size: 0.7rem;
+            font-weight: 700; display: flex; align-items: center;
+            justify-content: center; flex-shrink: 0;
+        }
+        .add-player-item .api-name { font-weight: 600; color: #0f172a; }
+        .add-player-item .api-meta { font-size: 0.75rem; color: #94a3b8; }
+
+        /* ── Saved status indicator ── */
+        .saved-indicator {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 14px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 700;
+            background: #dcfce7; color: #166534;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .session-info-bar { flex-direction: column; gap: 8px; }
+            .save-row .input-row { flex-direction: column; align-items: stretch; }
+            .squad-selector-row { flex-direction: column; align-items: flex-start; }
+            .cal-mode-tabs { width: 100%; }
+            .cal-mode-tab { flex: 1; justify-content: center; }
+        }
+        /* Calendar Add dropdown */
+        .cal-add-dropdown { display:none; position:absolute; top:100%; right:0; margin-top:6px; background:var(--bg-card); border:1px solid var(--border-light); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:100; min-width:180px; overflow:hidden; }
+        .cal-add-dropdown.show { display:block; }
+        .cal-add-dropdown button { display:flex; align-items:center; gap:10px; width:100%; padding:11px 16px; border:none; background:none; font-family:inherit; font-size:0.84rem; font-weight:500; color:var(--text-primary); cursor:pointer; transition:background 0.1s; }
+        .cal-add-dropdown button:hover { background:var(--bg-body); }
+        .cal-add-dropdown button i { width:16px; text-align:center; color:var(--primary); }

@@ -20,8 +20,12 @@ import { renderEmail, escapeHtml, ICONS, BRAND } from './_email-template.js';
 const SUBJECT_LABELS = {
   sales:   'Sales / Pilot enquiry',
   support: 'Support request',
+  general: 'General support',
   bug:     'Report a bug',
   feature: 'Feature request',
+  billing: 'Billing & plans',
+  players: 'Player analysis enquiry',
+  clubs:   'Club management enquiry',
 };
 
 const FROM_ADDRESS = `${BRAND.name} <noreply@${BRAND.support.split('@')[1]}>`;
@@ -38,7 +42,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Email service not configured yet. Please email us directly for now.' });
   }
 
-  const { subject, name, email, organisation, message } = req.body || {};
+  const { subject, name, email, organisation, message, meta } = req.body || {};
 
   if (!name?.trim() || !email?.trim() || !message?.trim()) {
     return res.status(400).json({ error: 'Name, email, and message are required.' });
@@ -58,6 +62,13 @@ export default async function handler(req, res) {
   const safeOrg = organisation?.trim() ? escapeHtml(organisation.trim()) : '—';
   const safeMessage = escapeHtml(message.trim()).replace(/\n/g, '<br>');
 
+  // Optional context attached by the in-app support form (plan / role / page topic).
+  const metaRow = (label, value) =>
+    value ? `<tr><td style="padding:4px 12px 4px 0;color:${BRAND.greenDark};font-size:11px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">${escapeHtml(String(label))}</td><td style="padding:4px 0;font-size:14px;color:#0f172a;">${escapeHtml(String(value))}</td></tr>` : '';
+  const metaRowsHtml = meta && typeof meta === 'object'
+    ? metaRow('Plan', meta.tier) + metaRow('Role', meta.role) + metaRow('Context', meta.context)
+    : '';
+
   // Support-side notification — no CTA (it's informational). Body in rich insert.
   const detailsHtml = `
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:linear-gradient(135deg,#e6f9f4 0%,#f0fdf9 100%);border:1px solid #a7f3d0;border-radius:14px;margin-bottom:14px;">
@@ -67,6 +78,7 @@ export default async function handler(req, res) {
               <td style="padding:4px 0;font-size:14px;color:#0f172a;"><strong>${safeName}</strong> &lt;${safeEmail}&gt;</td></tr>
           <tr><td style="padding:4px 12px 4px 0;color:${BRAND.greenDark};font-size:11px;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;">Organisation</td>
               <td style="padding:4px 0;font-size:14px;color:#0f172a;">${safeOrg}</td></tr>
+          ${metaRowsHtml}
         </table>
       </td></tr>
     </table>

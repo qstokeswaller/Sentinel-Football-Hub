@@ -6,3 +6,11 @@ node_modules/
 dist/
 data/*.db
 data/uploads/
+# Playwright/MCP screenshots + scratch artefacts — keep them out of the repo
+.playwright-mcp/
+# Safety net: stray screenshots accidentally written to the repo root
+/*.png
+/*.jpeg
+/*.jpg
+# Local dev-only login helper (uses service-role key from .env)
+scripts/dev-otp.mjs

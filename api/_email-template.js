@@ -234,7 +234,7 @@ export function renderEmail({
           <p style="margin:0;font-size:12px;color:#94a3b8;">
             <a href="${BRAND.site}" style="color:${BRAND.greenDark};text-decoration:none;font-weight:600;">${escapeHtml(BRAND.site.replace(/^https?:\/\//, ''))}</a>
             &nbsp;·&nbsp;
-            <a href="mailto:${BRAND.support}" style="color:${BRAND.greenDark};text-decoration:none;font-weight:600;">${escapeHtml(BRAND.support)}</a>
+            <a href="${BRAND.site}/?topic=support#contact" style="color:${BRAND.greenDark};text-decoration:none;font-weight:600;">${escapeHtml(BRAND.support)}</a>
           </p>
           ${footerExtra ? `<p style="margin:14px 0 0;font-size:11px;color:#cbd5e1;">${footerExtra}</p>` : ''}
         </td></tr>
