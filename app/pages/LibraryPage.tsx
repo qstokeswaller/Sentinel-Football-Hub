@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, ClipboardList, PenTool, Trash2, Clock, MapPin, Pencil, Share2, FileDown, Play, Film, User, Eye, ExternalLink } from 'lucide-react';
+import { ClipboardList, PenTool, Trash2, Clock, MapPin, Pencil, Share2, FileDown, Play, Film, User, Eye, ExternalLink } from 'lucide-react';
 import { Modal } from '../components/ui/Modal';
 import { Select } from '../components/ui/Input';
 import { SmartSearch } from '../components/ui/SmartSearch';
 import { PillTabs } from '../components/ui/PillTabs';
+import { PageToolbar } from '../components/ui/PageToolbar';
 import { GridSkeleton } from '../components/ui/Skeleton';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useToast } from '../context/ToastContext';
@@ -137,43 +138,36 @@ export const LibraryPage: React.FC = () => {
 
   return (
     <div>
-      {/* Title + search/filters share the top row — the filters fill the previously-empty
-          top-right on desktop, and stack cleanly under the title on smaller screens. */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-        <header>
-          <h1 data-tour="library-main" className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><BookOpen size={22} className="text-brand" /> Library</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Saved sessions and drills — share any of them with a link.</p>
-        </header>
-        <div className="flex flex-wrap items-center gap-2.5 lg:justify-end">
-          <SmartSearch value={search} onChange={setSearch} corpus={searchCorpus} placeholder={`Search ${tab}…`} />
-          <Select value={category} onChange={e => setCategory(e.target.value)} className="w-full sm:w-40 shrink-0">
-            <option value="all">All categories</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </Select>
-          <Select value={coach} onChange={e => setCoach(e.target.value)} className="w-full sm:w-40 shrink-0">
-            <option value="all">All coaches</option>
-            {coaches.map(c => <option key={c} value={c}>{c}</option>)}
-          </Select>
-          {tab === 'drills' && (
-            <div className="flex items-center gap-1.5">
-              <FilterChip v="all" label="All" />
-              <FilterChip v="static" label="Static" />
-              <FilterChip v="animated" label="Animated" />
-            </div>
-          )}
-          {(category !== 'all' || coach !== 'all' || drillType !== 'all' || search.trim()) && (
-            <button onClick={() => { setCategory('all'); setCoach('all'); setDrillType('all'); setSearch(''); }}
-              className="text-xs font-medium text-slate-500 hover:text-brand underline underline-offset-2 shrink-0">Clear filters</button>
-          )}
-        </div>
-      </div>
-
-      <div className="mb-4">
-        <PillTabs value={tab} onChange={t => setTab(t as 'sessions' | 'drills')} tabs={[
+      <PageToolbar
+        title="Library"
+        description="Saved sessions and drills — share any of them with a link."
+        dataTour="library-main"
+        left={<PillTabs value={tab} onChange={t => setTab(t as 'sessions' | 'drills')} tabs={[
           { id: 'sessions', label: 'Sessions', count: sessions?.length ?? 0 },
           { id: 'drills', label: 'Drills', count: drills?.length ?? 0 },
-        ]} />
-      </div>
+        ]} />}
+      >
+        <div className="flex w-56"><SmartSearch value={search} onChange={setSearch} corpus={searchCorpus} placeholder={`Search ${tab}…`} /></div>
+        <Select value={category} onChange={e => setCategory(e.target.value)} className="w-full sm:w-40 shrink-0">
+          <option value="all">All categories</option>
+          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+        </Select>
+        <Select value={coach} onChange={e => setCoach(e.target.value)} className="w-full sm:w-40 shrink-0">
+          <option value="all">All coaches</option>
+          {coaches.map(c => <option key={c} value={c}>{c}</option>)}
+        </Select>
+        {tab === 'drills' && (
+          <div className="flex items-center gap-1.5">
+            <FilterChip v="all" label="All" />
+            <FilterChip v="static" label="Static" />
+            <FilterChip v="animated" label="Animated" />
+          </div>
+        )}
+        {(category !== 'all' || coach !== 'all' || drillType !== 'all' || search.trim()) && (
+          <button onClick={() => { setCategory('all'); setCoach('all'); setDrillType('all'); setSearch(''); }}
+            className="text-xs font-medium text-slate-500 hover:text-brand underline underline-offset-2 shrink-0">Clear filters</button>
+        )}
+      </PageToolbar>
 
       {isLoading ? (
         <GridSkeleton count={12} cols="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" />

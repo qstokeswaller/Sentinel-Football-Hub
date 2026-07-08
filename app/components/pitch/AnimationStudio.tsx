@@ -55,6 +55,7 @@ export const AnimationStudio: React.FC<{
   const [color, setColor] = useState('#e53935');
   const [size, setSize] = useState<ObjSize>('medium');
   const [fill, setFill] = useState(false);
+  const [playerStyle, setPlayerStyle] = useState<'dot' | 'jersey' | 'shaper'>('dot');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [onion, setOnion] = useState(false);
   const [paths, setPaths] = useState(false);
@@ -214,6 +215,7 @@ export const AnimationStudio: React.FC<{
       onPitch={t => { setPitchType(t); if (grid === 'thirds' && t !== 'full') setGrid('none'); }} onOrientation={setOrientation}
       grid={grid} onGrid={setGrid} gridColor={gridColor} onGridColor={setGridColor}
       onTool={setTool} onColor={applyColor} onSize={applySize} onFill={setFill}
+      playerStyle={playerStyle} onPlayerStyle={setPlayerStyle}
       onUndo={undo} onClear={clearFrame} onDeleteSelected={deleteSelected} canDelete={!!selectedId && editing}
       flip={flip} onFlip={() => { snapshot(); setFrames(fs => fs.map(fr => { const m = flipObjects(fr.objects, fr.drawings, effOrientation); return { ...fr, objects: m.objects, drawings: m.drawings }; })); setFlip(f => !f); }}
       mobile={immersive} open={toolsOpen} onClose={() => setToolsOpen(false)} landscape={isLandscape}
@@ -223,7 +225,7 @@ export const AnimationStudio: React.FC<{
   const canvasEl = (
     <PitchCanvas
       data={{ pitchType, orientation: effOrientation, flip, grid, gridColor, objects: baseObjects, drawings: shownDrawings }}
-      editable={editing} activeTool={tool} activeColor={color} size={size} fill={fill}
+      editable={editing} activeTool={tool} activeColor={color} size={size} fill={fill} playerStyle={playerStyle}
       selectedId={selectedId} onSelect={setSelectedId} ghostObjects={ghost} motion={motion} maxHeight={canvasMaxHeight}
       onChange={d => editing && setFrameData(d.objects, d.drawings)}
     />

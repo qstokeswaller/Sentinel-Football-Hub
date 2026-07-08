@@ -6,14 +6,21 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Input';
 import { DatePicker } from '../components/ui/DatePicker';
 import { PillTabs } from '../components/ui/PillTabs';
+import { PageToolbar } from '../components/ui/PageToolbar';
 import { GridSkeleton, TableSkeleton } from '../components/ui/Skeleton';
 import { useAppState } from '../context/AppStateContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { usePermissions } from '../hooks/usePermissions';
 import { usePricingRules, useInvoices, useTransactions } from '../hooks/useFinancials';
+import { useSeasons } from '../hooks/useSeasons';
+import { isInSeason } from '../services/seasonsService';
+import { MemberFeesView } from '../components/financials/MemberFeesView';
 import { usePlayers, useSquads } from '../hooks/useSquads';
-import { addPricingRule, updatePricingRule, deletePricingRule, fetchMonthGenerationData, computeInvoicePreviews, insertGeneratedInvoices, addTransaction, deleteTransaction, generateFeeInvoices, setInvoicePayment, deleteInvoice, INCOME_CATEGORIES, EXPENSE_CATEGORIES, FEE_CADENCES, FEE_CATEGORIES, type PricingRule, type InvoicePreview, type Invoice } from '../services/financialService';
+import { addPricingRule, updatePricingRule, deletePricingRule, fetchMonthGenerationData, computeInvoicePreviews, insertGeneratedInvoices, addTransaction, deleteTransaction, setInvoicePayment, deleteInvoice, INCOME_CATEGORIES, EXPENSE_CATEGORIES, FEE_CADENCES, FEE_CATEGORIES, type PricingRule, type InvoicePreview, type Invoice } from '../services/financialService';
+import { BillPlayersModal } from '../components/financials/BillPlayersModal';
+import { aggregateMemberFees } from '../lib/financeAgg';
+import { downloadCollectionsPdf } from '../lib/financePdf';
 import { TierGate } from '../components/tier/TierGate';
 import { downloadCsv } from '../lib/csv';
 
@@ -31,16 +38,19 @@ const FEE_BLANK = { name: '', category: 'Membership', cadence: 'monthly', amount
 const rand2 = (n: number) => `R${n.toLocaleString('en-ZA', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 const CADENCE_LABEL: Record<string, string> = { once_off: 'Once-off', monthly: 'Monthly', quarterly: 'Quarterly', annual: 'Annual' };
 const INV_STATUS_STYLE: Record<string, string> = { paid: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', partial: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', sent: 'bg-sky-500/15 text-sky-500', draft: 'bg-slate-500/20 text-slate-400', overdue: 'bg-rose-500/15 text-rose-500' };
-const periodFor = (cadence: string | null) => {
-  const d = new Date(); const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0');
-  if (cadence === 'annual') return String(y);
-  if (cadence === 'quarterly') return `${y}-Q${Math.floor(d.getMonth() / 3) + 1}`;
-  if (cadence === 'once_off') return `${y}`;
-  return `${y}-${m}`;
+// A representative ISO date for an invoice's billing period ("2026-03" → 2026-03-01,
+// "2026-Q2" → 2026-04-01, "2026" → 2026-01-01), falling back to when it was created —
+// used to place an invoice inside a season or a custom date range.
+const invoiceDate = (v: { month: string | null; createdAt: string }): string => {
+  const m = v.month || '';
+  let x = m.match(/^(\d{4})-(\d{2})$/); if (x) return `${x[1]}-${x[2]}-01`;
+  x = m.match(/^(\d{4})-Q([1-4])$/); if (x) return `${x[1]}-${String((+x[2] - 1) * 3 + 1).padStart(2, '0')}-01`;
+  x = m.match(/^(\d{4})$/); if (x) return `${x[1]}-01-01`;
+  return (v.createdAt || '').slice(0, 10);
 };
 
 const FinancialsInner: React.FC = () => {
-  const { effectiveClubId } = useAppState();
+  const { effectiveClubId, club } = useAppState();
   const { showToast, showError } = useToast();
   const { canManage } = usePermissions();
   const queryClient = useQueryClient();
@@ -51,6 +61,7 @@ const FinancialsInner: React.FC = () => {
   const { data: rules, isLoading: rLoading } = usePricingRules();
   const { data: invoices, isLoading: iLoading } = useInvoices(tab === 'invoices' || tab === 'overview');
   const { data: transactions } = useTransactions(tab === 'overview' || tab === 'ledger');
+  const { data: seasons } = useSeasons();
 
   // Club ledger — income + expenses.
   const [txnOpen, setTxnOpen] = useState(false);
@@ -72,11 +83,17 @@ const FinancialsInner: React.FC = () => {
   const [feeModalOpen, setFeeModalOpen] = useState(false);
   const [editFee, setEditFee] = useState<PricingRule | null>(null);
   const [feeForm, setFeeForm] = useState(FEE_BLANK);
-  const [billFee, setBillFee] = useState<PricingRule | null>(null);
-  const [billPeriod, setBillPeriod] = useState('');
-  const [billDue, setBillDue] = useState('');
+  const [billModalOpen, setBillModalOpen] = useState(false);
+  const [billInitialFee, setBillInitialFee] = useState<PricingRule | null>(null);
   const [invSquad, setInvSquad] = useState('all');
   const [invStatus, setInvStatus] = useState('all');
+  const [invType, setInvType] = useState('all'); // fee category (Membership / Kit / …) — "outstanding by type"
+  // Invoices tab: collections view (by member/squad) vs the raw invoice list, + a period lens.
+  const [invView, setInvView] = useState<'member' | 'invoice'>('member');
+  const [invPeriodMode, setInvPeriodMode] = useState<'all' | 'season' | 'custom'>('all');
+  const [invSeasonId, setInvSeasonId] = useState('');
+  const [invFrom, setInvFrom] = useState('');
+  const [invTo, setInvTo] = useState('');
   const [payInv, setPayInv] = useState<Invoice | null>(null);
   const [payAmount, setPayAmount] = useState('');
   const [payMethod, setPayMethod] = useState('');
@@ -88,7 +105,7 @@ const FinancialsInner: React.FC = () => {
 
   const openFeeAdd = () => { setEditFee(null); setFeeForm(FEE_BLANK); setFeeModalOpen(true); };
   const openFeeEdit = (r: PricingRule) => { setEditFee(r); setFeeForm({ name: r.name, category: r.category || 'Membership', cadence: r.cadence || 'monthly', amount: String(r.amount), squadId: r.squadId || '', description: r.description || '', isActive: r.isActive }); setFeeModalOpen(true); };
-  const openBill = (r: PricingRule) => { setBillFee(r); setBillPeriod(periodFor(r.cadence)); setBillDue(''); };
+  const openBill = (r: PricingRule | null) => { setBillInitialFee(r); setBillModalOpen(true); };
   const openPay = (v: Invoice) => { setPayInv(v); setPayAmount(String(v.total)); setPayMethod(v.method || ''); setPayStatus('paid'); };
 
   const saveFee = useMutation({
@@ -100,11 +117,6 @@ const FinancialsInner: React.FC = () => {
     onError: (e) => showError(e),
   });
   const delFee = useMutation({ mutationFn: (r: PricingRule) => deletePricingRule(r.id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['pricing-rules'] }); showToast('Fee removed.', 'success'); }, onError: (e) => showError(e) });
-  const bill = useMutation({
-    mutationFn: () => generateFeeInvoices(effectiveClubId!, user?.id ?? null, billFee!, billPeriod, feePlayers(billFee!), billDue || null),
-    onSuccess: (n) => { queryClient.invalidateQueries({ queryKey: ['invoices'] }); showToast(n ? `Billed ${n} player${n === 1 ? '' : 's'}.` : 'Everyone was already billed for this period.', n ? 'success' : 'error'); setBillFee(null); if (n) setTab('invoices'); },
-    onError: (e) => showError(e),
-  });
   const markPay = useMutation({
     mutationFn: () => setInvoicePayment(payInv!.id, payStatus, Number(payAmount) || 0, payMethod || null),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['invoices'] }); showToast('Payment recorded.', 'success'); setPayInv(null); },
@@ -112,9 +124,25 @@ const FinancialsInner: React.FC = () => {
   });
   const delInv = useMutation({ mutationFn: (id: string) => deleteInvoice(id), onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['invoices'] }); showToast('Invoice deleted.', 'success'); }, onError: (e) => showError(e) });
 
+  const invSeason = useMemo(() => (seasons || []).find(s => s.id === invSeasonId) || null, [seasons, invSeasonId]);
+  // Map each invoice to a payment TYPE via its pricing rule's category (one-off/unknown → "Other").
+  const ruleCat = useMemo(() => Object.fromEntries((rules || []).map(r => [r.id, r.category || 'Other'])), [rules]);
+  const invTypeOf = (v: Invoice) => (v.pricingRuleId ? (ruleCat[v.pricingRuleId] || 'Other') : 'Other');
+  const invTypes = useMemo(() => [...new Set((invoices || []).map(invTypeOf))].sort(), [invoices, ruleCat]);
+  const inInvPeriod = (v: Invoice) => {
+    if (invPeriodMode === 'all') return true;
+    const d = invoiceDate(v);
+    if (invPeriodMode === 'season') return isInSeason(null, d, invSeason);
+    if (invFrom && d < invFrom) return false;
+    if (invTo && d > invTo) return false;
+    return true;
+  };
   const filteredInvoices = useMemo(() => (invoices || []).filter(v =>
-    (invSquad === 'all' || v.playerSquadId === invSquad) && (invStatus === 'all' || v.status === invStatus)
-  ), [invoices, invSquad, invStatus]);
+    (invSquad === 'all' || v.playerSquadId === invSquad) && (invStatus === 'all' || v.status === invStatus) &&
+    (invType === 'all' || invTypeOf(v) === invType) && inInvPeriod(v)
+  ), [invoices, invSquad, invStatus, invType, invPeriodMode, invSeasonId, invFrom, invTo, seasons, ruleCat]);
+  const memberGroups = useMemo(() => aggregateMemberFees(filteredInvoices, squadName), [filteredInvoices]); // eslint-disable-line react-hooks/exhaustive-deps
+  const invPeriodLabel = invPeriodMode === 'season' ? (invSeason?.name || 'Season') : invPeriodMode === 'custom' ? `${invFrom || '…'} – ${invTo || '…'}` : 'All-time';
 
   const summary = useMemo(() => {
     const txs = transactions || [];
@@ -208,17 +236,15 @@ const FinancialsInner: React.FC = () => {
 
   return (
     <div>
-      <header className="mb-5">
-        <h1 data-tour="financials-main" className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><Coins size={22} className="text-brand" /> Financials</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Club income, expenses, fees &amp; invoicing.</p>
-      </header>
-
-      <div className="mb-5 overflow-x-auto">
-        <PillTabs value={tab} onChange={id => setTab(id as Tab)} tabs={[
+      <PageToolbar
+        title="Financials"
+        description="Club income, expenses, fees & invoicing."
+        dataTour="financials-main"
+        left={<div className="overflow-x-auto min-w-0 max-w-full"><PillTabs value={tab} onChange={id => setTab(id as Tab)} tabs={[
           { id: 'overview', label: 'Overview' }, { id: 'ledger', label: 'Ledger' }, { id: 'fees', label: 'Fees' },
           { id: 'invoices', label: 'Invoices' }, { id: 'pricing', label: 'Pricing' }, { id: 'generate', label: 'Generate' },
-        ]} />
-      </div>
+        ]} /></div>}
+      />
 
       {tab === 'overview' && (
         <div className="space-y-4">
@@ -253,8 +279,9 @@ const FinancialsInner: React.FC = () => {
                     <thead><tr className="text-left text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-200 dark:border-sentinel-border"><th className="py-2 pr-2 font-semibold">Team</th><th className="px-2 text-right font-semibold">In</th><th className="px-2 text-right font-semibold">Out</th><th className="px-2 text-right font-semibold">Owed</th><th className="px-2 text-right font-semibold">Net</th></tr></thead>
                     <tbody>
                       {byTeam.map(t => (
-                        <tr key={t.squadId || 'none'} className="border-b border-slate-100 dark:border-white/5 last:border-0">
-                          <td className="py-2 pr-2 text-slate-700 dark:text-slate-200">{t.name}</td>
+                        <tr key={t.squadId || 'none'} onClick={() => { setInvView('member'); setInvSquad(t.squadId || 'all'); setTab('invoices'); }}
+                          title="View this squad's member fees" className="border-b border-slate-100 dark:border-white/5 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
+                          <td className="py-2 pr-2 font-medium text-slate-700 dark:text-slate-200">{t.name}</td>
                           <td className="px-2 text-right tabular-nums text-emerald-600 dark:text-emerald-400">{rand2(t.income + t.collected)}</td>
                           <td className="px-2 text-right tabular-nums text-rose-500">{rand2(t.expense)}</td>
                           <td className="px-2 text-right tabular-nums text-amber-600 dark:text-amber-400">{t.outstanding ? rand2(t.outstanding) : '—'}</td>
@@ -273,8 +300,8 @@ const FinancialsInner: React.FC = () => {
       {tab === 'ledger' && (
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <label className="inline-flex items-center gap-1.5 text-xs text-slate-500"><span>From</span><DatePicker value={ledgerFrom} onChange={e => setLedgerFrom(e.target.value)} className="w-40" /></label>
-            <label className="inline-flex items-center gap-1.5 text-xs text-slate-500"><span>To</span><DatePicker value={ledgerTo} onChange={e => setLedgerTo(e.target.value)} className="w-40" /></label>
+            <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"><span>From</span><DatePicker value={ledgerFrom} onChange={e => setLedgerFrom(e.target.value)} className="w-40" /></label>
+            <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"><span>To</span><DatePicker value={ledgerTo} onChange={e => setLedgerTo(e.target.value)} className="w-40" /></label>
             <Select value={ledgerKind} onChange={e => setLedgerKind(e.target.value)} className="w-32"><option value="all">All types</option><option value="income">Income</option><option value="expense">Expenses</option></Select>
             <Select value={ledgerSquad} onChange={e => setLedgerSquad(e.target.value)} className="w-44"><option value="all">All squads</option><option value="none">Whole club</option>{(squads || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
             {ledgerCats.length > 0 && <Select value={ledgerCat} onChange={e => setLedgerCat(e.target.value)} className="w-40"><option value="all">All categories</option>{ledgerCats.map(c => <option key={c} value={c}>{c}</option>)}</Select>}
@@ -315,8 +342,11 @@ const FinancialsInner: React.FC = () => {
       {tab === 'fees' && (
         <>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <p className="text-sm text-slate-500 dark:text-slate-400">Membership, kit &amp; registration fees — set them up, then bill a squad or the whole club.</p>
-            <Button variant="primary" onClick={openFeeAdd}><Plus size={16} /> Add Fee</Button>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Membership, kit &amp; registration fees — set them up, then bill a squad, a subset, or individuals.</p>
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" onClick={() => openBill(null)}><Receipt size={15} /> Bill / charge players</Button>
+              <Button variant="primary" onClick={openFeeAdd}><Plus size={16} /> Add Fee</Button>
+            </div>
           </div>
           {!fees.length ? <div className={`${card} p-12 text-center text-slate-400`}><Receipt size={26} className="mx-auto mb-3 opacity-60" />No fees yet. Add a membership or kit fee to start billing.</div> : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -382,13 +412,31 @@ const FinancialsInner: React.FC = () => {
       {tab === 'invoices' && (
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-4">
+            {/* By member = the collections view (squad → player standing); By invoice = the raw list. */}
+            <div className="inline-flex rounded-lg border border-slate-200 dark:border-sentinel-border overflow-hidden shrink-0">
+              <button onClick={() => setInvView('member')} className={'px-3 py-1.5 text-xs font-semibold ' + (invView === 'member' ? 'bg-brand text-[#0D1B2A]' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5')}>By member</button>
+              <button onClick={() => setInvView('invoice')} className={'px-3 py-1.5 text-xs font-semibold border-l border-slate-200 dark:border-sentinel-border ' + (invView === 'invoice' ? 'bg-brand text-[#0D1B2A]' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5')}>By invoice</button>
+            </div>
             <Select value={invSquad} onChange={e => setInvSquad(e.target.value)} className="w-44"><option value="all">All squads</option>{(squads || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
             <Select value={invStatus} onChange={e => setInvStatus(e.target.value)} className="w-40"><option value="all">All statuses</option><option value="sent">Sent (unpaid)</option><option value="partial">Partial</option><option value="paid">Paid</option><option value="overdue">Overdue</option><option value="draft">Draft</option></Select>
-            {(invSquad !== 'all' || invStatus !== 'all') && <button onClick={() => { setInvSquad('all'); setInvStatus('all'); }} className="text-xs text-slate-400 hover:text-brand">Clear</button>}
-            {filteredInvoices.length > 0 && <div className="ml-auto"><button onClick={() => downloadCsv('invoices', ['Player', 'Squad', 'Period', 'Total', 'Paid', 'Status', 'Method'], filteredInvoices.map(v => [v.playerName, squadName(v.playerSquadId), v.month || '', v.total, v.paidAmount, v.status, v.method || '']))} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-2.5 py-1 text-xs font-semibold text-slate-500 hover:border-brand hover:text-brand"><i className="fas fa-file-csv" /> CSV</button></div>}
+            {invTypes.length > 1 && <Select value={invType} onChange={e => setInvType(e.target.value)} className="w-40"><option value="all">All types</option>{invTypes.map(t => <option key={t} value={t}>{t}</option>)}</Select>}
+            <Select value={invPeriodMode} onChange={e => setInvPeriodMode(e.target.value as 'all' | 'season' | 'custom')} className="w-36"><option value="all">All-time</option>{(seasons || []).length > 0 && <option value="season">By season</option>}<option value="custom">Custom range</option></Select>
+            {invPeriodMode === 'season' && <Select value={invSeasonId} onChange={e => setInvSeasonId(e.target.value)} className="w-44"><option value="">Select season…</option>{(seasons || []).map(s => <option key={s.id} value={s.id}>{s.name}{s.isCurrent ? ' (current)' : ''}</option>)}</Select>}
+            {invPeriodMode === 'custom' && <>
+              <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"><span>From</span><DatePicker value={invFrom} onChange={e => setInvFrom(e.target.value)} className="w-36" /></label>
+              <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"><span>To</span><DatePicker value={invTo} onChange={e => setInvTo(e.target.value)} className="w-36" /></label>
+            </>}
+            {(invSquad !== 'all' || invStatus !== 'all' || invType !== 'all' || invPeriodMode !== 'all') && <button onClick={() => { setInvSquad('all'); setInvStatus('all'); setInvType('all'); setInvPeriodMode('all'); setInvSeasonId(''); setInvFrom(''); setInvTo(''); }} className="text-xs text-slate-400 hover:text-brand">Clear</button>}
+            {filteredInvoices.length > 0 && <div className="ml-auto flex items-center gap-2">
+              {invView === 'member' && <button onClick={() => downloadCollectionsPdf(club?.name || 'Sentinel Football Hub', memberGroups, invPeriodLabel)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-2.5 py-1 text-xs font-semibold text-slate-500 hover:border-brand hover:text-brand"><i className="fas fa-file-pdf" /> PDF</button>}
+              <button onClick={() => downloadCsv('invoices', ['Player', 'Squad', 'Type', 'Period', 'Total', 'Paid', 'Outstanding', 'Status', 'Method'], filteredInvoices.map(v => [v.playerName, squadName(v.playerSquadId), invTypeOf(v), v.month || '', v.total, v.paidAmount, Math.max(0, v.total - (v.paidAmount || 0)), v.status, v.method || '']))} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-2.5 py-1 text-xs font-semibold text-slate-500 hover:border-brand hover:text-brand"><i className="fas fa-file-csv" /> CSV</button>
+            </div>}
           </div>
           {iLoading ? <TableSkeleton rows={6} cols={6} />
-            : !filteredInvoices.length ? <div className={`${card} p-12 text-center text-slate-400`}><FileText size={26} className="mx-auto mb-3 opacity-60" />{invoices?.length ? 'No invoices match your filter.' : 'No invoices yet — bill a fee to create them.'}</div>
+            : invView === 'member' ? (
+              (invoices?.length ? <MemberFeesView groups={memberGroups} onRecordPay={openPay} onDelete={(id) => delInv.mutate(id)} />
+                : <div className={`${card} p-12 text-center text-slate-400`}><FileText size={26} className="mx-auto mb-3 opacity-60" />No invoices yet — bill a fee to create them.</div>)
+            ) : !filteredInvoices.length ? <div className={`${card} p-12 text-center text-slate-400`}><FileText size={26} className="mx-auto mb-3 opacity-60" />{invoices?.length ? 'No invoices match your filter.' : 'No invoices yet — bill a fee to create them.'}</div>
             : (
               <div className={`${card} overflow-hidden`}>
                 <div className="overflow-x-auto">
@@ -513,19 +561,9 @@ const FinancialsInner: React.FC = () => {
         </Modal>
       )}
 
-      {billFee && (
-        <Modal open onClose={() => setBillFee(null)} title={`Bill: ${billFee.name}`} size="sm"
-          footer={<>
-            <Button variant="ghost" onClick={() => setBillFee(null)}>Cancel</Button>
-            <Button variant="primary" disabled={bill.isPending} onClick={() => bill.mutate()}>{bill.isPending ? 'Billing…' : `Bill ${feePlayers(billFee).length} player${feePlayers(billFee).length === 1 ? '' : 's'}`}</Button>
-          </>}>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Creates a <b>{rand(billFee.amount)}</b> invoice for each player in <b>{billFee.squadId ? squadName(billFee.squadId) : 'the club'}</b> ({feePlayers(billFee).length}). Players already billed for this period are skipped.</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className={LABEL}>Billing period</label><input className={INPUT} value={billPeriod} onChange={e => setBillPeriod(e.target.value)} placeholder="2026-03" /></div>
-            <div><label className={LABEL}>Due date (optional)</label><DatePicker value={billDue} onChange={e => setBillDue(e.target.value)} /></div>
-          </div>
-        </Modal>
-      )}
+      <BillPlayersModal open={billModalOpen} onClose={() => setBillModalOpen(false)}
+        clubId={effectiveClubId} createdBy={user?.id ?? null} fees={fees} squads={squads || []} players={players || []}
+        initialFee={billInitialFee} onBilled={(n) => { if (n) setTab('invoices'); }} />
 
       {payInv && (
         <Modal open onClose={() => setPayInv(null)} title={`Record payment — ${payInv.playerName}`} size="sm"

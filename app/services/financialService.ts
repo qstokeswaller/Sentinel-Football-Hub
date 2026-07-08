@@ -68,6 +68,37 @@ export async function generateFeeInvoices(clubId: string, createdBy: string | nu
   return rows.length;
 }
 
+/**
+ * Flexible billing — create one invoice per selected player for either an existing fee
+ * (rule) or a one-off charge (ruleId null). This is the "select a squad → whole squad,
+ * a subset, or individual players → charge them" flow, so admins never add a charge one
+ * player at a time. For fee-based charges we skip players already billed for that rule +
+ * period (idempotent re-bill); one-off charges have no natural dedup key so each run inserts.
+ */
+export async function billPlayers(
+  clubId: string, createdBy: string | null,
+  charge: { ruleId: string | null; name: string; category?: string | null; amount: number; period: string; dueDate: string | null },
+  playerIds: string[],
+): Promise<number> {
+  let targets = playerIds;
+  if (charge.ruleId) {
+    const { data: existing } = await supabase.from('invoices').select('player_id').eq('club_id', clubId).eq('pricing_rule_id', charge.ruleId).eq('month', charge.period).limit(5000);
+    const done = new Set((existing || []).map((i: any) => i.player_id));
+    targets = playerIds.filter(id => !done.has(id));
+  }
+  if (!targets.length) return 0;
+  const desc = `${charge.category ? charge.category + ' — ' : ''}${charge.name}`;
+  const rows = targets.map(id => ({
+    club_id: clubId, player_id: id, pricing_rule_id: charge.ruleId, month: charge.period, status: 'sent',
+    subtotal: charge.amount, discount: 0, penalties: 0, total: charge.amount,
+    line_items: [{ description: desc, amount: charge.amount }],
+    due_date: charge.dueDate || null, created_by: createdBy,
+  }));
+  const { error } = await supabase.from('invoices').insert(rows);
+  if (error) throw error;
+  return rows.length;
+}
+
 export async function setInvoicePayment(id: string, status: string, paidAmount: number, method: string | null): Promise<void> {
   const row: Record<string, any> = { status, paid_amount: paidAmount, method: method || null };
   row.paid_at = status === 'paid' ? new Date().toISOString() : null;

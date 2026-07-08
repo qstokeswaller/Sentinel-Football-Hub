@@ -70,6 +70,19 @@ function poly(ctx: CanvasRenderingContext2D, pts: number[][], close = false) {
   ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); if (close) ctx.closePath();
 }
 
+// Shared equipment silhouettes — identical SVG paths render both in the interactive editor
+// (PitchCanvas, via Konva.Path) and here (via Path2D), so the two stay pixel-identical.
+export const CONE_D = 'M-8 8 Q-1 -12 0 -12 Q1 -12 8 8 Q0 10 -8 8 Z';
+export const MANNEQUIN_D = 'M-4.6 -3 C-5.8 2 -4 4.5 -3.4 10.5 L3.4 10.5 C4 4.5 5.8 2 4.6 -3 C3.4 -6.6 -3.4 -6.6 -4.6 -3 Z';
+export const REBOUNDER_D = 'M-11 8 L11 8 L7.5 -7 L-7.5 -7 Z';
+// Football shirt silhouette — MUST match PitchCanvas.tsx JERSEY_D (player 'jersey' variant).
+export const JERSEY_D = 'M-4 -8 C-2.5 -6.8 2.5 -6.8 4 -8 L7.5 -8.5 L11.5 -3.5 L7.5 0.5 L6 -1 L6 9 L-6 9 L-6 -1 L-7.5 0.5 L-11.5 -3.5 L-7.5 -8.5 Z';
+// 'shaper' — an ORIGINAL top-down body-with-limbs figure (torso + arms + legs as a closed
+// silhouette; head is a separate circle above; number on the chest). Distinct from any
+// patented coaching marker. MUST match PitchCanvas.tsx SHAPER_PTS. Flat, unscaled [x,y,…].
+export const SHAPER_PTS = [-2.4, -5.5, -5, -4.8, -9, -0.5, -10, 2.2, -3.6, -1, -4.6, 6, -5, 8.2, -4.4, 12.6, -1.4, 12.6, 0, 7.6, 1.4, 12.6, 4.4, 12.6, 5, 8.2, 4.6, 6, 3.6, -1, 10, 2.2, 9, -0.5, 5, -4.8, 2.4, -5.5];
+const scaledPath = (d: string, s: number) => { const p = new Path2D(); p.addPath(new Path2D(d), new DOMMatrix([s, 0, 0, s, 0, 0])); return p; };
+
 function drawObject(ctx: CanvasRenderingContext2D, o: PitchObject, W: number, H: number) {
   const x = o.x * W, y = o.y * H, s = SIZE_SCALE[o.size || 'medium'] * ((o as any).scale || 1);
   const stroke = isLight(o.color) ? '#0D1B2A' : '#ffffff';
@@ -79,21 +92,46 @@ function drawObject(ctx: CanvasRenderingContext2D, o: PitchObject, W: number, H:
 
   switch (o.type) {
     case 'player': case 'gk': {
-      const r = 13 * s;
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = o.color; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke();
-      label(o.type === 'gk' ? 'GK' : (o.label || ''), isLight(o.color) ? '#0D1B2A' : '#fff', r); break;
-    }
-    case 'ball': {
-      // Real soccer ball: WHITE body + central black pentagon + seams to the rim (matches PitchCanvas).
-      const r = 9 * s, navy = '#0D1B2A', pr = r * 0.44;
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = navy; ctx.stroke();
-      ctx.beginPath(); for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; const px = Math.cos(a) * pr, py = Math.sin(a) * pr; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath(); ctx.fillStyle = navy; ctx.fill();
-      ctx.strokeStyle = navy; ctx.lineWidth = 1;
-      for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; ctx.beginPath(); ctx.moveTo(Math.cos(a) * pr, Math.sin(a) * pr); ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); ctx.stroke(); }
+      const pl = o.type === 'gk' ? 'GK' : (o.label || '');
+      const fg = isLight(o.color) ? '#0D1B2A' : '#ffffff';
+      if ((o as any).variant === 'jersey') {
+        const body = scaledPath(JERSEY_D, s * 1.15);
+        ctx.fillStyle = o.color; ctx.fill(body); ctx.lineWidth = 1.4; ctx.strokeStyle = stroke; ctx.stroke(body);
+        ctx.fillStyle = fg; ctx.font = `bold ${Math.round(10 * s)}px Inter, sans-serif`; ctx.fillText(pl, 0, 3 * s);
+      } else if ((o as any).variant === 'shaper') {
+        // Torso + limbs silhouette, then head, then number on the chest.
+        poly(ctx, SHAPER_PTS.reduce<number[][]>((a, v, i) => (i % 2 ? a[a.length - 1].push(v * s) : a.push([v * s]), a), []), true);
+        ctx.fillStyle = o.color; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = stroke; ctx.lineJoin = 'round'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(0, -8.6 * s, 4 * s, 0, Math.PI * 2); ctx.fillStyle = o.color; ctx.fill(); ctx.stroke();
+        ctx.fillStyle = fg; ctx.font = `bold ${Math.round(8.5 * s)}px Inter, sans-serif`; ctx.fillText(pl, 0, 2.6 * s);
+      } else {
+        const r = 13 * s;
+        ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = o.color; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke();
+        label(pl, fg, r);
+      }
       break;
     }
-    case 'cone':
-      poly(ctx, [[0, -11 * s], [9.5 * s, 8 * s], [-9.5 * s, 8 * s]], true); ctx.fillStyle = o.color || '#f97316'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#7c2d12'; ctx.stroke(); break;
+    case 'ball': {
+      // Shaded white sphere + central black pentagon + 5 seams to outer patches (matches PitchCanvas).
+      const r = 9 * s, navy = '#0D1B2A';
+      const grad = ctx.createRadialGradient(-r * 0.34, -r * 0.38, r * 0.1, 0, 0, r);
+      grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.7, '#eef1f4'); grad.addColorStop(1, '#c4ccd4');
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill(); ctx.lineWidth = 1.1; ctx.strokeStyle = navy; ctx.stroke();
+      const pent = (cx: number, cy: number, rad: number, rot: number) => { ctx.beginPath(); for (let i = 0; i < 5; i++) { const a = rot + i * 2 * Math.PI / 5, px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath(); };
+      ctx.fillStyle = navy; ctx.strokeStyle = navy;
+      for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5, ox = Math.cos(a) * r * 0.66, oy = Math.sin(a) * r * 0.66; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * 0.34, Math.sin(a) * r * 0.34); ctx.lineTo(ox, oy); ctx.stroke(); pent(ox, oy, r * 0.2, a - Math.PI / 2); ctx.fill(); }
+      pent(0, 0, r * 0.34, -Math.PI / 2); ctx.fill();
+      break;
+    }
+    case 'cone': {
+      // Traffic cone: dark base ellipse, rounded orange body, white reflective band.
+      const col = o.color || '#f97316', dk = '#9a3412';
+      ctx.beginPath(); ctx.ellipse(0, 8.5 * s, 10 * s, 3 * s, 0, 0, Math.PI * 2); ctx.fillStyle = dk; ctx.fill();
+      const body = scaledPath(CONE_D, s);
+      ctx.fillStyle = col; ctx.fill(body);
+      poly(ctx, [[-3.4 * s, -3 * s], [3.4 * s, -3 * s], [4.6 * s, 0.8 * s], [-4.6 * s, 0.8 * s]], true); ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fill();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = dk; ctx.stroke(body); break;
+    }
     case 'flag':
       ctx.lineWidth = 2; ctx.strokeStyle = '#475569'; poly(ctx, [[0, 12 * s], [0, -12 * s]]); ctx.stroke();
       poly(ctx, [[0, -12 * s], [11 * s, -8 * s], [0, -4 * s]], true); ctx.fillStyle = o.color; ctx.fill(); break;
@@ -118,9 +156,13 @@ function drawObject(ctx: CanvasRenderingContext2D, o: PitchObject, W: number, H:
       ctx.globalAlpha = 1;
       break;
     }
-    case 'mannequin':
-      ctx.fillStyle = o.color; ctx.beginPath(); ctx.arc(0, -8 * s, 4 * s, 0, Math.PI * 2); ctx.fill();
-      ctx.lineWidth = 3; ctx.strokeStyle = o.color; poly(ctx, [[0, -4 * s], [0, 10 * s]]); ctx.stroke(); poly(ctx, [[-6 * s, 2 * s], [6 * s, 2 * s]]); ctx.stroke(); break;
+    case 'mannequin': {
+      // Free-kick mannequin: ground shadow, torso silhouette, head.
+      ctx.beginPath(); ctx.ellipse(0, 10.8 * s, 6 * s, 1.9 * s, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(13,27,42,0.28)'; ctx.fill();
+      const body = scaledPath(MANNEQUIN_D, s);
+      ctx.fillStyle = o.color; ctx.fill(body); ctx.lineWidth = 1; ctx.strokeStyle = stroke; ctx.stroke(body);
+      ctx.beginPath(); ctx.arc(0, -8.4 * s, 3.4 * s, 0, Math.PI * 2); ctx.fillStyle = o.color; ctx.fill(); ctx.stroke(); break;
+    }
     case 'ladder':
       ctx.lineWidth = 2; ctx.strokeStyle = o.color || '#fbbf24'; ctx.strokeRect(-7 * s, -13 * s, 14 * s, 26 * s);
       [-6.5, 0, 6.5].forEach(dy => { poly(ctx, [[-7 * s, dy * s], [7 * s, dy * s]]); ctx.lineWidth = 1.5; ctx.stroke(); }); break;
@@ -128,8 +170,16 @@ function drawObject(ctx: CanvasRenderingContext2D, o: PitchObject, W: number, H:
       ctx.lineWidth = 2.5; ctx.strokeStyle = o.color; poly(ctx, [[-10 * s, 6 * s], [-10 * s, -6 * s], [10 * s, -6 * s], [10 * s, 6 * s]]); ctx.stroke(); break;
     case 'ring':
       ctx.beginPath(); ctx.arc(0, 0, 11 * s, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.strokeStyle = o.color; ctx.stroke(); break;
-    case 'rebounder':
-      ctx.lineWidth = 2; ctx.strokeStyle = o.color; ctx.strokeRect(-11 * s, -8 * s, 22 * s, 16 * s); poly(ctx, [[-11 * s, -8 * s], [11 * s, 8 * s]]); ctx.lineWidth = 1; ctx.stroke(); break;
+    case 'rebounder': {
+      // Angled rebound net: taut mesh inside an angled trapezoid frame, on two legs.
+      const frame = scaledPath(REBOUNDER_D, s);
+      ctx.save(); ctx.clip(frame); ctx.strokeStyle = o.color; ctx.globalAlpha = 0.4; ctx.lineWidth = 0.7;
+      for (let i = -4; i <= 4; i++) { ctx.beginPath(); ctx.moveTo(i * 2.4 * s, -8 * s); ctx.lineTo(i * 3 * s, 9 * s); ctx.stroke(); }
+      for (let j = -6; j <= 8; j += 3) { ctx.beginPath(); ctx.moveTo(-12 * s, j * s); ctx.lineTo(12 * s, j * s); ctx.stroke(); }
+      ctx.restore(); ctx.globalAlpha = 1;
+      ctx.lineWidth = 2; ctx.strokeStyle = o.color; ctx.stroke(frame);
+      ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-8.5 * s, 8 * s); ctx.lineTo(-10.5 * s, 11.5 * s); ctx.moveTo(8.5 * s, 8 * s); ctx.lineTo(10.5 * s, 11.5 * s); ctx.stroke(); break;
+    }
     case 'text':
       ctx.fillStyle = o.color; ctx.font = `bold ${Math.round(16 * s)}px Inter, sans-serif`; ctx.fillText(o.label || 'Text', 0, 1); break;
   }

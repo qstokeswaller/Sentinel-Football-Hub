@@ -15,7 +15,14 @@ export function useCalendar() {
   return useQuery<CalendarItems>({
     queryKey: ['calendar', effectiveClubId, userId, isAdmin, coachSquadIds],
     queryFn: () => fetchCalendarItems(effectiveClubId, { userId, isAdmin, coachSquadIds }),
-    enabled: !!effectiveClubId && scopeReady,
+    // Wait for the profile to load before firing. Toggling the dev view re-keys the profile
+    // query, so for a moment `profile` is undefined (userId null); without this gate the
+    // calendar fires once with the half-loaded scope, then AGAIN once the profile lands —
+    // two sequential fetches that double the skeleton time. Gate on userId → one clean fetch.
+    enabled: !!effectiveClubId && scopeReady && !!userId,
     staleTime: 2 * 60_000,
+    // A club switch can momentarily 401/RLS-fail; the default 3× exponential backoff would
+    // hold the skeleton ~7s. One quick retry surfaces data (or the empty state) fast.
+    retry: 1,
   });
 }

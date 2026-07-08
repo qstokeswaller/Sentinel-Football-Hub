@@ -24,6 +24,7 @@ import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Input';
 import { PillTabs } from '../components/ui/PillTabs';
+import { PageToolbar } from '../components/ui/PageToolbar';
 
 /**
  * Reports Hub — Session / Match / Team / Player. A single card/list view toggle
@@ -54,15 +55,14 @@ export const ReportsPage: React.FC = () => {
   const [view, setView] = useState<View>('list');
   return (
     <div>
-      <header className="mb-5">
-        <h1 data-tour="reports-main" className="text-2xl font-bold text-slate-900 dark:text-white">Reports Hub</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Centralized repository for feedback, reports, and performance history.</p>
-      </header>
-
-      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-        <PillTabs value={tab} onChange={id => setTab(id as Tab)} tabs={TABS.map(t => ({ id: t.id, label: t.label, icon: <i className={`fas ${t.icon}`} /> }))} />
+      <PageToolbar
+        title="Reports Hub"
+        description="Centralized repository for feedback, reports, and performance history."
+        dataTour="reports-main"
+        left={<PillTabs value={tab} onChange={id => setTab(id as Tab)} tabs={TABS.map(t => ({ id: t.id, label: t.label, icon: <i className={`fas ${t.icon}`} /> }))} />}
+      >
         <ViewToggle view={view} setView={setView} />
-      </div>
+      </PageToolbar>
 
       {tab === 'sessions' && <SessionReports view={view} />}
       {tab === 'matches' && <MatchReports view={view} />}

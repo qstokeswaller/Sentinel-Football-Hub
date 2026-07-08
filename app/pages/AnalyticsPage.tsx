@@ -7,6 +7,7 @@ import { Select, Input } from '../components/ui/Input';
 import { DatePicker } from '../components/ui/DatePicker';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { PillTabs } from '../components/ui/PillTabs';
+import { PageToolbar } from '../components/ui/PageToolbar';
 import { StatsRowSkeleton, TableSkeleton } from '../components/ui/Skeleton';
 import { useMatches } from '../hooks/useMatches';
 import { useSquads, usePlayers } from '../hooks/useSquads';
@@ -137,41 +138,35 @@ const AnalyticsInner: React.FC = () => {
   return (
     <div>
       <style>{PRINT_CSS}</style>
-      <header className="no-print flex items-start justify-between mb-5 gap-3 flex-wrap">
-        <div>
-          <h1 data-tour="analytics-main" className="text-2xl font-bold text-slate-900 dark:text-white">Analytics</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Team &amp; player performance — from match reports, assessments and the training register.</p>
-        </div>
-        <div className="flex items-end gap-2 flex-wrap">
-          {!noTeams && (tab === 'team' ? (<>
-            {ageGroups.length > 0 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Age group</span><Select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-36"><option value="all">All age groups</option>{ageGroups.map(a => <option key={a} value={a}>{a}</option>)}</Select></label>}
-            {visibleSquads.length > 1 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Team</span><Select value={teamFilter} onChange={e => setTeamFilter(e.target.value)} className="w-40"><option value="all">All teams</option>{visibleSquads.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></label>}
-          </>) : (<>
-            {visibleSquads.length > 1 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Squad</span><Select value={squadFilter} onChange={e => setSquadFilter(e.target.value)} className="w-40"><option value="all">{coachSquadIds ? 'All my squads' : 'All squads'}</option>{visibleSquads.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></label>}
-            <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Position</span><Select value={posFilter} onChange={e => setPosFilter(e.target.value)} className="w-36">{POS_FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></label>
-            {specificPositions.length > 0 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Role</span><Select value={posSpecific} onChange={e => setPosSpecific(e.target.value)} className="w-32"><option value="all">All roles</option>{specificPositions.map(p => <option key={p} value={p}>{p}</option>)}</Select></label>}
-          </>))}
-          {(seasons || []).length > 0 && (
-            <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Season</span>
-              <Select value={seasonId} onChange={e => setSeasonId(e.target.value)} className="w-44"><option value="all">All-time</option>{(seasons || []).map(s => <option key={s.id} value={s.id}>{s.name}{s.isCurrent ? ' (current)' : ''}</option>)}</Select>
-            </label>
-          )}
-          <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">From</span><DatePicker value={from} onChange={e => setFrom(e.target.value)} className="w-44" /></label>
-          <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">To</span><DatePicker value={to} onChange={e => setTo(e.target.value)} className="w-44" /></label>
-          {(from || to) && <button onClick={() => { setFrom(''); setTo(''); }} className="text-xs text-slate-400 hover:text-brand mb-2">Clear</button>}
-          <button onClick={shareView} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-[#0D1B2A] hover:bg-brand-dark transition-colors"><Share2 size={15} /> Share view</button>
-          {shared && <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:border-brand hover:text-brand transition-colors"><Printer size={15} /> Print / PDF</button>}
-        </div>
-      </header>
-
-      {!noTeams && (
-        <div className="no-print mb-5">
-          <PillTabs value={tab} onChange={id => setTab(id as 'team' | 'player')} tabs={[
-            { id: 'team', label: 'Team Analytics', icon: <Users size={15} /> },
-            { id: 'player', label: 'Player Analytics', icon: <User size={15} /> },
-          ]} />
-        </div>
-      )}
+      <PageToolbar
+        title="Analytics"
+        description="Team & player performance — from match reports, assessments and the training register."
+        dataTour="analytics-main"
+        className="no-print"
+        left={!noTeams ? <PillTabs value={tab} onChange={id => setTab(id as 'team' | 'player')} tabs={[
+          { id: 'team', label: 'Team Analytics', icon: <Users size={15} /> },
+          { id: 'player', label: 'Player Analytics', icon: <User size={15} /> },
+        ]} /> : undefined}
+      >
+        {!noTeams && (tab === 'team' ? (<>
+          {ageGroups.length > 0 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Age group</span><Select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-36"><option value="all">All age groups</option>{ageGroups.map(a => <option key={a} value={a}>{a}</option>)}</Select></label>}
+          {visibleSquads.length > 1 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Team</span><Select value={teamFilter} onChange={e => setTeamFilter(e.target.value)} className="w-40"><option value="all">All teams</option>{visibleSquads.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></label>}
+        </>) : (<>
+          {visibleSquads.length > 1 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Squad</span><Select value={squadFilter} onChange={e => setSquadFilter(e.target.value)} className="w-40"><option value="all">{coachSquadIds ? 'All my squads' : 'All squads'}</option>{visibleSquads.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select></label>}
+          <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Position</span><Select value={posFilter} onChange={e => setPosFilter(e.target.value)} className="w-36">{POS_FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></label>
+          {specificPositions.length > 0 && <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Role</span><Select value={posSpecific} onChange={e => setPosSpecific(e.target.value)} className="w-32"><option value="all">All roles</option>{specificPositions.map(p => <option key={p} value={p}>{p}</option>)}</Select></label>}
+        </>))}
+        {(seasons || []).length > 0 && (
+          <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">Season</span>
+            <Select value={seasonId} onChange={e => setSeasonId(e.target.value)} className="w-44"><option value="all">All-time</option>{(seasons || []).map(s => <option key={s.id} value={s.id}>{s.name}{s.isCurrent ? ' (current)' : ''}</option>)}</Select>
+          </label>
+        )}
+        <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">From</span><DatePicker value={from} onChange={e => setFrom(e.target.value)} className="w-40" /></label>
+        <label className="text-[11px] font-semibold text-slate-400"><span className="block mb-1">To</span><DatePicker value={to} onChange={e => setTo(e.target.value)} className="w-40" /></label>
+        {(from || to) && <button onClick={() => { setFrom(''); setTo(''); }} className="text-xs text-slate-400 hover:text-brand mb-2">Clear</button>}
+        <button onClick={shareView} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-[#0D1B2A] hover:bg-brand-dark transition-colors"><Share2 size={15} /> Share view</button>
+        {shared && <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:border-brand hover:text-brand transition-colors"><Printer size={15} /> Print / PDF</button>}
+      </PageToolbar>
 
       {chips.length > 0 && (
         <div className="no-print flex flex-wrap items-center gap-2 mb-4">

@@ -85,8 +85,8 @@ export const DatePicker: React.FC<{
   return (
     <div className={cn('relative', className || 'w-full')}>
       <button ref={triggerRef} type="button" disabled={disabled} onClick={openMenu} className={trig}>
-        <span className={cn('truncate', !sel && 'text-slate-400')}>{fmt(value, placeholder)}</span>
-        <CalendarIcon size={compact ? 13 : 15} className={cn('shrink-0 text-slate-400', open && 'text-brand')} />
+        <span className={cn('truncate', !sel && 'text-slate-500 dark:text-slate-300 font-medium')}>{fmt(value, placeholder)}</span>
+        <CalendarIcon size={compact ? 13 : 15} className={cn('shrink-0 text-slate-500 dark:text-slate-400', open && 'text-brand')} />
       </button>
       {open && rect && createPortal(
         <>

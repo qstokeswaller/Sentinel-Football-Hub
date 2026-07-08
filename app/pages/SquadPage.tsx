@@ -6,6 +6,7 @@ import { Select } from '../components/ui/Input';
 import { positionOrder } from '../services/attendanceService';
 import { SmartSearch } from '../components/ui/SmartSearch';
 import { PillTabs } from '../components/ui/PillTabs';
+import { PageToolbar } from '../components/ui/PageToolbar';
 import { GridSkeleton, TableSkeleton } from '../components/ui/Skeleton';
 import { fuzzyFilter } from '../lib/fuzzy';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
@@ -250,40 +251,49 @@ export const SquadPage: React.FC = () => {
         </>
       ) : (
       <>
-      <header className="flex items-center justify-between mb-5">
-        <div>
-          <h1 data-tour="squad-main" className="text-2xl font-bold text-slate-900 dark:text-white">{title}</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Manage your squads and players.</p>
-        </div>
-      </header>
-
-      {/* Tabs */}
-      <div className="mb-5">
-        <PillTabs value={tab} onChange={t => setTab(t as 'squads' | 'players')} tabs={[
+      <PageToolbar
+        title={title}
+        description="Manage your squads and players."
+        dataTour="squad-main"
+        left={<PillTabs value={tab} onChange={t => setTab(t as 'squads' | 'players')} tabs={[
           { id: 'squads', label: 'Squads', count: squads?.length ?? 0 },
           { id: 'players', label: 'All Players', count: players?.length ?? 0 },
-        ]} />
-      </div>
+        ]} />}
+      >
+        {tab === 'squads' ? (<>
+          <div className="relative w-52">
+            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
+            <input value={squadSearch} onChange={e => setSquadSearch(e.target.value)} placeholder="Search squads…"
+              className="w-full rounded-lg border border-slate-200 dark:border-sentinel-border bg-slate-50 dark:bg-sentinel-bg pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-brand" />
+          </div>
+          <Select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="w-36 shrink-0">
+            <option value="all">All age groups</option>
+            {ageGroups.map(a => <option key={a} value={a}>{a}</option>)}
+          </Select>
+          <Select value={leagueFilter} onChange={e => setLeagueFilter(e.target.value)} className="w-36 shrink-0">
+            <option value="all">All leagues</option>
+            {leagues.map(l => <option key={l} value={l}>{l}</option>)}
+          </Select>
+          {isAdmin && <Button variant="primary" onClick={openAddSquad}><Plus size={16} /> Add Squad</Button>}
+        </>) : (<>
+          <Select value={squadFilter} onChange={e => setSquadFilter(e.target.value)} className="w-44 shrink-0">
+            <option value="all">All squads</option>
+            {(squads || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </Select>
+          <div className="flex w-56"><SmartSearch value={search} onChange={setSearch} corpus={searchCorpus} placeholder="Search players… (name, position)" /></div>
+          {canEdit && (<>
+            <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={importMutation.isPending}>
+              <Upload size={15} /> {importMutation.isPending ? 'Importing…' : 'Import CSV'}
+            </Button>
+            <Button variant="primary" onClick={openAdd}><Plus size={16} /> Add Player</Button>
+            <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onCsvFile} />
+          </>)}
+        </>)}
+      </PageToolbar>
 
       {/* Squads tab */}
       {tab === 'squads' && (
         <>
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <div className="relative flex-1 min-w-[180px] max-w-sm">
-              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs" />
-              <input value={squadSearch} onChange={e => setSquadSearch(e.target.value)} placeholder="Search squads…"
-                className="w-full rounded-lg border border-slate-200 dark:border-sentinel-border bg-slate-50 dark:bg-sentinel-bg pl-9 pr-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-brand" />
-            </div>
-            <Select value={ageFilter} onChange={e => setAgeFilter(e.target.value)} className="sm:w-40 shrink-0">
-              <option value="all">All age groups</option>
-              {ageGroups.map(a => <option key={a} value={a}>{a}</option>)}
-            </Select>
-            <Select value={leagueFilter} onChange={e => setLeagueFilter(e.target.value)} className="sm:w-40 shrink-0">
-              <option value="all">All leagues</option>
-              {leagues.map(l => <option key={l} value={l}>{l}</option>)}
-            </Select>
-            {isAdmin && <div className="ml-auto"><Button variant="primary" onClick={openAddSquad}><Plus size={16} /> Add Squad</Button></div>}
-          </div>
           {squadsLoading ? (
             <GridSkeleton count={4} cols="grid-cols-1 xl:grid-cols-2" />
           ) : !filteredSquads.length ? (
@@ -336,23 +346,6 @@ export const SquadPage: React.FC = () => {
       {/* All Players tab */}
       {tab === 'players' && (
         <>
-          <div className="flex flex-wrap gap-3 mb-4">
-            <Select value={squadFilter} onChange={e => setSquadFilter(e.target.value)} className="sm:w-52 shrink-0">
-              <option value="all">All squads</option>
-              {(squads || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </Select>
-            <SmartSearch value={search} onChange={setSearch} corpus={searchCorpus} placeholder="Search players… (name, position)" />
-            {canEdit && (
-              <div className="ml-auto flex items-center gap-2">
-                <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={importMutation.isPending}>
-                  <Upload size={15} /> {importMutation.isPending ? 'Importing…' : 'Import CSV'}
-                </Button>
-                <Button variant="primary" onClick={openAdd}><Plus size={16} /> Add Player</Button>
-                <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onCsvFile} />
-              </div>
-            )}
-          </div>
-
           {playersLoading ? (
             <TableSkeleton rows={8} cols={6} />
           ) : !visiblePlayers.length ? (

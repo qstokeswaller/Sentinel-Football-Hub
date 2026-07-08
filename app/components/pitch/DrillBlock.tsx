@@ -43,6 +43,7 @@ export const DrillBlock: React.FC<Props> = ({ drill, index, onChange, onRemove, 
   const [color, setColor] = useState('#e53935');
   const [size, setSize] = useState<ObjSize>('medium');
   const [fill, setFill] = useState(false);
+  const [playerStyle, setPlayerStyle] = useState<'dot' | 'jersey' | 'shaper'>('dot');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const history = useRef<DrillData[]>([]);
 
@@ -187,6 +188,7 @@ export const DrillBlock: React.FC<Props> = ({ drill, index, onChange, onRemove, 
             grid={drill.grid} onGrid={g => onChange({ ...drill, grid: g })}
             gridColor={drill.gridColor} onGridColor={c => onChange({ ...drill, gridColor: c })}
             onTool={setTool} onColor={applyColor} onSize={applySize} onFill={setFill}
+            playerStyle={playerStyle} onPlayerStyle={setPlayerStyle}
             fillShapes={drill.fillShapes} onFillShapes={v => { pushHistory(); onChange({ ...drill, fillShapes: v }); }}
             onUndo={undo} onClear={clear} onDeleteSelected={deleteSelected} canDelete={!!selectedId}
             flip={!!drill.flip} onFlip={() => { pushHistory(); const f = flipObjects(drill.objects, drill.drawings, effOrientation); onChange({ ...drill, flip: !drill.flip, objects: f.objects, drawings: f.drawings }); }}
@@ -194,7 +196,7 @@ export const DrillBlock: React.FC<Props> = ({ drill, index, onChange, onRemove, 
           />
         );
         const canvas = (
-          <PitchCanvas data={data} editable activeTool={tool} activeColor={color} size={size} fill={fill}
+          <PitchCanvas data={data} editable activeTool={tool} activeColor={color} size={size} fill={fill} playerStyle={playerStyle}
             selectedId={selectedId} onSelect={setSelectedId} onChange={(d) => setData(d)} maxHeight={canvasMaxHeight} touchScroll={phoneInline} />
         );
         const FAB = 'inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0D1B2A] text-white shadow-lg active:scale-95 transition-transform';

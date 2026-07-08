@@ -33,7 +33,7 @@ export type DrawTool = 'pencil' | 'line' | 'arrow' | 'biarrow' | 'dashed' | 'das
 export type ObjSize = 'small' | 'medium' | 'large';
 export type ActiveTool = ObjType | DrawTool | 'select' | 'eraser' | 'connect' | 'marquee' | null;
 
-export interface PitchObject { id: string; type: ObjType; x: number; y: number; color: string; size: ObjSize; label?: string; rot?: number; scale?: number; curve?: { x: number; y: number } }
+export interface PitchObject { id: string; type: ObjType; x: number; y: number; color: string; size: ObjSize; label?: string; rot?: number; scale?: number; curve?: { x: number; y: number }; /** player/gk render style: dot (default), jersey, or shaper (body+limbs) */ variant?: 'dot' | 'jersey' | 'shaper' }
 export interface PitchDrawing { id: string; tool: DrawTool; points: number[]; color: string; width: number; fill?: boolean; rot?: number }
 /** A connector is an edge ATTACHED to two objects by id — it follows them when they move,
  *  and a closed ring of them can be filled (see connectorGraph). */
@@ -62,6 +62,8 @@ interface Props {
   /** Phone inline preview: let the PAGE scroll vertically over the pitch (touch-action: pan-y)
    *  instead of trapping every touch — editing happens in fullscreen. */
   touchScroll?: boolean;
+  /** render newly-placed players as a dot (default), jersey, or shaper (body+limbs) */
+  playerStyle?: 'dot' | 'jersey' | 'shaper';
 }
 
 const SIZE_SCALE: Record<ObjSize, number> = { small: 0.78, medium: 1, large: 1.3 };
@@ -69,9 +71,21 @@ const SNAP = 10; // px alignment threshold for the magnetic auto-align (v7 SNAP_
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id' + Math.random().toString(36).slice(2));
 const SHAPE_TOOLS = ['rect', 'circle', 'tri', 'rondo2', 'rondo4', 'transfer'];
 const TWO_POINT = ['line', 'arrow', 'biarrow', 'dashed', 'dashed-line', 'rect', 'circle', 'tri', 'rondo2', 'rondo4', 'transfer'];
+// Straight one-segment tools that snap to horizontal/vertical (shapes are excluded).
+const STRAIGHT_LINE = ['line', 'arrow', 'biarrow', 'dashed', 'dashed-line'];
 const isDraw = (t: ActiveTool): t is DrawTool => ['pencil', 'line', 'arrow', 'biarrow', 'dashed', 'dashed-line', 'curved', 'rect', 'circle', 'tri', 'rondo2', 'rondo4', 'transfer'].includes(t as string);
 const isObj = (t: ActiveTool): t is ObjType => !!t && !isDraw(t) && t !== 'select' && t !== 'eraser' && t !== 'connect' && t !== 'marquee';
 const isLight = (hex: string) => { const c = hex.replace('#', ''); return (parseInt(c.substr(0, 2), 16) * 299 + parseInt(c.substr(2, 2), 16) * 587 + parseInt(c.substr(4, 2), 16) * 114) / 1000 > 150; };
+
+// Equipment silhouettes — MUST stay identical to drillRenderer.ts (CONE_D/MANNEQUIN_D/REBOUNDER_D)
+// so the interactive editor and the static thumbnail/share/PDF renders look the same.
+const CONE_D = 'M-8 8 Q-1 -12 0 -12 Q1 -12 8 8 Q0 10 -8 8 Z';
+const MANNEQUIN_D = 'M-4.6 -3 C-5.8 2 -4 4.5 -3.4 10.5 L3.4 10.5 C4 4.5 5.8 2 4.6 -3 C3.4 -6.6 -3.4 -6.6 -4.6 -3 Z';
+const REBOUNDER_D = 'M-11 8 L11 8 L7.5 -7 L-7.5 -7 Z';
+// Football shirt silhouette (collar → sleeves → body) — MUST match drillRenderer.ts JERSEY_D.
+const JERSEY_D = 'M-4 -8 C-2.5 -6.8 2.5 -6.8 4 -8 L7.5 -8.5 L11.5 -3.5 L7.5 0.5 L6 -1 L6 9 L-6 9 L-6 -1 L-7.5 0.5 L-11.5 -3.5 L-7.5 -8.5 Z';
+// 'shaper' body-with-limbs silhouette (torso+arms+legs; head is a separate circle) — MUST match drillRenderer.ts SHAPER_PTS.
+const SHAPER_PTS = [-2.4, -5.5, -5, -4.8, -9, -0.5, -10, 2.2, -3.6, -1, -4.6, 6, -5, 8.2, -4.4, 12.6, -1.4, 12.6, 0, 7.6, 1.4, 12.6, 4.4, 12.6, 5, 8.2, 4.6, 6, 3.6, -1, 10, 2.2, 9, -0.5, 5, -4.8, 2.4, -5.5];
 
 /** Build a Konva node for an object. Hit region = the visible shape only (labels off). */
 function buildObjectNode(o: PitchObject, W: number, H: number, editable: boolean): Konva.Group {
@@ -81,31 +95,50 @@ function buildObjectNode(o: PitchObject, W: number, H: number, editable: boolean
   const txt = (text: string, fill: string, r: number) => new Konva.Text({ text, fontSize: r * 1.05, fontStyle: 'bold', fill, width: r * 2.6, height: r * 2.6, offsetX: r * 1.3, offsetY: r * 1.3, align: 'center', verticalAlign: 'middle', listening: false });
 
   switch (o.type) {
-    case 'player': {
-      const r = 13 * s;
-      g.add(new Konva.Circle({ radius: r, fill: o.color, stroke, strokeWidth: 2 }));
-      if (o.label) g.add(txt(o.label, isLight(o.color) ? '#0D1B2A' : '#fff', r));
-      break;
-    }
-    case 'gk': {
-      const r = 13 * s;
-      g.add(new Konva.Circle({ radius: r, fill: o.color, stroke, strokeWidth: 2 }));
-      g.add(txt('GK', isLight(o.color) ? '#0D1B2A' : '#fff', r));
+    case 'player': case 'gk': {
+      const lbl = o.type === 'gk' ? 'GK' : (o.label || '');
+      const fg = isLight(o.color) ? '#0D1B2A' : '#fff';
+      if (o.variant === 'jersey') {
+        const js = s * 1.15;
+        g.add(new Konva.Path({ data: JERSEY_D, scaleX: js, scaleY: js, fill: o.color, stroke, strokeWidth: 1.4, strokeScaleEnabled: false, lineJoin: 'round' }));
+        if (lbl) { const t = txt(lbl, fg, 10 * s); t.y(2.6 * s); g.add(t); }
+      } else if (o.variant === 'shaper') {
+        g.add(new Konva.Line({ points: SHAPER_PTS.map(v => v * s), closed: true, fill: o.color, stroke, strokeWidth: 1.4, lineJoin: 'round' }));
+        g.add(new Konva.Circle({ y: -8.6 * s, radius: 4 * s, fill: o.color, stroke, strokeWidth: 1.4 }));
+        if (lbl) { const t = txt(lbl, fg, 8.5 * s); t.y(2.6 * s); g.add(t); }
+      } else {
+        const r = 13 * s;
+        g.add(new Konva.Circle({ radius: r, fill: o.color, stroke, strokeWidth: 2 }));
+        if (lbl) g.add(txt(lbl, fg, r));
+      }
       break;
     }
     case 'ball': {
-      // A real soccer ball: WHITE body + central black pentagon + seams radiating to the rim.
-      const r = 9 * s, navy = '#0D1B2A', pr = r * 0.44;
-      g.add(new Konva.Circle({ radius: r, fill: '#ffffff', stroke: navy, strokeWidth: 1.4 }));
-      const pent: number[] = [];
-      for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; pent.push(Math.cos(a) * pr, Math.sin(a) * pr); }
-      g.add(new Konva.Line({ points: pent, closed: true, fill: navy, listening: false }));
-      for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; g.add(new Konva.Line({ points: [Math.cos(a) * pr, Math.sin(a) * pr, Math.cos(a) * r, Math.sin(a) * r], stroke: navy, strokeWidth: 1, listening: false })); }
+      // Shaded white sphere + central black pentagon + 5 seams to outer patches.
+      const r = 9 * s, navy = '#0D1B2A';
+      g.add(new Konva.Circle({
+        radius: r, stroke: navy, strokeWidth: 1.1,
+        fillRadialGradientStartPoint: { x: -r * 0.34, y: -r * 0.38 }, fillRadialGradientStartRadius: r * 0.1,
+        fillRadialGradientEndPoint: { x: 0, y: 0 }, fillRadialGradientEndRadius: r,
+        fillRadialGradientColorStops: [0, '#ffffff', 0.7, '#eef1f4', 1, '#c4ccd4'],
+      }));
+      const pent = (cx: number, cy: number, rad: number, rot: number) => { const pts: number[] = []; for (let i = 0; i < 5; i++) { const a = rot + i * 2 * Math.PI / 5; pts.push(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad); } return pts; };
+      for (let i = 0; i < 5; i++) {
+        const a = -Math.PI / 2 + i * 2 * Math.PI / 5, ox = Math.cos(a) * r * 0.66, oy = Math.sin(a) * r * 0.66;
+        g.add(new Konva.Line({ points: [Math.cos(a) * r * 0.34, Math.sin(a) * r * 0.34, ox, oy], stroke: navy, strokeWidth: 0.9, listening: false }));
+        g.add(new Konva.Line({ points: pent(ox, oy, r * 0.2, a - Math.PI / 2), closed: true, fill: navy, listening: false }));
+      }
+      g.add(new Konva.Line({ points: pent(0, 0, r * 0.34, -Math.PI / 2), closed: true, fill: navy, listening: false }));
       break;
     }
-    case 'cone':
-      g.add(new Konva.RegularPolygon({ sides: 3, radius: 11 * s, fill: o.color || '#f97316', stroke: '#7c2d12', strokeWidth: 1.5 }));
+    case 'cone': {
+      // Traffic cone: dark base ellipse, rounded orange body, white reflective band.
+      const col = o.color || '#f97316', dk = '#9a3412';
+      g.add(new Konva.Ellipse({ y: 8.5 * s, radiusX: 10 * s, radiusY: 3 * s, fill: dk, listening: false }));
+      g.add(new Konva.Path({ data: CONE_D, scaleX: s, scaleY: s, fill: col, stroke: dk, strokeWidth: 1.2, strokeScaleEnabled: false, lineJoin: 'round' }));
+      g.add(new Konva.Line({ points: [-3.4 * s, -3 * s, 3.4 * s, -3 * s, 4.6 * s, 0.8 * s, -4.6 * s, 0.8 * s], closed: true, fill: 'rgba(255,255,255,0.9)', listening: false }));
       break;
+    }
     case 'flag':
       g.add(new Konva.Line({ points: [0, 12 * s, 0, -12 * s], stroke: '#475569', strokeWidth: 2 }));
       g.add(new Konva.Line({ points: [0, -12 * s, 11 * s, -8 * s, 0, -4 * s], closed: true, fill: o.color }));
@@ -132,11 +165,13 @@ function buildObjectNode(o: PitchObject, W: number, H: number, editable: boolean
       g.add(new Konva.Line({ points: [-hw, by, hw, by], stroke: col, strokeWidth: 1.2, opacity: 0.8, listening: false }));
       break;
     }
-    case 'mannequin':
-      g.add(new Konva.Circle({ y: -8 * s, radius: 4 * s, fill: o.color }));
-      g.add(new Konva.Line({ points: [0, -4 * s, 0, 10 * s], stroke: o.color, strokeWidth: 3, lineCap: 'round' }));
-      g.add(new Konva.Line({ points: [-6 * s, 2 * s, 6 * s, 2 * s], stroke: o.color, strokeWidth: 3, lineCap: 'round' }));
+    case 'mannequin': {
+      // Free-kick mannequin: ground shadow, torso silhouette, head.
+      g.add(new Konva.Ellipse({ y: 10.8 * s, radiusX: 6 * s, radiusY: 1.9 * s, fill: 'rgba(13,27,42,0.28)', listening: false }));
+      g.add(new Konva.Path({ data: MANNEQUIN_D, scaleX: s, scaleY: s, fill: o.color, stroke, strokeWidth: 1, strokeScaleEnabled: false, lineJoin: 'round' }));
+      g.add(new Konva.Circle({ y: -8.4 * s, radius: 3.4 * s, fill: o.color, stroke, strokeWidth: 1 }));
       break;
+    }
     case 'ladder':
       g.add(new Konva.Rect({ x: -7 * s, y: -13 * s, width: 14 * s, height: 26 * s, stroke: o.color || '#fbbf24', strokeWidth: 2 }));
       [-6.5, 0, 6.5].forEach(dy => g.add(new Konva.Line({ points: [-7 * s, dy * s, 7 * s, dy * s], stroke: o.color || '#fbbf24', strokeWidth: 1.5, listening: false })));
@@ -147,10 +182,17 @@ function buildObjectNode(o: PitchObject, W: number, H: number, editable: boolean
     case 'ring':
       g.add(new Konva.Circle({ radius: 11 * s, stroke: o.color, strokeWidth: 3 }));
       break;
-    case 'rebounder':
-      g.add(new Konva.Rect({ x: -11 * s, y: -8 * s, width: 22 * s, height: 16 * s, stroke: o.color, strokeWidth: 2, cornerRadius: 2 }));
-      g.add(new Konva.Line({ points: [-11 * s, -8 * s, 11 * s, 8 * s], stroke: o.color, strokeWidth: 1, listening: false }));
+    case 'rebounder': {
+      // Angled rebound net: taut mesh inside an angled trapezoid frame, on two legs.
+      const mesh = new Konva.Group({ listening: false, clipFunc: (c: any) => { c.moveTo(-11 * s, 8 * s); c.lineTo(11 * s, 8 * s); c.lineTo(7.5 * s, -7 * s); c.lineTo(-7.5 * s, -7 * s); c.closePath(); } });
+      for (let i = -4; i <= 4; i++) mesh.add(new Konva.Line({ points: [i * 2.4 * s, -8 * s, i * 3 * s, 9 * s], stroke: o.color, strokeWidth: 0.7, opacity: 0.4 }));
+      for (let j = -6; j <= 8; j += 3) mesh.add(new Konva.Line({ points: [-12 * s, j * s, 12 * s, j * s], stroke: o.color, strokeWidth: 0.7, opacity: 0.4 }));
+      g.add(mesh);
+      g.add(new Konva.Path({ data: REBOUNDER_D, scaleX: s, scaleY: s, stroke: o.color, strokeWidth: 2, strokeScaleEnabled: false, lineJoin: 'round' }));
+      g.add(new Konva.Line({ points: [-8.5 * s, 8 * s, -10.5 * s, 11.5 * s], stroke: o.color, strokeWidth: 1.6, lineCap: 'round', listening: false }));
+      g.add(new Konva.Line({ points: [8.5 * s, 8 * s, 10.5 * s, 11.5 * s], stroke: o.color, strokeWidth: 1.6, lineCap: 'round', listening: false }));
       break;
+    }
     case 'text': {
       const t = new Konva.Text({ text: o.label || 'Text', fontSize: 16 * s, fontStyle: 'bold', fill: o.color, align: 'center' });
       t.offsetX(t.width() / 2); t.offsetY(t.height() / 2);
@@ -227,7 +269,7 @@ export function flipObjects(objects: PitchObject[], drawings: PitchDrawing[], or
   return { objects: fo, drawings: fd };
 }
 
-export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeTool = null, activeColor = '#e53935', size = 'medium', fill = false, onChange, selectedId = null, onSelect, ghostObjects, maxHeight, motion, touchScroll = false }) => {
+export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeTool = null, activeColor = '#e53935', size = 'medium', fill = false, onChange, selectedId = null, onSelect, ghostObjects, maxHeight, motion, touchScroll = false, playerStyle = 'dot' }) => {
   const outerRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage | null>(null);
@@ -255,8 +297,8 @@ export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeToo
   // Inline text editor over the stage: { x,y in stage px, current value, id (edit) or null (new) }.
   const [textEdit, setTextEdit] = useState<{ x: number; y: number; value: string; id: string | null } | null>(null);
   // latest props for stable event handlers
-  const st = useRef({ data, editable, activeTool, activeColor, size, fill, onChange, selectedId, onSelect, ghostObjects, motion, multiSel, touchScroll });
-  st.current = { data, editable, activeTool, activeColor, size, fill, onChange, selectedId, onSelect, ghostObjects, motion, multiSel, touchScroll };
+  const st = useRef({ data, editable, activeTool, activeColor, size, fill, onChange, selectedId, onSelect, ghostObjects, motion, multiSel, touchScroll, playerStyle });
+  st.current = { data, editable, activeTool, activeColor, size, fill, onChange, selectedId, onSelect, ghostObjects, motion, multiSel, touchScroll, playerStyle };
 
   const aspect = pitchAspect(data.pitchType, data.orientation); // W/H — per pitch type (v7 proportions)
 
@@ -627,7 +669,8 @@ export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeToo
         if (!onEmpty) return; // tapping an existing object → let it drag/select
         const playerN = st.current.data.objects.filter(o => o.type === 'player').length + 1;
         // Every tool takes the currently-selected colour when placed.
-        const o: PitchObject = { id: uid(), type: tool, x: pos.x / W, y: pos.y / H, color: st.current.activeColor, size: st.current.size, label: tool === 'player' ? String(playerN) : tool === 'number' ? String(st.current.data.objects.filter(x => x.type === 'number').length + 1) : undefined };
+        const isPlayerTok = tool === 'player' || tool === 'gk';
+        const o: PitchObject = { id: uid(), type: tool, x: pos.x / W, y: pos.y / H, color: st.current.activeColor, size: st.current.size, label: tool === 'player' ? String(playerN) : tool === 'number' ? String(st.current.data.objects.filter(x => x.type === 'number').length + 1) : undefined, variant: isPlayerTok ? st.current.playerStyle : undefined };
         commit({ objects: [...st.current.data.objects, o] });
       } else if (isDraw(tool)) {
         drawingRef.current = { pts: [pos.x / W, pos.y / H] };
@@ -651,6 +694,13 @@ export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeToo
       const { W, H } = dimsRef.current; const tool = st.current.activeTool as DrawTool;
       const nx = pos.x / W, ny = pos.y / H;
       if (tool === 'pencil' || tool === 'curved') dr.pts.push(nx, ny);
+      else if (STRAIGHT_LINE.includes(tool)) {
+        // Straight lines/arrows snap to true horizontal/vertical when within ~8° — a guide-line
+        // helper so coaches can lay clean lines without a steady hand. Shapes are left free.
+        const x0 = dr.pts[0], y0 = dr.pts[1];
+        const angle = Math.atan2(Math.abs((ny - y0) * H), Math.abs((nx - x0) * W)) * 180 / Math.PI;
+        dr.pts = angle <= 8 ? [x0, y0, nx, y0] : angle >= 82 ? [x0, y0, x0, ny] : [x0, y0, nx, ny];
+      }
       else { dr.pts = [dr.pts[0], dr.pts[1], nx, ny]; }
       // live preview
       const layer = guideRef.current!; layer.destroyChildren();

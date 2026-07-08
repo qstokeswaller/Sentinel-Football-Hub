@@ -47,6 +47,7 @@ export const TacticalBoard: React.FC<Props> = ({ value, onChange, ourFormation, 
   const [color, setColor] = useState('#e53935');
   const [size, setSize] = useState<ObjSize>('medium');
   const [fill, setFill] = useState(false);
+  const [playerStyle, setPlayerStyle] = useState<'dot' | 'jersey' | 'shaper'>('dot');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const history = useRef<DrillData[]>([]);
 
@@ -93,6 +94,7 @@ export const TacticalBoard: React.FC<Props> = ({ value, onChange, ourFormation, 
       grid={data.grid} onGrid={g => setData({ ...data, grid: g }, false)}
       gridColor={data.gridColor} onGridColor={c => setData({ ...data, gridColor: c }, false)}
       onTool={setTool} onColor={applyColor} onSize={applySize} onFill={setFill}
+      playerStyle={playerStyle} onPlayerStyle={setPlayerStyle}
       fillShapes={data.fillShapes} onFillShapes={v => setData({ ...data, fillShapes: v })}
       onUndo={undo} onClear={clear} onDeleteSelected={deleteSelected} canDelete={!!selectedId}
       flip={!!data.flip} onFlip={() => { const f = flipObjects(data.objects, data.drawings, effOrientation); setData({ ...data, flip: !data.flip, objects: f.objects, drawings: f.drawings }); }}
@@ -100,7 +102,7 @@ export const TacticalBoard: React.FC<Props> = ({ value, onChange, ourFormation, 
     />
   );
   const canvas = (
-    <PitchCanvas data={{ ...data, orientation: effOrientation }} editable activeTool={tool} activeColor={color} size={size} fill={fill}
+    <PitchCanvas data={{ ...data, orientation: effOrientation }} editable activeTool={tool} activeColor={color} size={size} fill={fill} playerStyle={playerStyle}
       selectedId={selectedId} onSelect={setSelectedId} onChange={(d) => setData(d)} maxHeight={canvasMaxHeight} touchScroll={phoneInline} />
   );
   const FAB = 'inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0D1B2A] text-white shadow-lg active:scale-95 transition-transform';

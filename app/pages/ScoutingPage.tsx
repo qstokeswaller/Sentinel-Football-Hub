@@ -2,7 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2, Binoculars, FileText, Film, UserPlus } from 'lucide-react';
 import { Select } from '../components/ui/Input';
+import { positionOrder } from '../services/attendanceService';
 import { SmartSearch } from '../components/ui/SmartSearch';
+import { PageToolbar } from '../components/ui/PageToolbar';
 import { GridSkeleton } from '../components/ui/Skeleton';
 import { fuzzyFilter } from '../lib/fuzzy';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
@@ -25,6 +27,10 @@ import { Button } from '../components/ui/Button';
  * promote-to-squad are follow-on increments.
  */
 const initials = (n: string) => (n || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+// Position-group filter — classify a scouted player's position (CB, CAM, ST…) into GK/DEF/MID/FWD
+// via the shared positionOrder mapping (0=GK,1=DEF,2=MID,3=FWD), the same buckets used across the app.
+const POS_GROUP_FILTERS: [string, string][] = [['all', 'All positions'], ['GK', 'Goalkeepers'], ['DEF', 'Defenders'], ['MID', 'Midfielders'], ['FWD', 'Forwards']];
+const posGroupKey = (pos?: string | null) => { const o = positionOrder(pos || undefined); return o === 0 ? 'GK' : o === 1 ? 'DEF' : o === 2 ? 'MID' : o === 3 ? 'FWD' : 'OTHER'; };
 
 export const ScoutingPage: React.FC = () => {
   const { canAccessScouting } = usePermissions();
@@ -36,6 +42,7 @@ export const ScoutingPage: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [verdictFilter, setVerdictFilter] = useState('all');
+  const [posFilter, setPosFilter] = useState('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [editPlayer, setEditPlayer] = useState<ScoutedPlayer | null>(null);
   const [confirmDel, setConfirmDel] = useState<ScoutedPlayer | null>(null);
@@ -60,9 +67,10 @@ export const ScoutingPage: React.FC = () => {
     let list = players || [];
     if (verdictFilter === 'unevaluated') list = list.filter(p => !p._latestVerdict);
     else if (verdictFilter !== 'all') list = list.filter(p => p._latestVerdict === verdictFilter);
+    if (posFilter !== 'all') list = list.filter(p => posGroupKey(p.position) === posFilter);
     // Typo-tolerant fuzzy search across name/position/club/nationality/agent.
     return fuzzyFilter(search, list, p => [p.name, p.position, p.current_club, p.nationality, p.agent_name]);
-  }, [players, verdictFilter, search]);
+  }, [players, verdictFilter, posFilter, search]);
 
   // Autocomplete corpus — scouted player names + distinct positions.
   const searchCorpus = useMemo(() => {
@@ -85,24 +93,21 @@ export const ScoutingPage: React.FC = () => {
 
   return (
     <div>
-      <header className="flex items-center justify-between mb-5">
-        <div>
-          <h1 data-tour="scouting-main" className="text-2xl font-bold text-slate-900 dark:text-white">Scouting</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Your scouting pipeline.</p>
-        </div>
-        {canAccessScouting && (
-          <Button variant="primary" onClick={() => { setEditPlayer(null); setModalOpen(true); }}><Plus size={16} /> Add Player</Button>
-        )}
-      </header>
-
-      <div className="flex flex-wrap gap-3 mb-4">
-        <Select value={verdictFilter} onChange={e => setVerdictFilter(e.target.value)} className="sm:w-52 shrink-0">
+      {/* No tabs → PageToolbar keeps a slim title on the left; verdict + position filters, search and Add Player grouped right. */}
+      <PageToolbar title="Scouting" description="Your scouting pipeline." dataTour="scouting-main">
+        <Select value={verdictFilter} onChange={e => setVerdictFilter(e.target.value)} className="w-40 shrink-0">
           <option value="all">All verdicts</option>
           <option value="unevaluated">Unevaluated</option>
           {Object.entries(SCOUTING_VERDICTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </Select>
-        <SmartSearch value={search} onChange={setSearch} corpus={searchCorpus} placeholder="Search scouted players… (name, position)" />
-      </div>
+        <Select value={posFilter} onChange={e => setPosFilter(e.target.value)} className="w-40 shrink-0">
+          {POS_GROUP_FILTERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </Select>
+        <div className="flex w-56"><SmartSearch value={search} onChange={setSearch} corpus={searchCorpus} placeholder="Search scouted players…" /></div>
+        {canAccessScouting && (
+          <Button variant="primary" onClick={() => { setEditPlayer(null); setModalOpen(true); }}><Plus size={16} /> Add Player</Button>
+        )}
+      </PageToolbar>
 
       {isLoading ? (
         <GridSkeleton count={6} cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" />

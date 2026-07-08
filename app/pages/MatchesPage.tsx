@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Select, Input } from '../components/ui/Input';
 import { DatePicker } from '../components/ui/DatePicker';
 import { PillTabs } from '../components/ui/PillTabs';
+import { PageToolbar } from '../components/ui/PageToolbar';
 import { ListSkeleton } from '../components/ui/Skeleton';
 import { useToast } from '../context/ToastContext';
 import { useAppState } from '../context/AppStateContext';
@@ -93,23 +94,29 @@ export const MatchesPage: React.FC = () => {
 
   return (
     <div>
-      <header className="flex items-center justify-between mb-5">
-        <div>
-          <h1 data-tour="matches-main" className="text-2xl font-bold text-slate-900 dark:text-white">Matches</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Fixtures and results.</p>
-        </div>
-        {canEdit && (tab === 'planning'
-          ? <Button variant="primary" onClick={() => navigate('/match-plan')}><Plus size={16} /> New Plan</Button>
-          : <Button variant="primary" onClick={openAdd}><Plus size={16} /> Add Match</Button>)}
-      </header>
-
-      <div className="mb-5">
-        <PillTabs value={tab} onChange={t => setTab(t as typeof tab)} tabs={[
+      <PageToolbar
+        title="Matches"
+        description="Fixtures and results."
+        dataTour="matches-main"
+        left={<PillTabs value={tab} onChange={t => setTab(t as typeof tab)} tabs={[
           { id: 'fixtures', label: 'Fixtures', count: fixtures.length },
           { id: 'results', label: 'Results', count: results.length },
           { id: 'planning', label: 'Match Planning', count: plans?.length ?? 0 },
-        ]} />
-      </div>
+        ]} />}
+      >
+        {tab === 'planning' ? (
+          canEdit && <Button variant="primary" onClick={() => navigate('/match-plan')}><Plus size={16} /> New Plan</Button>
+        ) : (
+          <>
+            <Select value={teamFilter} onChange={e => setTeamFilter(e.target.value)} className="w-40"><option value="all">All Teams</option>{(squads || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
+            <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"><span>From</span><DatePicker value={fromDate} onChange={e => setFromDate(e.target.value)} className="w-36" /></label>
+            <label className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"><span>To</span><DatePicker value={toDate} onChange={e => setToDate(e.target.value)} className="w-36" /></label>
+            {hasFilter && <button onClick={() => { setTeamFilter('all'); setFromDate(''); setToDate(''); }} className="text-xs text-slate-400 hover:text-brand">Clear</button>}
+            <Button variant="secondary" onClick={shareFixtures}><Share2 size={15} /> Share {tab === 'results' ? 'Results' : 'Fixtures'}</Button>
+            {canEdit && <Button variant="primary" onClick={openAdd}><Plus size={16} /> Add Match</Button>}
+          </>
+        )}
+      </PageToolbar>
 
       {tab === 'planning' ? (
         !plans?.length ? (
@@ -136,14 +143,6 @@ export const MatchesPage: React.FC = () => {
         )
       ) : (
         <>
-          {/* Filter + share — by team and date range (e.g. a weekend, a tournament). */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Select value={teamFilter} onChange={e => setTeamFilter(e.target.value)} className="w-44"><option value="all">All Teams</option>{(squads || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</Select>
-            <label className="inline-flex items-center gap-1.5 text-xs text-slate-500"><span>From</span><DatePicker value={fromDate} onChange={e => setFromDate(e.target.value)} className="w-44" /></label>
-            <label className="inline-flex items-center gap-1.5 text-xs text-slate-500"><span>To</span><DatePicker value={toDate} onChange={e => setToDate(e.target.value)} className="w-44" /></label>
-            {hasFilter && <button onClick={() => { setTeamFilter('all'); setFromDate(''); setToDate(''); }} className="text-xs text-slate-400 hover:text-brand">Clear</button>}
-            <div className="ml-auto"><Button variant="secondary" onClick={shareFixtures}><Share2 size={15} /> Share {tab === 'results' ? 'Results' : 'Fixtures'}</Button></div>
-          </div>
           {isLoading ? (
             <ListSkeleton rows={6} />
           ) : !filteredList.length ? (

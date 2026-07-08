@@ -2,7 +2,7 @@ import React from 'react';
 import {
   MousePointer2, Trash2, Undo2, RotateCcw, Circle, Triangle, Flag, Hash,
   Pencil, ArrowRight, ArrowLeftRight, Spline, Minus,
-  Square, Type, PaintBucket, Eraser, FlipVertical2, X, MoveHorizontal, MoveVertical, Waypoints, BoxSelect,
+  Square, Type, PaintBucket, Eraser, FlipVertical2, X, MoveHorizontal, MoveVertical, Waypoints, BoxSelect, PersonStanding,
 } from 'lucide-react';
 import { Select } from '../ui/Input';
 import { cn } from '../../lib/utils';
@@ -39,10 +39,8 @@ const Rondo2Icon = () => (<svg {...svgBase}><rect x="3" y="6" width="18" height=
 const Rondo4Icon = () => (<svg {...svgBase}><rect x="3" y="6" width="18" height="12" rx="1" /><path d="M12 6v12M3 12h18" /></svg>);
 const TransferIcon = () => (<svg {...svgBase}><rect x="3" y="7" width="18" height="10" rx="1" /><path d="M10 7v10M14 7v10" /></svg>);
 
-const PLAYERS: { id: ObjType; label: string; icon: React.ReactNode }[] = [
-  { id: 'player', label: 'Player', icon: <Circle size={12} fill="currentColor" /> },
-  { id: 'gk', label: 'Goalkeeper', icon: <span className="text-[11px] font-bold">GK</span> },
-];
+// Jersey — a football shirt silhouette (the 'jersey' player-render style).
+const JerseyIcon = () => (<svg {...svgBase}><path d="M9 4c1 1 5 1 6 0l3 1.5L20.5 9l-2.7 1.8L16 9.6V20H8V9.6l-1.8 1.2L3.5 9 6 5.5z" strokeWidth={1.8} /></svg>);
 const EQUIPMENT: { id: ObjType; label: string; icon: React.ReactNode }[] = [
   { id: 'cone', label: 'Cone', icon: <ConeIcon /> },
   { id: 'ball', label: 'Ball', icon: <BallIcon /> },
@@ -83,6 +81,8 @@ interface Props {
   onPitch: (t: PitchType) => void; onOrientation: (o: PitchOrientation) => void;
   grid?: GridType; onGrid?: (g: GridType) => void; gridColor?: string; onGridColor?: (c: string) => void;
   onTool: (t: ActiveTool) => void; onColor: (c: string) => void; onSize: (s: ObjSize) => void; onFill: (v: boolean) => void;
+  /** player render style — dot (default), jersey, or shaper; the Players group shows the extra toggles when set */
+  playerStyle?: 'dot' | 'jersey' | 'shaper'; onPlayerStyle?: (s: 'dot' | 'jersey' | 'shaper') => void;
   /** Connectors — attach lines between objects; fillShapes fills any closed ring of them. */
   fillShapes?: boolean; onFillShapes?: (v: boolean) => void;
   onUndo: () => void; onClear: () => void; onDeleteSelected: () => void; canDelete: boolean;
@@ -177,7 +177,10 @@ export const DrillToolbar: React.FC<Props> = (p) => {
     {/* Tool groups (Select moved into the action row; object size is the S·M·L above) */}
     <div className="flex flex-wrap gap-x-3 gap-y-1.5">
       <Group heading="Players">
-        {PLAYERS.map(t => <ToolBtn key={t.id} on={p.activeTool === t.id} label={t.label} onClick={() => p.onTool(t.id)}>{t.icon}</ToolBtn>)}
+        <ToolBtn on={p.activeTool === 'player' && (p.playerStyle || 'dot') === 'dot'} label="Player (dot)" onClick={() => { p.onPlayerStyle?.('dot'); p.onTool('player'); }}><Circle size={12} fill="currentColor" /></ToolBtn>
+        {p.onPlayerStyle && <ToolBtn on={p.activeTool === 'player' && p.playerStyle === 'jersey'} label="Player (jersey)" onClick={() => { p.onPlayerStyle!('jersey'); p.onTool('player'); }}><JerseyIcon /></ToolBtn>}
+        {p.onPlayerStyle && <ToolBtn on={p.activeTool === 'player' && p.playerStyle === 'shaper'} label="Player (shaper — body shape)" onClick={() => { p.onPlayerStyle!('shaper'); p.onTool('player'); }}><PersonStanding size={16} /></ToolBtn>}
+        <ToolBtn on={p.activeTool === 'gk'} label="Goalkeeper" onClick={() => p.onTool('gk')}><span className="text-[11px] font-bold">GK</span></ToolBtn>
       </Group>
       <Group heading="Equipment">
         {EQUIPMENT.map(t => <ToolBtn key={t.id} on={p.activeTool === t.id} label={t.label} onClick={() => p.onTool(t.id)}>{t.icon}</ToolBtn>)}
@@ -307,7 +310,10 @@ const MobileToolSheet: React.FC<Props> = (p) => {
           <MBtn on={p.activeTool === 'select' || p.activeTool === null} label="Select / move" onClick={() => pick('select')}><MousePointer2 size={17} /></MBtn>
         </MGroup>
         <MGroup heading="Players">
-          {PLAYERS.map(t => <MBtn key={t.id} on={p.activeTool === t.id} label={t.label} onClick={() => pick(t.id)}>{t.icon}</MBtn>)}
+          <MBtn on={p.activeTool === 'player' && (p.playerStyle || 'dot') === 'dot'} label="Player (dot)" onClick={() => { p.onPlayerStyle?.('dot'); pick('player'); }}><Circle size={16} fill="currentColor" /></MBtn>
+          {p.onPlayerStyle && <MBtn on={p.activeTool === 'player' && p.playerStyle === 'jersey'} label="Player (jersey)" onClick={() => { p.onPlayerStyle!('jersey'); pick('player'); }}><JerseyIcon /></MBtn>}
+          {p.onPlayerStyle && <MBtn on={p.activeTool === 'player' && p.playerStyle === 'shaper'} label="Player (shaper — body shape)" onClick={() => { p.onPlayerStyle!('shaper'); pick('player'); }}><PersonStanding size={18} /></MBtn>}
+          <MBtn on={p.activeTool === 'gk'} label="Goalkeeper" onClick={() => pick('gk')}><span className="text-[15px] font-bold">GK</span></MBtn>
         </MGroup>
         <MGroup heading="Equipment">
           {EQUIPMENT.map(t => <MBtn key={t.id} on={p.activeTool === t.id} label={t.label} onClick={() => pick(t.id)}>{t.icon}</MBtn>)}
