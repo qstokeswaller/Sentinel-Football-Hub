@@ -33,7 +33,7 @@ export type DrawTool = 'pencil' | 'line' | 'arrow' | 'biarrow' | 'dashed' | 'das
 export type ObjSize = 'small' | 'medium' | 'large';
 export type ActiveTool = ObjType | DrawTool | 'select' | 'eraser' | 'connect' | 'marquee' | null;
 
-export interface PitchObject { id: string; type: ObjType; x: number; y: number; color: string; size: ObjSize; label?: string; rot?: number; scale?: number; curve?: { x: number; y: number }; /** player/gk render style: dot (default), jersey, or shaper (body+limbs) */ variant?: 'dot' | 'jersey' | 'shaper' }
+export interface PitchObject { id: string; type: ObjType; x: number; y: number; color: string; size: ObjSize; label?: string; rot?: number; scale?: number; curve?: { x: number; y: number }; /** player/gk render style: dot (default), jersey, or shaper (body+limbs) */ variant?: 'dot' | 'jersey' | 'shaper'; /** player photo URL — shown in the token centre (initials fallback) */ avatar?: string }
 export interface PitchDrawing { id: string; tool: DrawTool; points: number[]; color: string; width: number; fill?: boolean; rot?: number }
 /** A connector is an edge ATTACHED to two objects by id — it follows them when they move,
  *  and a closed ring of them can be filled (see connectorGraph). */
@@ -88,7 +88,7 @@ const JERSEY_D = 'M-4 -8 C-2.5 -6.8 2.5 -6.8 4 -8 L7.5 -8.5 L11.5 -3.5 L7.5 0.5 
 const SHAPER_PTS = [-2.4, -5.5, -5, -4.8, -9, -0.5, -10, 2.2, -3.6, -1, -4.6, 6, -5, 8.2, -4.4, 12.6, -1.4, 12.6, 0, 7.6, 1.4, 12.6, 4.4, 12.6, 5, 8.2, 4.6, 6, 3.6, -1, 10, 2.2, 9, -0.5, 5, -4.8, 2.4, -5.5];
 
 /** Build a Konva node for an object. Hit region = the visible shape only (labels off). */
-function buildObjectNode(o: PitchObject, W: number, H: number, editable: boolean): Konva.Group {
+function buildObjectNode(o: PitchObject, W: number, H: number, editable: boolean, getAvatar?: (url: string) => HTMLImageElement | null): Konva.Group {
   const g = new Konva.Group({ x: o.x * W, y: o.y * H, rotation: o.rot || 0, scaleX: o.scale || 1, scaleY: o.scale || 1, draggable: editable, id: o.id, name: 'obj' });
   const s = SIZE_SCALE[o.size] * 1;
   const stroke = isLight(o.color) ? '#0D1B2A' : '#ffffff';
@@ -98,18 +98,28 @@ function buildObjectNode(o: PitchObject, W: number, H: number, editable: boolean
     case 'player': case 'gk': {
       const lbl = o.type === 'gk' ? 'GK' : (o.label || '');
       const fg = isLight(o.color) ? '#0D1B2A' : '#fff';
+      const img = o.avatar && getAvatar ? getAvatar(o.avatar) : null;
+      // A round, clipped player photo centred on the token, with a ring. Initials show until it loads.
+      const photoBadge = (cx: number, cy: number, R: number, ringColor: string, ringW: number) => {
+        const cover = Math.max((2 * R) / img!.width, (2 * R) / img!.height);
+        const gr = new Konva.Group({ x: cx, y: cy, listening: false, clipFunc: (c: any) => { c.beginPath(); c.arc(0, 0, R, 0, Math.PI * 2); c.closePath(); } });
+        gr.add(new Konva.Image({ image: img!, width: img!.width * cover, height: img!.height * cover, offsetX: img!.width * cover / 2, offsetY: img!.height * cover / 2 }));
+        g.add(gr);
+        g.add(new Konva.Circle({ x: cx, y: cy, radius: R, stroke: ringColor, strokeWidth: ringW, listening: false }));
+      };
       if (o.variant === 'jersey') {
         const js = s * 1.15;
         g.add(new Konva.Path({ data: JERSEY_D, scaleX: js, scaleY: js, fill: o.color, stroke, strokeWidth: 1.4, strokeScaleEnabled: false, lineJoin: 'round' }));
-        if (lbl) { const t = txt(lbl, fg, 10 * s); t.y(2.6 * s); g.add(t); }
+        if (img) photoBadge(0, 1.5 * s, 6.5 * s, stroke, 1.4);
+        else if (lbl) { const t = txt(lbl, fg, 10 * s); t.y(2.6 * s); g.add(t); }
       } else if (o.variant === 'shaper') {
         g.add(new Konva.Line({ points: SHAPER_PTS.map(v => v * s), closed: true, fill: o.color, stroke, strokeWidth: 1.4, lineJoin: 'round' }));
-        g.add(new Konva.Circle({ y: -8.6 * s, radius: 4 * s, fill: o.color, stroke, strokeWidth: 1.4 }));
-        if (lbl) { const t = txt(lbl, fg, 8.5 * s); t.y(2.6 * s); g.add(t); }
+        if (img) photoBadge(0, -6.5 * s, 5.6 * s, stroke, 1.4);
+        else { g.add(new Konva.Circle({ y: -8.6 * s, radius: 4 * s, fill: o.color, stroke, strokeWidth: 1.4 })); if (lbl) { const t = txt(lbl, fg, 8.5 * s); t.y(2.6 * s); g.add(t); } }
       } else {
         const r = 13 * s;
-        g.add(new Konva.Circle({ radius: r, fill: o.color, stroke, strokeWidth: 2 }));
-        if (lbl) g.add(txt(lbl, fg, r));
+        if (img) photoBadge(0, 0, r, o.color, 2.5);
+        else { g.add(new Konva.Circle({ radius: r, fill: o.color, stroke, strokeWidth: 2 })); if (lbl) g.add(txt(lbl, fg, r)); }
       }
       break;
     }
@@ -453,13 +463,29 @@ export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeToo
     commit({ connectors: [...cons, { id: uid(), from: fromId, to: toId, color: st.current.activeColor, width: drawWidth(st.current.size) }] });
   };
 
+  // Player-photo avatars — loaded lazily and cached; when one finishes it re-renders the
+  // objects layer so the photo pops in (initials show meanwhile). Returns the image only
+  // once it's actually decoded, else null.
+  const avatarImgs = useRef<Map<string, HTMLImageElement>>(new Map());
+  const renderObjectsRef = useRef<() => void>(() => {});
+  const getAvatar = useCallback((url: string): HTMLImageElement | null => {
+    const cache = avatarImgs.current;
+    let img = cache.get(url);
+    if (!img) {
+      img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => renderObjectsRef.current();
+      img.src = url; cache.set(url, img);
+    }
+    return (img.complete && img.naturalWidth > 0) ? img : null;
+  }, []);
+
   const renderObjects = useCallback(() => {
     const layer = objRef.current; const stage = stageRef.current; if (!layer || !stage) return;
     const { W, H } = dimsRef.current; const { editable: ed, activeTool: tool, selectedId: sel } = st.current;
     trRef.current?.nodes([]); // detach before the nodes it points at are destroyed
     layer.destroyChildren();
     // onion-skin ghosts (faded, non-interactive) under everything
-    (st.current.ghostObjects || []).forEach(o => { const g = buildObjectNode(o, W, H, false); g.opacity(0.3); g.listening(false); layer.add(g); });
+    (st.current.ghostObjects || []).forEach(o => { const g = buildObjectNode(o, W, H, false, getAvatar); g.opacity(0.3); g.listening(false); layer.add(g); });
     // Anything but a draw tool lets you click to select/move/rotate/resize existing items.
     const selectable = ed && !isDraw(tool);
     // drawings first (under objects)
@@ -482,7 +508,7 @@ export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeToo
     const marquee = tool === 'marquee';
     const inGroup = (id: string) => st.current.multiSel.includes(id);
     st.current.data.objects.forEach(o => {
-      const g = buildObjectNode(o, W, H, ed);
+      const g = buildObjectNode(o, W, H, ed, getAvatar);
       // In marquee mode ONLY the selected group is interactive/draggable, so an empty-drag over
       // unselected objects still starts a new box. Otherwise objects listen (unless a draw tool is on).
       g.listening(ed && !isDraw(tool) && (!marquee || inGroup(o.id)));
@@ -557,7 +583,8 @@ export const PitchCanvas: React.FC<Props> = ({ data, editable = false, activeToo
     layer.draw();
     renderMotion();
     renderConnectors();
-  }, [renderMotion, renderConnectors, renderConnectorsLive]);
+  }, [renderMotion, renderConnectors, renderConnectorsLive, getAvatar]);
+  renderObjectsRef.current = renderObjects;
 
   /** Rotate a drawing node around its own centre (so shapes spin in place). */
   const applyDrawingTransform = (n: Konva.Node, d: PitchDrawing) => {

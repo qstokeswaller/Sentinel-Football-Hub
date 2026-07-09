@@ -82,6 +82,12 @@ export const MatchPlanBuilderPage: React.FC = () => {
     const slots = formationSlots(data.squad.formation);
     return slots.map((s, i) => { const a = data.squad.startingXI?.[i]; const nm = a?.playerId ? playerName(a.playerId) : ''; return nm ? surname(nm) : s.pos; });
   }, [data.squad, players]);
+  // The picked XI (name + photo) aligned to formation slots — carries through every plan step so
+  // "Show Formation" drops real players (photo in the token centre, initials if they have none).
+  const xiPlayers = useMemo(() => {
+    const slots = formationSlots(data.squad.formation);
+    return slots.map((_s, i) => { const a = data.squad.startingXI?.[i]; const p = a?.playerId ? (players || []).find(pl => pl.id === a.playerId) : null; return { name: p?.name || '', avatar: p?.profileImageUrl || null }; });
+  }, [data.squad, players]);
 
   const patch = (p: Partial<MatchPlanData>) => setData(d => ({ ...d, ...p }));
 
@@ -151,12 +157,12 @@ export const MatchPlanBuilderPage: React.FC = () => {
       {step === 0 && <MatchStep data={data} patch={patch} squadId={squadId} matches={matches || []} clubId={effectiveClubId} />}
       {step === 1 && <OppIntelStep data={data} patch={patch} />}
       {step === 2 && <SquadStep squadId={squadId} squadPlayers={squadPlayers} data={data} patch={patch} playerName={playerName} />}
-      {step === 3 && <BoardStep title="Plan A — Starting Formation" boardKey="planA" data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} oppFormation={data.oppIntel.formation} />}
-      {step === 4 && <BoardStep title="Plan B — Alternative Formation" boardKey="planB" data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} oppFormation={data.oppIntel.formation} withSubs squadPlayers={squadPlayers} />}
-      {step === 5 && <BoardStep title="Plan C — Trailing / Chasing the Game" boardKey="planC" data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} oppFormation={data.oppIntel.formation} withSubs squadPlayers={squadPlayers} />}
-      {step === 6 && <ZoneStep title="Offensive Behaviour" subtitle="Plan your attacking phases" group="offense" zones={[['buildup', 'Build-up'], ['transition', 'Transition'], ['attack', 'Attack']]} data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} oppFormation={data.oppIntel.formation} />}
-      {step === 7 && <ZoneStep title="Defensive Behaviour" subtitle="Plan your defensive structure" group="defense" zones={[['defBlock', 'Defensive Block'], ['midPress', 'Midfield Press'], ['highPress', 'High Press']]} data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} oppFormation={data.oppIntel.formation} />}
-      {step === 8 && <SetPiecesStep data={data} patch={patch} squadPlayers={squadPlayers} ourFormation={data.squad.formation} xiLabels={xiLabels} oppFormation={data.oppIntel.formation} />}
+      {step === 3 && <BoardStep title="Plan A — Starting Formation" boardKey="planA" data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} />}
+      {step === 4 && <BoardStep title="Plan B — Alternative Formation" boardKey="planB" data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} withSubs squadPlayers={squadPlayers} />}
+      {step === 5 && <BoardStep title="Plan C — Trailing / Chasing the Game" boardKey="planC" data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} withSubs squadPlayers={squadPlayers} />}
+      {step === 6 && <ZoneStep title="Offensive Behaviour" subtitle="Plan your attacking phases" group="offense" zones={[['buildup', 'Build-up'], ['transition', 'Transition'], ['attack', 'Attack']]} data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} />}
+      {step === 7 && <ZoneStep title="Defensive Behaviour" subtitle="Plan your defensive structure" group="defense" zones={[['defBlock', 'Defensive Block'], ['midPress', 'Midfield Press'], ['highPress', 'High Press']]} data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} />}
+      {step === 8 && <SetPiecesStep data={data} patch={patch} squadPlayers={squadPlayers} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} />}
       {step === 9 && <ExportStep data={data} patch={patch} title={title} />}
 
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200 dark:border-sentinel-border">
@@ -361,20 +367,20 @@ const SquadStep: React.FC<{ squadId: string; squadPlayers: any[]; data: MatchPla
 };
 
 // ── Steps 3-5: Plan boards ──
-const BoardStep: React.FC<{ title: string; boardKey: 'planA' | 'planB' | 'planC'; data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; ourFormation: string; xiLabels: string[]; oppFormation: string; withSubs?: boolean; squadPlayers?: any[] }> = ({ title, boardKey, data, patch, ourFormation, xiLabels, oppFormation }) => {
+const BoardStep: React.FC<{ title: string; boardKey: 'planA' | 'planB' | 'planC'; data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; ourFormation: string; xiLabels: string[]; xiPlayers: { name: string; avatar: string | null }[]; oppFormation: string; withSubs?: boolean; squadPlayers?: any[] }> = ({ title, boardKey, data, patch, ourFormation, xiLabels, xiPlayers, oppFormation }) => {
   const board = data.plans[boardKey];
   const setBoard = (b: PlanBoard) => patch({ plans: { ...data.plans, [boardKey]: b } });
   return (
     <div className={card}>
       <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">{title}</h3>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Show your formation (or the opposition), then draw movements & annotations — static or animated.</p>
-      <TacticalBoard value={board} onChange={setBoard} ourFormation={ourFormation} ourLabels={xiLabels} oppFormation={oppFormation || '4-3-3'} notesPlaceholder={`${title} notes — tactical instructions, key principles…`} />
+      <TacticalBoard value={board} onChange={setBoard} ourFormation={ourFormation} ourLabels={xiLabels} ourXI={xiPlayers} oppFormation={oppFormation || '4-3-3'} notesPlaceholder={`${title} notes — tactical instructions, key principles…`} />
     </div>
   );
 };
 
 // ── Steps 6-7: Zone boards (offense / defense) ──
-const ZoneStep: React.FC<{ title: string; subtitle: string; group: 'offense' | 'defense'; zones: [string, string][]; data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; ourFormation: string; xiLabels: string[]; oppFormation: string }> = ({ title, subtitle, group, zones, data, patch, ourFormation, xiLabels, oppFormation }) => {
+const ZoneStep: React.FC<{ title: string; subtitle: string; group: 'offense' | 'defense'; zones: [string, string][]; data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; ourFormation: string; xiLabels: string[]; xiPlayers: { name: string; avatar: string | null }[]; oppFormation: string }> = ({ title, subtitle, group, zones, data, patch, ourFormation, xiLabels, xiPlayers, oppFormation }) => {
   const [zone, setZone] = useState(zones[0][0]);
   const board = data[group][zone] || { notes: '' };
   const setBoard = (b: PlanBoard) => patch({ [group]: { ...data[group], [zone]: b } } as Partial<MatchPlanData>);
@@ -385,13 +391,13 @@ const ZoneStep: React.FC<{ title: string; subtitle: string; group: 'offense' | '
       <div className="inline-flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-white/5 mb-4">
         {zones.map(([k, lab]) => <button key={k} onClick={() => setZone(k)} className={'px-4 py-1.5 rounded-md text-sm font-semibold ' + (zone === k ? 'bg-white dark:bg-sentinel-surface text-slate-900 dark:text-white shadow-sm' : 'text-slate-500')}>{lab}</button>)}
       </div>
-      <TacticalBoard key={zone} value={board} onChange={setBoard} ourFormation={ourFormation} ourLabels={xiLabels} oppFormation={oppFormation || '4-3-3'} notesPlaceholder={`${zones.find(z => z[0] === zone)?.[1]} notes…`} />
+      <TacticalBoard key={zone} value={board} onChange={setBoard} ourFormation={ourFormation} ourLabels={xiLabels} ourXI={xiPlayers} oppFormation={oppFormation || '4-3-3'} notesPlaceholder={`${zones.find(z => z[0] === zone)?.[1]} notes…`} />
     </div>
   );
 };
 
 // ── Step 8: Set Pieces ──
-const SetPiecesStep: React.FC<{ data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; squadPlayers: any[]; ourFormation: string; xiLabels: string[]; oppFormation: string }> = ({ data, patch, squadPlayers, ourFormation, xiLabels, oppFormation }) => {
+const SetPiecesStep: React.FC<{ data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; squadPlayers: any[]; ourFormation: string; xiLabels: string[]; xiPlayers: { name: string; avatar: string | null }[]; oppFormation: string }> = ({ data, patch, squadPlayers, ourFormation, xiLabels, xiPlayers, oppFormation }) => {
   const sp = data.setPieces;
   const setTaker = (k: string, v: string) => patch({ setPieces: { ...sp, takers: { ...sp.takers, [k]: v } } });
   const setBoard = (k: 'cornersFor' | 'cornersAgainst', b: PlanBoard) => patch({ setPieces: { ...sp, [k]: b } });
@@ -415,12 +421,12 @@ const SetPiecesStep: React.FC<{ data: MatchPlanData; patch: (p: Partial<MatchPla
       <div className={card}>
         <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1"><i className="fas fa-flag text-emerald-500 mr-2" />Corners — For Us</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Plan your corner kick routines</p>
-        <TacticalBoard value={sp.cornersFor} onChange={b => setBoard('cornersFor', b)} ourFormation={ourFormation} ourLabels={xiLabels} oppFormation={oppFormation || '4-3-3'} notesPlaceholder="Corner routines — short, near post, far post, variations…" />
+        <TacticalBoard value={sp.cornersFor} onChange={b => setBoard('cornersFor', b)} ourFormation={ourFormation} ourLabels={xiLabels} ourXI={xiPlayers} oppFormation={oppFormation || '4-3-3'} notesPlaceholder="Corner routines — short, near post, far post, variations…" />
       </div>
       <div className={card}>
         <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1"><i className="fas fa-shield-alt text-rose-500 mr-2" />Corners — Against Us</h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Defensive set-up for defending corners</p>
-        <TacticalBoard value={sp.cornersAgainst} onChange={b => setBoard('cornersAgainst', b)} ourFormation={ourFormation} ourLabels={xiLabels} oppFormation={oppFormation || '4-3-3'} notesPlaceholder="Defending corners — zonal, man-marking, responsibilities…" />
+        <TacticalBoard value={sp.cornersAgainst} onChange={b => setBoard('cornersAgainst', b)} ourFormation={ourFormation} ourLabels={xiLabels} ourXI={xiPlayers} oppFormation={oppFormation || '4-3-3'} notesPlaceholder="Defending corners — zonal, man-marking, responsibilities…" />
       </div>
     </div>
   );

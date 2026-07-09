@@ -22,12 +22,18 @@ const OUR_COLOR = '#00C49A';
 const OPP_COLOR = '#ef4444';
 const emptyData = (): DrillData => ({ pitchType: 'full', orientation: 'landscape', objects: [], drawings: [], connectors: [], flip: false });
 
-function buildTokens(formation: string, prefix: string, color: string, labels: string[] | undefined, mirror: boolean): PitchObject[] {
-  return formationSlots(formation).map((s, i) => ({
-    id: `${prefix}${i}`, type: s.pos === 'GK' ? 'gk' : 'player',
-    x: mirror ? 1 - s.x : s.x, y: mirror ? 1 - s.y : s.y,
-    color, size: 'medium' as ObjSize, label: labels?.[i] || s.pos,
-  }));
+const tokenInitials = (name: string) => name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+function buildTokens(formation: string, prefix: string, color: string, labels: string[] | undefined, mirror: boolean, variant: 'dot' | 'jersey' | 'shaper', people?: { name: string; avatar: string | null }[]): PitchObject[] {
+  return formationSlots(formation).map((s, i) => {
+    const nm = people?.[i]?.name || '';
+    return {
+      id: `${prefix}${i}`, type: s.pos === 'GK' ? 'gk' : 'player',
+      x: mirror ? 1 - s.x : s.x, y: mirror ? 1 - s.y : s.y,
+      color, size: 'medium' as ObjSize, variant,
+      label: nm ? tokenInitials(nm) : (labels?.[i] || s.pos),
+      avatar: people?.[i]?.avatar || undefined,
+    };
+  });
 }
 
 interface Props {
@@ -35,12 +41,14 @@ interface Props {
   onChange: (b: PlanBoard) => void;
   ourFormation: string;
   ourLabels?: string[];
+  /** Starting XI aligned to formation slots — drives token initials + player photos. */
+  ourXI?: { name: string; avatar: string | null }[];
   oppFormation?: string;
   notesPlaceholder?: string;
   showNotes?: boolean;
 }
 
-export const TacticalBoard: React.FC<Props> = ({ value, onChange, ourFormation, ourLabels, oppFormation = '4-3-3', notesPlaceholder, showNotes = true }) => {
+export const TacticalBoard: React.FC<Props> = ({ value, onChange, ourFormation, ourLabels, ourXI, oppFormation = '4-3-3', notesPlaceholder, showNotes = true }) => {
   const mode = value.mode || 'static';
   const data: DrillData = { ...emptyData(), ...(value.data || {}) };
   const [tool, setTool] = useState<ActiveTool>('select');
@@ -79,8 +87,8 @@ export const TacticalBoard: React.FC<Props> = ({ value, onChange, ourFormation, 
 
   const hasOurs = data.objects.some(o => o.id.startsWith('fm-'));
   const hasOpp = data.objects.some(o => o.id.startsWith('opp-'));
-  const toggleOurs = () => setData({ ...data, objects: hasOurs ? data.objects.filter(o => !o.id.startsWith('fm-')) : [...data.objects, ...buildTokens(ourFormation, 'fm-', OUR_COLOR, ourLabels, false)] });
-  const toggleOpp = () => setData({ ...data, objects: hasOpp ? data.objects.filter(o => !o.id.startsWith('opp-')) : [...data.objects, ...buildTokens(oppFormation, 'opp-', OPP_COLOR, undefined, true)] });
+  const toggleOurs = () => setData({ ...data, objects: hasOurs ? data.objects.filter(o => !o.id.startsWith('fm-')) : [...data.objects, ...buildTokens(ourFormation, 'fm-', OUR_COLOR, ourLabels, false, playerStyle, ourXI)] });
+  const toggleOpp = () => setData({ ...data, objects: hasOpp ? data.objects.filter(o => !o.id.startsWith('opp-')) : [...data.objects, ...buildTokens(oppFormation, 'opp-', OPP_COLOR, undefined, true, playerStyle)] });
 
   // In fullscreen, reserve only the overlay padding so the pitch grows as tall as the viewport.
   // The phone-inline board stays LARGE; `touchScroll` lets an empty-pitch drag scroll the page.
