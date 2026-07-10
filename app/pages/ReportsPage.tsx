@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileText, Users, Star, Trash2, Zap, Plus, Download, ClipboardList, Shield, User, ArrowLeft, Printer, List, LayoutGrid } from 'lucide-react';
+import { FileText, Users, Star, Trash2, Zap, Plus, Share2, ClipboardList, Shield, User, ArrowLeft, Printer, List, LayoutGrid } from 'lucide-react';
 import { ListSkeleton } from '../components/ui/Skeleton';
 import { useToast } from '../context/ToastContext';
 import { useAppState } from '../context/AppStateContext';
@@ -18,7 +18,7 @@ import { fetchClubSquadAssessments, deleteSquadAssessment, type SquadAssessment 
 import { ReportFormModal } from '../components/reports/ReportFormModal';
 import { SquadAssessmentModal } from '../components/squad/SquadAssessmentModal';
 import { PlayerReportsTab } from '../components/squad/PlayerReportsTab';
-import { downloadReportPdf } from '../lib/reportPdf';
+import { copySessionReportShareLink } from '../services/shareService';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
@@ -78,7 +78,7 @@ const Stars: React.FC<{ n: number }> = ({ n }) => (
 );
 const SessionReports: React.FC<{ view: View }> = ({ view }) => {
   const { canEdit } = usePermissions();
-  const { club, profile } = useAppState();
+  const { profile } = useAppState();
   const { showToast, showError } = useToast();
   const queryClient = useQueryClient();
   const { data: reports, isLoading } = useReports();
@@ -105,6 +105,12 @@ const SessionReports: React.FC<{ view: View }> = ({ view }) => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['reports'] }); showToast('Report deleted.', 'success'); setConfirmDel(null); },
     onError: (e) => showError(e),
   });
+
+  // Share-first: copy a branded public link; the PDF/print lives on that page (no direct PDF here).
+  const shareReport = async (r: Report) => {
+    try { await copySessionReportShareLink(r.id, r.shareToken); queryClient.invalidateQueries({ queryKey: ['reports'] }); showToast('Share link copied — opens a branded page with Print / PDF.', 'success'); }
+    catch (e) { showError(e); }
+  };
 
   const Meta: React.FC<{ r: Report }> = ({ r }) => (
     <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
@@ -156,7 +162,7 @@ const SessionReports: React.FC<{ view: View }> = ({ view }) => {
       )}
       {viewReport && (
         <Modal open={!!viewReport} onClose={() => setViewReport(null)} title={viewReport.sessionTitle || 'General Report'} size="lg"
-          footer={<Button variant="secondary" onClick={() => downloadReportPdf(viewReport, club?.name || 'Sentinel Football Hub')}><Download size={15} /> Download PDF</Button>}>
+          footer={<Button variant="secondary" onClick={() => shareReport(viewReport)}><Share2 size={15} /> Share</Button>}>
           <div className="space-y-4 text-sm">
             <div className="flex flex-wrap gap-4 text-slate-500 dark:text-slate-400">
               <span>{fmt(viewReport.date)}</span>{viewReport.team && <span><i className="fas fa-shield-halved mr-1" />{viewReport.team}</span>}

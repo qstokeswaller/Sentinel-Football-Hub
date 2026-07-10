@@ -10,6 +10,8 @@ import { Modal } from '../ui/Modal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { resolveRange, dateInRange, type RangeValue } from '../../lib/dateRange';
+import type { Season } from '../../services/seasonsService';
 
 /**
  * Analysis tab — Player Highlights + Analysis Videos. Each item is a real upload
@@ -48,14 +50,16 @@ const VideoRow: React.FC<{ item: VideoItem; onRemove?: () => void }> = ({ item, 
   );
 };
 
-export const PlayerAnalysisTab: React.FC<{ player: Player; canEdit?: boolean }> = ({ player, canEdit = false }) => {
+export const PlayerAnalysisTab: React.FC<{ player: Player; canEdit?: boolean; seasons: Season[]; range: RangeValue }> = ({ player, canEdit = false, seasons, range }) => {
   const { showToast, showError } = useToast();
   const queryClient = useQueryClient();
   const [modal, setModal] = useState<{ column: MediaColumn; label: string } | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{ column: MediaColumn; idx: number } | null>(null);
 
-  const highlights = [...((player.highlights || []) as VideoItem[])].sort(byNewest);
-  const analysis = [...((player.analysisVideos || []) as VideoItem[])].sort(byNewest);
+  const { from, to } = resolveRange(range, seasons);
+  const inRange = (v: VideoItem) => dateInRange(v.date, from, to);
+  const highlights = [...((player.highlights || []) as VideoItem[])].sort(byNewest).filter(inRange);
+  const analysis = [...((player.analysisVideos || []) as VideoItem[])].sort(byNewest).filter(inRange);
   const rawFor = (col: MediaColumn) => (col === 'highlights' ? (player.highlights || []) : (player.analysisVideos || [])) as VideoItem[];
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['player', player.id] });
 

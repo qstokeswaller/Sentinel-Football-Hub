@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchPlayerDossier } from '../services/dossierService';
 import { downloadPlayerDossierPdf } from '../lib/dossierPdf';
+import { dateInRange } from '../lib/dateRange';
 import { PublicShareShell, ShareDownloadButton } from '../components/public/PublicShareShell';
 import { PlayerDossierView, type DossierData } from '../components/public/PlayerDossierView';
 
@@ -13,6 +14,8 @@ import { PlayerDossierView, type DossierData } from '../components/public/Player
 export const PlayerDossierPage: React.FC = () => {
   const [params] = useSearchParams();
   const token = params.get('token') || '';
+  const from = params.get('from') || '';
+  const to = params.get('to') || '';
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['player-dossier', token],
@@ -27,6 +30,9 @@ export const PlayerDossierPage: React.FC = () => {
 
   const { player, squad, club } = data;
   const squadLabel = [squad?.name, squad?.age_group].filter(Boolean).join(' · ');
+  // Reports scoped to the shared season/date range (empty bounds = all-time).
+  const assessments = (data.assessments || (data.latest_assessment ? [data.latest_assessment] : []))
+    .filter((a: any) => dateInRange(a.date || a.created_at, from, to));
   const view: DossierData = {
     player: {
       name: player.name, position: player.position, jersey_number: player.jersey_number,
@@ -35,14 +41,14 @@ export const PlayerDossierPage: React.FC = () => {
       height: player.height, weight: player.weight, bio: player.bio, previous_clubs: player.previous_clubs,
     },
     stats: data.match_stats || [],
-    assessments: data.assessments || (data.latest_assessment ? [data.latest_assessment] : []),
+    assessments,
     seasonMatches: data.season_matches || 0,
     media: data.media || { gallery: [], highlights: [] },
     squadLabel,
   };
 
   return (
-    <PublicShareShell club={club} label="Player Dossier" action={<ShareDownloadButton onClick={() => downloadPlayerDossierPdf(data)} />}>
+    <PublicShareShell club={club} label="Player Dossier" action={<ShareDownloadButton onClick={() => downloadPlayerDossierPdf({ ...data, assessments })} />}>
       <PlayerDossierView data={view} />
     </PublicShareShell>
   );

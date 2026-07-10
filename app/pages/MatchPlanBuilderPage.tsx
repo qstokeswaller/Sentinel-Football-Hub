@@ -163,7 +163,7 @@ export const MatchPlanBuilderPage: React.FC = () => {
       {step === 6 && <ZoneStep title="Offensive Behaviour" subtitle="Plan your attacking phases" group="offense" zones={[['buildup', 'Build-up'], ['transition', 'Transition'], ['attack', 'Attack']]} data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} />}
       {step === 7 && <ZoneStep title="Defensive Behaviour" subtitle="Plan your defensive structure" group="defense" zones={[['defBlock', 'Defensive Block'], ['midPress', 'Midfield Press'], ['highPress', 'High Press']]} data={data} patch={patch} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} />}
       {step === 8 && <SetPiecesStep data={data} patch={patch} squadPlayers={squadPlayers} ourFormation={data.squad.formation} xiLabels={xiLabels} xiPlayers={xiPlayers} oppFormation={data.oppIntel.formation} />}
-      {step === 9 && <ExportStep data={data} patch={patch} title={title} />}
+      {step === 9 && <ExportStep data={data} patch={patch} title={title} onShare={handleShare} sharing={sharing} canShare={!!id} />}
 
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200 dark:border-sentinel-border">
         <Button variant="ghost" disabled={step === 0} onClick={() => setStep(s => Math.max(0, s - 1))}><ChevronLeft size={15} /> Previous</Button>
@@ -433,13 +433,13 @@ const SetPiecesStep: React.FC<{ data: MatchPlanData; patch: (p: Partial<MatchPla
 };
 
 // ── Step 9: Export ──
-const ExportStep: React.FC<{ data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; title: string }> = ({ data, patch, title }) => {
+const ExportStep: React.FC<{ data: MatchPlanData; patch: (p: Partial<MatchPlanData>) => void; title: string; onShare: () => void; sharing: boolean; canShare: boolean }> = ({ data, patch, onShare, sharing, canShare }) => {
   const SECTIONS: [string, string][] = [['squad', 'Squad Selection'], ['match', 'Match Details'], ['oppIntel', 'Opponent Intelligence'], ['planA', 'Plan A — Starting Formation'], ['planB', 'Plan B — Alternative'], ['planC', 'Plan C — Trailing'], ['offense', 'Offensive Behaviour'], ['defense', 'Defensive Behaviour'], ['setPieces', 'Set Pieces']];
   const toggle = (k: string) => patch({ exportSections: { ...data.exportSections, [k]: !data.exportSections[k] } });
   return (
     <div className={card}>
-      <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Export Match Plan</h3>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Select which sections to include, then print or save as PDF</p>
+      <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Share Match Plan</h3>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Choose which sections to include, then copy a branded share link. The shared page shows the plan (animations play) and can be printed or saved as PDF from there.</p>
       <div className="space-y-2 max-w-md">
         {SECTIONS.map(([k, lab]) => (
           <label key={k} className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-sentinel-border cursor-pointer hover:border-brand">
@@ -449,7 +449,9 @@ const ExportStep: React.FC<{ data: MatchPlanData; patch: (p: Partial<MatchPlanDa
         ))}
       </div>
       <div className="mt-6 text-center">
-        <Button variant="primary" onClick={() => window.print()}><i className="fas fa-file-pdf mr-1.5" /> Export PDF Dossier{title ? '' : ''}</Button>
+        {canShare
+          ? <Button variant="primary" disabled={sharing} onClick={onShare}><i className="fas fa-share-nodes mr-1.5" /> {sharing ? 'Sharing…' : 'Copy Share Link'}</Button>
+          : <p className="text-sm text-slate-400"><i className="fas fa-circle-info mr-1.5" />Save the plan first to get a share link.</p>}
       </div>
     </div>
   );

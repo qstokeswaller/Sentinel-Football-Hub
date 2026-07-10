@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trash2, ChevronDown, FileText } from 'lucide-react';
 import { useAppState } from '../../context/AppStateContext';
 import { useToast } from '../../context/ToastContext';
-import { fetchAssessments, createAssessment, deleteAssessment, globalAverage, type Assessment } from '../../services/assessmentService';
+import { fetchAssessments, createAssessment, deleteAssessment, type Assessment } from '../../services/assessmentService';
 import { REPORT_SECTIONS, REPORT_SCALE_LABELS } from '../../lib/reportSections';
 import { ASSESS_MATRICES } from '../../lib/assessmentMatrices';
 import { Input, Textarea, Label } from '../ui/Input';
@@ -11,6 +10,11 @@ import { DatePicker } from '../ui/DatePicker';
 import { Button } from '../ui/Button';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { PillTabs } from '../ui/PillTabs';
+import { ReportsHistory } from '../reports/ReportsHistory';
+import { ReportRangeFilter } from './ReportRangeFilter';
+import { resolveRange, dateInRange, emptyRange, type RangeValue } from '../../lib/dateRange';
+import { useSeasons } from '../../hooks/useSeasons';
+import type { Season } from '../../services/seasonsService';
 
 /**
  * Reports tab — three sub-tabs (mirrors the old player-profile Reports tab):
@@ -33,9 +37,17 @@ const Rating: React.FC<{ value: number; onPick: (n: number) => void }> = ({ valu
   </div>
 );
 
-export const PlayerReportsTab: React.FC<{ playerId: string; squadName?: string; canEdit?: boolean }> = ({ playerId, squadName, canEdit = false }) => {
+export const PlayerReportsTab: React.FC<{ playerId: string; squadName?: string; canEdit?: boolean; seasons?: Season[]; range?: RangeValue }> = ({ playerId, squadName, canEdit = false, seasons: seasonsProp, range: rangeProp }) => {
   const [sub, setSub] = useState<Sub>('report');
   const { data: all } = useQuery({ queryKey: ['assessments', playerId], queryFn: () => fetchAssessments(playerId), enabled: !!playerId, staleTime: 60_000 });
+
+  // Controlled by the profile page (range provided; the picker lives next to Share). Otherwise the
+  // Reports page self-manages it and renders the picker inside the History sub-tab.
+  const { data: seasonsData } = useSeasons();
+  const [internalRange, setInternalRange] = useState<RangeValue>(emptyRange);
+  const selfManaged = rangeProp == null;
+  const seasons = seasonsProp ?? seasonsData ?? [];
+  const range = rangeProp ?? internalRange;
 
   return (
     <div>
@@ -44,7 +56,7 @@ export const PlayerReportsTab: React.FC<{ playerId: string; squadName?: string; 
       </div>
       {sub === 'report' && <PlayerReportForm playerId={playerId} canEdit={canEdit} />}
       {sub === 'assessment' && <AssessmentForm playerId={playerId} squadName={squadName} canEdit={canEdit} />}
-      {sub === 'history' && <History playerId={playerId} all={all || []} canEdit={canEdit} />}
+      {sub === 'history' && <History playerId={playerId} all={all || []} canEdit={canEdit} seasons={seasons} range={range} onRangeChange={selfManaged ? setInternalRange : undefined} />}
     </div>
   );
 };
@@ -170,8 +182,8 @@ const AssessmentForm: React.FC<{ playerId: string; squadName?: string; canEdit: 
   );
 };
 
-// ── History ──
-const History: React.FC<{ playerId: string; all: Assessment[]; canEdit: boolean }> = ({ playerId, all, canEdit }) => {
+// ── History (visual reports history: aggregate radar per type + per-report radars) ──
+const History: React.FC<{ playerId: string; all: Assessment[]; canEdit: boolean; seasons: Season[]; range: RangeValue; onRangeChange?: (v: RangeValue) => void }> = ({ playerId, all, canEdit, seasons, range, onRangeChange }) => {
   const { showToast, showError } = useToast();
   const queryClient = useQueryClient();
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -180,65 +192,18 @@ const History: React.FC<{ playerId: string; all: Assessment[]; canEdit: boolean 
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['assessments', playerId] }); showToast('Report deleted.', 'success'); setConfirmId(null); },
     onError: (e) => showError(e),
   });
-  const performance = all.filter(a => a.type !== PLAYER_REPORT);
-  const development = all.filter(a => a.type === PLAYER_REPORT);
+
+  const { from, to } = resolveRange(range, seasons);
+  const filtered = all.filter(a => dateInRange(a.date || a.createdAt, from, to));
 
   return (
     <div>
-      <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4"><i className="fas fa-folder-open text-brand" /> Intelligence & Reports History</h3>
-      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-2"><i className="fas fa-chart-line text-brand" /> Performance Reports</h4>
-      {performance.length ? <div className="space-y-2 mb-6">{performance.map(a => <HistoryCard key={a.id} a={a} canEdit={canEdit} onDelete={() => setConfirmId(a.id)} />)}</div>
-        : <Empty text="No reports found. Create a new assessment to begin tracking." />}
-      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-2 mt-8"><i className="fas fa-seedling text-brand" /> Development Structures</h4>
-      {development.length ? <div className="space-y-2">{development.map(a => <HistoryCard key={a.id} a={a} canEdit={canEdit} onDelete={() => setConfirmId(a.id)} />)}</div>
-        : <Empty text="No historical records found." />}
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><i className="fas fa-folder-open text-brand" /> Intelligence & Reports History</h3>
+        {onRangeChange && <ReportRangeFilter seasons={seasons} value={range} onChange={onRangeChange} />}
+      </div>
+      <ReportsHistory assessments={filtered} onDelete={canEdit ? (id) => setConfirmId(id) : undefined} />
       {confirmId && <ConfirmModal open onClose={() => setConfirmId(null)} onConfirm={() => del.mutate(confirmId)} title="Delete this report?" message="This report will be permanently removed." busy={del.isPending} />}
-    </div>
-  );
-};
-
-const Empty: React.FC<{ text: string }> = ({ text }) => (
-  <div className="rounded-xl border border-slate-200 dark:border-sentinel-border bg-white dark:bg-sentinel-surface py-10 text-center text-slate-400">
-    <FileText size={24} className="mx-auto mb-2 opacity-50" /><p className="text-sm">{text}</p>
-  </div>
-);
-
-const HistoryCard: React.FC<{ a: Assessment; canEdit: boolean; onDelete: () => void }> = ({ a, canEdit, onDelete }) => {
-  const [open, setOpen] = useState(false);
-  const avg = globalAverage(a.ratings);
-  return (
-    <div className="rounded-lg border border-slate-200 dark:border-sentinel-border overflow-hidden">
-      <button onClick={() => setOpen(o => !o)} className="w-full flex items-center gap-3 p-3 text-left hover:bg-slate-50 dark:hover:bg-white/5">
-        {avg != null && <div className="w-10 h-10 rounded-full border-2 border-brand text-brand flex items-center justify-center text-sm font-bold shrink-0">{avg.toFixed(1)}</div>}
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold text-slate-900 dark:text-white">{a.type === PLAYER_REPORT ? 'Player Report' : (a.type || 'Performance Report')}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{a.date || '—'}{a.author ? ` · ${a.author}` : ''}</div>
-        </div>
-        {canEdit && <span role="button" tabIndex={0} onClick={e => { e.stopPropagation(); onDelete(); }} title="Delete" className="p-1.5 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 shrink-0"><Trash2 size={14} /></span>}
-        <ChevronDown size={16} className={'text-slate-400 transition-transform ' + (open ? 'rotate-180' : '')} />
-      </button>
-      {open && (
-        <div className="px-3 pb-3 pt-1 space-y-3 border-t border-slate-100 dark:border-sentinel-border">
-          {a.notes && <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap pt-2">{a.notes}</p>}
-          {Object.entries(a.ratings || {}).filter(([k]) => k !== '__comments').map(([cat, attrs]) => {
-            const entries = Object.entries(attrs || {}).filter(([, v]) => typeof v === 'number');
-            if (!entries.length) return null;
-            return (
-              <div key={cat}>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1 capitalize">{cat.replace(/([A-Z])/g, ' $1')}</div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-                  {entries.map(([k, v]) => (
-                    <div key={k} className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 dark:text-slate-400 truncate capitalize">{k.replace(/_/g, ' ')}</span>
-                      <span className="font-bold text-slate-900 dark:text-white ml-2">{v as number}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 };

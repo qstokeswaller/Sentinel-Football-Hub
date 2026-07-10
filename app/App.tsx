@@ -18,6 +18,7 @@ const MatchDetailsPage = lazy(() => import('./pages/MatchDetailsPage').then(m =>
 const MatchPlanBuilderPage = lazy(() => import('./pages/MatchPlanBuilderPage').then(m => ({ default: m.MatchPlanBuilderPage })));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 const ScoutingPage = lazy(() => import('./pages/ScoutingPage').then(m => ({ default: m.ScoutingPage })));
+const ScoutProfilePage = lazy(() => import('./pages/ScoutProfilePage').then(m => ({ default: m.ScoutProfilePage })));
 const ReportsPage = lazy(() => import('./pages/ReportsPage').then(m => ({ default: m.ReportsPage })));
 const PlatformAdminPage = lazy(() => import('./pages/PlatformAdminPage').then(m => ({ default: m.PlatformAdminPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -98,6 +99,7 @@ const App: React.FC = () => {
                   <Route path="/match-plan/:id" element={<MatchPlanBuilderPage />} />
                   <Route path="/analytics" element={<AnalyticsPage />} />
                   <Route path="/scouting" element={<ScoutingPage />} />
+                  <Route path="/scouting/:id" element={<ScoutProfilePage />} />
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/library" element={<LibraryPage />} />

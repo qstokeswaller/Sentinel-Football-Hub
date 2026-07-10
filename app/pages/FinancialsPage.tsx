@@ -7,7 +7,7 @@ import { Select } from '../components/ui/Input';
 import { DatePicker } from '../components/ui/DatePicker';
 import { PillTabs } from '../components/ui/PillTabs';
 import { PageToolbar } from '../components/ui/PageToolbar';
-import { GridSkeleton, TableSkeleton } from '../components/ui/Skeleton';
+import { InfoCardsSkeleton, MemberFeesSkeleton, TableSkeleton } from '../components/ui/Skeleton';
 import { useAppState } from '../context/AppStateContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -383,7 +383,7 @@ const FinancialsInner: React.FC = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">Attendance-based pricing (per-session / monthly) for coaching invoicing.</p>
             <Button variant="primary" onClick={openAdd}><Plus size={16} /> Add Rule</Button>
           </div>
-          {rLoading ? <GridSkeleton count={3} cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" />
+          {rLoading ? <InfoCardsSkeleton count={3} />
             : !orionRules.length ? <div className="py-12 text-center text-slate-400"><Coins size={26} className="mx-auto mb-3 opacity-60" />No pricing rules yet.</div>
             : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -432,7 +432,7 @@ const FinancialsInner: React.FC = () => {
               <button onClick={() => downloadCsv('invoices', ['Player', 'Squad', 'Type', 'Period', 'Total', 'Paid', 'Outstanding', 'Status', 'Method'], filteredInvoices.map(v => [v.playerName, squadName(v.playerSquadId), invTypeOf(v), v.month || '', v.total, v.paidAmount, Math.max(0, v.total - (v.paidAmount || 0)), v.status, v.method || '']))} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-2.5 py-1 text-xs font-semibold text-slate-500 hover:border-brand hover:text-brand"><i className="fas fa-file-csv" /> CSV</button>
             </div>}
           </div>
-          {iLoading ? <TableSkeleton rows={6} cols={6} />
+          {iLoading ? (invView === 'member' ? <MemberFeesSkeleton /> : <TableSkeleton rows={6} cols={6} />)
             : invView === 'member' ? (
               (invoices?.length ? <MemberFeesView groups={memberGroups} onRecordPay={openPay} onDelete={(id) => delInv.mutate(id)} />
                 : <div className={`${card} p-12 text-center text-slate-400`}><FileText size={26} className="mx-auto mb-3 opacity-60" />No invoices yet — bill a fee to create them.</div>)

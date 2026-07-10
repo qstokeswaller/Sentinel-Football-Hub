@@ -8,7 +8,7 @@ import { DatePicker } from '../components/ui/DatePicker';
 import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { PillTabs } from '../components/ui/PillTabs';
 import { PageToolbar } from '../components/ui/PageToolbar';
-import { StatsRowSkeleton, TableSkeleton } from '../components/ui/Skeleton';
+import { AnalyticsSummarySkeleton } from '../components/ui/Skeleton';
 import { useMatches } from '../hooks/useMatches';
 import { useSquads, usePlayers } from '../hooks/useSquads';
 import { useCoachScope } from '../hooks/useCoachScope';
@@ -179,7 +179,7 @@ const AnalyticsInner: React.FC = () => {
       <div id="analytics-print">
         {shared && <div className="hidden print:block mb-3 text-lg font-bold text-slate-900">Analytics{season ? ` · ${season.name}` : ''}{from || to ? ` · ${from || '…'}–${to || '…'}` : ''}</div>}
         {isLoading ? (
-          <><StatsRowSkeleton /><TableSkeleton rows={8} /></>
+          <AnalyticsSummarySkeleton />
         ) : tab === 'team' ? (
           <TeamAnalytics matches={matches || []} visibleSquads={visibleSquads} coachSquadIds={coachSquadIds} clubId={effectiveClubId} players={players || []} squadName={squadName} archetype={archetype} season={season} from={from} to={to} teamFilter={teamFilter} ageFilter={ageFilter} shared={shared} />
         ) : (

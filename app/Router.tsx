@@ -8,6 +8,8 @@ const App = lazy(() => import('./App'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const PlayerDossierPage = lazy(() => import('./pages/PlayerDossierPage').then(m => ({ default: m.PlayerDossierPage })));
 const SquadDossierPage = lazy(() => import('./pages/SquadDossierPage').then(m => ({ default: m.SquadDossierPage })));
+const ScoutDossierPage = lazy(() => import('./pages/ScoutDossierPage').then(m => ({ default: m.ScoutDossierPage })));
+const ReportDossierPage = lazy(() => import('./pages/ReportDossierPage').then(m => ({ default: m.ReportDossierPage })));
 const SessionSharePage = lazy(() => import('./pages/SessionSharePage').then(m => ({ default: m.SessionSharePage })));
 const DrillSharePage = lazy(() => import('./pages/DrillSharePage').then(m => ({ default: m.DrillSharePage })));
 const MatchPlanDossierPage = lazy(() => import('./pages/MatchPlanDossierPage').then(m => ({ default: m.MatchPlanDossierPage })));
@@ -59,6 +61,8 @@ const AppRouter: React.FC = () => {
         {/* Public share routes — no auth, outside the protected shell. */}
         <Route path="/dossier/player" element={<PlayerDossierPage />} />
         <Route path="/dossier/squad" element={<SquadDossierPage />} />
+        <Route path="/dossier/scout" element={<ScoutDossierPage />} />
+        <Route path="/dossier/report" element={<ReportDossierPage />} />
         <Route path="/dossier/session" element={<SessionSharePage />} />
         <Route path="/dossier/drill" element={<DrillSharePage />} />
         <Route path="/dossier/match-plan" element={<MatchPlanDossierPage />} />

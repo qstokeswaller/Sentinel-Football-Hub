@@ -134,15 +134,6 @@ export const CalendarSkeleton: React.FC = () => (
   </div>
 );
 
-/** Toolbar row: search input + a couple of dropdowns. */
-const ToolbarSkeleton: React.FC = () => (
-  <Pulse className="flex flex-wrap items-center gap-2 mb-4">
-    <Block className="h-9 flex-1 min-w-[180px] rounded-lg" />
-    <Block className="h-9 w-32 rounded-lg" />
-    <Block className="h-9 w-28 rounded-lg" />
-  </Pulse>
-);
-
 /** KPI stat cards row (analytics / financials). */
 export const StatsRowSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
   <Pulse className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -162,19 +153,147 @@ const TabsSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
   </Pulse>
 );
 
-export type SkeletonVariant = 'dashboard' | 'cards' | 'list' | 'analytics' | 'detail' | 'builder' | 'settings' | 'generic';
+/**
+ * The shared PageToolbar shape: pill-tabs (or a slim title) on the left, filters + a
+ * primary action on the right — one row, no big page title. Matches components/ui/PageToolbar.
+ */
+export const PageToolbarSkeleton: React.FC<{ tabs?: number; filters?: number; action?: boolean }> = ({ tabs = 3, filters = 2, action = true }) => (
+  <Pulse className="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div className="flex items-center gap-2">
+      {tabs > 0 ? Array.from({ length: tabs }).map((_, i) => <Block key={i} className="h-9 w-24 rounded-full" />) : <Block className="h-7 w-40" />}
+    </div>
+    <div className="flex items-center gap-2">
+      {Array.from({ length: filters }).map((_, i) => <Block key={i} className="h-9 w-32 rounded-lg" />)}
+      {action && <Block className="h-9 w-28 rounded-lg" />}
+    </div>
+  </Pulse>
+);
 
-/** Full-page skeleton for a given layout shape. */
+/** Squad Management cards — a wide info card (identity + counts) with a right-hand schedule column. */
+export const SquadCardsSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
+  <Pulse className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+    {Array.from({ length: count }).map((_, i) => (
+      <CardShell key={i} className="p-5">
+        <div className="flex flex-col md:flex-row md:items-stretch gap-4">
+          <div className="flex items-start gap-3 flex-1">
+            <Block className="w-11 h-11 rounded-lg shrink-0" />
+            <div className="flex-1 space-y-2">
+              <Block className="h-4 w-40" />
+              <Block className="h-3 w-52" />
+              <Block className="h-4 w-24 mt-1.5" />
+              <div className="flex gap-2 pt-0.5"><Block className="h-3 w-9" /><Block className="h-3 w-9" /><Block className="h-3 w-9" /><Block className="h-3 w-9" /></div>
+            </div>
+          </div>
+          <div className="md:w-56 shrink-0 space-y-2 md:border-l border-slate-100 dark:border-white/5 md:pl-4">
+            {Array.from({ length: 4 }).map((_, j) => <Block key={j} className="h-3.5 w-full" />)}
+          </div>
+        </div>
+        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex justify-end"><Block className="h-3.5 w-24" /></div>
+      </CardShell>
+    ))}
+  </Pulse>
+);
+
+/** Scouting / player cards — avatar top-left, name + sub, verdict pill + report count. */
+export const AvatarCardsSkeleton: React.FC<{ count?: number; cols?: string }> = ({ count = 6, cols = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' }) => (
+  <Pulse className={cn('grid gap-4', cols)}>
+    {Array.from({ length: count }).map((_, i) => (
+      <CardShell key={i} className="p-5">
+        <div className="flex items-start gap-3">
+          <Block className="w-11 h-11 rounded-full shrink-0" />
+          <div className="flex-1 space-y-2 pt-0.5"><Block className="h-4 w-2/3" /><Block className="h-3 w-2/5" /></div>
+        </div>
+        <div className="mt-3.5 flex items-center justify-between">
+          <Block className="h-5 w-20 rounded-full" />
+          <Block className="h-3 w-16" />
+        </div>
+        <Block className="h-3 w-1/2 mt-2.5" />
+      </CardShell>
+    ))}
+  </Pulse>
+);
+
+/** Fixture / match rows — date block · centred VS · a right-hand action. */
+export const MatchRowsSkeleton: React.FC<{ rows?: number }> = ({ rows = 6 }) => (
+  <Pulse className="space-y-3">
+    {Array.from({ length: rows }).map((_, i) => (
+      <CardShell key={i} className="p-4 flex items-center gap-4">
+        <div className="w-14 text-center space-y-1.5 shrink-0"><Block className="h-3 w-8 mx-auto" /><Block className="h-6 w-9 mx-auto" /></div>
+        <div className="flex-1 flex items-center justify-center gap-3">
+          <Block className="h-4 w-24" /><Block className="h-7 w-12 rounded-md" /><Block className="h-4 w-24" />
+        </div>
+        <Block className="h-8 w-24 rounded-lg shrink-0 hidden sm:block" />
+      </CardShell>
+    ))}
+  </Pulse>
+);
+
+/** Plain info cards (fees, pricing) — no image tile. */
+export const InfoCardsSkeleton: React.FC<{ count?: number; cols?: string }> = ({ count = 3, cols = 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' }) => (
+  <Pulse className={cn('grid gap-4', cols)}>
+    {Array.from({ length: count }).map((_, i) => (
+      <CardShell key={i} className="p-5 space-y-3">
+        <div className="flex items-center justify-between"><Block className="h-4 w-28" /><Block className="h-6 w-6 rounded" /></div>
+        <Block className="h-7 w-20" /><Block className="h-3 w-32" />
+        <Block className="h-9 w-full rounded-lg mt-1" />
+      </CardShell>
+    ))}
+  </Pulse>
+);
+
+/** Squad-grouped member rows (the Invoices "By member" collections view). */
+export const MemberFeesSkeleton: React.FC<{ groups?: number; rows?: number }> = ({ groups = 2, rows = 4 }) => (
+  <Pulse className="space-y-4">
+    {Array.from({ length: groups }).map((_, g) => (
+      <CardShell key={g} className="overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 dark:border-sentinel-border flex items-center justify-between bg-slate-50 dark:bg-sentinel-bg">
+          <Block className="h-4 w-44" /><Block className="h-4 w-64 hidden sm:block" />
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-sentinel-border">
+          {Array.from({ length: rows }).map((_, r) => (
+            <div key={r} className="flex items-center gap-3 px-4 py-3">
+              <Block className="w-7 h-7 rounded-full shrink-0" /><Block className="h-4 w-32" />
+              <div className="flex-1 flex items-center justify-end gap-6"><Block className="h-4 w-12" /><Block className="h-4 w-12" /><Block className="h-4 w-16" /></div>
+            </div>
+          ))}
+        </div>
+      </CardShell>
+    ))}
+  </Pulse>
+);
+
+/** Analytics summary — one inline stat row card, then a section (chart/table). */
+export const AnalyticsSummarySkeleton: React.FC = () => (
+  <Pulse className="space-y-4">
+    <div className="flex items-center gap-2"><Block className="h-4 w-4 rounded" /><Block className="h-4 w-40" /></div>
+    <CardShell className="px-5 py-3.5 flex flex-wrap items-center gap-x-7 gap-y-2.5">
+      {Array.from({ length: 6 }).map((_, i) => <div key={i} className="space-y-1.5"><Block className="h-2.5 w-12" /><Block className="h-5 w-16" /></div>)}
+    </CardShell>
+    <CardShell className="p-5 space-y-3"><Block className="h-5 w-44" /><Block className="h-3 w-64" /><Block className="h-44 w-full rounded-lg" /></CardShell>
+  </Pulse>
+);
+
+export type SkeletonVariant = 'dashboard' | 'squad' | 'scouting' | 'library' | 'matches' | 'reports' | 'analytics' | 'financials' | 'detail' | 'builder' | 'settings' | 'generic';
+
+/** Full-page skeleton for a given layout shape (chunk-load fallback; mirrors each page). */
 export const PageSkeleton: React.FC<{ variant?: SkeletonVariant }> = ({ variant = 'generic' }) => {
   switch (variant) {
     case 'dashboard':
-      return <div><HeaderSkeleton actions={1} /><StatsRowSkeleton /><CalendarSkeleton /></div>;
-    case 'cards':
-      return <div><HeaderSkeleton /><ToolbarSkeleton /><GridSkeleton count={8} /></div>;
-    case 'list':
-      return <div><HeaderSkeleton /><TabsSkeleton /><ToolbarSkeleton /><ListSkeleton rows={6} /></div>;
+      return <div><Pulse className="mb-4"><Block className="h-7 w-44" /></Pulse><CalendarSkeleton /></div>;
+    case 'squad':
+      return <div><PageToolbarSkeleton tabs={2} filters={3} /><SquadCardsSkeleton count={4} /></div>;
+    case 'scouting':
+      return <div><PageToolbarSkeleton tabs={0} filters={2} /><AvatarCardsSkeleton count={6} /></div>;
+    case 'library':
+      return <div><PageToolbarSkeleton tabs={2} filters={3} action={false} /><GridSkeleton count={12} cols="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" /></div>;
+    case 'matches':
+      return <div><PageToolbarSkeleton tabs={3} filters={2} /><MatchRowsSkeleton rows={6} /></div>;
+    case 'reports':
+      return <div><PageToolbarSkeleton tabs={4} filters={1} action={false} /><ListSkeleton rows={6} /></div>;
     case 'analytics':
-      return <div><HeaderSkeleton actions={0} /><ToolbarSkeleton /><StatsRowSkeleton /><TableSkeleton rows={8} /></div>;
+      return <div><PageToolbarSkeleton tabs={2} filters={3} action={false} /><AnalyticsSummarySkeleton /></div>;
+    case 'financials':
+      return <div><PageToolbarSkeleton tabs={6} filters={0} action={false} /><StatsRowSkeleton /><Pulse className="grid grid-cols-1 lg:grid-cols-2 gap-4">{Array.from({ length: 2 }).map((_, i) => <CardShell key={i} className="p-5 space-y-3"><Block className="h-5 w-32" />{Array.from({ length: 4 }).map((_, j) => <Block key={j} className="h-4 w-full" />)}</CardShell>)}</Pulse></div>;
     case 'detail':
       return (
         <div>
@@ -206,16 +325,19 @@ export const PageSkeleton: React.FC<{ variant?: SkeletonVariant }> = ({ variant 
     case 'settings':
       return (
         <div>
-          <HeaderSkeleton actions={0} />
-          <Pulse className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <CardShell key={i} className="p-5 space-y-3">
-                <Block className="h-5 w-40" />
-                <Block className="h-4 w-full" />
-                <Block className="h-4 w-2/3" />
-              </CardShell>
-            ))}
-          </Pulse>
+          <Pulse className="mb-5"><Block className="h-7 w-32" /></Pulse>
+          <div className="flex flex-col md:flex-row gap-5">
+            <Pulse className="md:w-56 shrink-0 flex md:flex-col gap-1.5">
+              {Array.from({ length: 6 }).map((_, i) => <Block key={i} className="h-10 w-full rounded-lg" />)}
+            </Pulse>
+            <Pulse className="flex-1 space-y-4">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <CardShell key={i} className="p-5 space-y-3">
+                  <Block className="h-5 w-40" /><Block className="h-10 w-full max-w-md rounded-lg" /><Block className="h-10 w-full max-w-md rounded-lg" />
+                </CardShell>
+              ))}
+            </Pulse>
+          </div>
         </div>
       );
     default:
@@ -241,9 +363,13 @@ export const variantForPath = (path: string): SkeletonVariant => {
   if (/^\/players\/|^\/matches\/[^/]+$/.test(path)) return 'detail';
   if (/^\/planner|^\/animation|^\/match-plan/.test(path)) return 'builder';
   if (path.startsWith('/dashboard')) return 'dashboard';
-  if (path.startsWith('/squad') || path.startsWith('/scouting') || path.startsWith('/library')) return 'cards';
-  if (path.startsWith('/matches') || path.startsWith('/reports')) return 'list';
-  if (path.startsWith('/analytics') || path.startsWith('/financials')) return 'analytics';
+  if (path.startsWith('/squad')) return 'squad';
+  if (path.startsWith('/scouting')) return 'scouting';
+  if (path.startsWith('/library')) return 'library';
+  if (path.startsWith('/matches')) return 'matches';
+  if (path.startsWith('/reports')) return 'reports';
+  if (path.startsWith('/analytics')) return 'analytics';
+  if (path.startsWith('/financials')) return 'financials';
   if (path.startsWith('/settings')) return 'settings';
   return 'generic';
 };

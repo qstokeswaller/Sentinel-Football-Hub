@@ -8,7 +8,8 @@ import { AnimationPlayer } from '../components/pitch/AnimationPlayer';
 import { DrillSections } from '../components/DrillSections';
 import { normaliseDrawingData, normaliseFrames } from '../components/pitch/drillRenderer';
 import { pitchAspect } from '../components/pitch/pitchGeometry';
-import { PublicShareShell } from '../components/public/PublicShareShell';
+import { PublicShareShell, ShareDownloadButton } from '../components/public/PublicShareShell';
+import { downloadSessionPdf } from '../lib/sessionExport';
 
 /** Public single-drill share — ?token=<uuid>, no auth. Static → image; animated → playable. */
 const Centered: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -34,6 +35,13 @@ export const DrillSharePage: React.FC = () => {
   const isAnimated = animation && Array.isArray(animation.frames) && animation.frames.length > 1;
   const dd = normaliseDrawingData(drill.drawing_data);
 
+  // Static drills download as a PDF from inside the share page (animated ones play, can't be PDF'd).
+  const exportPdf = () => downloadSessionPdf(
+    { title: drill.title, author: drill.author } as any,
+    [{ title: drill.title, description: drill.description || '', pitchType: drill.pitch_type, orientation: drill.orientation, objects: dd.objects, drawings: dd.drawings, flip: dd.flip }],
+    club?.display_name || club?.name || 'Sentinel Football Hub',
+  );
+
   const aspect = isAnimated ? pitchAspect(animation.pitch_type, animation.orientation) : pitchAspect(drill.pitch_type || 'full', drill.orientation || 'landscape');
   const pitchMaxW = Math.round(540 * aspect); // cap by height → neat + centred for any pitch type / orientation
   const pitch = isAnimated
@@ -41,7 +49,7 @@ export const DrillSharePage: React.FC = () => {
     : <DrillView pitchType={drill.pitch_type || 'full'} orientation={drill.orientation || 'landscape'} objects={dd.objects} drawings={dd.drawings} flip={dd.flip} />;
 
   return (
-    <PublicShareShell club={club} label="Drill" maxWidth="max-w-[1680px]">
+    <PublicShareShell club={club} label="Drill" maxWidth="max-w-[1680px]" action={isAnimated ? undefined : <ShareDownloadButton onClick={exportPdf} label="Print / PDF" />}>
       <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
         <div className="flex items-center gap-2.5 mb-3">
           <h1 className="text-xl font-bold text-slate-900 flex-1 min-w-0">{drill.title || 'Drill'}</h1>

@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, Binoculars, FileText, Film, UserPlus } from 'lucide-react';
+import { Plus, Pencil, Share2, Binoculars, FileText, Film, UserPlus } from 'lucide-react';
 import { Select } from '../components/ui/Input';
 import { positionOrder } from '../services/attendanceService';
 import { SmartSearch } from '../components/ui/SmartSearch';
 import { PageToolbar } from '../components/ui/PageToolbar';
-import { GridSkeleton } from '../components/ui/Skeleton';
+import { AvatarCardsSkeleton } from '../components/ui/Skeleton';
 import { fuzzyFilter } from '../lib/fuzzy';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useToast } from '../context/ToastContext';
@@ -14,10 +15,10 @@ import { usePermissions } from '../hooks/usePermissions';
 import { useScoutedPlayers } from '../hooks/useScouting';
 import { useSquads } from '../hooks/useSquads';
 import { deleteScoutedPlayer, promoteScoutedToSquad, type ScoutedPlayer } from '../services/scoutService';
+import { copyScoutShareLink } from '../services/shareService';
 import { SCOUTING_VERDICTS } from '../lib/scoutingConstants';
 import { ScoutFormModal } from '../components/scouting/ScoutFormModal';
 import { ScoutVideosModal } from '../components/scouting/ScoutVideosModal';
-import { ScoutReportsModal } from '../components/scouting/ScoutReportsModal';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 
@@ -37,6 +38,7 @@ export const ScoutingPage: React.FC = () => {
   const { showToast, showError } = useToast();
   const { effectiveClubId } = useAppState();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { data: players, isLoading } = useScoutedPlayers();
   const { data: squads } = useSquads();
 
@@ -47,7 +49,6 @@ export const ScoutingPage: React.FC = () => {
   const [editPlayer, setEditPlayer] = useState<ScoutedPlayer | null>(null);
   const [confirmDel, setConfirmDel] = useState<ScoutedPlayer | null>(null);
   const [videoPlayer, setVideoPlayer] = useState<ScoutedPlayer | null>(null);
-  const [reportsPlayer, setReportsPlayer] = useState<ScoutedPlayer | null>(null);
   const [promotePlayer, setPromotePlayer] = useState<ScoutedPlayer | null>(null);
   const [promoteSquad, setPromoteSquad] = useState('');
 
@@ -68,8 +69,8 @@ export const ScoutingPage: React.FC = () => {
     if (verdictFilter === 'unevaluated') list = list.filter(p => !p._latestVerdict);
     else if (verdictFilter !== 'all') list = list.filter(p => p._latestVerdict === verdictFilter);
     if (posFilter !== 'all') list = list.filter(p => posGroupKey(p.position) === posFilter);
-    // Typo-tolerant fuzzy search across name/position/club/nationality/agent.
-    return fuzzyFilter(search, list, p => [p.name, p.position, p.current_club, p.nationality, p.agent_name]);
+    // Typo-tolerant fuzzy search across name/position/club/agent.
+    return fuzzyFilter(search, list, p => [p.name, p.position, p.current_club, p.current_team, p.agent_name]);
   }, [players, verdictFilter, posFilter, search]);
 
   // Autocomplete corpus — scouted player names + distinct positions.
@@ -88,6 +89,15 @@ export const ScoutingPage: React.FC = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['scouted'] }); showToast('Scouted player removed.', 'success'); setConfirmDel(null); },
     onError: (e) => showError(e),
   });
+
+  // Branded public scout-report share link (reports + ratings + video).
+  const shareScout = async (p: ScoutedPlayer) => {
+    try {
+      await copyScoutShareLink(p.id, p.share_token);
+      queryClient.invalidateQueries({ queryKey: ['scouted'] });
+      showToast('Branded scout report link copied — reports, ratings & video.', 'success');
+    } catch (e) { showError(e); }
+  };
 
   const card = 'rounded-xl border border-slate-200 dark:border-sentinel-border bg-white dark:bg-sentinel-surface';
 
@@ -110,7 +120,7 @@ export const ScoutingPage: React.FC = () => {
       </PageToolbar>
 
       {isLoading ? (
-        <GridSkeleton count={6} cols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" />
+        <AvatarCardsSkeleton count={6} />
       ) : !visible.length ? (
         <div className="py-16 text-center text-slate-400">
           <Binoculars size={28} className="mx-auto mb-3 opacity-60" />
@@ -121,22 +131,25 @@ export const ScoutingPage: React.FC = () => {
           {visible.map(p => {
             const verdict = p._latestVerdict ? SCOUTING_VERDICTS[p._latestVerdict] : null;
             return (
-              <div key={p.id} className={`${card} p-5`}>
+              <div key={p.id} role="button" tabIndex={0} onClick={() => navigate(`/scouting/${p.id}`)}
+                onKeyDown={e => { if (e.key === 'Enter') navigate(`/scouting/${p.id}`); }}
+                title="Open scout profile"
+                className={`${card} p-5 cursor-pointer hover:border-brand hover:shadow-sm transition-all`}>
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-full bg-brand/15 text-brand flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden">
-                    {p.profile_image_url ? <img src={p.profile_image_url} alt={p.name} className="w-full h-full object-cover" /> : initials(p.name)}
+                    {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" /> : initials(p.name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-slate-900 dark:text-white truncate">{p.name}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">{p.position || '—'}{p.age ? ` · ${p.age}y` : ''}</div>
                   </div>
                   {canAccessScouting && (
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => setReportsPlayer(p)} title="Scout reports" className="p-1.5 rounded text-slate-400 hover:text-brand hover:bg-brand/10"><FileText size={14} /></button>
+                    <div className="flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => navigate(`/scouting/${p.id}`)} title="Scout profile" className="p-1.5 rounded text-slate-400 hover:text-brand hover:bg-brand/10"><FileText size={14} /></button>
                       <button onClick={() => setVideoPlayer(p)} title="Videos" className="p-1.5 rounded text-slate-400 hover:text-brand hover:bg-brand/10"><Film size={14} /></button>
+                      <button onClick={() => shareScout(p)} title="Share branded scout report" className="p-1.5 rounded text-slate-400 hover:text-brand hover:bg-brand/10"><Share2 size={14} /></button>
                       <button onClick={() => { setPromotePlayer(p); setPromoteSquad(''); }} title="Promote to squad" className="p-1.5 rounded text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10"><UserPlus size={14} /></button>
-                      <button onClick={() => { setEditPlayer(p); setModalOpen(true); }} title="Edit" className="p-1.5 rounded text-slate-400 hover:text-brand hover:bg-brand/10"><Pencil size={14} /></button>
-                      <button onClick={() => setConfirmDel(p)} title="Delete" className="p-1.5 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-500/10"><Trash2 size={14} /></button>
+                      <button onClick={() => { setEditPlayer(p); setModalOpen(true); }} title="Edit / delete" className="p-1.5 rounded text-slate-400 hover:text-brand hover:bg-brand/10"><Pencil size={14} /></button>
                     </div>
                   )}
                 </div>
@@ -144,7 +157,7 @@ export const ScoutingPage: React.FC = () => {
                   {verdict
                     ? <span className="text-xs font-semibold rounded-full px-2.5 py-1" style={{ background: verdict.bg, color: verdict.color }}>{verdict.label}</span>
                     : <span className="text-xs font-semibold rounded-full px-2.5 py-1 bg-slate-100 dark:bg-white/5 text-slate-400">Unevaluated</span>}
-                  <button onClick={() => setReportsPlayer(p)} className="text-xs text-slate-400 hover:text-brand flex items-center gap-1"><FileText size={12} />{p._reportCount} report{p._reportCount === 1 ? '' : 's'}</button>
+                  <button onClick={e => { e.stopPropagation(); navigate(`/scouting/${p.id}`); }} className="text-xs text-slate-400 hover:text-brand flex items-center gap-1"><FileText size={12} />{p._reportCount} report{p._reportCount === 1 ? '' : 's'}</button>
                 </div>
                 {(p.current_club || p.agent_name) && (
                   <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -157,9 +170,8 @@ export const ScoutingPage: React.FC = () => {
         </div>
       )}
 
-      <ScoutFormModal open={modalOpen} onClose={() => setModalOpen(false)} player={editPlayer} />
+      <ScoutFormModal open={modalOpen} onClose={() => setModalOpen(false)} player={editPlayer} onDelete={(p) => { setModalOpen(false); setConfirmDel(p); }} />
       {videoPlayer && <ScoutVideosModal open={!!videoPlayer} onClose={() => setVideoPlayer(null)} playerId={videoPlayer.id} playerName={videoPlayer.name} />}
-      {reportsPlayer && <ScoutReportsModal open={!!reportsPlayer} onClose={() => setReportsPlayer(null)} playerId={reportsPlayer.id} playerName={reportsPlayer.name} canEdit={canAccessScouting} />}
 
       {confirmDel && (
         <ConfirmModal open onClose={() => setConfirmDel(null)} onConfirm={() => delMutation.mutate(confirmDel)}

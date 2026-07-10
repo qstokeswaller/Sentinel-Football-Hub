@@ -6,9 +6,10 @@ import { supabase } from '../lib/supabase';
  * player. Reports/videos/promote come in follow-on increments.
  */
 export interface ScoutedPlayer {
-  id: string; name: string; position: string | null; age: number | null;
-  agent_name: string | null; current_club: string | null; nationality: string | null;
-  scouting_status: string | null; profile_image_url: string | null; created_at: string;
+  id: string; name: string; position: string | null; age: string | null; dob: string | null; foot: string | null;
+  height: string | null; weight: string | null; current_club: string | null; current_team: string | null;
+  agent_name: string | null; agent_contact: string | null; scouting_status: string | null; notes: string | null;
+  photo_url: string | null; share_token: string | null; created_at: string;
   _reportCount: number; _latestVerdict: string | null; _latestAvg: number | null;
   _latestScout: string | null; _latestDate: string | null;
   [key: string]: any;
@@ -57,7 +58,7 @@ export async function updateScoutedPlayer(id: string, data: Record<string, any>)
 export async function promoteScoutedToSquad(clubId: string, sp: ScoutedPlayer, squadId: string | null): Promise<string> {
   const { data: row, error } = await supabase.from('players').insert({
     club_id: clubId, squad_id: squadId || null, name: sp.name, position: sp.position || null,
-    ...(sp.dob ? { date_of_birth: sp.dob } : {}), ...(sp.nationality ? { nationality: sp.nationality } : {}),
+    ...(sp.dob ? { date_of_birth: sp.dob } : {}),
   }).select('id').single();
   if (error) throw error;
   await supabase.from('scouted_players').update({ scouting_status: 'signed' }).eq('id', sp.id);
@@ -73,10 +74,10 @@ export async function deleteScoutedPlayer(id: string): Promise<void> {
 }
 
 // ── Scout videos (scouting_videos) ──
-export interface ScoutVideo { id: string; title: string; url: string; }
+export interface ScoutVideo { id: string; title: string; url: string; created_by: string | null; }
 
 export async function fetchScoutVideos(scoutedPlayerId: string): Promise<ScoutVideo[]> {
-  const { data, error } = await supabase.from('scouting_videos').select('id, title, url')
+  const { data, error } = await supabase.from('scouting_videos').select('id, title, url, created_by')
     .eq('scouted_player_id', scoutedPlayerId).order('created_at', { ascending: false });
   if (error) throw error;
   return (data || []) as ScoutVideo[];
@@ -95,8 +96,8 @@ export async function deleteScoutVideo(id: string): Promise<void> {
 // ── Scout reports (scouting_reports) ──
 export interface ScoutReport {
   id: string; report_type: string; match_context: string | null; date: string | null;
-  verdict: string | null; scout_name: string | null; global_average: number | null;
-  ratings: Record<string, Record<string, number>>; feedback: { strengths?: string; weaknesses?: string; recommendation?: string };
+  verdict: string | null; scout_name: string | null; created_by: string | null; global_average: number | null;
+  ratings: Record<string, number>; feedback: { strengths?: string; weaknesses?: string; recommendation?: string };
   created_at: string;
 }
 
@@ -110,7 +111,7 @@ export async function fetchScoutReports(scoutedPlayerId: string): Promise<ScoutR
 export async function addScoutReport(clubId: string, createdBy: string | null, scoutedPlayerId: string, data: {
   report_type: string; match_context: string | null; date: string | null; verdict: string | null;
   scout_name: string | null; global_average: number | null;
-  ratings: Record<string, Record<string, number>>; feedback: Record<string, string>;
+  ratings: Record<string, number>; feedback: Record<string, string>;
 }): Promise<void> {
   const { error } = await supabase.from('scouting_reports').insert({ club_id: clubId, created_by: createdBy, scouted_player_id: scoutedPlayerId, ...data });
   if (error) throw error;

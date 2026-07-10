@@ -3,11 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Share2 } from 'lucide-react';
 import { usePlayer, useSquads } from '../hooks/useSquads';
+import { useSeasons } from '../hooks/useSeasons';
 import { deletePlayer, playerAge } from '../services/squadService';
 import { usePermissions } from '../hooks/usePermissions';
 import { useAppState } from '../context/AppStateContext';
 import { useToast } from '../context/ToastContext';
-import { copyDossierLink } from '../services/shareService';
+import { emptyRange, type RangeValue } from '../lib/dateRange';
+import { PlayerShareModal } from '../components/squad/PlayerShareModal';
+import { ReportRangeFilter } from '../components/squad/ReportRangeFilter';
 import { PageSkeleton } from '../components/ui/Skeleton';
 import { TierGate } from '../components/tier/TierGate';
 import { PlayerStatusSelect } from '../components/squad/PlayerStatusSelect';
@@ -43,11 +46,13 @@ export const PlayerProfilePage: React.FC = () => {
   const { effectiveClubId } = useAppState();
   const { data: player, isLoading } = usePlayer(id);
   const { data: squads } = useSquads();
+  const { data: seasons } = useSeasons();
   const { showToast, showError } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('details');
-  const [sharing, setSharing] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [range, setRange] = useState<RangeValue>(emptyRange);
   const [assignOpen, setAssignOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
 
@@ -56,13 +61,6 @@ export const PlayerProfilePage: React.FC = () => {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['players'] }); showToast('Player deleted (restorable for 7 days).', 'success'); navigate('/squad'); },
     onError: (e) => showError(e),
   });
-
-  const handleShare = async () => {
-    if (!player) return;
-    setSharing(true);
-    try { await copyDossierLink('player', player.id, player.shareToken); showToast('Dossier link copied to clipboard.', 'success'); }
-    catch (e) { showError(e); } finally { setSharing(false); }
-  };
 
   if (isLoading) return <PageSkeleton variant="detail" />;
   if (!player) return <div className="py-20 text-center text-slate-400">Player not found. <Link to="/squad" className="text-brand">Back to Squad</Link></div>;
@@ -83,8 +81,9 @@ export const PlayerProfilePage: React.FC = () => {
           <h1 className="text-xl font-bold text-slate-900 dark:text-white truncate">{player.name}</h1>
           <p className="text-sm font-semibold text-brand">{subtitle || '—'}{playerAge(player) != null ? ` · ${playerAge(player)}y` : ''}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <button onClick={handleShare} disabled={sharing} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-sentinel-border px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:border-brand disabled:opacity-50"><Share2 size={15} /> {sharing ? 'Sharing…' : 'Share'}</button>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          {(tab === 'reports' || tab === 'analysis') && <ReportRangeFilter compact seasons={seasons || []} value={range} onChange={setRange} />}
+          <button onClick={() => setShareOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-sentinel-border px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:border-brand"><Share2 size={15} /> Share</button>
           <PlayerStatusSelect playerId={player.id} value={player.playerStatus} canEdit={canEdit} size="md" />
         </div>
       </div>
@@ -100,9 +99,10 @@ export const PlayerProfilePage: React.FC = () => {
       {tab === 'details' && <PlayerDetailsForm player={player} squads={squads || []} canEdit={canEdit} isAdmin={isAdmin} onDelete={() => setConfirmDel(true)} onAssign={() => setAssignOpen(true)} />}
       {tab === 'stats' && <PlayerStats playerId={player.id} squadId={player.squadId} position={player.position} />}
       {tab === 'media' && <TierGate feature="media_tabs" label="Player Media"><PlayerMediaTab player={player} canEdit={canEdit} /></TierGate>}
-      {tab === 'reports' && <TierGate feature="player_reports" label="Player Reports"><PlayerReportsTab playerId={player.id} squadName={squadName} canEdit={canEdit} /></TierGate>}
-      {tab === 'analysis' && <TierGate feature="media_tabs" label="Player Analysis"><PlayerAnalysisTab player={player} canEdit={canEdit} /></TierGate>}
+      {tab === 'reports' && <TierGate feature="player_reports" label="Player Reports"><PlayerReportsTab playerId={player.id} squadName={squadName} canEdit={canEdit} seasons={seasons || []} range={range} /></TierGate>}
+      {tab === 'analysis' && <TierGate feature="media_tabs" label="Player Analysis"><PlayerAnalysisTab player={player} canEdit={canEdit} seasons={seasons || []} range={range} /></TierGate>}
 
+      <PlayerShareModal open={shareOpen} onClose={() => setShareOpen(false)} player={player} seasons={seasons || []} defaultRange={range} />
       <AssignSquadModal open={assignOpen} onClose={() => setAssignOpen(false)} playerId={player.id} playerName={player.name} currentSquadId={player.squadId} squads={squads || []} />
       {confirmDel && (
         <ConfirmModal open onClose={() => setConfirmDel(false)} onConfirm={() => del.mutate()} busy={del.isPending}

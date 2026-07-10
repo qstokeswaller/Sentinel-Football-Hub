@@ -8,7 +8,7 @@ import { Select, Input } from '../components/ui/Input';
 import { DatePicker } from '../components/ui/DatePicker';
 import { PillTabs } from '../components/ui/PillTabs';
 import { PageToolbar } from '../components/ui/PageToolbar';
-import { ListSkeleton } from '../components/ui/Skeleton';
+import { MatchRowsSkeleton } from '../components/ui/Skeleton';
 import { useToast } from '../context/ToastContext';
 import { useAppState } from '../context/AppStateContext';
 import { usePermissions } from '../hooks/usePermissions';
@@ -144,7 +144,7 @@ export const MatchesPage: React.FC = () => {
       ) : (
         <>
           {isLoading ? (
-            <ListSkeleton rows={6} />
+            <MatchRowsSkeleton rows={6} />
           ) : !filteredList.length ? (
             <div className="py-16 text-center text-slate-400">
               <Trophy size={28} className="mx-auto mb-3 opacity-60" />

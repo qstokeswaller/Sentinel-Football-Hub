@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ClipboardList, PenTool, Trash2, Clock, MapPin, Pencil, Share2, FileDown, Play, Film, User, Eye, ExternalLink } from 'lucide-react';
+import { ClipboardList, PenTool, Trash2, Clock, MapPin, Pencil, Share2, Play, Film, User, Eye, ExternalLink } from 'lucide-react';
 import { Modal } from '../components/ui/Modal';
 import { Select } from '../components/ui/Input';
 import { SmartSearch } from '../components/ui/SmartSearch';
@@ -22,7 +22,6 @@ import { flattenDrillDescription } from '../lib/drillText';
 import { fetchAnimation } from '../services/animationService';
 import { copySessionShareLink, ensureSessionShareToken, sessionShareUrl } from '../services/sessionShareService';
 import { copyDrillShareLink, ensureDrillShareToken, drillShareUrl } from '../services/drillShareService';
-import { downloadSessionPdf } from '../lib/sessionExport';
 import { deleteLibrarySession, deleteLibraryDrill, type LibSession, type LibDrill } from '../services/libraryService';
 
 /**
@@ -49,7 +48,6 @@ export const LibraryPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: sessions, isLoading: sLoading } = useLibrarySessions();
   const { data: drills, isLoading: dLoading } = useLibraryDrills();
-  const clubName = club?.settings?.branding?.club_display_name || club?.name || 'Sentinel Football Hub';
 
   const [tab, setTab] = useState<'sessions' | 'drills'>('sessions');
   const [search, setSearch] = useState('');
@@ -118,18 +116,6 @@ export const LibraryPage: React.FC = () => {
     } catch (e) { showError(e); }
   };
 
-  const exportPdf = (i: Item) => {
-    try {
-      if (i._kind === 'session') {
-        const s = i as LibSession;
-        downloadSessionPdf({ title: s.title, team: s.team, venue: s.venue, author: s.author, duration: s.duration, purpose: s.purpose, date: s.date } as any,
-          s.drills.map(d => ({ title: d.title, description: d.description || '', pitchType: d.pitchType, orientation: d.orientation, objects: d.objects, drawings: d.drawings, flip: d.flip })), clubName);
-      } else {
-        const d = i as LibDrill;
-        downloadSessionPdf({ title: d.title, author: d.author }, [{ title: d.title, description: d.description || '', pitchType: d.pitchType, orientation: d.orientation, objects: d.objects, drawings: d.drawings, flip: d.flip }], clubName);
-      }
-    } catch (e) { showError(e); }
-  };
 
   const isLoading = tab === 'sessions' ? sLoading : dLoading;
   const FilterChip: React.FC<{ v: typeof drillType; label: string }> = ({ v, label }) => (
@@ -210,7 +196,6 @@ export const LibraryPage: React.FC = () => {
                 <div className="flex border-t border-slate-200 dark:border-sentinel-border">
                   <button onClick={() => setView(i)} className={actBtn}><Eye size={14} /> View</button>
                   <button onClick={() => share(i)} className={actBtn + ' border-l border-slate-200 dark:border-sentinel-border'}><Share2 size={14} /> Share</button>
-                  {!animated && <button onClick={() => exportPdf(i)} className={actBtn + ' border-l border-slate-200 dark:border-sentinel-border'}><FileDown size={14} /> PDF</button>}
                 </div>
               </div>
             );
@@ -231,7 +216,6 @@ export const LibraryPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => share(view)} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-[#0a1628] hover:bg-brand-dark"><Share2 size={14} /> Copy share link</button>
               <button onClick={() => openFull(view)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-brand"><ExternalLink size={14} /> View full version</button>
-              {!isAnimated(view) && <button onClick={() => exportPdf(view)} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-sentinel-border px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-brand"><FileDown size={14} /> PDF</button>}
               {canDelete(view) && <button onClick={() => setConfirmDel(view)} className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-rose-200 dark:border-rose-500/30 px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10"><Trash2 size={14} /> Delete</button>}
             </div>
 

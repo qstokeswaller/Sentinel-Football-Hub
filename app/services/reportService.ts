@@ -10,6 +10,7 @@ export interface Report {
   rating: number; intensity: string | null; notes: string | null;
   drillNotes: Record<string, any>; createdAt: string; sessionTitle: string | null;
   team: string | null; createdBy: string | null; authorName: string | null;
+  shareToken: string | null;
   [key: string]: any;
 }
 
@@ -43,6 +44,7 @@ export async function fetchReports(clubId: string | null): Promise<Report[]> {
       notes: r.notes || null, drillNotes: parseObj(r.drill_notes), createdAt: r.created_at,
       sessionTitle: sess?.title || null, team: sess?.team || null,
       createdBy: r.created_by || null, authorName: r.created_by ? (names[r.created_by] || null) : null,
+      shareToken: r.share_token || null,
     };
   });
 }

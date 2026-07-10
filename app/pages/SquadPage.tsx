@@ -7,7 +7,7 @@ import { positionOrder } from '../services/attendanceService';
 import { SmartSearch } from '../components/ui/SmartSearch';
 import { PillTabs } from '../components/ui/PillTabs';
 import { PageToolbar } from '../components/ui/PageToolbar';
-import { GridSkeleton, TableSkeleton } from '../components/ui/Skeleton';
+import { SquadCardsSkeleton, TableSkeleton } from '../components/ui/Skeleton';
 import { fuzzyFilter } from '../lib/fuzzy';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useAppState } from '../context/AppStateContext';
@@ -295,7 +295,7 @@ export const SquadPage: React.FC = () => {
       {tab === 'squads' && (
         <>
           {squadsLoading ? (
-            <GridSkeleton count={4} cols="grid-cols-1 xl:grid-cols-2" />
+            <SquadCardsSkeleton count={4} />
           ) : !filteredSquads.length ? (
             <Empty icon={<Shield size={28} />} text={squads?.length ? 'No squads match your filter.' : 'No squads yet.'} />
           ) : (

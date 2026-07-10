@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
+import { ReportsHistory, type HistoryReport } from '../reports/ReportsHistory';
 
 /**
  * Reusable player-dossier CONTENT (no share shell) — embedded by the public player dossier
@@ -22,10 +23,6 @@ const initials = (n: string) => (n || '?').trim().split(/\s+/).map(w => w[0]).jo
 const STATUS: Record<string, string> = { active: 'Active', injured: 'Injured', sick: 'Sick', suspended: 'Suspended', trialist: 'Trialist', unavailable: 'Unavailable' };
 const STATUS_COLOR: Record<string, string> = { active: 'bg-emerald-100 text-emerald-700', injured: 'bg-rose-100 text-rose-700', suspended: 'bg-amber-100 text-amber-700', trialist: 'bg-sky-100 text-sky-700' };
 const isGKPos = (p?: string | null) => { const s = (p || '').toUpperCase(); return s.includes('GK') || s.includes('GOAL'); };
-const avgOf = (obj: any): number | null => { if (!obj || typeof obj !== 'object') return typeof obj === 'number' && obj > 0 ? obj : null; const nums = Object.values(obj).filter(v => typeof v === 'number' && (v as number) > 0) as number[]; return nums.length ? +(nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1) : null; };
-const rate5 = (v: number | null) => v == null ? 'bg-slate-100 text-slate-500' : v >= 4 ? 'bg-emerald-100 text-emerald-700' : v >= 3 ? 'bg-sky-100 text-sky-700' : v >= 2 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
-const PILLARS: [string, string, string][] = [['tactical', 'Tactical', 'text-indigo-500'], ['technical', 'Technical', 'text-sky-500'], ['physical', 'Physical', 'text-emerald-500'], ['psychological', 'Psychological', 'text-amber-500']];
-
 const Card: React.FC<{ title?: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-4">
     {title && <div className="px-6 py-3 border-b border-slate-100 text-[12px] font-bold uppercase tracking-wider text-slate-500">{title}</div>}
@@ -58,17 +55,11 @@ export const PlayerDossierView: React.FC<{ data: DossierData; onBack?: () => voi
   const seasonMinutes = (data.seasonMatches || 0) * 90;
   const pctMinutes = seasonMinutes ? Math.round(minutes / seasonMinutes * 100) : null;
 
-  // Performance-rating averages across all recorded assessments (lifetime).
-  const pAgg: Record<string, { s: number; c: number }> = {}; PILLARS.forEach(([k]) => pAgg[k] = { s: 0, c: 0 });
-  const overall: number[] = [];
-  assessments.forEach(a => {
+  // Normalise assessments for the shared visual reports-history (ratings may arrive as a JSON string).
+  const historyReports: HistoryReport[] = assessments.map((a: any) => {
     let r: any = a.ratings; if (typeof r === 'string') { try { r = JSON.parse(r); } catch { r = {}; } }
-    const per: number[] = [];
-    PILLARS.forEach(([k]) => { const v = avgOf(r?.[k]); if (v != null) { pAgg[k].s += v; pAgg[k].c++; per.push(v); } });
-    if (per.length) overall.push(per.reduce((x, y) => x + y, 0) / per.length);
+    return { id: a.id, type: a.type, ratings: r || {}, notes: a.notes, author: a.author, date: a.date, created_at: a.created_at };
   });
-  const pillarAvg = (k: string) => pAgg[k].c ? +(pAgg[k].s / pAgg[k].c).toFixed(1) : null;
-  const lifetimeAvg = overall.length ? +(overall.reduce((a, b) => a + b, 0) / overall.length).toFixed(1) : null;
 
   const info = [
     player.date_of_birth && { label: 'Date of Birth', value: fmtDate(player.date_of_birth) + (age ? ` (${age})` : '') },
@@ -155,47 +146,12 @@ export const PlayerDossierView: React.FC<{ data: DossierData; onBack?: () => voi
         </Card>
       )}
 
-      {/* Performance rating averages (lifetime, across all assessments) */}
-      {assessments.length > 0 && lifetimeAvg != null && (
-        <Card title="Performance Ratings — Lifetime Average">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-14 h-14 rounded-full border-2 border-brand text-brand flex items-center justify-center text-lg font-bold shrink-0">{lifetimeAvg}</div>
-            <div className="text-sm text-slate-500">Average across <b className="text-slate-700">{assessments.length}</b> recorded assessment{assessments.length === 1 ? '' : 's'} <span className="text-slate-400">(out of 5)</span></div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {PILLARS.map(([k, l, c]) => { const v = pillarAvg(k); return (
-              <div key={k} className="rounded-xl border border-slate-200 p-3 text-center">
-                <div className={'text-[11px] font-semibold uppercase tracking-wider ' + c}>{l}</div>
-                <div className={'mt-1 inline-block text-sm font-bold rounded px-2 py-0.5 ' + rate5(v)}>{v != null ? `${v}/5` : '—'}</div>
-              </div>
-            ); })}
-          </div>
-        </Card>
-      )}
-
-      {/* Recent assessments */}
-      {assessments.length > 0 && (
-        <Card title="Recent Assessments">
-          <div className="space-y-3">
-            {assessments.slice(0, 6).map((a, i) => {
-              let r: any = a.ratings; if (typeof r === 'string') { try { r = JSON.parse(r); } catch { r = {}; } }
-              const per = PILLARS.map(([k]) => avgOf(r?.[k])).filter((v): v is number => v != null);
-              const g = per.length ? +(per.reduce((x, y) => x + y, 0) / per.length).toFixed(1) : null;
-              return (
-                <div key={i} className="rounded-xl border border-slate-200 p-4">
-                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-                    <div className="text-sm text-slate-500">{[fmtDate(a.date || a.created_at), a.author && `Coach: ${a.author}`, a.type].filter(Boolean).join(' · ')}</div>
-                    {g != null && <span className={'text-xs font-bold rounded px-2 py-0.5 ' + rate5(g)}>{g}/5</span>}
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {PILLARS.map(([k, l, c]) => { const v = avgOf(r?.[k]); return v != null ? <span key={k} className={'text-[11px] font-semibold ' + c}>{l} {v}</span> : null; })}
-                  </div>
-                  {a.notes?.trim() && <p className="text-sm text-slate-700 whitespace-pre-wrap">{a.notes.trim()}</p>}
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+      {/* Performance & development reports — visual history (radar + per-category averages) */}
+      {historyReports.length > 0 && (
+        <div className="mb-4">
+          <div className="text-[12px] font-bold uppercase tracking-wider text-slate-500 mb-3 px-1">Scouting & Assessment Reports</div>
+          <ReportsHistory assessments={historyReports} />
+        </div>
       )}
 
       {/* Media & Highlights */}

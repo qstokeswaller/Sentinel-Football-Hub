@@ -17,7 +17,7 @@ export const ScoutVideosModal: React.FC<{ open: boolean; onClose: () => void; pl
   const { user } = useAuth();
   const { showToast, showError } = useToast();
   const queryClient = useQueryClient();
-  const { data: videos } = useQuery({ queryKey: ['scout-videos', playerId], queryFn: () => fetchScoutVideos(playerId), enabled: open && !!playerId });
+  const { data: videos, isLoading } = useQuery({ queryKey: ['scout-videos', playerId], queryFn: () => fetchScoutVideos(playerId), enabled: open && !!playerId });
 
   const [mode, setMode] = useState<'link' | 'upload'>('link');
   const [title, setTitle] = useState('');
@@ -65,7 +65,8 @@ export const ScoutVideosModal: React.FC<{ open: boolean; onClose: () => void; pl
           </div>
 
           {/* List */}
-          {!videos?.length ? <p className="text-sm text-slate-400 text-center py-4">No videos yet.</p> : (
+          {isLoading ? <p className="text-sm text-slate-400 text-center py-4"><i className="fas fa-circle-notch fa-spin" /> Loading…</p>
+            : !videos?.length ? <p className="text-sm text-slate-400 text-center py-4">No videos yet.</p> : (
             <div className="space-y-3">
               {videos.map(v => {
                 const yt = youtubeId(v.url);
